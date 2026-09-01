@@ -63,12 +63,42 @@ but not yet adversarially verified — verify the tools table before adopting.*
 - **Monte-Carlo batching is the primary GPU payoff:** the SPEF-annotated statistical tier runs 1e4–1e6 parameter/mismatch/corner instances per GPU — the proven 70–138x regime (R1, R4). Copy Brian2CUDA's per-delay queue design for per-arc delays (R3). Use VAJAX for batched-SPICE spot checks; consider upstreaming SNN-shaped features rather than building a full engine (R1).
 - **Vast.AI practicalities:** everything load-bearing is open-source, no license servers. Rent A100/H100 for FP64 stacks, or engineer FP32/mixed precision (consumer RTX throttles FP64 to 1/64) (R1).
 
-## 5. Open questions
+## 5. Analyticity of the primitive set (verified)
+
+*Added 2026-09-01, verified against github.com/neuromorphs/NIR @ f5372ae
+(`nir/ir/*.py`), with an empirical FP32 measurement.*
+
+The architect's claim — Verilog-AMS needs a solver only for certain model
+classes; the stat-sim models can be analytical/event-driven — is **verified
+against the code**. All 19 serializable NIR primitives classify as:
+
+| Class | Count | Primitives | Inter-event treatment |
+|---|---|---|---|
+| Closed-form (LTI) | 6 | LI, LIF, CubaLI, CubaLIF, I, IF | exact (matrix) exponential propagator; threshold/reset only re-initializes state at events — piecewise-exact |
+| Event-only | 9 | Threshold, Delay, Linear, Affine, Scale, Conv1d/2d, SumPool2d, AvgPool2d | memoryless maps or pure event retiming |
+| Structural | 4 | Input, Output, Flatten, NIRGraph | index remapping; Input/Output are the natural pipe endpoints (`PIPES.md`) |
+
+**None requires a numerical ODE integrator.** The GPU stat-sim tier is
+expression evaluation plus event scheduling — the §2 negotiation-loop
+blocker does not apply to it. What breaks analyticity (and stays on the CPU
+oracle path): AdEx, Izhikevich, conductance-based synapses, NMDA/HH gating,
+multiplicative adaptive thresholds. Additive OU noise on an LTI membrane
+keeps an exact update.
+
+**FP32 verdict (measured):** single-update relative error 1e-8..1e-7;
+because the leak is a contraction, error does **not** accumulate —
+|v32 − v64| holds at ~3e-8 after 10^6 chained updates. One guard: clamp
+decay factors to 0 below the subnormal range (dt/tau ≳ 87) rather than
+trusting subnormals, which also avoids vendor-divergent FTZ behavior.
+Question 5 below is thereby answered: consumer GPUs suffice for LI/LIF
+islands.
+
+## 6. Open questions
 
 1. TH-gate latch modeling in an AIG flow: how many fixed-point iterations per DATA/NULL wavefront in practice, and does GEM's scheduler tolerate them?
 2. How badly do SPEF per-arc delay distributions hit the batched engine — is Brian2CUDA's order-of-magnitude penalty representative of our fan-out topology?
 3. Spike-time quantization vs `@cross` tolerance: what dt (or root-find tolerance) makes GPU tier-0 traces equivalence-checkable against NVC/ngspice golden runs?
 4. Diffrax events are terminating — is solve-per-event looping acceptable at our event rates, or do we need a custom multi-event kernel (MPGOS-style)?
-5. Is FP32 sufficient for LI/LIF islands (enabling cheap consumer GPUs), given exact integration bounds error?
+5. ~~Is FP32 sufficient for LI/LIF islands?~~ Answered in §5: yes, with the subnormal clamp guard.
 6. Where do typical mylex netlists sit vs the ~1e4-unit GPU crossover — i.e., which designs ever leave the CPU tier for single runs?
 7. Build vs contribute: VAJAX (127 open issues, small community) upstream investment vs an in-house JAX kernel; and RTLflow's license ambiguity if we fork its batching pattern.

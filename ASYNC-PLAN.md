@@ -134,7 +134,12 @@ needs matched delay must say so under (d), and that statement becomes a
 constraint the verification stack is obliged to discharge (§4).
 
 This section is deliberately under-specified. Pinning it down is milestone
-**P1** and should produce an ADR before any mapper code is written.
+**P1** and should produce an ADR before any mapper code is written. The
+contract's *executable* counterpart is the pipe construct: `PIPES.md`
+specifies it (operations, close/EOF, deterministic arbitration, signal-view
+polymorphism, the byte-pipe/socket degenerate case) and maps pipe
+configuration onto the fields above and pipe mechanisms onto refinement
+conditions (a)–(d).
 
 ## 4. Verification architecture
 
@@ -204,7 +209,12 @@ are real cycles. See §11.
 - **Sync-emulation functional simulation.** Already in use. Cheap suggested
   addition: retain dual-rail *encoding* in the sync binding even with a
   clocked handshake, and assert both rails are never simultaneously high.
-  Free illegal-state check in the fastest tier.
+  Free illegal-state check in the fastest tier. Note from the ldx libraries
+  (`LDX-VORTEX.md`): the existing `ncl_sync` binding deletes the second
+  rail entirely, so this assertion needs a third binding variant
+  (dual-rail-clocked), and the rail-polarity convention must be normalized
+  first — the ldx VHDL packages carry the value on the L rail while the
+  asic SPICE cells carry it on H.
 - **SPEF back-annotation with statistical simulation.** Already in use.
   Discharges the RT constraints that formal extracts symbolically: formal
   enumerates which forks must be isochronic, SPEF supplies per-branch RC to
@@ -247,7 +257,9 @@ see inside them. See §10.
 
 An HLS-shaped path to the same IR. Deferred; the contract language must
 stabilize first. Noted here because it constrains §3 — the contract language
-should not assume an RTL-shaped source.
+should not assume an RTL-shaped source. The C-side channel representation
+is settled by `PIPES.md`: a network socket is the byte-pipe degenerate case
+of a channel, so C code speaks pipes of bytes from day one.
 
 ### Neural models (via mylex)
 
@@ -256,12 +268,13 @@ emission is a *binding*, which is the natural seam: mylex targets the Nulex
 IR, and the AMS binding is shared infrastructure rather than a parallel
 implementation.
 
-**License boundary.** `bindings/ams.py` is marked shared with mylex (§8),
-but the async work is PolyForm Noncommercial while mylex is BSD-3-Clause and
-positioned as the open frontend (mylex PLAN.md §1.4). Which license governs
-the shared AMS binding — and whether mylex keeps its own BSD-licensed
-emitter as the default path until post-P6 convergence (§11) — is settled in
-the §12 license ADR and mirrored in mylex PLAN.md.
+**License boundary — settled 2026-09-01.** All tools in the mylex
+repository, `bindings/ams.py` and the mylex compiler included, are PolyForm
+Noncommercial 1.0.0 (`LICENSE-ASYNC.md`). BSD-3-Clause survives only where
+upstream requires it: code derived from NIR (reference models, reused
+tests) keeps its origin license. mylex PLAN.md's license line is updated to
+match; its §1.4 "open frontend" positioning should be re-read against the
+source-available posture.
 
 ## 6. Vortex as the proving target
 
@@ -308,7 +321,10 @@ broadcast to the scheduler with no ack. The first target therefore already
 contains one non-elastic boundary — the §3 contract language must express an
 ack-less channel, or P4 must explicitly exclude it and treat the branch
 pulse as derived from the `result_if` handshake (where `br_enable` actually
-originates).
+originates). The sideband family is broader than this one interface —
+warp-control pulses, the scheduler CSR bundle, ibuffer credit returns,
+valid-only DCR writes — so the ack-less-channel decision is load-bearing
+across the whole §6 map, not a one-off.
 
 Then `VX_alu_muldiv`, then full `VX_execute`, then reassess the FPU.
 
@@ -392,8 +408,12 @@ answer (§10) more than anything else.
 - **P0 — Scaffolding.** Repo, license, package skeleton, CI.
 - **P1 — Contract language.** The load-bearing decision. Produces
   `docs/contracts.md` and an ADR. No mapper code before this lands.
-- **P2 — Cell library resolution.** Either integrate the existing in-house
-  NCL library or characterize a THmn set for ASAP7/cln28. Blocking; see §10.
+- **P2 — Cell library resolution: characterize, seeded by ldx.** The ldx
+  assets (cell topologies, the Xyce characterization pipeline, the
+  assert-correct verification methodology) are reusable seeds, but they
+  target IHP SG13G2/1.2V vs this plan's ASAP7/cln28, a Liberty emitter must
+  be written from scratch, several THmn members lack transistor netlists,
+  and no cell has reset. Blocking; see §10 and `LDX-VORTEX.md`.
 - **P3 — QDI binding + rules for a gate subset.** Enough rules to map a
   2-input gate netlist, each with its soundness proof. Establishes the
   methodology the rest follows.
@@ -411,15 +431,27 @@ FPU binding decision.
 
 Recorded because they change the shape of early work, not merely its order.
 
-1. **Prior NCL work — location and form.** Whether a characterized THmn
-   threshold-gate library exists, and in what form (behavioral Verilog,
-   Liberty, transistor-level), determines whether P2 is "integrate" or
-   "characterize from scratch." These are very different first months.
-   Not found in `/usr/local/src`.
+1. **Prior NCL work — FOUND (2026-09-01); see `LDX-VORTEX.md`.** Lives in
+   `/usr/local/src/ldx`: a behavioral dual-rail VHDL package plus its sync
+   binding (`fpga/lib/ncl`, `fpga/lib/ncl_sync`), Sutherland C-element
+   SPICE cells for th12/22/23/33/34w2 on IHP SG13G2 130nm with a Xyce
+   characterization pipeline and Verilog-A extraction (`asic/`), an NCL
+   SHA-256d miner (70,578 LE, retained bitstream), and ARV harnesses. The
+   ARV core sources and the patched NVC carrying the ncl library live
+   outside ldx (`/usr/local/src/arv`, `/usr/local/src/nvc`) and are
+   currently missing. No Liberty, LEF, or layout exists anywhere; no
+   reset-pin cell variants.
 2. **Cause of the FPGA failure.** If routing delay violated isochronic forks,
    the ASIC path is unaffected. If synthesis optimized away hazard-freedom
    structure, the same failure is latent in the Yosys path and the mapper
-   must be designed around it from day one (§5).
+   must be designed around it from day one (§5). *Evidence from ldx
+   (2026-09-01, `LDX-VORTEX.md`):* the recorded split is not "synchronizers
+   made synchronous" — the entire logic package goes synchronous
+   (`ncl_sync` deletes the second rail), it appears fully formed as the
+   deliberate synthesis path, and ldx history holds no failed true-async
+   attempt; the failures actually recorded are clocked-glue races (MMIO
+   skew; an unresolved LW-in-loop corruption). The routing-vs-optimization
+   question stays open; any post-mortem is in the missing arv repo.
 3. **"LLM → async logic" scope.** Whether this means large language models
    specifically (transformer inference in async), or the neural-model path
    generally that mylex already covers. Determines whether mylex must reach
@@ -466,10 +498,9 @@ Deliberately unpinned; to be settled ADR-style in `docs/decisions/`.
 - Project name (`nulex` is a placeholder).
 - Which PolyForm variant. Noncommercial 1.0.0 is assumed; Small Business,
   Internal Use, or Shield would each express a different commercial posture.
-- Which license governs `bindings/ams.py` (shared with BSD-3-Clause mylex),
-  and the file-level boundary between `LICENSE-ASYNC.md` and the BSD root
-  LICENSE that mylex PLAN.md §8 plans, while the async work is housed in the
-  mylex repository.
+- ~~Which license governs `bindings/ams.py`~~ — settled (§5): PolyForm
+  Noncommercial 1.0.0 for all tools in the repository; NIR-derived code
+  keeps BSD-3-Clause.
 - 4-phase RTZ only, or 2-phase bindings as well?
 - Does the IR model NULL wavefronts explicitly, or only DATA with NULL
   implied by the protocol field of the contract?

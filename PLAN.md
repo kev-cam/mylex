@@ -5,7 +5,10 @@ EDA SNN synthesis stack. It consumes ONNX (with QONNX quantization
 annotations) and NIR (Neuromorphic Intermediate Representation) as inputs, and
 emits standard Verilog-AMS referencing an accompanying primitive library.
 
-License: BSD-3-Clause (aligned with NIR upstream).
+License: PolyForm Noncommercial 1.0.0 for the tools in this repository
+(see `LICENSE-ASYNC.md`; decided 2026-09-01, superseding the BSD-3-Clause
+plan below where they conflict). Code derived from NIR upstream (reference
+models, reused tests) remains BSD-3-Clause per its origin.
 
 This document is the working plan, not the spec. Decisions get refined in the
 VM during implementation; this exists to keep the architecture coherent and
