@@ -64,3 +64,49 @@ Build notes: the fork's `sv2vhdl` library needs `python3-dev` and has a
 parallel-make race on STD.STANDARD (skippable — not needed for this flow).
 An uninstalled build needs `PATH=<nvc>/build/bin` and
 `NVC_LIBPATH=<nvc>/build/lib`.
+
+## 6. tgt-vhdl chain probe: VX_elastic_buffer (2026-09-01)
+
+**The chain works end-to-end**: `VX_elastic_buffer` (+8-file closure) went
+SV → iverilog `tgt-vhdl -psv2vhdl=1` → NVC `--std=2040` analyze/elaborate/
+simulate, and a handshake testbench (`probes/ebtest/tb_eb.vhd`) passed 5
+tokens through with a mid-stream backpressure window, order and data intact
+— after three translator fixes applied by hand to the generated VHDL. The
+recipe:
+
+```
+iverilog -g2012 -tvhdl -psv2vhdl=1 -I hw/rtl -I hw/rtl/libs \
+  -o eb.vhd -s VX_elastic_buffer <9 libs/*.sv files>
+nvc --std=2040 -a eb.vhd tb_eb.vhd -e tb_eb -r   # NVC_LIBPATH=<nvc>/build/lib
+```
+
+**Findings (all in the iverilog fork's tgt-vhdl, none in Vortex or NVC):**
+
+1. **Reserved-word collision.** `pipe` is a keyword in the fork's
+   `--std=2040` grammar (the PIPES.md construct is already staked out in
+   the parser). Vortex's `VX_pipe_register` names a signal `pipe` → parse
+   error. tgt-vhdl must escape identifiers that collide with
+   extended-standard keywords (VHDL extended identifiers, or rename).
+2. **2-D packed-array part-select flat-index mis-lowering.** For
+   `pipe[i][DATAW-1 : DATAW-RESETW]` (variable outer index, constant inner
+   part-select; DATAW=2, RESETW=1) the flat index came out `(i-1)*2+1`
+   instead of `i*2+1` — runtime index -1 at the first reset. This idiom
+   (valid-bit-only reset) is everywhere in Vortex; the bug is load-bearing.
+3. **Disjoint-slice NBA shadow lost-update.** Two `always_ff` blocks write
+   disjoint bit ranges of one reg. Each translated process snapshots the
+   WHOLE signal, updates its own bits, and drives the WHOLE signal back —
+   two drivers each asserting stale copies of the other's bits; resolution
+   then loses an update (token data corrupted after an enable-hold window;
+   scoreboard caught it). The multi-UDN encoding has undriven-with-value
+   states (L3D_0Z/L3D_1Z) that exist for exactly this: the shadow should
+   weaken unowned bits so driven-beats-undriven resolution merges slices.
+   Confirmed by merging the two writers into one process → PASS.
+4. Minor: `bin/fix-ivl-vhdl`'s concat-cast rule predates logic3d typing
+   and *introduces* type errors on `-psv2vhdl` output — skip it there.
+
+Toolchain state on this machine: iverilog fork built at
+`/usr/local/src/iverilog/_install`; NVC fork complete in
+`/usr/local/src/nvc/build` including all `lib/sv2vhdl` packages,
+`libsv_math.so` and `libresolver.so` (built with explicit
+`PYTHON3_CFLAGS=$(python3-config --includes)` — the Makefile's deferred
+expansion misfires).
