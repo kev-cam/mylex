@@ -91,7 +91,9 @@ stack (§3). Get it wrong and everything downstream is mush.
 - NCL threshold-gate cell library, or integration with an existing one (§10)
 
 ### Out of scope (this repo)
-- Place and route, extraction, signoff (consumes SPEF, does not produce it)
+- Place and route and signoff. SPEF extraction is also out of scope here —
+  but not missing from the stack: stat-sim's `klayout2spef.py` produces it
+  from layout (see §5 toolchain)
 - Training or model authoring (mylex's domain)
 - C++ frontend (planned, deferred — see §5)
 - FPGA QDI implementation (see §7; sync-emulation binding on FPGA is in scope)
@@ -150,7 +152,7 @@ binding discharges its own obligations by the method appropriate to it.
 |---|---|---|---|
 | QDI dual-rail | Input-completeness, observability, orphan-freedom | Static formal | Pre-layout |
 | Bundled-data | Matched-delay margin, RT constraints | SPEF + variation sim | Post-layout |
-| Clocked SRAM wrapper | Protocol conformance, synchronizer MTBF | Formal + standard sync analysis | Both |
+| Clocked SRAM wrapper | Protocol conformance, synchronizer MTBF | Formal + stat-sim metastability models (MTBF quantified, not linted) | Both |
 | Verilog-AMS | Settling / threshold contract | AMS simulation, narrow | Post-layout |
 | Sync emulation | Functional equivalence only | Sync↔async EC discharges; fast RTL sim is the *use* | Pre-layout |
 
@@ -215,7 +217,13 @@ are real cycles. See §11.
   (dual-rail-clocked), and the rail-polarity convention must be normalized
   first — the ldx VHDL packages carry the value on the L rail while the
   asic SPICE cells carry it on H.
-- **SPEF back-annotation with statistical simulation.** Already in use.
+- **SPEF back-annotation with statistical simulation — the `stat-sim`
+  tool** (`/usr/local/src/stat-sim`, PolyForm NC, implementing US8478576B1
+  probability waveforms + US20230334213A1 defect binning). It generates
+  Verilog-AMS models carrying silicon variability — per-cell tau/T0 from
+  transistor Monte-Carlo on a real PDK — so metastability is *simulated
+  with a quantified MTBF*, not structurally linted; `klayout2spef.py`
+  produces the SPEF from layout. Already in use.
   Discharges the RT constraints that formal extracts symbolically: formal
   enumerates which forks must be isochronic, SPEF supplies per-branch RC to
   settle each claim numerically. Two notes:
@@ -253,6 +261,12 @@ hazard-freedom), then Yosys and ABC will do the same to an NCL netlist.
 The mapper must mark NCL cells don't-touch and never let a generic optimizer
 see inside them. See §10.
 
+An in-house alternative path exists: `sv2ghdl` (SV → VHDL for NVC/GHDL,
+"federated simulation") feeds the NVC fork, whose direct-RTLIL backend then
+reaches Yosys — SV → VHDL → NVC → RTLIL. That route keeps the whole
+frontend in tools we own and simulate with; which path the mapper trusts
+(sv2v → Yosys vs sv2ghdl → NVC → RTLIL) is an open decision for P3.
+
 ### C++ (planned)
 
 An HLS-shaped path to the same IR. Deferred; the contract language must
@@ -267,6 +281,17 @@ mylex compiles ONNX/NIR to Verilog-AMS today. Under this architecture the AMS
 emission is a *binding*, which is the natural seam: mylex targets the Nulex
 IR, and the AMS binding is shared infrastructure rather than a parallel
 implementation.
+
+### The surrounding toolchain
+
+The federation this plan plugs into (all kev-cam repos, restored locally):
+`smak` (make replacement orchestrating the fleet), `sv2ghdl` (SV→VHDL
+frontend), the `nvc` fork (digital sim, `lib/ncl`, RTLIL backend, Xyce
+cosim), the `xyce` fork (analog, auto ADC/DAC bridge insertion at
+mixed-signal boundaries), `stat-sim` (variability AMS models, SPEF from
+layout, MTBF), `ldx` (runtime linker + many-core fabric), `arv` (async
+RISC-V testbed). PIPES.md's foreign endpoints are the intended transport
+between federation members.
 
 **License boundary — settled 2026-09-01.** All tools in the mylex
 repository, `bindings/ams.py` and the mylex compiler included, are PolyForm
