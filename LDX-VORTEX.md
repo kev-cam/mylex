@@ -38,3 +38,29 @@ Vortex has no scalar core to swap: payloads are warp-indexed and lane-vectored e
 4. Was the LW-in-loop corruption ever root-caused (CPU vs port-B arbitration)?
 5. Which process is authoritative for P4 (ASAP7 or cln28), and do we have Xyce-usable device models for it?
 6. Is ARV intended as a reference design or as a deliverable core? That decides whether fixing its gaps (byte access, CSRs, real handshakes) is ever in scope.
+
+## 5. Bring-up results (2026-09-01, this machine)
+
+The full stack was revived and runs: ARV HEAD (2-stage forwarding pipeline)
+→ kev-cam/nvc fork (built from source, `lib/ncl` built in) → phase-clocked
+NCL simulation via `ldx/fpga/bench/sha256/sim_bench.py`.
+
+| Test | Result |
+|---|---|
+| `sha256_sw.bin` | PASS — correct hash, 4,969 cycles |
+| `sha256_cfu.bin` | PASS — correct hash, 3,578 cycles (**1.39× CFU speedup**, matching the 1.40× ldx recorded) |
+| `lw_test.bin`, `lw_far.bin` | PASS — both LW regressions exact |
+| `kload_test.bin` | PASS — all four result registers exact |
+| `rotr_test.bin` | PASS — ARV correct; the source comment's expected value for R2 was itself miscalculated |
+
+**LW-bug update (open question 4):** the LW-in-loop corruption recorded as
+unresolved at ldx `796379a` does **not** reproduce on ARV HEAD under the
+sim_bench testbench (simple single-reader memory model). Suspicion narrows
+to the `arv_soc` dual-port BRAM port-B arbitration in ldx (PCIe/CPU port
+sharing) — or the bug was fixed by the pipeline rework. Reproducing under
+`arv_soc` itself is the next diagnostic.
+
+Build notes: the fork's `sv2vhdl` library needs `python3-dev` and has a
+parallel-make race on STD.STANDARD (skippable — not needed for this flow).
+An uninstalled build needs `PATH=<nvc>/build/bin` and
+`NVC_LIBPATH=<nvc>/build/lib`.
