@@ -1,0 +1,259 @@
+SAME  addwide.v (exit=0, 3 notes)
+SAME  always_ff.v (exit=0, 1 notes)
+DIFF  always_ff_warn_sens.v
+2,5c2,5
+<     > 
+<     |
+<  96 |     wait on tmp_ivl_5'Event, clk;
+<     |             ^^^^^^^^^^^^^^^
+---
+>      > 
+>      |
+SAME  assign3.2C.v (exit=0, 2 notes)
+SAME  assign_nb2.v (exit=0, 3 notes)
+SAME  attrib01_module.v (exit=0, 1 notes)
+SAME  attrib02_port_decl.v (exit=0, 1 notes)
+SAME  attrib03_parameter.v (exit=0, 1 notes)
+SAME  attrib04_net_var.v (exit=0, 1 notes)
+SAME  attrib05_port_conn.v (exit=0, 1 notes)
+SAME  attrib06_operator_suffix.v (exit=0, 1 notes)
+SAME  attrib07_func_call.v (exit=0, 1 notes)
+SAME  attrib08_mod_inst.v (exit=0, 1 notes)
+SAME  attrib.v (exit=0, 3 notes)
+SAME  basicexpr.v (exit=0, 2 notes)
+SAME  basicreg.v (exit=0, 1 notes)
+SAME  basicstate2.v (exit=0, 2 notes)
+SAME  basicstate.v (exit=0, 2 notes)
+DIFF  bitsel10.v
+4c4
+<  176 |     report "bus=" & sv_bstr(to_std_logic_vector(bus_sig)) & ", D=" & sv_bstr(to_std_logic_vector(D)) & ", drv.D=" & sv_bstr(to_std_logic_vector(D)) & ", E=" & sv_bstr(to_std_logic_vector(E)) & ", drv.save=" & sv_bstr(to_std_logic_vector(save));
+---
+>  181 |     report "bus=" & sv_bstr(to_std_logic_vector(bus_sig)) & ", D=" & sv_bstr(to_std_logic_vector(D)) & ", drv.D=" & sv_bstr(to_std_logic_vector(D)) & ", E=" & sv_bstr(to_std_logic_vector(E)) & ", drv.save=" & sv_bstr(to_std_logic_vector(save));
+SAME  br993a.v (exit=0, 5 notes)
+SAME  br993b.v (exit=0, 6 notes)
+SAME  br994.v (exit=0, 3 notes)
+SAME  br995.v (exit=0, 1 notes)
+SAME  br_gh1258.v (exit=0, 0 notes)
+SAME  br_gh306a.v (exit=0, 1 notes)
+SAME  br_gh306b.v (exit=0, 1 notes)
+SAME  br_gh330.v (exit=0, 1 notes)
+DIFF  br_gh456.v
+4c4
+<  189 |     wait until falling_edge(clk);
+---
+>  204 |     wait until falling_edge(clk);
+9c9
+<  191 |     wait until falling_edge(clk);
+---
+>  206 |     wait until falling_edge(clk);
+SAME  br_gh687.v (exit=0, 11 notes)
+SAME  br_gh99v.v (exit=0, 2 notes)
+SAME  br_gh99x.v (exit=0, 2 notes)
+DIFF  bufif.v
+19c19
+<  109 |       y => ad,
+---
+>  114 |       y => ad,
+24c24
+<  110 |       data => ad_val,
+---
+>  115 |       data => ad_val,
+SAME  case5-syn-fail.v (exit=0, 5 notes)
+SAME  case5.v (exit=0, 5 notes)
+SAME  case_priority.v (exit=0, 5 notes)
+SAME  casesynth1.v (exit=0, 2 notes)
+SAME  casesynth2.v (exit=0, 2 notes)
+SAME  casesynth3.v (exit=0, 2 notes)
+SAME  case_unique.v (exit=0, 5 notes)
+SAME  conditsynth1.v (exit=0, 2 notes)
+SAME  conditsynth2.v (exit=0, 2 notes)
+SAME  conditsynth3.v (exit=0, 2 notes)
+SAME  credence20041209.v (exit=0, 2 notes)
+SAME  deassign3.4A.v (exit=0, 2 notes)
+SAME  dff1.v (exit=0, 2 notes)
+SAME  dffsynth10.v (exit=0, 10 notes)
+DIFF  dffsynth11.v
+1c1
+< ** Note: T: 0 0 111 xxx
+---
+> ** Note: T: 0 0 111 010
+SAME  dffsynth2.v (exit=0, 2 notes)
+SAME  dffsynth3.v (exit=0, 1 notes)
+SAME  dffsynth4.v (exit=0, 1 notes)
+SAME  dffsynth5.v (exit=0, 2 notes)
+SAME  dffsynth6.v (exit=0, 2 notes)
+SAME  dffsynth7.v (exit=0, 10 notes)
+SAME  dffsynth8.v (exit=0, 10 notes)
+SAME  dffsynth9.v (exit=0, 10 notes)
+SAME  dffsynth.v (exit=0, 2 notes)
+SAME  drive_strength2.v (exit=0, 5 notes)
+DIFF  edge.v
+4c4
+<  162 |   process is
+---
+>  167 |   process is
+5a6,140453
+> ** Note: T: Error: edge detected for x -> x
+> ** Note: T: Error: edge detected for x -> x
+> ** Note: T: Error: edge detected for x -> x
+SAME  event_list2.v (exit=0, 1 notes)
+SAME  ff_dual_enable.v (exit=0, 1 notes)
+SAME  ga_mod2.v (exit=0, 1 notes)
+SAME  initmod2.v (exit=0, 4 notes)
+DIFF  initmod.v
+4c4
+<  217 |       report "" & sv_hstr(to_std_logic_vector(a)) & " " & sv_hstr(to_std_logic_vector(b)) & " " & sv_hstr(to_std_logic_vector(c)) & " " & sv_hstr(to_std_logic_vector(d)) & " : " & sv_bstr(to_std_logic_vector(r)) & " : " & sv_hstr(to_std_logic_vector(e0)) & " " & sv_hstr(to_std_logic_vector(f0)) & " " & sv_hstr(to_std_logic_vector(g0)) & " " & sv_hstr(to_std_logic_vector(h0)) & " : " & sv_bstr(to_std_logic_vector(M1_r)) & " : " & sv_hstr(to_std_logic_vector(e)) & " " & sv_hstr(to_std_logic_vector(f)) & " " & sv_hstr(to_std_logic_vector(g)) & " " & sv_hstr(to_std_logic_vector(h));
+---
+>  242 |       report "" & sv_hstr(to_std_logic_vector(a)) & " " & sv_hstr(to_std_logic_vector(b)) & " " & sv_hstr(to_std_logic_vector(c)) & " " & sv_hstr(to_std_logic_vector(d)) & " : " & sv_bstr(to_std_logic_vector(r)) & " : " & sv_hstr(to_std_logic_vector(e0)) & " " & sv_hstr(to_std_logic_vector(f0)) & " " & sv_hstr(to_std_logic_vector(g0)) & " " & sv_hstr(to_std_logic_vector(h0)) & " : " & sv_bstr(to_std_logic_vector(M1_r)) & " : " & sv_hstr(to_std_logic_vector(e)) & " " & sv_hstr(to_std_logic_vector(f)) & " " & sv_hstr(to_std_logic_vector(g)) & " " & sv_hstr(to_std_logic_vector(h));
+SAME  inside_synth2.v (exit=0, 12 notes)
+SAME  land4.v (exit=0, 7 notes)
+SAME  lcatsynth.v (exit=0, 1 notes)
+SAME  memidx.v (exit=0, 2 notes)
+SAME  memsynth1.v (exit=0, 2 notes)
+SAME  memsynth2.v (exit=0, 2 notes)
+SAME  memsynth3.v (exit=0, 2 notes)
+SAME  memsynth4.v (exit=0, 1 notes)
+SAME  memsynth5.v (exit=0, 1 notes)
+DIFF  memsynth6.v
+4c4
+<  94 |     tmp_ivl_0 := mem(To_Integer(tmp_ivl_2));
+---
+>  99 |     tmp_ivl_0 := mem(To_Integer(tmp_ivl_2));
+SAME  memsynth7.v (exit=0, 1 notes)
+SAME  memsynth8.v (exit=0, 1 notes)
+SAME  memsynth9.v (exit=0, 1 notes)
+SAME  mix_reset.v (exit=0, 1 notes)
+SAME  modparam.v (exit=0, 2 notes)
+SAME  mult16.v (exit=0, 17 notes)
+SAME  mult2.v (exit=0, 1 notes)
+SAME  multireg.v (exit=0, 1 notes)
+SAME  nblkorder.v (exit=0, 1 notes)
+SAME  not_a_latch2.v (exit=0, 4 notes)
+DIFF  npmos2.v
+19c19
+<  109 |       y => ad,
+---
+>  114 |       y => ad,
+24c24
+<  110 |       data => ad_val,
+---
+>  115 |       data => ad_val,
+SAME  port-test7.v (exit=0, 1 notes)
+SAME  posedge.v (exit=0, 1 notes)
+SAME  pr1033.v (exit=0, 11 notes)
+SAME  pr1077.v (exit=0, 7 notes)
+SAME  pr1087.v (exit=0, 2 notes)
+SAME  pr1353345b.v (exit=0, 1 notes)
+SAME  pr1353345.v (exit=0, 1 notes)
+SAME  pr1476440.v (exit=0, 7 notes)
+SAME  pr1603313.v (exit=0, 2 notes)
+SAME  pr1623097.v (exit=0, 7 notes)
+SAME  pr1628288.v (exit=0, 37 notes)
+SAME  pr1636409.v (exit=0, 12 notes)
+SAME  pr1637208.v (exit=0, 1 notes)
+SAME  pr1648365.v (exit=0, 3 notes)
+SAME  pr1662508.v (exit=0, 17 notes)
+DIFF  pr1698499.v
+34c34
+<  193 |         if is_one(y$EN) then
+---
+>  194 |         if is_one(y$EN) then
+39c39
+<  193 |         if is_one(y$EN) then
+---
+>  194 |         if is_one(y$EN) then
+SAME  pr1717361.v (exit=0, 3 notes)
+SAME  pr1746401.v (exit=0, 1 notes)
+SAME  pr1799904.v (exit=0, 19 notes)
+SAME  pr1875866b.v (exit=0, 2 notes)
+SAME  pr1875866.v (exit=0, 2 notes)
+SAME  pr2018235a.v (exit=0, 2 notes)
+SAME  pr2728812a.v (exit=1, 0 notes)
+SAME  pr273.v (exit=0, 3 notes)
+SAME  pr2994193.v (exit=0, 0 notes)
+SAME  pr3064375.v (exit=0, 26 notes)
+SAME  pr355.v (exit=0, 34 notes)
+SAME  pr434.v (exit=0, 10 notes)
+SAME  pr492.v (exit=0, 24 notes)
+DIFF  pr581.v
+4c4
+<  90 |       result => data(0)
+---
+>  95 |       result => data(0)
+SAME  pr587.v (exit=0, 522 notes)
+DIFF  pr596.v
+4c4
+<  82 |           next_lfsr(l3d_index(v_N, True)) <= l3d_bit_read(lfsr, l3d_index(v_N - logic3d_vector'(L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_1), True));
+---
+>  87 |           next_lfsr(l3d_index(v_N, True)) <= l3d_bit_read(lfsr, l3d_index(v_N - logic3d_vector'(L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_1), True));
+SAME  pr685.v (exit=0, 1 notes)
+SAME  pr820.v (exit=0, 301 notes)
+SAME  ptest001.v (exit=0, 1 notes)
+SAME  ram16x1.v (exit=0, 16 notes)
+DIFF  rnpmos2.v
+19c19
+<  109 |       y => ad,
+---
+>  114 |       y => ad,
+24c24
+<  110 |       data => ad_val,
+---
+>  115 |       data => ad_val,
+SAME  sched1.v (exit=0, 2 notes)
+SAME  sdf5.v (exit=0, 6 notes)
+SAME  sdf6.v (exit=0, 8 notes)
+SAME  sdw_always1.v (exit=0, 2 notes)
+SAME  sdw_always2.v (exit=0, 2 notes)
+SAME  sdw_always3.v (exit=0, 3 notes)
+SAME  sdw_instmod1.v (exit=0, 8 notes)
+SAME  sdw_instmod2.v (exit=0, 6 notes)
+DIFF  shiftl.v
+4c4
+<  41 |       v_nba_c_Reg := unsigned_to_l3d(Resize(l3d_to_unsigned(l3d_or(a sll l3d_shcount(logic3d_vector'(L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_1)), b)), 2));
+---
+>  42 |       v_nba_c_Reg := unsigned_to_l3d(Resize(l3d_to_unsigned(l3d_or(a sll l3d_shcount(logic3d_vector'(L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_1)), b)), 2));
+14c14
+<  41 |       v_nba_c_Reg := unsigned_to_l3d(Resize(l3d_to_unsigned(l3d_or(a sll l3d_shcount(logic3d_vector'(L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_1)), b)), 2));
+---
+>  42 |       v_nba_c_Reg := unsigned_to_l3d(Resize(l3d_to_unsigned(l3d_or(a sll l3d_shcount(logic3d_vector'(L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_0, L3D_1)), b)), 2));
+SAME  specify_01.v (exit=0, 2 notes)
+DIFF  specify4.v
+1,2c1,2
+< ** Note: T: 10 q=x, d=0, c=1
+< ** Note: T: 15 q=x, d=0, c=0
+---
+> ** Note: T: 10 q=0, d=0, c=1
+> ** Note: T: 15 q=0, d=0, c=0
+SAME  specify5.v (exit=0, 8 notes)
+SAME  sqrt32synth.v (exit=0, 32 notes)
+SAME  sqrt32.v (exit=0, 32 notes)
+SAME  ssetclr1.v (exit=0, 2 notes)
+SAME  ssetclr2.v (exit=0, 2 notes)
+SAME  ssetclr3.v (exit=0, 2 notes)
+SAME  sv_argumentless_func.v (exit=124, 0 notes)
+SAME  sv_enum1.v (exit=0, 1 notes)
+SAME  sv_parameter_type.v (exit=0, 2 notes)
+DIFF  sv_unpacked_port2.v
+14c14
+<  108 |   dut: entity work.test
+---
+>  113 |   dut: entity work.test
+DIFF  sv_unpacked_port.v
+14c14
+<  117 |   DUT: entity work.test
+---
+>  122 |   DUT: entity work.test
+SAME  sv_unpacked_wire.v (exit=0, 1 notes)
+SAME  time1.v (exit=0, 2 notes)
+DIFF  time2.v
+4,10c4,5
+<  55 |       wait until rising_edge(tmp_ivl_1);
+<     |                  ^^^^^^^^^^^^^^^^^^^^^^
+< ** Warning: potential infinite loop in process with no sensitivity list and no wait statements.
+<     > 
+<     |
+<  50 |   process is
+<     |   ^
+SAME  time3.v (exit=0, 2 notes)
+SAME  ufuncsynth1.v (exit=0, 2 notes)
+SAME  unary_minus1.v (exit=0, 2 notes)

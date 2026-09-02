@@ -1,0 +1,15 @@
+=== /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/t3_mixed.sv top=t3_mixed tag=fix2
+--- vvp:
+T3a q=9 z=5 exp q=9 z=5
+T3b q=3 z=9 exp q=3 z=9
+--- translate rc=0:
+sv2vhdl: warning: t3_mixed: signal q is assigned with a blocking assignment in one always block and a nonblocking assignment in another (/tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/t3_mixed.sv:9, /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/t3_mixed.sv:10); they cannot be merged, so the signal keeps two VHDL drivers
+sv2vhdl: warning: t3_mixed: signal q is assigned by 2 always blocks that cannot be merged (/tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/t3_mixed.sv:9, /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/t3_mixed.sv:10) and at least one drives the whole signal (or a dynamically indexed element); that driver will clobber the other blocks' bits
+--- nvc -r:
+** Note: 10ms+2: T3a q=9 z=x exp q=9 z=5
+   Process :t3_mixed:_p2 at /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/out/t3_mixed.fix2/d.vhd:74
+** Note: 20ms+2: T3b q=3 z=9 exp q=3 z=9
+   Process :t3_mixed:_p2 at /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/out/t3_mixed.fix2/d.vhd:74
+** Note: 20ms+2: FINISH called
+   Procedure FINISH [] at lib/std.08/env-body.vhd:42
+   Process :t3_mixed:_p2 at /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/out/t3_mixed.fix2/d.vhd:94

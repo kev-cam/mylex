@@ -1,0 +1,16 @@
+=== /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/t10_promote.sv top=t10_promote tag=fix2
+--- vvp:
+T10a a=1001 b=0110 e=0100 f=1001 g=0101 h=0100
+T10b a=1111 b=0100 e=0010 f=1111 g=0101 h=0011
+T10c a=0000 (async reset -> 0000)
+--- translate rc=0:
+--- nvc -r:
+** Note: 16ms+0: T10a a=1001 b=0110 e=0100 f=1001 g=0101 h=0100
+   Process :t10_promote:_p6 at /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/out/t10_promote.fix2/d.vhd:195
+** Note: 27ms+0: T10b a=1111 b=0100 e=0010 f=1111 g=0101 h=0011
+   Process :t10_promote:_p6 at /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/out/t10_promote.fix2/d.vhd:195
+** Note: 28ms+0: T10c a=0000 (async reset -> 0000)
+   Process :t10_promote:_p6 at /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/out/t10_promote.fix2/d.vhd:195
+** Note: 28ms+0: FINISH called
+   Procedure FINISH [] at lib/std.08/env-body.vhd:42
+   Process :t10_promote:_p6 at /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/out/t10_promote.fix2/d.vhd:227

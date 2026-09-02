@@ -1,0 +1,4 @@
+                ufuncsynth1: Passed.
+============================================================================
+Test results:
+  Total=3020, Passed=3006, Failed=9, Not Implemented=2, Expected Fail=3

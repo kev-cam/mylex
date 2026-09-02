@@ -101,8 +101,10 @@ nvc --std=2040 -a eb.vhd tb_eb.vhd -e tb_eb -r   # NVC_LIBPATH=<nvc>/build/lib
    states (L3D_0Z/L3D_1Z) that exist for exactly this: the shadow should
    weaken unowned bits so driven-beats-undriven resolution merges slices.
    Confirmed by merging the two writers into one process → PASS.
-4. Minor: `bin/fix-ivl-vhdl`'s concat-cast rule predates logic3d typing
-   and *introduces* type errors on `-psv2vhdl` output — skip it there.
+4. Not a flow bug after all: `bin/fix-ivl-vhdl` is a legacy post-processor
+   that the `iverilog-sv2ghdl` wrapper never runs on `-psv2vhdl` output;
+   applying it by hand during the probe is what introduced the cast
+   errors. Don't.
 
 Toolchain state on this machine: iverilog fork built at
 `/usr/local/src/iverilog/_install`; NVC fork complete in
@@ -110,3 +112,35 @@ Toolchain state on this machine: iverilog fork built at
 `libsv_math.so` and `libresolver.so` (built with explicit
 `PYTHON3_CFLAGS=$(python3-config --includes)` — the Makefile's deferred
 expansion misfires).
+
+## 7. tgt-vhdl fixes, review follow-up and verification (2026-09-02)
+
+All three probe findings are fixed and committed in the iverilog fork (three commits, one per bug; the same changes are exported as patches in `probes/tgt-vhdl-fixes/`). The probe recipe now reports `PASS: 5 tokens through VX_elastic_buffer with backpressure, order and data intact` from a fresh translation with **zero hand patches** (`probes/tgt-vhdl-fixes/vortex-probe/eb.vhd`).
+
+### What was fixed
+
+1. **Reserved words** (`tgt-vhdl/scope.cc:496-539`, patch 01). `is_vhdl_reserved_word()` held only the VHDL-93 list; the fork's `pipe` is tokenised unconditionally (`nvc/src/lexer.l:458`, plain `TOKEN()`), as is upstream's `reverse_range` (`lexer.l:481`). 23 words added (2000/2008/2019 keywords + PSL + `reverse_range` + `pipe`); `reg pipe` -> `pipe_sig` at declaration and every use via the existing rename path (`state.cc:106`, `expr.cc:117`). Ports named after these words are renamed too (`view` -> `view_sig`); function/task/block names still bypass the table (open).
+2. **Packed prefix index** (`netmisc.cc:409` and `:1660`, patch 02 — iverilog **core**, not tgt-vhdl). `make_prefix_var_offset()` called `normalize_variable_base(idx, msb, lsb, stride, msb > lsb)`, whose `wid/is_up` describe an indexed part select; for a dim with `msb == lsb` (`[DEPTH-1:0]` with DEPTH=1) the `-:` branch (`netmisc.cc:342-343`) subtracts `stride-1`, giving `(i-1)*2+1`. Both call sites now pass `(…, 1, true)` = element position `idx-lsb`/`lsb-idx`, matching `NetNet::sb_to_idx` (`netlist.cc:767-800`). Trees for `msb != lsb` are unchanged; vvp was equally wrong before (`data_out=xx`).
+3. **One VHDL driver per Verilog variable** (`tgt-vhdl/process.cc`, `state.hh:50`, `vhdl.cc:125`, `vhdl_syntax.hh:546,737,994`, patch 03). nvc `--std=2040` admits several sources on an unresolved signal (`rt/model.c:13029-13036`) but the driving value is the FIRST source's (`rt/model.c:14146-14153`), so the second always_ff's whole-signal NBA shadow never reached the signal. `merge_edge_processes_in_all_entities()` (`process.cc:1068`) composes edge-triggered always blocks of one architecture that have the same sensitivity set, edge-guarded bodies, and assign a common signal (transitively) into one process before the shadow passes run; kill switch `SV2VHDL_NO_MERGE=1`.
+
+### Review issues fixed in this pass
+
+- **Medium 1 — blocking-in-X / NBA-in-Y merge (t3_mixed):** `blocking_vs_nba()` (`process.cc:873`) refuses a member whose blocking target is another member's NBA-only target; the remainder is re-split by shared signals (`split_by_shared_sigs`, `process.cc:890`; cluster loop `process.cc:1128-1155`) and a warning names the signal and both blocks. Long-term fix (rename only reads after the first blocking write, in `shadow_blocking_targets`) remains open.
+- **Medium 2 — wait-until form outside census/merge (t8_gap):** `promote_wait_until_edge_form()` (`process.cc:753`) rewrites an edge process drawn as `wait until <edge>` (only because it reads a blocking temp — `stmt.cc:1107` wait-for-0 -> `stmt.cc:2008` form D) into the guarded sensitised form when every other wait is a `wait for 0 ns`; it then gets NBA deferral and merges (t8_gap: q=0101/1111 == vvp). Every remaining non-initial process that assigns arch signals enters the census (`extra_writer_t`, `process.cc:803`, recorded at `process.cc:1440`); a signal with >=2 writers where any drives the whole signal / a dynamic element is warned (`process.cc:1173-1200`). New: `vhdl_wait_stmt::get_expr()`, `vhdl_procedural::clear_wait_stmts()`.
+- **Time-0 edge miss (found while verifying the promotion):** the guarded form ran its body once at time 0 and sat in `wait for 0 ns` when the initial block's deposits (`clr := 1`) fired at delta 1, losing the X->1 posedge Verilog sees (case5 async reset). `nba_defer_commits` now skips the `wait for 0 ns` on the initialisation run (`nba_init_run` flag, `process.cc:402`), parking the process within delta 0. dffsynth11 and specify4 now match vvp where they printed X before.
+- **Low 3 (accel pin names for renamed ports):** not changed; noted as open (needs an `nvc_verilog_ports` map or a `_sig` fallback in `model.c:8797/6584`).
+
+### Verification
+
+- Probe: PASS, zero hand patches (translate/analyse/elaborate/run rc 0), one merge (`VX_pipe_register.sv:51+:63`).
+- Repros (`probes/tgt-vhdl-fixes/repros/`): BUG1 pipe_repro/words_repro/control analyse+elaborate; BUG2 repro PASS (nvc) and `data_out=01` (vvp), cases/structcase/nzlsb/partsel PASSED under both; BUG3 nba_slice PASS (9 MISMATCH with NO_MERGE), merge_cases PASS; reviewer's t1-t10: t3 not merged + 2 warnings, t8 promoted+merged == vvp, t10 (6 promotion shapes) == vvp, others byte-identical output.
+- Legacy `ivtest/vhdl_nvc_reg.pl`: 285/294, identical non-pass set to baseline (twice).
+- vvp core `vvp_reg.pl`: 3006/3020 with patch 02; before/after subset with netmisc.cc reverted shows the 9 failures are pre-existing (`CE (no error reported)`, fork commit 8c6158c) and cases.sv FAILED(6) -> PASSED.
+- 197-file sv2vhdl sweep: 4 merges, 0 exit diffs, 3 genuine new multi-writer warnings; 149 changed outputs simulated old vs new: 131 identical, 15 line-number-only in pre-existing nvc errors, edge.v same loop, dffsynth11/specify4 now correct.
+
+### Still open
+
+- Blocking-vs-NBA on one signal across blocks is refused+warned, not merged (correct fix: program-order read renaming in `shadow_blocking_targets`).
+- Blocks sharing a signal with different sensitivity sets remain two drivers (warned).
+- Pre-existing, unrelated: `always begin #5 clk = 1; #5 clk = 0; end` gets one blocking-shadow commit at the end of the loop body (`process.cc` shadow_blocking_targets commit placement), so `clk` never goes high in VHDL (ivltests/case5.v); function/task/named-block names bypass the reserved-word table; `|PORT:` analog metadata uses the pre-rename name.
+- Not committed anywhere (per rules); the iverilog tree also carries an unrelated pre-existing `configure` diff, excluded from the patches. No ivtest case was added for the msb==lsb shape (cases.sv/structcase.sv/nzlsb.sv/partsel.sv in the export are ready to adapt).

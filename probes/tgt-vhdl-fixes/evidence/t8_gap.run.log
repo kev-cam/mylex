@@ -1,0 +1,14 @@
+=== /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/t8_gap.sv top=t8_gap tag=fix2
+--- vvp:
+T8a q=0101 exp=0101
+T8b q=1111 exp=1111
+--- translate rc=0:
+sv2vhdl: warning: t8_gap: signal r is assigned by 2 always blocks that cannot be merged (/tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/t8_gap.sv:20, /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/t8_gap.sv:21) and at least one drives the whole signal (or a dynamically indexed element); that driver will clobber the other blocks' bits
+--- nvc -r:
+** Note: 10ms+2: T8a q=0101 exp=0101
+   Process :t8_gap:_p3 at /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/out/t8_gap.fix2/d.vhd:97
+** Note: 20ms+2: T8b q=1111 exp=1111
+   Process :t8_gap:_p3 at /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/out/t8_gap.fix2/d.vhd:97
+** Note: 20ms+2: FINISH called
+   Procedure FINISH [] at lib/std.08/env-body.vhd:42
+   Process :t8_gap:_p3 at /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/fix-review/out/t8_gap.fix2/d.vhd:120

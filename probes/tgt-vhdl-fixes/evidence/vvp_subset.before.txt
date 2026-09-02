@@ -1,0 +1,20 @@
+Running compiler/VVP tests for Icarus Verilog version: 13.
+----------------------------------------------------------------------------
+         array_packed_2d: Passed.
+            array_packed: Passed.
+               br_gh130a: ==> Failed - CE (no error reported).
+               br_gh386c: ==> Failed - CE (no error reported).
+                    edge: Passed.
+enum_compatibility_fail2: ==> Failed - CE (no error reported).
+enum_compatibility_fail3: ==> Failed - CE (no error reported).
+enum_compatibility_fail4: ==> Failed - CE (no error reported).
+enum_compatibility_fail5: ==> Failed - CE (no error reported).
+enum_compatibility_fail6: ==> Failed - CE (no error reported).
+enum_compatibility_fail7: ==> Failed - CE (no error reported).
+enum_compatibility_fail8: ==> Failed - CE (no error reported).
+               pr1637208: Passed.
+             sdw_always1: Passed.
+        var_prefix_index: Passed.
+============================================================================
+Test results:
+  Total=15, Passed=6, Failed=9, Not Implemented=0, Expected Fail=0

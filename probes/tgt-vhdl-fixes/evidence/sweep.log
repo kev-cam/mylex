@@ -1,0 +1,12 @@
+WARN: ivltests/edge.v: sv2vhdl: warning: top: signal passed is assigned by 2 always blocks that cannot be merged (ivltests/edge.v:85, ivltests/edge.v:99) and at least one drives the whole signal (or a dynamically indexed element); that driver will clobber the other blocks' bits
+DIFF (1 merges): ivltests/edge.v
+DIFF (0 merges): ivltests/pr1603313.v
+DIFF (1 merges): ivltests/pr1637208.v
+DIFF (0 merges): ivltests/pr434.v
+CRASH/TIMEOUT(134): ivltests/pr772.v
+WARN: ivltests/sdw_always1.v: sv2vhdl: warning: main: signal working is assigned by 2 always blocks that cannot be merged (ivltests/sdw_always1.v:72, ivltests/sdw_always1.v:45) and at least one drives the whole signal (or a dynamically indexed element); that driver will clobber the other blocks' bits
+DIFF (1 merges): ivltests/sdw_always1.v
+WARN: ivltests/sdw_always2.v: sv2vhdl: warning: main: signal test_var is assigned by 3 always blocks that cannot be merged (ivltests/sdw_always2.v:65, ivltests/sdw_always2.v:62, ivltests/sdw_always2.v:68) and at least one drives the whole signal (or a dynamically indexed element); that driver will clobber the other blocks' bits
+DIFF (1 merges): ivltests/sdw_always2.v
+SUMMARY files=197 differing=6 merges=4 crash=1 exitdiff=0 warnings=3
+SWEEP DONE
