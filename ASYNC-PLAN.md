@@ -261,11 +261,16 @@ hazard-freedom), then Yosys and ABC will do the same to an NCL netlist.
 The mapper must mark NCL cells don't-touch and never let a generic optimizer
 see inside them. See §10.
 
-An in-house alternative path exists: `sv2ghdl` (SV → VHDL for NVC/GHDL,
-"federated simulation") feeds the NVC fork, whose direct-RTLIL backend then
-reaches Yosys — SV → VHDL → NVC → RTLIL. That route keeps the whole
+An in-house alternative path exists, and it is more complete than first
+noted: the `iverilog` fork's actively developed `tgt-vhdl` backend parses
+(System)Verilog and emits VHDL against the `logic3dw`/`sv2vhdl` support
+packages; `sv2ghdl` orchestrates the translation; the NVC fork simulates
+the result (`lib/sv2vhdl` is that runtime — building it needs
+`python3-dev`), and its direct-RTLIL backend reaches Yosys:
+**SV → iverilog `tgt-vhdl` → sv2ghdl → NVC → RTLIL**. That keeps the whole
 frontend in tools we own and simulate with; which path the mapper trusts
-(sv2v → Yosys vs sv2ghdl → NVC → RTLIL) is an open decision for P3.
+(sv2v → Yosys vs iverilog/sv2ghdl → NVC → RTLIL) is an open decision for
+P3.
 
 ### C++ (planned)
 
@@ -285,8 +290,9 @@ implementation.
 ### The surrounding toolchain
 
 The federation this plan plugs into (all kev-cam repos, restored locally):
-`smak` (make replacement orchestrating the fleet), `sv2ghdl` (SV→VHDL
-frontend), the `nvc` fork (digital sim, `lib/ncl`, RTLIL backend, Xyce
+`smak` (make replacement orchestrating the fleet), the `iverilog` fork
+(`tgt-vhdl` — the Verilog parser of the translation chain), `sv2ghdl`
+(SV→VHDL orchestration), the `nvc` fork (digital sim, `lib/ncl`, RTLIL backend, Xyce
 cosim), the `xyce` fork (analog, auto ADC/DAC bridge insertion at
 mixed-signal boundaries), `stat-sim` (variability AMS models, SPEF from
 layout, MTBF), `ldx` (runtime linker + many-core fabric), `arv` (async
