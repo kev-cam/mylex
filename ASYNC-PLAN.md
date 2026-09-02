@@ -437,9 +437,16 @@ Recorded because they change the shape of early work, not merely its order.
    SPICE cells for th12/22/23/33/34w2 on IHP SG13G2 130nm with a Xyce
    characterization pipeline and Verilog-A extraction (`asic/`), an NCL
    SHA-256d miner (70,578 LE, retained bitstream), and ARV harnesses. The
-   ARV core sources and the patched NVC carrying the ncl library live
-   outside ldx (`/usr/local/src/arv`, `/usr/local/src/nvc`) and are
-   currently missing. No Liberty, LEF, or layout exists anywhere; no
+   ARV core sources and the patched NVC live outside ldx and are restored
+   as of 2026-09-01: NVC at `/usr/local/src/nvc` (kev-cam fork — `lib/ncl`
+   built in, a Xyce co-simulation branch, a direct-RTLIL backend giving a
+   native VHDL→Yosys path), and the core at
+   `/usr/local/src/risc-v-cpu-asynchronous` (`arv` symlink pending), where
+   ARV has advanced past the ldx snapshot: 2-stage forwarding pipeline,
+   Fmax 17→45 MHz, plus sync↔async transceivers and handshake components
+   in `infrastructure/`. Caution: three divergent copies of the ncl
+   package exist (arv 290 / ldx 436 / nvc 451 lines) — single-sourcing on
+   NVC's `lib/ncl` is a P0-level cleanup. No Liberty, LEF, or layout exists anywhere; no
    reset-pin cell variants.
 2. **Cause of the FPGA failure.** If routing delay violated isochronic forks,
    the ASIC path is unaffected. If synthesis optimized away hazard-freedom
