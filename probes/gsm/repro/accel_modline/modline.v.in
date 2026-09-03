@@ -1,0 +1,55 @@
+// Repro for accel_verilog_module (nvc/src/rt/model.c): the `module <name>` header is
+// located by LINE NUMBER (nvc_verilog_src "file:line"), and the scanner counted
+// fgets() chunks of 4096 bytes as lines.  Four physical lines longer than that
+// (sv2v emits multi-KB packed localparam lines) shift the 4-line window by four
+// lines onto the PREVIOUS module's header, so the entity `ptop` was taken for
+// Verilog module `decoy` -- a different module synthesized against ptop's ports.
+// (`module automatic ...`, a legal SV lifetime that yosys's read_verilog
+// rejects, is covered by lifetime.v for the scanner only.)  run.sh expands
+// each //LONG line to ~5000 characters.
+//LONG
+//LONG
+//LONG
+//LONG
+module VX_preg #(
+    parameter W = 8,
+    parameter INIT = 0
+) (
+    input  wire         clk,
+    input  wire         reset,
+    input  wire         en,
+    input  wire [W-1:0] d,
+    output reg  [W-1:0] q
+);
+    always @(posedge clk)
+        if (reset)   q <= INIT;
+        else if (en) q <= d;
+endmodule
+module decoy (input wire clk, output reg t);
+    always @(posedge clk) t <= ~t;
+endmodule
+module PTop #(
+    parameter N = 2
+) (
+    input  wire        clk,
+    input  wire        reset,
+    input  wire        en,
+    input  wire [11:0] d,
+    output wire [11:0] q,
+    output wire        v,
+    output wire [3:0]  c
+);
+    wire [7:0] lo;
+    wire [3:0] hi;
+    VX_preg #(.W(8), .INIT(0)) u_lo (.clk(clk), .reset(reset), .en(en), .d(d[7:0]),  .q(lo));
+    VX_preg #(.W(4), .INIT(1)) u_hi (.clk(clk), .reset(reset), .en(en), .d(d[11:8]), .q(hi));
+    assign q = {hi, lo};
+    wire [11:0] r;
+    wire        valid;
+    wire [3:0]  cause;
+    wire [6:0]  rst;
+    VX_preg #(.W(12), .INIT(0)) u_r (.clk(clk), .reset(reset), .en(en), .d(d), .q(r));
+    assign {valid, cause, rst} = r;
+    assign v = valid;
+    assign c = cause;
+endmodule

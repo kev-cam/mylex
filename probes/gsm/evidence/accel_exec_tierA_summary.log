@@ -1,0 +1,26 @@
+== nvc: nvc 1.19-devel (1.18.0.r548.g54aa09179) (Using LLVM 14.0.0); libgsm.so 2026-09-03 15:15:14
+== plain (NVC_ACCEL unset)
+** Note: 1315ns+2: accel-jit: NVC_FUSED_BLOCK â fused 14/14 member(s), two-entry 0 posedge-only + 14 every-event
+** Note: 2101ns+0: PASS: 210 cycles replayed and compared from cycle 0 (outputs bit-exact, x = don't-care); DUT commits alu/lsu/sfu=39/27/68, lsu req/rsp=27/20, branches=13, csr_wr=2, trap_csr_wr=5, w
+   wall 2.50s
+== --accel (text path, cold cache)
+** Note: accel-jit: params CORE_ID=0 VX_gpu_pkg_ALU_TYPE_BITS=2 VX_gpu_pkg_BAR_ADDR_BITS=4 VX_gpu_pkg_BAR_ADDR_W=4 VX_gpu_pkg_BAR_SIZE_W=5 VX_gpu_pkg_BYTESEL_BITS=4 VX_gpu_pkg_CTA_TID_LANE_BITS=6 VX_g
+** Note: accel-jit: synth 'exec_top' (top module 'exec_top') from 1 source(s)
+** Note: accel-jit: synth 'exec_top' running as in-process fork (pid 343775)
+  keep CORE_ID = 0 (default of exec_top)
+-- Running command `opt -keepdc' --
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/final/exec_tierA/accel_cache_final/aj_exec_top_f30dde3381c35b31_g343775.c: 1092 comb cells, 66 registers
+** Note: accel-jit: ACTIVE â 'exec_top' subtree rerouted to native model (accel installed)
+** Note: 2101ns+0: PASS: 210 cycles replayed and compared from cycle 0 (outputs bit-exact, x = don't-care); DUT commits alu/lsu/sfu=39/27/68, lsu req/rsp=27/20, branches=13, csr_wr=2, trap_csr_wr=5, w
+   wall 82.85s
+== accel_cache_final
+   62381 aj_exec_top_f30dde3381c35b31_bridge.c
+   5165007 aj_exec_top_f30dde3381c35b31.c
+   39248 aj_exec_top_f30dde3381c35b31_nvc.c
+   2723344 aj_exec_top_f9c612454394ab29.so
+== --accel (warm cache)
+** Note: accel-jit: reusing cached synth for 'exec_top' (logic unchanged)
+** Note: accel-jit: reusing cached .so for 'exec_top' (logic unchanged)
+** Note: accel-jit: ACTIVE â 'exec_top' subtree rerouted to native model (accel installed)
+** Note: 2101ns+0: PASS: 210 cycles replayed and compared from cycle 0 (outputs bit-exact, x = don't-care); DUT commits alu/lsu/sfu=39/27/68, lsu req/rsp=27/20, branches=13, csr_wr=2, trap_csr_wr=5, w
+   wall 1.30s

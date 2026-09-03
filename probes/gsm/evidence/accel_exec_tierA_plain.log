@@ -1,0 +1,4 @@
+** Note: 1315ns+2: accel-jit: NVC_FUSED_BLOCK â fused 14/14 member(s), two-entry 0 posedge-only + 14 every-event
+** Note: 2101ns+0: PASS: 210 cycles replayed and compared from cycle 0 (outputs bit-exact, x = don't-care); DUT commits alu/lsu/sfu=39/27/68, lsu req/rsp=27/20, branches=13, csr_wr=2, trap_csr_wr=5, warp_ctl=17 -- all outputs identical to the vvp oracle every cycle
+   Process :tb_exec_replay:replay at tb_exec_replay.vhd:270
+   wall 2.50s

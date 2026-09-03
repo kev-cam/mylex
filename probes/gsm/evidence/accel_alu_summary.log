@@ -1,0 +1,25 @@
+== nvc: nvc 1.19-devel (1.18.0.r548.g54aa09179) (Using LLVM 14.0.0); libgsm.so 2026-09-03 15:15:14
+== plain (NVC_ACCEL unset)
+** Note: 421ns+0: PASS: 42 cycles replayed and compared from cycle 0, 27 results and 7 branch resolutions identical to the vvp oracle
+   wall 0.37s
+== --accel (text path, cold cache)
+** Note: accel-jit: params NUM_LANES=2 VX_gpu_pkg_ALU_TYPE_BITS=2 VX_gpu_pkg_BYTESEL_BITS=4 VX_gpu_pkg_INST_ARGS_BITS=27 VX_gpu_pkg_INST_FMT_BITS=2 VX_gpu_pkg_INST_FRM_BITS=3 VX_gpu_pkg_INST_OP_BITS=4
+** Note: accel-jit: synth 'alu_top' (top module 'alu_top') from 1 source(s)
+** Note: accel-jit: synth 'alu_top' running as in-process fork (pid 343328)
+  keep NUM_LANES = 2 (default of alu_top)
+-- Running command `opt -keepdc' --
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/final/alu/accel_cache_final/aj_alu_top_5d80ba5e6c791951_g343328.c: 189 comb cells, 2 registers
+** Note: accel-jit: ACTIVE â 'alu_top' subtree rerouted to native model (accel installed)
+** Note: 421ns+0: PASS: 42 cycles replayed and compared from cycle 0, 27 results and 7 branch resolutions identical to the vvp oracle
+   wall 3.56s
+== accel_cache_final
+   11204 aj_alu_top_5d80ba5e6c791951_bridge.c
+   561549 aj_alu_top_5d80ba5e6c791951.c
+   1851 aj_alu_top_5d80ba5e6c791951_nvc.c
+   310648 aj_alu_top_7cac45576f4e6e89.so
+== --accel (warm cache)
+** Note: accel-jit: reusing cached synth for 'alu_top' (logic unchanged)
+** Note: accel-jit: reusing cached .so for 'alu_top' (logic unchanged)
+** Note: accel-jit: ACTIVE â 'alu_top' subtree rerouted to native model (accel installed)
+** Note: 421ns+0: PASS: 42 cycles replayed and compared from cycle 0, 27 results and 7 branch resolutions identical to the vvp oracle
+   wall 0.20s

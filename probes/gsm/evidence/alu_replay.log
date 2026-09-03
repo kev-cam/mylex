@@ -1,0 +1,5 @@
+# ALU: gen_statemachine on the fresh alu.v (README recipe), harness_alu.c, committed probes/alutest/vectors.txt
+Generated alu.c: 189 comb cells, 2 registers
+Generated alu_nvc.c (NVC-mapped version)
+gen_statemachine wall 0.55s
+PASS: 42 cycles, 27 results, 7 branches, 0 mismatches

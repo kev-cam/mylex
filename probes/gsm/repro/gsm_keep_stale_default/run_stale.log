@@ -1,0 +1,7 @@
+  chparam DATAW = 4 on dep
+  keep RESETW = 1 (default of dep)
+Generated out_after.c: 1 comb cells, 1 registers
+Generated out_after_nvc.c (NVC-mapped version)
+--- reset mux in out_after.c (correct: bit 0 only reset, bits 3:1 hold):
+113:    _auto_rtlil_cc_3402_Mux_9 = _rst ? UINT64_C(0x0) : _d;
+133:    _auto_rtlil_cc_3402_Mux_9 = _rst ? UINT64_C(0x0) : _d;

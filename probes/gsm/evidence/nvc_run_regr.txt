@@ -1,0 +1,14 @@
+# NVC test/regress via bin/run_regr (full testlist.txt, 1,265 entries), 2026-09-03
+# final binary: nvc 1.19-devel (1.18.0.r548.g54aa09179) + 03-nvc-accel-text-path.patch, build dir /usr/local/src/nvc/build
+# baseline binary: the preserved pre-fix build 1.18.0.r547.ged2e52793 (before the eval-arena fix and today's model.c changes)
+nvc_run_regr_full: ok=1147 failed=112 skipped=4
+nvc_run_regr_baseline: ok=1147 failed=112 skipped=4
+failure sets: identical (comm -3 empty) -- no test changes verdict with the fix
+# failing tests (both binaries), by family: issue x45, vhpi x16, wave x13, vlog x13, mixed x7, ivtest x5, select x3, signal x2, wide x1, wait x1, udp x1, string x1, signed x1, record x1, rand x1, driver x1, 
+#   vhpi*: 'Fatal: .../lib/vhpi_test.so: No such file or directory' (the plugin is built by make check, not by make)
+#   vlog*/mixed*/ivtest*/udp1: the fork's Verilog front-end (pre-existing); wave*/issue*/others: gold-output diffs, pre-existing
+
+== failing tests, final binary:
+driver8 issue1030 issue1035 issue1044 issue1045 issue1057 issue1060 issue1071 issue1161 issue1192 issue1213 issue1233 issue1240 issue1285 issue1294 issue1301 issue1313 issue432 issue434 issue454 issue497 issue524 issue536 issue586 issue612 issue681 issue703 issue704 issue744 issue762 issue808 issue840 issue851 issue852 issue856 issue877 issue878 issue901 issue904 issue957 issue962 issue972 issue978 issue979 issue985 issue988 ivtest15 ivtest2 ivtest20 ivtest8 ivtest9 mixed1 mixed2 mixed3 mixed4 mixed5 mixed6 mixed7 rand2 record11 select4 select5 select6 signal21 signal33 signed1 string1 udp1 vhpi1 vhpi10 vhpi11 vhpi12 vhpi13 vhpi14 vhpi15 vhpi16 vhpi2 vhpi3 vhpi4 vhpi5 vhpi6 vhpi7 vhpi8 vhpi9 vlog1 vlog13 vlog16 vlog2 vlog21 vlog26 vlog27 vlog28 vlog29 vlog3 vlog4 vlog6 vlog7 wait27 wave1 wave10 wave11 wave12 wave13 wave2 wave3 wave4 wave5 wave6 wave7 wave8 wave9 wide4 
+== failing tests, baseline binary:
+driver8 issue1030 issue1035 issue1044 issue1045 issue1057 issue1060 issue1071 issue1161 issue1192 issue1213 issue1233 issue1240 issue1285 issue1294 issue1301 issue1313 issue432 issue434 issue454 issue497 issue524 issue536 issue586 issue612 issue681 issue703 issue704 issue744 issue762 issue808 issue840 issue851 issue852 issue856 issue877 issue878 issue901 issue904 issue957 issue962 issue972 issue978 issue979 issue985 issue988 ivtest15 ivtest2 ivtest20 ivtest8 ivtest9 mixed1 mixed2 mixed3 mixed4 mixed5 mixed6 mixed7 rand2 record11 select4 select5 select6 signal21 signal33 signed1 string1 udp1 vhpi1 vhpi10 vhpi11 vhpi12 vhpi13 vhpi14 vhpi15 vhpi16 vhpi2 vhpi3 vhpi4 vhpi5 vhpi6 vhpi7 vhpi8 vhpi9 vlog1 vlog13 vlog16 vlog2 vlog21 vlog26 vlog27 vlog28 vlog29 vlog3 vlog4 vlog6 vlog7 wait27 wave1 wave10 wave11 wave12 wave13 wave2 wave3 wave4 wave5 wave6 wave7 wave8 wave9 wide4 

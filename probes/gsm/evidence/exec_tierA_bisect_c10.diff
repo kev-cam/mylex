@@ -1,0 +1,40 @@
+# sm_dump_comb (-DSM_DUMP) of every internal comb signal at cycle 10 (the AND at PC=105 in alu_int),
+# pre-fix model (<) vs current model (>), identical harness/inputs; names normalised. Its inputs agree:
+  _execute_alu_unit_g_blocks_0_alu_int_alu_in2_imm=ffff0ff00ff0
+  _execute_alu_unit_g_blocks_0_alu_int_alu_in1=1234f0f0f0f0
+  _execute_alu_unit_g_blocks_0_alu_int_alu_op=c
+# and the first wrong signal is the per-lane case writer's target msc_result (lane 1 = 0x1234 stored at
+# lane 0, lane 1 cleared); everything else below is downstream of it:
+< _auto_rtlil_cc_3402_Mux_3810=0006c0000105a5c0000000000f000f000e100e19
+> _auto_rtlil_cc_3402_Mux_3810=0006c0000105a5c0000123400f000f000e100e19
+< _execute_alu_unit_g_blocks_0_alu_int_rsp_buf_data_in=0006c0000105a5c0000000000f000f000e100e19
+> _execute_alu_unit_g_blocks_0_alu_int_rsp_buf_data_in=0006c0000105a5c0000123400f000f000e100e19
+< _execute_alu_unit_g_blocks_0_alu_int_rsp_buf_genblk1_g_eb1_pipe_buffer_g_register_g_pipe_regs_0_pipe_register_data_in=0046c0000105a5c0000000000f000f000e100e19
+> _execute_alu_unit_g_blocks_0_alu_int_rsp_buf_genblk1_g_eb1_pipe_buffer_g_register_g_pipe_regs_0_pipe_register_data_in=0046c0000105a5c0000123400f000f000e100e19
+< _execute_alu_unit_g_blocks_0_alu_int_rsp_buf_genblk1_g_eb1_pipe_buffer_g_register_data=00000cb0000041297000000004000000000000000206c0000105a5c0000000000f000f000e100e19
+> _execute_alu_unit_g_blocks_0_alu_int_rsp_buf_genblk1_g_eb1_pipe_buffer_g_register_data=00000cb0000041297000000004000000000000000206c0000105a5c0000123400f000f000e100e19
+< _execute_alu_unit_g_blocks_0_alu_int_rsp_buf_genblk1_g_eb1_pipe_buffer_data_in=0006c0000105a5c0000000000f000f000e100e19
+> _execute_alu_unit_g_blocks_0_alu_int_rsp_buf_genblk1_g_eb1_pipe_buffer_data_in=0006c0000105a5c0000123400f000f000e100e19
+< _3_execute_alu_unit_g_blocks_0_alu_int_alu_result_63_32=0
+> _3_execute_alu_unit_g_blocks_0_alu_int_alu_result_63_32=1234
+< _execute_alu_unit_g_blocks_0_alu_int_alu_result=f000f0
+> _execute_alu_unit_g_blocks_0_alu_int_alu_result=123400f000f0
+< _execute_alu_unit_g_blocks_0_alu_int_msc_result=1234
+> _execute_alu_unit_g_blocks_0_alu_int_msc_result=123400f000f0
+
+# differing internal signals per cycle (cycles 3-9: msc_result alone -- the in-flight instruction is not of the
+# msc class, so the misplaced lane is never consumed; cycle 10 is the first where it propagates):
+cycle 00: 0
+cycle 01: 0
+cycle 02: 0
+cycle 03: 1
+cycle 04: 1
+cycle 05: 1
+cycle 06: 1
+cycle 07: 1
+cycle 08: 1
+cycle 09: 1
+cycle 10: 8
+cycle 11: 27
+cycle 12: 46
+cycle 13: 29

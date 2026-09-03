@@ -1,0 +1,5 @@
+# Tier A: gen_statemachine (sv2ghdl working tree, keep-default fix) on the fresh exec.v of run.sh tierA, generated harness, committed vectors.txt
+Generated execA.c: 1092 comb cells, 66 registers
+Generated execA_nvc.c (NVC-mapped version)
+gen_statemachine wall 4.08s
+PASS: 210 cycles replayed through the gen_statemachine model, 0 mismatches

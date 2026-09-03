@@ -1,0 +1,9 @@
+# Tier B: gen_statemachine on the fresh exec.v of run.sh tierB, generated harness, committed vectors_tierB.txt
+Generated execB.c: 13977 comb cells, 168 registers
+Generated execB_nvc.c (NVC-mapped version)
+gen_statemachine wall 19.38s
+harness: 35 inputs, 46 outputs
+gcc wall 194.21s
+execB.c byte-identical to the cmp/tierB exec.c (previous binary)
+PASS: 641 cycles replayed through the gen_statemachine model, 0 mismatches
+rc=0

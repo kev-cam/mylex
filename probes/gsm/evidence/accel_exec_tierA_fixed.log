@@ -1,0 +1,143 @@
+** Note: accel-jit: params CORE_ID=0 VX_gpu_pkg_ALU_TYPE_BITS=2 VX_gpu_pkg_BAR_ADDR_BITS=4 VX_gpu_pkg_BAR_ADDR_W=4 VX_gpu_pkg_BAR_SIZE_W=5 VX_gpu_pkg_BYTESEL_BITS=4 VX_gpu_pkg_CTA_TID_LANE_BITS=6 VX_gpu_pkg_CTA_TID_WIDTH=2 VX_gpu_pkg_DV_STACK_SIZE=1 VX_gpu_pkg
+** Note: accel-jit: synth 'exec_top' (top module 'exec_top') from 1 source(s)
+** Note: accel-jit: synth 'exec_top' running as in-process fork (pid 343775)
+  keep CORE_ID = 0 (default of exec_top)
+  skip VX_gpu_pkg_ALU_TYPE_BITS=2 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_BAR_ADDR_BITS=4 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_BAR_ADDR_W=4 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_BAR_SIZE_W=5 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_BYTESEL_BITS=4 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_CTA_TID_LANE_BITS=6 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_CTA_TID_WIDTH=2 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_DV_STACK_SIZE=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_DV_STACK_SIZEW=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_EX_FPU=2 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_EX_SFU=2 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_EX_TCU=2 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_HART_ID_BITS=2 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_HART_ID_WIDTH=2 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_INST_ARGS_BITS=27 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_INST_FMT_BITS=2 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_INST_FRM_BITS=3 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_INST_LSU_BITS=4 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_INST_OP_BITS=4 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_ISSUE_WIS_BITS=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_ISSUE_WIS_W=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_LANE_LAUNCH_BITS=6 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_LSU_ADDR_WIDTH=30 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_LSU_CLIENT_TAG_WIDTH=62 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_LSU_WORD_SIZE=4 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_MEM_ATTR_WIDTH=12 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NB_BITS=3 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NB_WIDTH=3 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NCTA_BITS=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NCTA_WIDTH=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NC_BITS=0 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NC_WIDTH=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NT_BITS=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NUM_CTA_MAX=2 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NUM_EX_UNITS=3 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NUM_REGS=32 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NUM_REGS_BITS=5 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NUM_XREGS=2 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NW_BITS=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_NW_WIDTH=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_PC_BITS=30 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_PERF_CTR_BITS=44 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_PER_ISSUE_WARPS=2 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_REG_TYPES=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_RV_REGS=32 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_SIMD_COUNT=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_SIMD_IDX_BITS=0 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_SIMD_IDX_W=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_UUID_WIDTH=1 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_VX_DCR_DATA_WIDTH=32 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_XLENB=4 (not a settable parameter of exec_top)
+  skip VX_gpu_pkg_XLENB_W=2 (not a settable parameter of exec_top)
+  skip _bbase_07E29_branch_ctl_if=0 (not a settable parameter of exec_top)
+  skip _bbase_07E29_commit_if=0 (not a settable parameter of exec_top)
+  skip _bbase_07E29_dispatch_if=0 (not a settable parameter of exec_top)
+  skip _bbase_07E29_lsu_client_if=0 (not a settable parameter of exec_top)
+  skip _param_07E29_CORE_ID=0 (not a settable parameter of exec_top)
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/final/exec_tierA/accel_cache_final/aj_exec_top_f30dde3381c35b31_g343775.c: 1092 comb cells, 66 registers
+** Note: accel-jit:   port clk        in  width=1 elem=4
+** Note: accel-jit:   port reset      in  width=1 elem=4
+** Note: accel-jit:   port lsu_client_if_0_req_valid out width=1 elem=4
+** Note: accel-jit:   port lsu_client_if_0_req_data out width=221 elem=4
+** Note: accel-jit:   port lsu_client_if_0_req_ready in  width=1 elem=4
+** Note: accel-jit:   port lsu_client_if_0_rsp_valid in  width=1 elem=4
+** Note: accel-jit:   port lsu_client_if_0_rsp_data in  width=130 elem=4
+** Note: accel-jit:   port lsu_client_if_0_rsp_ready out width=1 elem=4
+** Note: accel-jit:   port dispatch_if_0_valid in  width=1 elem=4
+** Note: accel-jit:   port dispatch_if_0_data in  width=273 elem=4
+** Note: accel-jit:   port dispatch_if_0_ready out width=1 elem=4
+** Note: accel-jit:   port dispatch_if_1_valid in  width=1 elem=4
+** Note: accel-jit:   port dispatch_if_1_data in  width=273 elem=4
+** Note: accel-jit:   port dispatch_if_1_ready out width=1 elem=4
+** Note: accel-jit:   port dispatch_if_2_valid in  width=1 elem=4
+** Note: accel-jit:   port dispatch_if_2_data in  width=273 elem=4
+** Note: accel-jit:   port dispatch_if_2_ready out width=1 elem=4
+** Note: accel-jit:   port commit_if_0_valid out width=1 elem=4
+** Note: accel-jit:   port commit_if_0_data out width=114 elem=4
+** Note: accel-jit:   port commit_if_0_ready in  width=1 elem=4
+** Note: accel-jit:   port commit_if_1_valid out width=1 elem=4
+** Note: accel-jit:   port commit_if_1_data out width=114 elem=4
+** Note: accel-jit:   port commit_if_1_ready in  width=1 elem=4
+** Note: accel-jit:   port commit_if_2_valid out width=1 elem=4
+** Note: accel-jit:   port commit_if_2_data out width=114 elem=4
+** Note: accel-jit:   port commit_if_2_ready in  width=1 elem=4
+** Note: accel-jit:   port sched_csr_if_cycles in  width=44 elem=4
+** Note: accel-jit:   port sched_csr_if_instret in  width=44 elem=4
+** Note: accel-jit:   port sched_csr_if_active_warps in  width=2 elem=4
+** Note: accel-jit:   port sched_csr_if_thread_masks in  width=4 elem=4
+** Note: accel-jit:   port sched_csr_if_mscratch in  width=32 elem=4
+** Note: accel-jit:   port sched_csr_if_cta_csrs in  width=331 elem=4
+** Note: accel-jit:   port sched_csr_if_cta_lane in  width=12 elem=4
+** Note: accel-jit:   port sched_csr_if_csr_mstatus in  width=32 elem=4
+** Note: accel-jit:   port sched_csr_if_csr_mtvec in  width=32 elem=4
+** Note: accel-jit:   port sched_csr_if_csr_mepc in  width=32 elem=4
+** Note: accel-jit:   port sched_csr_if_csr_mcause in  width=32 elem=4
+** Note: accel-jit:   port sched_csr_if_csr_mtval in  width=32 elem=4
+** Note: accel-jit:   port sched_csr_if_csr_rd_wid out width=1 elem=4
+** Note: accel-jit:   port sched_csr_if_csr_rd_cta_id out width=1 elem=4
+** Note: accel-jit:   port sched_csr_if_csr_wr_valid out width=1 elem=4
+** Note: accel-jit:   port sched_csr_if_csr_wr_wid out width=1 elem=4
+** Note: accel-jit:   port sched_csr_if_csr_wr_data out width=32 elem=4
+** Note: accel-jit:   port sched_csr_if_trap_csr_wr_valid out width=1 elem=4
+** Note: accel-jit:   port sched_csr_if_trap_csr_wr_addr out width=12 elem=4
+** Note: accel-jit:   port sched_csr_if_trap_csr_wr_data out width=32 elem=4
+** Note: accel-jit:   port branch_ctl_if_0_valid out width=1 elem=4
+** Note: accel-jit:   port branch_ctl_if_0_wid out width=1 elem=4
+** Note: accel-jit:   port branch_ctl_if_0_taken out width=1 elem=4
+** Note: accel-jit:   port branch_ctl_if_0_dest out width=30 elem=4
+** Note: accel-jit:   port branch_ctl_if_0_is_trap out width=1 elem=4
+** Note: accel-jit:   port branch_ctl_if_0_is_mret out width=1 elem=4
+** Note: accel-jit:   port branch_ctl_if_0_trap_cause out width=4 elem=4
+** Note: accel-jit:   port warp_ctl_if_wspawn_valid out width=1 elem=4
+** Note: accel-jit:   port warp_ctl_if_tmc_valid out width=1 elem=4
+** Note: accel-jit:   port warp_ctl_if_split_valid out width=1 elem=4
+** Note: accel-jit:   port warp_ctl_if_sjoin_valid out width=1 elem=4
+** Note: accel-jit:   port warp_ctl_if_bar_valid out width=1 elem=4
+** Note: accel-jit:   port warp_ctl_if_wsync_valid out width=1 elem=4
+** Note: accel-jit:   port warp_ctl_if_wid out width=1 elem=4
+** Note: accel-jit:   port warp_ctl_if_wspawn out width=32 elem=4
+** Note: accel-jit:   port warp_ctl_if_tmc out width=2 elem=4
+** Note: accel-jit:   port warp_ctl_if_split out width=35 elem=4
+** Note: accel-jit:   port warp_ctl_if_sjoin out width=3 elem=4
+** Note: accel-jit:   port warp_ctl_if_bar out width=13 elem=4
+** Note: accel-jit:   port warp_ctl_if_bar_addr out width=4 elem=4
+** Note: accel-jit:   port warp_ctl_if_dvstack_wid out width=1 elem=4
+** Note: accel-jit:   port warp_ctl_if_bar_phase in  width=1 elem=4
+** Note: accel-jit:   port warp_ctl_if_warp_pending_alm_empty in  width=2 elem=4
+** Note: accel-jit:   port warp_ctl_if_lsu_sched_drained in  width=1 elem=4
+** Note: accel-jit:   port warp_ctl_if_dvstack_ptr in  width=1 elem=4
+** Note: accel-jit:   port dcr_csr_if_valid in  width=1 elem=4
+** Note: accel-jit:   port dcr_csr_if_addr in  width=12 elem=4
+** Note: accel-jit:   port dcr_csr_if_mpm_class in  width=8 elem=4
+** Note: accel-jit:   port dcr_csr_if_value out width=32 elem=4
+** Note: accel-jit:   port dcr_csr_if_ready out width=1 elem=4
+** Note: accel-jit: bridge 32 inputs, 43 outputs
+** Note: accel-jit: ACTIVE â 'exec_top' subtree rerouted to native model (accel installed)
+** Note: accel-jit: T0 audit: has_field 387 calls 0.1s, find_signal 76 calls 0.0s
+** Note: accel-jit: disconnected 1968 driver(s) of rerouted procs (0 live fastclk skipped, 0 bound-output drivers synced)
+** Note: 2101ns+0: PASS: 210 cycles replayed and compared from cycle 0 (outputs bit-exact, x = don't-care); DUT commits alu/lsu/sfu=39/27/68, lsu req/rsp=27/20, branches=13, csr_wr=2, trap_csr_wr=5, warp_ctl=17 -- all outputs identical to the vvp oracle every 

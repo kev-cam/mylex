@@ -1,0 +1,7 @@
+input     1  clk
+input     1  reset
+input     8  a
+output    1  ready
+output    8  cnt
+output    8  q
+output    8  junk

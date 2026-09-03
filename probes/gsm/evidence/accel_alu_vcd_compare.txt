@@ -1,0 +1,12 @@
+DIFF br_dest[0] [(0, 6, 2)]
+DIFF br_dest[10] [(0, 6, 2)]
+DIFF br_dest[11] [(0, 6, 2)]
+DIFF br_dest[12] [(0, 6, 2)]
+DIFF br_dest[13] [(0, 6, 2)]
+DIFF br_dest[14] [(0, 6, 2)]
+DIFF br_dest[15] [(0, 6, 2)]
+DIFF br_dest[16] [(0, 6, 2)]
+DIFF br_dest[17] [(0, 6, 2)]
+DIFF br_dest[18] [(0, 6, 2)]
+tb-level signals: 434; sampled at the 42 compare instants (11+10k ns): 402 identical, 32 differ
+(pre-first-edge t=0 initial values differ on 155 signals: plain X=6 vs accel seeded 2 -- never sampled)

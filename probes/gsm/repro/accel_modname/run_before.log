@@ -1,0 +1,65 @@
+== entities and attributes (tgt-vhdl)
+16:entity VX_preg1 is
+25:  attribute nvc_verilog_src of VX_preg1 : entity is "params.v:16";
+27:  attribute nvc_verilog_params of VX_preg1 : entity is "INIT=0 W=8";
+79:entity VX_preg is
+88:  attribute nvc_verilog_src of VX_preg : entity is "params.v:16";
+90:  attribute nvc_verilog_params of VX_preg : entity is "INIT=1 W=4";
+155:entity ptop is
+164:  attribute nvc_verilog_src of ptop : entity is "params.v:31";
+166:  attribute nvc_verilog_params of ptop : entity is "N=2 VX_gpu_pkg_ALU_TYPE_BITS=2 VX_gpu_pkg_BYTESEL_BITS=4 VX_gpu_
+params attribute length: 354
+== plain
+** Note: 241ns+0: PASS: 24 cycles, ptop outputs identical to the reference model
+== --accel (text path)
+** Note: accel-jit: params N=2 VX_gpu_pkg_ALU_TYPE_BITS=2 VX_gpu_pkg_BYTESEL_BITS=4 VX_gpu_pkg_INST_ARGS_BITS=27 VX_gpu_pkg_INST_FMT_BITS=2 VX_gpu_pkg_INST_FRM_
+** Note: accel-jit: synth 'ptop' (top module 'ptop') from 1 source(s)
+** Note: accel-jit: synth 'ptop' running as in-process fork (pid 328780)
+  chparam N = 2 on VX_gpu_pkg_NUM_RE
+-- Running command `chparam -set N 2 VX_gpu_pkg_NUM_RE' --
+  chparam VX_gpu_pkg_ALU_TYPE_BITS = 2 on VX_gpu_pkg_NUM_RE
+-- Running command `chparam -set VX_gpu_pkg_ALU_TYPE_BITS 2 VX_gpu_pkg_NUM_RE' --
+  chparam VX_gpu_pkg_BYTESEL_BITS = 4 on VX_gpu_pkg_NUM_RE
+-- Running command `chparam -set VX_gpu_pkg_BYTESEL_BITS 4 VX_gpu_pkg_NUM_RE' --
+  chparam VX_gpu_pkg_INST_ARGS_BITS = 27 on VX_gpu_pkg_NUM_RE
+-- Running command `chparam -set VX_gpu_pkg_INST_ARGS_BITS 27 VX_gpu_pkg_NUM_RE' --
+  chparam VX_gpu_pkg_INST_FMT_BITS = 2 on VX_gpu_pkg_NUM_RE
+-- Running command `chparam -set VX_gpu_pkg_INST_FMT_BITS 2 VX_gpu_pkg_NUM_RE' --
+  chparam VX_gpu_pkg_INST_FRM_BITS = 3 on VX_gpu_pkg_NUM_RE
+-- Running command `chparam -set VX_gpu_pkg_INST_FRM_BITS 3 VX_gpu_pkg_NUM_RE' --
+  chparam VX_gpu_pkg_INST_OP_BITS = 4 on VX_gpu_pkg_NUM_RE
+-- Running command `chparam -set VX_gpu_pkg_INST_OP_BITS 4 VX_gpu_pkg_NUM_RE' --
+  chparam VX_gpu_pkg_NCTA_BITS = 1 on VX_gpu_pkg_NUM_RE
+-- Running command `chparam -set VX_gpu_pkg_NCTA_BITS 1 VX_gpu_pkg_NUM_RE' --
+  chparam VX_gpu_pkg_NCTA_WIDTH = 1 on VX_gpu_pkg_NUM_RE
+-- Running command `chparam -set VX_gpu_pkg_NCTA_WIDTH 1 VX_gpu_pkg_NUM_RE' --
+  chparam VX_gpu_pkg_NUM_CTA_MAX = 2 on VX_gpu_pkg_NUM_RE
+-- Running command `chparam -set VX_gpu_pkg_NUM_CTA_MAX 2 VX_gpu_pkg_NUM_RE' --
+ERROR: Module `VX_gpu_pkg_NUM_RE' not found!
+ERROR: Module `VX_gpu_pkg_NUM_RE' not found!
+gen_statemachine: yosys pass error — declining
+** Note: accel-jit: synth failed for 'ptop' â leaving in nvc
+** Note: accel-jit: params INIT=1 W=4
+** Note: accel-jit: synth 'vx_preg' (top module 'vx_preg') from 1 source(s)
+** Note: accel-jit: synth 'vx_preg' running as in-process fork (pid 328781)
+  chparam INIT = 1 on vx_preg
+-- Running command `chparam -set INIT 1 vx_preg' --
+  chparam W = 4 on vx_preg
+-- Running command `chparam -set W 4 vx_preg' --
+ERROR: Module `vx_preg' not found!
+ERROR: Module `vx_preg' not found!
+gen_statemachine: yosys pass error — declining
+** Note: accel-jit: synth failed for 'vx_preg' â leaving in nvc
+** Note: accel-jit: params INIT=0 W=8
+** Note: accel-jit: synth 'vx_preg1' (top module 'vx_preg1') from 1 source(s)
+** Note: accel-jit: synth 'vx_preg1' running as in-process fork (pid 328782)
+  chparam INIT = 0 on vx_preg1
+-- Running command `chparam -set INIT 0 vx_preg1' --
+  chparam W = 8 on vx_preg1
+-- Running command `chparam -set W 8 vx_preg1' --
+ERROR: Module `vx_preg1' not found!
+ERROR: Module `vx_preg1' not found!
+gen_statemachine: yosys pass error — declining
+** Note: accel-jit: synth failed for 'vx_preg1' â leaving in nvc
+** Note: 241ns+0: PASS: 24 cycles, ptop outputs identical to the reference model
+== cache_before

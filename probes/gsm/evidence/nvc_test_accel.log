@@ -1,0 +1,21 @@
+== gen
+=== generic-width subtree accel test ===
+  gen_tb       ref=Y=190  accel=Y=190   subtree[emit=1 notxl=1 synthfail=0 install=2]  -> MATCH
+=== 0 failure(s) ===
+== agg
+=== aggregate-translation accel test ===
+  agg_tb     ref=Y=30   accel=Y=30    subtree[emit=1 notxl=1 synthfail=0 install=2]  -> MATCH
+== gred
+=== adversarial generic-dedup accel test (NVC_ACCEL_NO_VARIANT=0) ===
+  gred_tb    ref=Y=30   accel=Y=30    subtree[emit=1 notxl=1 synthfail=0 install=1]  -> MATCH
+== l3dcat
+  l3dcat_tb    ref=Y=15619583 accel=Y=15619583 subtree[notxl=1 install=2]  -> MATCH
+== l3did
+  l3did_tb     ref=Y=21760    accel=Y=21760    subtree[notxl=2 install=0]  -> DECLINED-SAFE (guard held; not accelerated)
+== l3dmv
+  l3dmv_tb    ref=Y=607493 accel=Y=607493 meta_declined=1 weak_seen=7  -> OK ('U' declined, values match)
+== l3dwrap
+  l3dwrap_tb   ref=Y=3135187  accel=Y=3135187  subtree[notxl=2 install=2]  -> MATCH
+== whl
+=== counter-controlled while-loop accel test ===
+  whl_tb     ref=Y=180  accel=Y=180   subtree[emit=1 notxl=1 synthfail=0 install=2]  -> MATCH

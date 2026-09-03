@@ -1,0 +1,26 @@
+== oracle rows (reset a | ready cnt q junk)
+1 10 1 00000110 00010000 xxxxxxxx
+1 10 1 00000111 00010000 xxxxxxxx
+0 10 1 00001000 00010000 xxxxxxxx
+0 13 0 00001001 00010000 xxxxxxxx
+0 16 1 00001010 00010011 xxxxxxxx
+0 19 0 00001011 00010110 xxxxxxxx
+0 1c 1 00001100 00011001 xxxxxxxx
+0 1f 0 00001101 00011100 xxxxxxxx
+0 22 1 00001110 00011111 xxxxxxxx
+0 25 0 00001111 00100010 xxxxxxxx
+0 28 1 00010000 00100101 xxxxxxxx
+0 2b 0 00010001 00101000 xxxxxxxx
+Generated prehist_nvc.c (NVC-mapped version)
+== harness with the pre-history posedge:
+PASS: 12 cycles replayed through the gen_statemachine model, 0 mismatches
+== harness WITHOUT it (previous generator):
+cycle 0: ready mismatch (bit 0) act=0000000000000000 exp=1
+cycle 0: cnt mismatch (bit 0) act=0000000000000005 exp=00000110
+cycle 0: q mismatch (bit 4) act=0000000000000000 exp=00010000
+cycle 1: cnt mismatch (bit 0) act=0000000000000006 exp=00000111
+cycle 2: cnt mismatch (bit 0) act=0000000000000007 exp=00001000
+cycle 3: cnt mismatch (bit 0) act=0000000000000008 exp=00001001
+cycle 4: cnt mismatch (bit 0) act=0000000000000009 exp=00001010
+cycle 5: cnt mismatch (bit 0) act=000000000000000a exp=00001011
+FAIL: 12 cycles replayed through the gen_statemachine model, 14 mismatches

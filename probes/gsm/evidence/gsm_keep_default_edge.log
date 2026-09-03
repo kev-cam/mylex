@@ -1,0 +1,16 @@
+== [final] oct_010: /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/review_gsm/tests/edge.v W=010 oct oct.c
+       chparam W = 010 on oct
+     Generated oct.c: 0 comb cells, 1 registers
+     mask constant (0xff = W kept at 8, 0x3ff = W set to 10): UINT64_C(0x0) UINT64_C(0x3ff) 
+== [final] wide_2p32: /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/review_gsm/tests/edge.v BASE=4294967296 wide wide.c
+       chparam BASE = 4294967296 on wide
+     Generated wide.c: 1 comb cells, 1 registers
+     BASE constant (0x100000000 expected): UINT64_C(0x0) UINT64_C(0x100000000) UINT64_C(0xffffffffffffffff) 
+== [final] neg_u64: /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/review_gsm/tests/edge.v K=18446744073709551615 neg neg.c
+       keep K = 18446744073709551615 (default of neg)
+     Generated neg.c: 1 comb cells, 1 registers
+     K constant: UINT64_C(0x0) UINT64_C(0xffffffff) 
+== [final] neg_m1: /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/review_gsm/tests/edge.v K=-1 neg neg_m1.c
+       keep K = -1 (default of neg)
+     Generated neg_m1.c: 1 comb cells, 1 registers
+     K constant: UINT64_C(0x0) UINT64_C(0xffffffff) 

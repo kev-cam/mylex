@@ -1,0 +1,13 @@
+== gen_statemachine hier.v  hier out_none.c
+   Generated out_none.c: 1 comb cells, 1 registers
+   Generated out_none_nvc.c (NVC-mapped version)
+   -> model written (9639 bytes)
+== gen_statemachine hier.v N=2 hier out_default.c
+     keep N = 2 (default of hier)
+   Generated out_default.c: 1 comb cells, 1 registers
+   Generated out_default_nvc.c (NVC-mapped version)
+   -> model written (9639 bytes)
+== gen_statemachine hier.v N=3 hier out_other.c
+     chparam N = 3 on hier
+   hier.v:25: ERROR: Failed to detect width for identifier \alu.hier.execute_if.data!
+   -> NO model

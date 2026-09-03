@@ -1,0 +1,54 @@
+== dep_DR: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/dep.v DATAW=4 RESETW=1 dep dep_DR.c
+       chparam DATAW = 4 on dep
+       chparam RESETW = 1 on dep
+     Generated dep_DR.c: 2 comb cells, 1 registers
+== dep_RD: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/dep.v RESETW=1 DATAW=4 dep dep_RD.c
+       keep RESETW = 1 (default of dep)
+       chparam DATAW = 4 on dep
+       chparam RESETW = 1 on dep (default drifted)
+     Generated dep_RD.c: 2 comb cells, 1 registers
+     dep_DR reset mux (correct: bit 0 only): _auto_rtlil_cc_3402_Mux_15 = _rst ? (((_q) >> 1) & UINT64_C(0x7)) : (((_d) >> 1) & UINT64_
+     dep_RD reset mux (correct: bit 0 only): _auto_rtlil_cc_3402_Mux_15 = _rst ? (((_q) >> 1) & UINT64_C(0x7)) : (((_d) >> 1) & UINT64_
+== chain_ABC: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/chain.v A=2 B=1 C=1 chain chain_ABC.c
+       chparam A = 2 on chain
+       chparam B = 1 on chain
+       keep C = 1 (default of chain)
+     Generated chain_ABC.c: 3 comb cells, 1 registers
+== chain_CBA: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/chain.v C=1 B=1 A=2 chain chain_CBA.c
+       keep C = 1 (default of chain)
+       keep B = 1 (default of chain)
+       chparam A = 2 on chain
+       chparam C = 1 on chain (default drifted)
+       chparam B = 1 on chain (default drifted)
+     Generated chain_CBA.c: 3 comb cells, 1 registers
+     chain_ABC constants (correct: 0x80 0x10 0x4; stale keep: 0x80 0x20 0x8): UINT64_C(0x0) UINT64_C(0x10) UINT64_C(0x4) UINT64_C(0x80) UINT64_C(0xff) UINT64_C(0xffffff) UINT64_C(0xffffffff) 
+     chain_CBA constants (correct: 0x80 0x10 0x4; stale keep: 0x80 0x20 0x8): UINT64_C(0x0) UINT64_C(0x10) UINT64_C(0x4) UINT64_C(0x80) UINT64_C(0xff) UINT64_C(0xffffff) UINT64_C(0xffffffff) 
+== hier_none: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/../gsm_chparam_default/hier.v hier hier_none.c
+     Generated hier_none.c: 1 comb cells, 1 registers
+== hier_N2: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/../gsm_chparam_default/hier.v N=2 hier hier_N2.c
+       keep N = 2 (default of hier)
+     Generated hier_N2.c: 1 comb cells, 1 registers
+     hier_none.c == hier_N2.c
+== dep_all_default: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/dep.v DATAW=1 RESETW=1 dep dep_def.c
+       keep DATAW = 1 (default of dep)
+       keep RESETW = 1 (default of dep)
+     Generated dep_def.c: 1 comb cells, 1 registers
+== dep_none: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/dep.v dep dep_none.c
+     Generated dep_none.c: 1 comb cells, 1 registers
+     dep_def.c == dep_none.c
+== oct_010: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/edge.v W=010 oct oct.c
+       chparam W = 010 on oct
+     Generated oct.c: 0 comb cells, 1 registers
+     mask (0xff = W kept at 8 WRONG, 0x3ff = W set to 10): UINT64_C(0x0) UINT64_C(0x3ff) 
+== wide_2p32: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/edge.v BASE=4294967296 wide wide.c
+       chparam BASE = 4294967296 on wide
+     Generated wide.c: 1 comb cells, 1 registers
+     BASE constant (0x100000000 expected): UINT64_C(0x0) UINT64_C(0x100000000) UINT64_C(0xffffffffffffffff) 
+== neg_u64: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/edge.v K=18446744073709551615 neg neg.c
+       keep K = 18446744073709551615 (default of neg)
+     Generated neg.c: 1 comb cells, 1 registers
+     K constant (0xffffffff expected): UINT64_C(0x0) UINT64_C(0xffffffff) 
+== neg_m1: /usr/local/src/mylex/probes/gsm/repro/gsm_keep_stale_default/edge.v K=-1 neg neg_m1.c
+       keep K = -1 (default of neg)
+     Generated neg_m1.c: 1 comb cells, 1 registers
+     K constant (0xffffffff expected): UINT64_C(0x0) UINT64_C(0xffffffff) 

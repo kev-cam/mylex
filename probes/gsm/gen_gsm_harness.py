@@ -23,6 +23,10 @@ c = ['#include <stdio.h>', '#include <stdint.h>', '#include <string.h>', '#inclu
 for i, (w, n) in enumerate(ins):
     if w <= 64: c.append('    in._%s = hex64(tok[%d]);' % (n, i))
     else:       c.append('    set_limbs(tok[%d], in._%s, %d);' % (i, n, limbs(w)))
+c.append('    // pre-history of the exectest oracle (tb_exec.sv.in: `reg clk = 0; always #5 clk = ~clk`, reset = 1 from t0,')
+c.append('    // row 0 driven from t0, recorder at negedge+1 ns): the first rising edge at 5 ns precedes the row-0 sample')
+c.append('    // at 11 ns, so row k is compared after k+1 posedges with inputs in0, in0, in1, ..., in(k-1). Replay that edge.')
+c.append('    if(cyc==0) sm_clock(&st,&in);')
 c.append('    memset(&out,0,sizeof out); sm_comb(&st,&in,&out);')
 c.append('    { int fb; uint32_t tmp[64];')
 for j, (w, n) in enumerate(outs):

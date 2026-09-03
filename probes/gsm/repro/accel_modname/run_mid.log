@@ -1,0 +1,27 @@
+== entities and attributes (tgt-vhdl)
+16:entity VX_preg2 is
+25:  attribute nvc_verilog_src of VX_preg2 : entity is "params.v:24";
+27:  attribute nvc_verilog_params of VX_preg2 : entity is "INIT=0 W=12";
+79:entity VX_preg1 is
+88:  attribute nvc_verilog_src of VX_preg1 : entity is "params.v:24";
+90:  attribute nvc_verilog_params of VX_preg1 : entity is "INIT=0 W=8";
+142:entity VX_preg is
+151:  attribute nvc_verilog_src of VX_preg : entity is "params.v:24";
+153:  attribute nvc_verilog_params of VX_preg : entity is "INIT=1 W=4";
+218:entity ptop is
+229:  attribute nvc_verilog_src of ptop : entity is "params.v:39";
+231:  attribute nvc_verilog_params of ptop : entity is "N=2 VX_gpu_pkg_ALU_TYPE_BITS=2 VX_gpu_pkg_BYTESEL_BITS=4 VX_gpu_
+params attribute length: 354
+== plain
+** Note: 241ns+0: PASS: 24 cycles, ptop outputs identical to the reference model
+== --accel (text path)
+** Note: accel-jit: params N=2 VX_gpu_pkg_ALU_TYPE_BITS=2 VX_gpu_pkg_BYTESEL_BITS=4 VX_gpu_pkg_INST_ARGS_BITS=27 VX_gpu_pkg_INST_FMT_BITS=2 VX_gpu_pkg_INST_FRM_
+** Note: accel-jit: synth 'ptop' (top module 'ptop') from 1 source(s)
+** Note: accel-jit: synth 'ptop' running as in-process fork (pid 330736)
+** Note: accel-jit: ACTIVE â 'ptop' subtree rerouted to native model (accel installed)
+** Failure: 241ns+0: FAIL: 20 of 24 cycles mismatch
+== cache_mid
+   aj_ptop_1592b60a4f34e526_bridge.c
+   aj_ptop_1592b60a4f34e526.c
+   aj_ptop_1592b60a4f34e526_nvc.c
+   aj_ptop_beb3fdd8ee4d9f56.so

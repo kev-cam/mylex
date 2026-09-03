@@ -1,0 +1,37 @@
+== physical lines longer than 4095 characters: 5
+== nvc_verilog_src of PTop: modline.v:31  (line 31 is: module PTop #()
+== step 1: header scan at line 31
+   old scanner: decoy
+   new scanner: PTop
+== step 1b: lifetime.v line 2 (module automatic PTop (input w...) -- scanner only, yosys read_verilog rejects TOK_AUTOMATIC
+   old scanner: automatic
+   new scanner: PTop
+== step 2: --accel (text path) on the fixed nvc
+   ** Note: accel-jit: entity 'ptop' is Verilog module 'PTop'
+   ** Note: accel-jit: synth 'ptop' (top module 'PTop') from 1 source(s)
+   ** Note: accel-jit: synth 'ptop' running as in-process fork (pid 348106)
+   ** Note: accel-jit: ACTIVE â 'ptop' subtree rerouted to native model (accel installed)
+   ** Note: 241ns+0: PASS: 24 cycles, ptop outputs identical to the reference model
+   cache: aj_ptop_6a39a8a360360eb1.so 
+== step 3: attribute pointed at the decoy header (mis-located window) -> guard
+   ** Note: accel-jit: entity 'ptop' vs Verilog module 'decoy' at the nvc_verilog_src line: not its module â ignored
+   ** Note: accel-jit: synth 'ptop' (top module 'ptop') from 1 source(s)
+   ** Note: accel-jit: synth 'ptop' running as in-process fork (pid 348217)
+   ERROR: Module `ptop' not found!
+   ERROR: Module `ptop' not found!
+   gen_statemachine: yosys pass error — declining
+   ** Note: accel-jit: synth failed for 'ptop' â leaving in nvc
+   ** Note: accel-jit: entity 'vx_preg' is Verilog module 'VX_preg'
+   ** Note: accel-jit: synth 'vx_preg' (top module 'VX_preg') from 1 source(s)
+   ** Note: accel-jit: synth 'vx_preg' running as in-process fork (pid 348218)
+   ** Note: accel-jit: ACTIVE â 'vx_preg' subtree rerouted to native model (accel installed)
+   ** Note: accel-jit: entity 'vx_preg1' is Verilog module 'VX_preg'
+   ** Note: accel-jit: synth 'vx_preg1' (top module 'VX_preg') from 1 source(s)
+   ** Note: accel-jit: synth 'vx_preg1' running as in-process fork (pid 348266)
+   ** Note: accel-jit: ACTIVE â 'vx_preg1' subtree rerouted to native model (accel installed)
+   ** Note: accel-jit: entity 'vx_preg2' is Verilog module 'VX_preg'
+   ** Note: accel-jit: synth 'vx_preg2' (top module 'VX_preg') from 1 source(s)
+   ** Note: accel-jit: synth 'vx_preg2' running as in-process fork (pid 348317)
+   ** Note: accel-jit: ACTIVE â 'vx_preg2' subtree rerouted to native model (accel installed)
+   ** Note: 241ns+0: PASS: 24 cycles, ptop outputs identical to the reference model
+   cache: aj_vx_preg1_7ed26a0e031731cf.so aj_vx_preg2_48c22c81cdc25af0.so aj_vx_preg_2865b5537e6790f8.so 

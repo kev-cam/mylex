@@ -1,6 +1,10 @@
 // Replay mylex probes/alutest/vectors.txt through the gen_statemachine model of alu_top.
 // Line k: inputs applied at negedge k; recorded outputs reflect the preceding posedge
 // plus the new inputs (comb) -> sm_comb(state, in_k) must equal outputs_k; then sm_clock.
+// Pre-history as in tb_alu.sv (`reg clk = 0; always #5 clk = ~clk`, reset = 1 from t0, row 0
+// driven from t0, recorder at negedge+1 ns): the first rising edge at 5 ns precedes the row-0
+// sample at 11 ns, so row k follows k+1 posedges (inputs in0, in0, in1, ..). Replay that edge
+// before the row-0 compare; all rows are compared (x nibble = don't care).
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -27,8 +31,9 @@ int main(int argc,char**argv){
     in._reset = (cyc<2)?1:0;           // oracle: reset high for lines 0-1
     in._ex_valid = hexval(exv[0])>0?1:0; in._rs_ready = hexval(rsr[0])>0?1:0;
     parse_hex(exd,in._ex_data,9,NULL);
+    if(cyc==0) sm_clock(&st,&in);         // the oracle's first posedge (5 ns) precedes its row-0 sample (11 ns)
     memset(&out,0,sizeof out); sm_comb(&st,&in,&out);
-    if(cyc>=4){
+    {
       int ok=1;
       ok &= cmp_nib(out._ex_ready,e_exr) && cmp_nib(out._rs_valid,e_rsv) && cmp_nib(out._br_valid,e_brv);
       if(hexval(e_rsv[0])==1){ fires++; ok &= cmp_limbs(out._rs_data,4,e_rsd); }
