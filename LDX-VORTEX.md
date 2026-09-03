@@ -144,3 +144,44 @@ All three probe findings are fixed and committed in the iverilog fork (three com
 - Blocks sharing a signal with different sensitivity sets remain two drivers (warned).
 - Pre-existing, unrelated: `always begin #5 clk = 1; #5 clk = 0; end` gets one blocking-shadow commit at the end of the loop body (`process.cc` shadow_blocking_targets commit placement), so `clk` never goes high in VHDL (ivltests/case5.v); function/task/named-block names bypass the reserved-word table; `|PORT:` analog metadata uses the pre-rename name.
 - Not committed anywhere (per rules); the iverilog tree also carries an unrelated pre-existing `configure` diff, excluded from the patches. No ivtest case was added for the msb==lsb shape (cases.sv/structcase.sv/nzlsb.sv/partsel.sv in the export are ready to adapt).
+
+## 8. VX_alu_int through the chain — cycle-accurate vs Icarus (2026-09-03)
+
+`VX_alu_int` is the P4 target and the first module with real SystemVerilog:
+interface ports (`VX_execute_if`, `VX_result_if`, `VX_branch_ctl_if`),
+`import VX_gpu_pkg::*`, macro-declared packed structs, a string parameter.
+
+**Finding: Icarus cannot parse SV interface ports at all** (`bus_if.slave x`
+is a syntax error even for `-tnull`), and sv2ghdl's normalizer has no
+interface rules. The working chain is therefore
+**sv2v → iverilog `tgt-vhdl` → NVC** — sv2v is what Vortex's own Yosys flow
+uses for the same reason. sv2v inlines an interface-port module into its
+instantiator as a named generate block, so a flat-port wrapper is the top.
+
+**Result: PASS — 42 cycles replayed, 27 results and 7 branch resolutions
+identical to the vvp oracle.** The differential test records every cycle's
+inputs and outputs from Icarus/vvp on the flattened Verilog and replays
+them under NVC, comparing all outputs every cycle: ADD/ADDI/SUB/SLT/SLTU/
+AND/OR/XOR/SLL/SRL/SRA/LUI/AUIPC and BEQ (taken/not), BNE, BLT, BGE, BLTU,
+JAL on two lanes with periodic `rs_ready` backpressure. Recipe, wrapper,
+both testbenches and the oracle vectors: `probes/alutest/`.
+
+Translator gaps found and fixed (iverilog fork commits, one each):
+
+1. String parameter in a generate scope aborted translation — the inlined
+   `alu` block carries `INSTANCE_ID = "alu0"`. Skipped in the suffix.
+2. Identifier explosion: every numeric parameter of every generate scope
+   was folded into every identifier; with the inlined scope's ~40
+   localparams that made 1.5 KB names and a 2.1 MB VHDL file. Only
+   loop-iteration scopes (`name[idx]`) contribute now — 163 KB.
+3. Block-local regs (sv2v's `sv2v_tmp_cast` temporaries) leaked into `@*`
+   sensitivity lists while being declared as process variables. Stripped
+   after the body is drawn.
+
+Regression: `ivtest/vhdl_nvc_reg.pl` 285/294, failure set identical to
+baseline. The elastic-buffer probe still passes on the same build.
+
+Practical notes: sv2v v0.0.13 release binary (no Haskell toolchain
+needed); Vortex build axes (`VX_CFG_XLEN`, `FLEN`, `FPU_TYPE`) are `-D`s
+not header defines; `vvp` needs `LD_LIBRARY_PATH=<ivl>/_install/lib` and
+the ivtest scripts need `<ivl>/_install/bin` first on `PATH`.
