@@ -272,10 +272,16 @@ frontend in tools we own and simulate with; which path the mapper trusts
 (sv2v → Yosys vs iverilog/sv2ghdl → NVC → RTLIL) is an open decision for
 P3.
 
-*Evidence as of 2026-09-03 (LDX-VORTEX.md §6–§9):* the chain is proven
-through Vortex's whole execute stage — with **sv2v in front**, because
-Icarus cannot parse SV interface ports — and the translated VHDL is
-cycle-for-cycle equivalent to Icarus on the same flattened Verilog. More
+*Evidence as of 2026-09-03 (LDX-VORTEX.md §6–§10):* the chain is proven
+through Vortex's whole execute stage including the soft FPU — with **sv2v
+in front**, because Icarus cannot parse SV interface ports — and the
+translated VHDL is cycle-for-cycle equivalent to Icarus on the same
+flattened Verilog (641 cycles, 106 FPU ops IEEE-exact). The same
+differential method found and fixed 17 translator gaps, one NVC runtime
+bug (eval-arena aliasing of `new`) and one `gen_statemachine` bug, and
+the translator output is now byte-reproducible. A Yosys-derived
+single-cycle C model of the ALU agrees with both simulators
+(`probes/gsm`), which is the compiled-sync member of GPU-SIM.md §4. More
 consequential for P3: the NVC fork already links **libyosys in-process**
 and constructs `RTLIL::Design` directly from its elaborated tree
 (`vhdl2rtlil_module`, behind `NVC_ACCEL_RTLIL=1`, first installs on VeeR
