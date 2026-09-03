@@ -63,6 +63,17 @@ but not yet adversarially verified — verify the tools table before adopting.*
 - **Monte-Carlo batching is the primary GPU payoff:** the SPEF-annotated statistical tier runs 1e4–1e6 parameter/mismatch/corner instances per GPU — the proven 70–138x regime (R1, R4). Copy Brian2CUDA's per-delay queue design for per-arc delays (R3). Use VAJAX for batched-SPICE spot checks; consider upstreaming SNN-shaped features rather than building a full engine (R1). The concrete port target is **stat-sim** (`/usr/local/src/stat-sim`): its generated models are analytical/event-driven *by construction* — metastability as a mid-rail plateau of duration Exp(tau) then resolution, probability waveforms emerging from Monte-Carlo aggregation — so `ensemble.py` is the batching seam and no solver enters the loop.
 - **Vast.AI practicalities:** everything load-bearing is open-source, no license servers. Rent A100/H100 for FP64 stacks, or engineer FP32/mixed precision (consumer RTX throttles FP64 to 1/64) (R1).
 
+## 4a. Already in practice: `sv2ghdl/gpubuild`
+
+*Added 2026-09-03.* The many-instance batching this memo recommends is not
+hypothetical in the stack: `sv2ghdl/gpubuild/` compiles `gen_statemachine`
+single-cycle models into CUDA "farm" fat binaries in a pinned container (no
+CUDA install on the build host), ships only binaries to any GPU host or a
+Vast.AI session (`build_farm.sh`, `ship_run.sh`, `vast_run.sh`), and
+certifies results by checksum. That is the compiled-synchronous-model
+member of the §4 architecture; the analytical stat-sim engine and the NCL
+phase-batched tier are the two members still to build.
+
 ## 5. Analyticity of the primitive set (verified)
 
 *Added 2026-09-01, verified against github.com/neuromorphs/NIR @ f5372ae

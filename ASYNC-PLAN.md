@@ -272,6 +272,19 @@ frontend in tools we own and simulate with; which path the mapper trusts
 (sv2v → Yosys vs iverilog/sv2ghdl → NVC → RTLIL) is an open decision for
 P3.
 
+*Evidence as of 2026-09-03 (LDX-VORTEX.md §6–§9):* the chain is proven
+through Vortex's whole execute stage — with **sv2v in front**, because
+Icarus cannot parse SV interface ports — and the translated VHDL is
+cycle-for-cycle equivalent to Icarus on the same flattened Verilog. More
+consequential for P3: the NVC fork already links **libyosys in-process**
+and constructs `RTLIL::Design` directly from its elaborated tree
+(`vhdl2rtlil_module`, behind `NVC_ACCEL_RTLIL=1`, first installs on VeeR
+EH1a 2026-08-31; see `nvc/TODO-yosys-integration.md`). So the "Yosys
+frontend" and "NVC simulation" halves of this plan are already one
+process in the toolchain: the NCL mapper can be a Yosys pass invoked
+in-process on NVC's own RTLIL, and NVC can then simulate the mapped
+netlist — the equivalence loop closes without leaving the process.
+
 ### C++ (planned)
 
 An HLS-shaped path to the same IR. Deferred; the contract language must
