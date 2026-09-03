@@ -1,0 +1,60 @@
+3942c3942,3950
+<   comb_fused_0: process (LPM_d0_ivl_239, LPM_d10_ivl_239, LPM_d11_ivl_239, LPM_d12_ivl_239, LPM_d13_ivl_239, LPM_d14_ivl_239, LPM_d15_ivl_239, LPM_d16_ivl_239, LPM_d17_ivl_239, LPM_d18_ivl_239, LPM_d19_ivl_239, LPM_d1_ivl_239, LPM_d20_ivl_239, LPM_d21_ivl_239, LPM_d22_ivl_239, LPM_d23_ivl_239, LPM_d24_ivl_239, LPM_d25_ivl_239, LPM_d26_ivl_239, LPM_d27_ivl_239, LPM_d28_ivl_239, LPM_d29_ivl_239, LPM_d2_ivl_239, LPM_d30_ivl_239, LPM_d31_ivl_239, LPM_d3_ivl_239, LPM_d4_ivl_239, LPM_d5_ivl_239, LPM_d6_ivl_239, LPM_d7_ivl_239, LPM_d8_ivl_239, LPM_d9_ivl_239) is
+---
+>   comb_fused_0: process (LPM_d0_ivl_238, LPM_d10_ivl_238, LPM_d11_ivl_238, LPM_d12_ivl_238, LPM_d13_ivl_238, LPM_d14_ivl_238, LPM_d15_ivl_238, LPM_d16_ivl_238, LPM_d17_ivl_238, LPM_d18_ivl_238, LPM_d19_ivl_238, LPM_d1_ivl_238, LPM_d20_ivl_238, LPM_d21_ivl_238, LPM_d22_ivl_238, LPM_d23_ivl_238, LPM_d24_ivl_238, LPM_d25_ivl_238, LPM_d26_ivl_238, LPM_d27_ivl_238, LPM_d28_ivl_238, LPM_d29_ivl_238, LPM_d2_ivl_238, LPM_d30_ivl_238, LPM_d31_ivl_238, LPM_d3_ivl_238, LPM_d4_ivl_238, LPM_d5_ivl_238, LPM_d6_ivl_238, LPM_d7_ivl_238, LPM_d8_ivl_238, LPM_d9_ivl_238) is
+>   begin
+>     sum_int := LPM_d31_ivl_238 & LPM_d30_ivl_238 & LPM_d29_ivl_238 & LPM_d28_ivl_238 & LPM_d27_ivl_238 & LPM_d26_ivl_238 & LPM_d25_ivl_238 & LPM_d24_ivl_238 & LPM_d23_ivl_238 & LPM_d22_ivl_238 & LPM_d21_ivl_238 & LPM_d20_ivl_238 & LPM_d19_ivl_238 & LPM_d18_ivl_238 & LPM_d17_ivl_238 & LPM_d16_ivl_238 & LPM_d15_ivl_238 & LPM_d14_ivl_238 & LPM_d13_ivl_238 & LPM_d12_ivl_238 & LPM_d11_ivl_238 & LPM_d10_ivl_238 & LPM_d9_ivl_238 & LPM_d8_ivl_238 & LPM_d7_ivl_238 & LPM_d6_ivl_238 & LPM_d5_ivl_238 & LPM_d4_ivl_238 & LPM_d3_ivl_238 & LPM_d2_ivl_238 & LPM_d1_ivl_238 & LPM_d0_ivl_238;
+>     tmp_ivl_227 := logic3d_vector'(L3D_0, L3D_0);
+>     tmp_ivl_224 := tmp_ivl_227 & sum_int;
+>     sum := sv2v_cast_77CB4(tmp_ivl_224);
+>   end process;
+>   
+>   comb_fused_1: process (LPM_d0_ivl_239, LPM_d10_ivl_239, LPM_d11_ivl_239, LPM_d12_ivl_239, LPM_d13_ivl_239, LPM_d14_ivl_239, LPM_d15_ivl_239, LPM_d16_ivl_239, LPM_d17_ivl_239, LPM_d18_ivl_239, LPM_d19_ivl_239, LPM_d1_ivl_239, LPM_d20_ivl_239, LPM_d21_ivl_239, LPM_d22_ivl_239, LPM_d23_ivl_239, LPM_d24_ivl_239, LPM_d25_ivl_239, LPM_d26_ivl_239, LPM_d27_ivl_239, LPM_d28_ivl_239, LPM_d29_ivl_239, LPM_d2_ivl_239, LPM_d30_ivl_239, LPM_d31_ivl_239, LPM_d3_ivl_239, LPM_d4_ivl_239, LPM_d5_ivl_239, LPM_d6_ivl_239, LPM_d7_ivl_239, LPM_d8_ivl_239, LPM_d9_ivl_239) is
+3950,3957d3957
+<   
+<   comb_fused_1: process (LPM_d0_ivl_238, LPM_d10_ivl_238, LPM_d11_ivl_238, LPM_d12_ivl_238, LPM_d13_ivl_238, LPM_d14_ivl_238, LPM_d15_ivl_238, LPM_d16_ivl_238, LPM_d17_ivl_238, LPM_d18_ivl_238, LPM_d19_ivl_238, LPM_d1_ivl_238, LPM_d20_ivl_238, LPM_d21_ivl_238, LPM_d22_ivl_238, LPM_d23_ivl_238, LPM_d24_ivl_238, LPM_d25_ivl_238, LPM_d26_ivl_238, LPM_d27_ivl_238, LPM_d28_ivl_238, LPM_d29_ivl_238, LPM_d2_ivl_238, LPM_d30_ivl_238, LPM_d31_ivl_238, LPM_d3_ivl_238, LPM_d4_ivl_238, LPM_d5_ivl_238, LPM_d6_ivl_238, LPM_d7_ivl_238, LPM_d8_ivl_238, LPM_d9_ivl_238) is
+<   begin
+<     sum_int := LPM_d31_ivl_238 & LPM_d30_ivl_238 & LPM_d29_ivl_238 & LPM_d28_ivl_238 & LPM_d27_ivl_238 & LPM_d26_ivl_238 & LPM_d25_ivl_238 & LPM_d24_ivl_238 & LPM_d23_ivl_238 & LPM_d22_ivl_238 & LPM_d21_ivl_238 & LPM_d20_ivl_238 & LPM_d19_ivl_238 & LPM_d18_ivl_238 & LPM_d17_ivl_238 & LPM_d16_ivl_238 & LPM_d15_ivl_238 & LPM_d14_ivl_238 & LPM_d13_ivl_238 & LPM_d12_ivl_238 & LPM_d11_ivl_238 & LPM_d10_ivl_238 & LPM_d9_ivl_238 & LPM_d8_ivl_238 & LPM_d7_ivl_238 & LPM_d6_ivl_238 & LPM_d5_ivl_238 & LPM_d4_ivl_238 & LPM_d3_ivl_238 & LPM_d2_ivl_238 & LPM_d1_ivl_238 & LPM_d0_ivl_238;
+<     tmp_ivl_227 := logic3d_vector'(L3D_0, L3D_0);
+<     tmp_ivl_224 := tmp_ivl_227 & sum_int;
+<     sum := sv2v_cast_77CB4(tmp_ivl_224);
+<   end process;
+4051,4060c4051
+<   comb_fused_0: process (base, offset) is
+<   begin
+<     tmp_ivl_31 := offset(11);
+<     tmp_ivl_35 := offset(0 + 10 downto 0);
+<     tmp_ivl_33 := (others => tmp_ivl_31);
+<     tmp_ivl_36 := tmp_ivl_33 & tmp_ivl_35;
+<     offset_addr := base + tmp_ivl_36;
+<   end process;
+<   
+<   comb_fused_1: process (csa_carry, csa_sum) is
+---
+>   comb_fused_0: process (csa_carry, csa_sum) is
+4067,4073c4058
+<   comb_fused_2: process (pack) is
+<   begin
+<     tmp_ivl_0 := logic3d_vector'(L3D_0, L3D_0);
+<     is_pack := Boolean_To_Logic(pack /= tmp_ivl_0);
+<   end process;
+<   
+<   comb_fused_3: process (offset, stride) is
+---
+>   comb_fused_1: process (offset, stride) is
+4085a4071,4085
+>   
+>   comb_fused_2: process (pack) is
+>   begin
+>     tmp_ivl_0 := logic3d_vector'(L3D_0, L3D_0);
+>     is_pack := Boolean_To_Logic(pack /= tmp_ivl_0);
+>   end process;
+>   
+>   comb_fused_3: process (base, offset) is
+>   begin
+>     tmp_ivl_31 := offset(11);
+>     tmp_ivl_35 := offset(0 + 10 downto 0);
+>     tmp_ivl_33 := (others => tmp_ivl_31);
+>     tmp_ivl_36 := tmp_ivl_33 & tmp_ivl_35;
+>     offset_addr := base + tmp_ivl_36;
+>   end process;

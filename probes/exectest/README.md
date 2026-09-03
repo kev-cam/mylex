@@ -1,18 +1,25 @@
 # VX_execute through the in-house chain — cycle-accurate vs Icarus (2026-09-03)
 
-The whole Vortex execute stage (`hw/rtl/core/VX_execute.sv`: ALU+MULDIV, LSU,
-SFU; F disabled — "Tier A") simulated under NVC and proved
-**cycle-for-cycle equivalent to Icarus** on the same flattened Verilog:
+The whole Vortex execute stage (`hw/rtl/core/VX_execute.sv`) simulated under
+NVC and proved **cycle-for-cycle equivalent to Icarus** on the same flattened
+Verilog, in both configurations, with the translator's output taken **as
+generated** (no hand patches):
 
+    Tier A (ALU+MULDIV, LSU, SFU; F disabled):
     PASS: 210 cycles replayed and compared from cycle 0 (outputs bit-exact, x = don't-care);
     DUT commits alu/lsu/sfu=39/27/68, lsu req/rsp=27/20, branches=13, csr_wr=2,
     trap_csr_wr=5, warp_ctl=17 -- all outputs identical to the vvp oracle every cycle
 
-Every one of the 43 wrapper outputs is compared every cycle, from cycle 0,
-with the translator's output taken **as generated** (no hand patches).
-Tier B (F enabled with the soft FPU, `-DASIC`, NUM_EX_UNITS=4) translates,
-analyses, elaborates and runs 100 ns cleanly from the same recipe (`./run.sh
-tierB`) but has no differential test yet.
+    Tier B (+ FPU: soft FPU via -DASIC, NUM_EX_UNITS=4):
+    PASS: 641 cycles replayed and compared from cycle 0 (outputs bit-exact, x = don't-care);
+    DUT commits alu/lsu/sfu/fpu=39/27/74/106, lsu req/rsp=27/20, branches=13, csr_wr=2,
+    trap_csr_wr=5, warp_ctl=17 -- all outputs identical to the vvp oracle every cycle
+
+Every wrapper output (43 in Tier A, 46 in Tier B) is compared every cycle
+from cycle 0.  The 106 FPU results of Tier B (FADD/FSUB/FMUL/FMADD/FMSUB/
+FNMADD/FNMSUB/FDIV/FSQRT/FCVT/FMIN/FMAX/FSGNJ*/FCLASS/FMV/FEQ/FLT/FLE, all
+rounding modes, specials) also match an exact IEEE-754 binary32 reference
+(`decode_tierB.py`: 206/206 lane results), so the oracle itself is right.
 
 ## Chain
 
@@ -37,43 +44,56 @@ the port names disagree with the package.
     XLEN=32 python3 ci/gen_config.py --config VX_config.toml --output $VXINC/VX_config.vh --format verilog
     XLEN=32 python3 ci/gen_config.py --config VX_types.toml  --output $VXINC/VX_types.vh  --format verilog --resolved
 
-    ./run.sh tierA        # gen_wrapper.py -> out_tierA/exec_top.sv; sv2v -> exec.v; mk_ports.py -> ports.txt;
-                          # iverilog -tnull / vvp compile / -tvhdl -psv2vhdl=1 -> exec.vhd; nvc -a, -e, -r 100ns
-    ./run_tb.sh all       # gen_tb.py -> tb_exec.sv + tb_exec_replay.vhd; sv2v (DUT+tb); iverilog/vvp -> vectors.txt;
-                          # nvc -a exec.vhd tb_exec_replay.vhd; -e; -r  -> PASS/FAIL
+    ./run.sh tierA [outdir]          # gen_wrapper.py -> exec_top.sv; sv2v -> exec.v; mk_ports.py -> ports.txt;
+                                     # iverilog -tnull / vvp compile / -tvhdl -psv2vhdl=1 -> exec.vhd; nvc -a, -e, -r 100ns
+    ./run_tb.sh tierA all [outdir]   # gen_tb.py -> tb_exec.sv + tb_exec_replay.vhd; sv2v (DUT+tb); iverilog/vvp -> vectors.txt;
+                                     # nvc -a exec.vhd tb_exec_replay.vhd; -e; -r  -> PASS/FAIL
+    ./run.sh tierB && ./run_tb.sh tierB all      # same for Tier B (default outdir ./out_<tier>)
+
+`run_tb.sh [tierA|tierB] [oracle|replay|rerun|all] [outdir]` writes
+everything (generated benches, `tb.v`, `vectors.txt`, `work/`, logs) under
+the out directory, so a Tier B run never touches the Tier A evidence.  The
+out directory must hold the DUT built by `run.sh` for the same tier, and its
+`ports.txt` must equal the committed `ports_<tier>.txt` the benches are
+generated from (the script refuses otherwise).
 
 Environment variables (defaults = this machine): `IVL` (iverilog install with
 the fixes below), `NVC` (nvc build dir; `NVC_LIBPATH=$NVC/lib`), `SV2V`,
 `VORTEX`, `VXINC`. `defs.txt` carries the build axes (1 core, 2 warps x 2
-threads, caches/LMEM off, XLEN/FLEN=32); `run.sh` adds `-DVX_CFG_EXT_F_DISABLE`
+threads, caches/LMEM off, XLEN/FLEN=32); the scripts add `-DVX_CFG_EXT_F_DISABLE`
 (Tier A) or `-DASIC` (Tier B, `VX_CFG_FPU_TYPE` -> STD). Sources: `VX_gpu_pkg`,
 the ten interfaces, `libs/*.sv`, and the 14 core files (`VX_{execute, alu_unit,
 alu_int, alu_muldiv, lsu_unit, lsu_slice, lsu_agu, sfu_unit, csr_unit,
 csr_data, wctl_unit, lane_gather, lane_dispatch, pe_switch}`); Tier B adds the
 14 `fpu/` files.
 
-`ports_tierA.txt` (dir width name, numeric widths from sv2v's `exec.v`) is what
-both benches are generated from; `run_tb.sh` refuses to run if it differs from
-the port list of the DUT just built.
+**NVC build requirement.** The Tier B replay needs the NVC fork with
+`patches/13-nvc-jit-eval-alloc.patch` (see *Simulator fix* below); on an
+unfixed build run it with `NVC_NO_EVAL_ARENA=1` (or `NVC_JIT_THRESHOLD`
+large enough that textio never tiers up), otherwise the replay dies with
+`SEGV_MAPERR address=0x200000002` in `STD.TEXTIO.GET_CHAR` after 87 rows.
 
 ## Files
 
 | file | role |
 |---|---|
-| `gen_wrapper.py`, `exec_top.sv` | wrapper generator and the Tier A wrapper it produced (74 flat ports + clk/reset) |
-| `mk_ports.py`, `ports_tierA.txt` | resolved port list from `exec.v` (widths: dispatch 273, commit 114, lsu req 221 / rsp 130, cta_csrs 331 ...) |
-| `tb_exec.sv.in`, `gen_tb.py`, `tb_exec.sv` | vvp oracle: template, generator (port map + recorder + replay bench), generated bench |
-| `tb_exec_replay.vhd` | generated NVC replay/compare bench |
-| `vectors.txt` | this run's oracle output: 210 lines, 32 hex inputs then 43 binary outputs per line |
-| `coverage.py`, `decode_commits.py` | tallies / event decode from `vectors.txt` |
+| `gen_wrapper.py`, `exec_top.sv` | wrapper generator and the Tier A wrapper it produced (74 flat ports + clk/reset; Tier B: 81) |
+| `mk_ports.py`, `ports_tierA.txt`, `ports_tierB.txt` | resolved port lists from sv2v's `exec.v` (Tier A widths: dispatch 273, commit 114, lsu req 221 / rsp 130, cta_csrs 331; Tier B: dispatch 274, commit 115, lsu req 222 -- NUM_REGS_BITS is 6 with F) |
+| `tb_exec.sv.in`, `gen_tb.py` | vvp oracle template (both tiers; the FPU stream is under `` `ifndef VX_CFG_EXT_F_DISABLE ``) and the generator (port map + recorder + replay bench) |
+| `tb_exec.sv`, `tb_exec_replay.vhd` | generated Tier A benches; `tb_exec_tierB.sv`, `tb_exec_replay_tierB.vhd` the Tier B ones |
+| `vectors.txt` | Tier A oracle output: 210 lines, 32 hex inputs then 43 binary outputs per line |
+| `vectors_tierB.txt` | Tier B oracle output: 641 lines, 35 hex inputs then 46 binary outputs per line |
+| `coverage.py`, `decode_commits.py` | tallies / event decode from a vector file (`--tier tierB` for the Tier B layout) |
+| `decode_tierB.py` | Tier B decoder: every dispatch/commit on all four ports, FPU commits matched to their dispatch by PC, op/frm/special-operand classes, latencies, x bits, and every FPU lane result checked against an exact IEEE-754 binary32 reference |
 | `run.sh`, `run_tb.sh` | the recipe |
-| `evidence_*.log` | logs of the run that produced `vectors.txt` and the PASS |
-| `repros/` | one minimal Verilog repro per translator gap (`run_repro.sh x.v`, or `x.v` + `tb_x.vhd` self-check) |
-| `patches/` | one patch per translator fix (series, apply in order) and `all-fixes-combined.patch` |
+| `evidence_*.log`, `evidence_*_tierB.log` | logs of the runs that produced `vectors.txt` / `vectors_tierB.txt` and the two PASS lines |
+| `evidence_fusedorder_tierB.diff` | head of the diff between two translations of the same Tier B `exec.v` by the unfixed translator (gap 12) |
+| `repros/` | one minimal repro per translator gap (`run_repro.sh x.v`, or `x.v` + `tb_x.vhd` self-check; `run_fusedorder.sh` for gap 12) and the NVC repros (`arena_new.vhd`, `arena_line.vhd`, `run_arena_*.sh`) |
+| `patches/` | one patch per translator fix (series, apply in order; 01-11 are committed in the fork as `c157cf9`, 12 applies on top) and `13-nvc-jit-eval-alloc.patch` for the NVC fork |
 
 ## Differential test
 
-* **Stimulus** (`tb_exec.sv.in`): three independent, deterministic dispatch
+* **Stimulus** (`tb_exec.sv.in`): independent, deterministic dispatch
   streams run concurrently (ALU: ADD/ADDI/SUB/SLT(U)/AND/ORI/XOR/SLL/SRL/SRAI/
   LUI/AUIPC/CZERO.*, MUL/MULH(S)(U), DIV/DIVU/REM/REMU incl. /0 and INT_MIN/-1,
   BEQ..BGEU/JAL/JALR/ECALL/EBREAK/MRET; LSU: LB/LBU/LH/LHU/LW/SB/SH/SW at all
@@ -85,6 +105,27 @@ the port list of the DUT just built.
   WSYNC drain gates (`lsu_sched_drained`, `warp_pending_alm_empty`) exercised.
   Every input changes only at the falling edge; the recorder samples 1 ns
   after each falling edge.
+* **Tier B adds the FPU stream** on `dispatch_if[3]` (EX_FPU), 106
+  instructions on two lanes with different operands, expected results in the
+  template's comments: FADD 13 / FSUB 4 / FMUL 10 / FMADD 7 / FMSUB 2 /
+  FNMADD 2 / FNMSUB 1 (ties-to-even both ways, exact cancellations to +-0
+  under RNE and RDN, overflow to inf or MAXNRM per mode, subnormal <-> normal
+  crossings, inf-inf and 0*inf NV, sNaN/qNaN propagation, a fused
+  10*0.1f-1 that only an FMA gets right); FDIV 11 and FSQRT 9 (1/3, 2/3 under
+  RTZ/RDN, x/0 DZ, 0/0 and inf/inf NV, subnormal quotients, sqrt of negative,
+  -0, inf, subnormals, results just below a rounding tie) interleaved with
+  NCP ops so results return out of dispatch order; F2I 9 / F2U 5 / I2F 6 /
+  U2F 3 (every rounding mode on +-2.5, saturation of 3e9 / 2^31 / 2^32 / NaN /
+  inf, 2^24+1 ties); FMIN 3 / FMAX 2 / FSGNJ/N/X 4 / FCLASS 5 (all ten
+  classes) / FMV 2 / FEQ 2 / FLT 3 / FLE 3 (NaN handling incl. sNaN-only NV
+  on FEQ). Four ops use `frm = DYN`: warp 1's FRM is set to RDN by the SFU
+  stream (CSRRW imm, the FPU stream waits for that commit) so DYN resolves to
+  RDN on warp 1 (results 0xBF800001 for -(1+2^-24) and 0x4F7FFFFF for 2^32-1)
+  and RNE on warp 0. Two `commit_if[3].ready` backpressure windows (12
+  cycles each, one during the FDIV burst, one during FCVT). Once the FPU
+  stream has drained, the SFU stream reads back the accumulated fflags
+  (FFLAGS(w0) = 0x1F, FCSR(w1) = 0x5D = FRM RDN | NV DZ OF NX, FRM(w1) = 2),
+  clears warp 0's flags with CSRRC and re-reads FCSR(w0) = 0.
 * **Format**: inputs as nibble-padded `%h` (they never contain x), outputs as
   `%b` — one character per bit — so an x bit is a don't-care for that bit
   only. (vvp's `%h` prints a whole nibble as `X` when any bit is x, which had
@@ -100,9 +141,10 @@ the port list of the DUT just built.
   each failing with exactly one mismatch.
 * **Not vacuous**: every `*_valid`/`*_ready` expectation must be `0`/`1` once
   reset is released (`defined` guard, severity failure); the only x handshake
-  bits in this run are five `warp_ctl_if_*_valid` in row 0 under reset. The
+  bits are five `warp_ctl_if_*_valid` in row 0 under reset (both tiers). The
   PASS line's tallies are counted from the NVC DUT's own outputs and equal the
-  oracle's `sent`/`commits` (39/27/68).
+  oracle's `sent`/`commits` (39/27/68; Tier B 39/27/74/106, the oracle's
+  `ORACLE_DONE` line carries all four).
 * **Coverage** (`python3 coverage.py`): dispatch fires 39/27/68 (stall cycles
   136/10/65), commits 39/27/68 (backpressure 11/20/42), 18 loads / 7 stores /
   2 fences with byte-enable patterns R/W 00100010..11111111, 20 responses
@@ -111,13 +153,25 @@ the port list of the DUT just built.
   reads, BAR gated by `lsu_sched_drained` low [110..117] -> `bar_valid` at
   119..122, WSYNC gated by `warp_pending_alm_empty[1]` low [125..132] ->
   `wsync_valid` at 134/135.
+* **Tier B coverage** (`python3 coverage.py --tier tierB`, `python3
+  decode_tierB.py ports_tierB.txt vectors_tierB.txt`): dispatch fires
+  39/27/74/106 (stalls 136/10/69/495), commits 39/27/74/106 (backpressure
+  11/20/47/54); the Tier A tallies are unchanged in the same run (SFU 74 = 68 +
+  the 6 F-CSR ops; BAR/WSYNC gates two cycles later). FPU: 106/106 dispatched
+  PCs committed, 4 returned out of dispatch order, latencies FADD/FMUL/FMA
+  10-12 (16 under backpressure), FDIV 19-21, FSQRT 19-21, FCVT 7-8 (14/16
+  under backpressure), NCP 4-6; rounding modes RNE 56, RTZ 8, RDN 5, RUP 6,
+  RMM 3, DYN 4; operand classes per lane operand +0 31, -0 14, +inf 13, -inf
+  10, qNaN 17, sNaN 6, subnormal 25, normal 240; last FDIV/FSQRT commits at
+  cycles 456/457 of 641; **206/206 lane results equal the IEEE reference, 0 x
+  bits in any valid FPU commit**; f-register destinations rd = 32..63.
 
 Not covered: NUM_LANES == NUM_THREADS here so `lane_dispatch`'s packet
-iterator (PID_BITS != 0) is compiled out; WGATHER, packed loads, AMO, XLEN=64
-and the FPU are not exercised; the memory model is in-order with a fixed
-latency.
+iterator (PID_BITS != 0) is compiled out; WGATHER, packed loads, AMO, XLEN=64,
+FLEN=64 / F2F and the hard-FPU (`VX_CFG_FPU_TYPE` != STD) paths are not
+exercised; the memory model is in-order with a fixed latency.
 
-## Translator gaps fixed (iverilog fork, `tgt-vhdl`, uncommitted; `patches/`)
+## Translator gaps fixed (iverilog fork, `tgt-vhdl`; `patches/`)
 
 All in the sv2vhdl target unless noted; each has a repro in `repros/`.
 
@@ -134,38 +188,132 @@ All in the sv2vhdl target unless noted; each has a repro in `repros/`.
 | 9 | `dynsel`, `signedidx` | runtime-base bit-select in continuous logic (`s_man[dsh-1]` with dsh x) was a bare VHDL index: `Fatal: index 2147483647 outside of NATURAL range`; a signed narrow index (`x[i]`, 4-bit i = -1) read `x[15]` | `lpm.cc`: runtime base -> `l3d_bit_read`/`l3d_part_read` (x for out-of-range), base converted with `l3d_index(off, signed)` where the sign is derived from the base nexus (LPM output / signal / constant) |
 | 10 | `add1bit` | 1-bit Verilog add/sub/mul (`wire [0:0] pid = a + b`, VX_lane_dispatch) emitted `a + b` on two scalar `logic3d` — a subtype of natural, so the ENCODINGS were added (0+0 = Z) | `vhdl_syntax.cc binop emit`: +,-,*,/,mod on two scalar logic3d -> bit 0 of the package vector operator on the lifted bits; `lpm.cc`: no scalar `Resize` for a 1-bit MULT |
 | 11 | `scalarword` (line 10, `assign m[1] = 1'b1`) | constant driver on a word other than word 0 of an unpacked array dropped (`assign m[1] = 1'b1` never emitted; upstream TODO) — not sv2vhdl-specific | `scope.cc draw_constant_drivers`: draw every word's driver (`nexus_to_var_ref` already selects the word) |
+| 12 | `fusedorder` (+ `evidence_fusedorder_tierB.diff`) | translation not byte-reproducible: the fused combinational cones of an architecture (`comb_fused_N`) were emitted in the iteration order of a `std::map` keyed by member **pointer**, so their numbering and order followed the heap layout — for the Tier B `exec.v` the length of argv (absolute vs relative path) permuted them (4520 diff lines, `comb_fused_0`/`_1` of `VX_csa_tree` swapped, `tmp_ivl_N` temporaries renumbered) | `process.cc fuse_comb_cones`: components visited in order of first appearance in the topological order (`comp_order`), the map is only a lookup |
 
 Gaps 1-9 were found by the translation/elaboration step (Tier A: 1-4; Tier B:
-5-9, the last one only at run time), gap 10 by the differential test (every
-unit's commit `sid`/LSU tag `pid` was X from the first instruction), and gap
-11 by the `scalarword` repro written for the review's medium issue on gap 6.
+5-9, the last one only at run time), gap 10 by the Tier A differential test
+(every unit's commit `sid`/LSU tag `pid` was X from the first instruction),
+gap 11 by the `scalarword` repro written for the review's medium issue on gap
+6, and gap 12 by comparing two translations of the same Tier B input. **The
+Tier B differential test found no translator gap**: the soft FPU (`VX_fpu_std`,
+`VX_fma_unit_rtl`, `VX_wallace_mul`, `VX_csa_*`, `VX_fdivsqrt_unit`,
+`VX_fcvt_unit`, `VX_fncp_unit`, `VX_fp_rounding`) is bit-exact against vvp
+over all 641 cycles, so the gap-10 class (1-bit arithmetic on scalar
+`logic3d`) does not recur in the FPU arithmetic trees.
 
 Applying: `cd <iverilog> && for p in patches/[0-9]*.patch; do patch -p1 < $p; done && make -j && make install`
-(the series reproduces the reviewed working tree byte-for-byte; the combined
-patch applies on fork HEAD `0b3bedd`). The tree also carries an unrelated,
+(01-11 are the commits `9b79b73..c157cf9` of the fork and
+`all-fixes-combined.patch` is their union on `0b3bedd`; 12 is the uncommitted
+working-tree change on top of `c157cf9`). The tree also carries an unrelated,
 pre-existing `configure` regeneration diff that is deliberately not exported.
+
+`repros/run_fusedorder.sh [ivl_install]` translates `fusedorder.v` (eight
+two-member cones) with a relative path, an absolute path and a 4 KB
+environment and compares after path normalisation; it passes on the fixed
+translator. Note that it does **not** reorder on the unfixed one either — its
+allocations are monotonic, the permutation needs the allocator churn of a
+large design (the exported diff is the Tier B evidence, produced by the
+unfixed translator from the same `exec.v` with an absolute vs a relative
+path).
+
+## Simulator fix (NVC fork, `patches/13-nvc-jit-eval-alloc.patch`)
+
+The Tier B replay initially died after 87 rows with `SEGV_MAPERR
+address=0x200000002` inside `STD.TEXTIO.GET_CHAR` (100% reproducible; row 86
+passes, row 87 crashes; the trigger moved with the thread count — 1/2/4
+threads pass, 3/5 crash — with `NVC_JIT_THRESHOLD` (1, 10, 10^8 pass; the
+default 100 crashes), with `--jit`, and with gdb's `LINES`/`COLUMNS` in the
+environment; `-H` had no effect).  With `NVC_MAX_THREADS=1` the full 641-row
+replay already passed bit-exact, which localised the fault to the runtime,
+not the DUT: the same `exec.vhd` is right, only the simulator's memory is not.
+
+Root cause, found with a hardware watchpoint under gdb and by reading
+`jit-exits.c`/`jit-llvm.c`/`rt/model.c`: the fork's eval-lifetime arena
+(commit `28f14fcee` "eval-lifetime arena to eliminate runtime GC churn",
+default **on** since the gate flipped to `NVC_NO_EVAL_ARENA`) routes
+**every** `__nvc_mspace_alloc` from LLVM-compiled code into a per-thread bump
+arena that is reset at each process evaluation.  That exit is not only the
+TLAB overflow path for escaping unconstrained results (what the arena was
+designed for) but also `MACRO_GALLOC`, i.e. VHDL `new` and protected-type
+state, which must outlive the evaluation.  The interpreter's `new`
+(`interp_galloc`) goes to the collected heap, so the bug appears only once
+the allocating function tiers up to native code (threshold 100): textio's
+`readline`/`grow`/`shrink`/`consume` do exactly that in any bench that reads
+vectors, after which the `line` descriptor lives in memory that the next
+evaluation's transients overwrite — `0x200000002` is two `L3D_0` (= 2)
+elements of a `logic3d_vector` written over the line's data pointer. The
+fork's own commit message states the assumption ("no access types /
+pointer-bearing results stored across a wait"); a testbench violates it.
+
+Fix (7 files, +37/-8): `__nvc_mspace_alloc` is the collected heap again
+(persistent objects, as upstream and as the interpreter); a new exit
+`__nvc_eval_alloc` serves the TLAB overflow path (`cgen_tlab_alloc_body`'s
+slow block in `jit-llvm.c`, the `tlab stub` in `jit-x86.c`) from the arena
+when it is enabled and from the heap otherwise. The helper is declared by
+name with `__nvc_mspace_alloc`'s signature rather than as an `llvm_fn_t`
+because the helper table is full (`STATIC_ASSERT(LLVM_LAST_FN <= 64)`, the
+code cache's `helper_mask`); it is exported in `symbols.txt` and registered
+in `jit-code.c` like the other `__nvc_*` symbols. With it the 87-row and the
+full 641-row replays pass at the default thread count and threshold.
+
+Repros: `repros/arena_new.vhd` (`run_arena_new.sh`) keeps a `line` across a
+wait while another `readline` reuses the arena, 200 iterations; with
+`NVC_JIT_THRESHOLD=1` (the script's default: every function is native from
+its first call) the unfixed fork fails with `iteration 195: line corrupted at
+1 ('b' expected 'a')` and the fixed one reports `PASS: 200 lines kept across
+waits`. With the default threshold of 100 the same file happened to pass on
+the unfixed build (whether a dead line's block is reused before the live one
+is read depends on the allocation pattern), which is why the exec replay is
+the primary evidence: `./run_tb.sh tierB all` -> crash at row 87 on the
+unfixed build, `NVC_NO_EVAL_ARENA=1 ./run_tb.sh tierB replay` -> PASS.
+`repros/arena_line.vhd` (one `read` per character with a signal assignment
+in between, the bench's pattern) passes on both builds and is kept as a
+regression check only.
+
+## Determinism
+
+Three translations each of `VX_elastic_buffer` (ebtest), `alu.v` (alutest),
+Tier A `exec.v` and Tier B `exec.v` with the final translator — relative
+path, absolute path, and absolute path under a 4 KB environment variable —
+are byte-identical after normalising the source path in the comments
+(`sed -E 's#(/[^ ]*/)?exec\.v#exec.v#g'`), and identical to the files the
+fresh runs produced. Before gap 12 the same Tier B input translated with the
+absolute path (`run.sh`) and with `../out_tierB/exec.v` differed in 4520
+lines (`evidence_fusedorder_tierB.diff`).
 
 ## Review issues closed in this pass
 
-* translator (medium): `slice_element` on a 1-bit array word (gap 6, `scalarword`);
-  (low) signed LPM part-select base (gap 9, `signedidx`); dead `drives_whole`
-  and the dynamic trailing-select blind spot (gap 4); `ufunc` actual cast
-  instead of resize (gap 7); the `scope_nexus_t` pin plumbing that could never
-  trigger was dropped (the `arrayword` errors all came from the PART_VP path,
-  which still passes without it).
-* testbench (medium): replay pre-history aligned with the oracle and compare
-  from cycle 0; bit-exact `%b` outputs; (low) DUT-side tallies and the
-  defined-handshake guard. The same alignment/`rdhex` fix was applied to
-  `probes/alutest/tb_alu_replay.vhd` (PASS from cycle 0, row-0 mutant fails).
+* testbench (high): `FMT_S`/`FMT_SUB` were declared as `S`/`SS` (the oracle
+  did not compile under iverilog); `tx_fpu` was never initialised
+  (`dispatch_if_3_data`/`_ready` x in rows 0-2, tripping the replay's
+  vacuity guard at cycle 2); `run_tb.sh` was Tier A only and wrote its
+  outputs into the probe directory (now tiered, everything under the out
+  directory); (medium) `coverage.py`/`decode_commits.py` hardcoded the Tier A
+  layout (`--tier`, `REQW`-derived LSU offsets; Tier A output byte-identical),
+  `decode_tierB.py` added; the end-of-test wait and both `ORACLE_*` lines
+  cover the FPU port (`sent=39/27/74/106 commits=39/27/74/106`); (low) the
+  `FR+n` destinations wrapped past 63 (`FR+32..61` -> `FR+0..29`, rd now
+  32..63).
+* translator (high): the Tier B replay crash — an NVC runtime bug, fixed in
+  the fork (above); the translator output is unchanged.
+* the `comb_fused_N` order (open item of the previous pass): gap 12.
 
-## Verification on the final build
+## Verification on the final builds (iverilog `c157cf9` + patch 12, NVC `ed2e52793` + patch 13)
 
-* this probe: fresh `./run.sh tierA && ./run_tb.sh all` from this directory -> PASS above;
+* this probe: fresh `./run.sh tierA && ./run_tb.sh tierA all` -> PASS 210
+  cycles, `vectors.txt` **byte-identical** to the committed file; fresh
+  `./run.sh tierB && ./run_tb.sh tierB all` -> PASS 641 cycles (default NVC
+  thread count, eval arena on), `vectors_tierB.txt` = this run's oracle output;
 * `probes/alutest`: PASS, 42 cycles from cycle 0, vectors identical to the probe's;
-* `probes/ebtest` (LDX-VORTEX section 6 recipe): PASS, 5 tokens; `eb.vhd` identical to the previous build's;
-* `ivtest/vhdl_nvc_reg.pl`: 285/294, report byte-identical to the baseline (failure set always3.1.4G basicstate basicstate2 contrib8.2 dff1 function1 inout port-test2 pr142); no core (`netmisc.cc`) change, so `vvp_reg.pl` not rerun;
-* Tier B: sv2v / -tnull / vvp compile / -tvhdl / nvc -a / -e / -r 100 ns all rc 0;
-* all 12 repros pass (`entorder samefunc genlabel nestblk` analyse+elaborate; the rest self-check under nvc).
+* `probes/ebtest` (LDX-VORTEX section 6 recipe, 9 `libs/` files, `tb_eb.vhd`): PASS, 5 tokens;
+  `eb.vhd` differs from the section-7 export only in the generate-scope
+  suffixes of gap 3 (`pipe_sig_g_pipe`) and the source path;
+* `ivtest/vhdl_nvc_reg.pl`: 285/294, report byte-identical to the baseline
+  (failure set always3.1.4G basicstate basicstate2 contrib8.2 dff1 function1
+  inout port-test2 pr142); no iverilog core file changed, so `vvp_reg.pl` not rerun;
+* determinism as above; all repros pass (`entorder samefunc genlabel nestblk`
+  analyse+elaborate; the self-checking ones under nvc; `run_fusedorder.sh`;
+  `run_arena_new.sh`, `run_arena_line.sh`).
 
 ## Open items
 
@@ -183,7 +331,11 @@ pre-existing `configure` regeneration diff that is deliberately not exported.
   array is declared with Verilog bounds (`wire [7:0] M [4:7]` -> `M(1)`), and
   `draw_constant_drivers` walks `j` from `array_base` — pre-existing, not hit
   by Vortex (all its unpacked arrays are 0-based).
-* The order of fused `comb_fused_N` processes in `exec.vhd` differs between two
-  translations of the same input (equivalent VHDL, but not byte-reproducible).
-* Tier B has no differential test; `VX_lane_dispatch`'s packet iterator,
-  WGATHER, AMO, XLEN=64 are not exercised.
+* NVC eval arena: the TLAB overflow objects of a process that keeps its own
+  TLAB across a wait (`proc->tlab`, procedures that wait with large locals)
+  still go to the shared arena, which the next evaluation of any process
+  resets — the same hazard the fork had before, untouched by patch 13; the
+  interpreter's overflow path (`tlab_alloc` -> `mspace_alloc`) stays on the
+  heap, so cold code still churns the GC.
+* `VX_lane_dispatch`'s packet iterator, WGATHER, AMO, XLEN=64, FLEN=64 and
+  the hard-FPU paths are not exercised.

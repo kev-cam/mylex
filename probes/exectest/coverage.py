@@ -1,13 +1,25 @@
 #!/usr/bin/env python3
-"""Coverage tallies parsed from the oracle's vectors.txt (field order from
-ports_tierA.txt: all inputs as nibble-padded hex, then all outputs as
-binary, one character per bit -- see gen_tb.py).  A field with any x/z is None."""
-import os, sys
+"""Coverage tallies parsed from the oracle's vector file (field order from
+ports_<tier>.txt: all inputs as nibble-padded hex, then all outputs as
+binary, one character per bit -- see gen_tb.py).  A field with any x/z is None.
+
+    python3 coverage.py [--tier tierA|tierB] [vectors file]
+
+Tier A (default) reads vectors.txt through ports_tierA.txt (3 commit ports);
+Tier B reads vectors_tierB.txt through ports_tierB.txt (4 commit ports; the
+FPU op/result decode and IEEE reference check are in decode_tierB.py)."""
+import argparse, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
-PORTS = os.path.join(HERE, 'ports_tierA.txt')
+ap = argparse.ArgumentParser()
+ap.add_argument('--tier', default='tierA', choices=['tierA', 'tierB'])
+ap.add_argument('vec', nargs='?', default=None)
+a = ap.parse_args()
+PORTS = os.path.join(HERE, 'ports_%s.txt' % a.tier)
 if not os.path.exists(PORTS):
-    PORTS = os.path.join(HERE, '..', 'ports_tierA.txt')
-VEC = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, 'vectors.txt')
+    PORTS = os.path.join(HERE, '..', 'ports_%s.txt' % a.tier)
+VEC = a.vec or os.path.join(HERE, 'vectors.txt' if a.tier == 'tierA' else 'vectors_tierB.txt')
+NU = 3 if a.tier == 'tierA' else 4          # EX_ALU, EX_LSU, EX_SFU[, EX_FPU]
+UNITS = '/'.join(['alu', 'lsu', 'sfu', 'fpu'][:NU])
 
 ports = []
 for line in open(PORTS):
@@ -17,6 +29,7 @@ for line in open(PORTS):
 fields = [p for p in ports if p[0] == 'input'] + [p for p in ports if p[0] == 'output']
 idx = {n: i for i, (_, _, n) in enumerate(fields)}
 base = [16 if d == 'input' else 2 for (d, _, _) in fields]
+REQW = [w for (_, w, n) in fields if n == 'lsu_client_if_0_req_data'][0]
 
 def val(tok, b):
     if 'x' in tok.lower() or 'z' in tok.lower():
@@ -36,9 +49,12 @@ def g(r, n):
 def bits(v, lo, w):
     return (v >> lo) & ((1 << w) - 1)
 
+def slash(l):
+    return '/'.join(str(x) for x in l)
+
 n = len(rows)
-disp = [0, 0, 0]; disp_stall = [0, 0, 0]
-commit = [0, 0, 0]; commit_bp = [0, 0, 0]
+disp = [0] * NU; disp_stall = [0] * NU
+commit = [0] * NU; commit_bp = [0] * NU
 req_rd = req_wr = req_fence = req_stall = 0
 byteen_hist = {}
 mask_hist = {}
@@ -55,7 +71,7 @@ reset_release = None
 for c, r in enumerate(rows):
     if reset_release is None and g(r, 'reset') == 0:
         reset_release = c
-    for u in range(3):
+    for u in range(NU):
         v = g(r, 'dispatch_if_%d_valid' % u); rd = g(r, 'dispatch_if_%d_ready' % u)
         if v == 1 and rd == 1: disp[u] += 1
         if v == 1 and rd == 0: disp_stall[u] += 1
@@ -66,8 +82,9 @@ for c, r in enumerate(rows):
     if rv == 1 and rr == 0: req_stall += 1
     if rv == 1 and rr == 1:
         d = g(r, 'lsu_client_if_0_req_data')
-        # lsu_req_data_t: {rw[1], mask[2], byteen[2][4], addr[2][30], attr[2][12], data[2][32], tag[62]}
-        rw = bits(d, 220, 1); mask = bits(d, 218, 2); byteen = bits(d, 210, 8); tag = bits(d, 0, 62)
+        # lsu_req_data_t: {rw[1], mask[2], byteen[2][4], addr[2][30], attr[2][12], data[2][32], tag[W-159]}
+        # (tag is 62 bits in Tier A, 63 in Tier B: it carries rd)
+        rw = bits(d, REQW - 1, 1); mask = bits(d, REQW - 3, 2); byteen = bits(d, REQW - 11, 8); tag = bits(d, 0, REQW - 159)
         if tag & 1: req_fence += 1
         elif rw: req_wr += 1
         else: req_rd += 1
@@ -96,8 +113,8 @@ for c, r in enumerate(rows):
     if bits(g(r, 'warp_ctl_if_warp_pending_alm_empty'), 1, 1) == 0: alm_low.append(c)
 
 print("cycles recorded: %d (reset released at cycle index %s)" % (n, reset_release))
-print("dispatch fires alu/lsu/sfu: %d/%d/%d  (valid&!ready stall cycles: %d/%d/%d)" % (*disp, *disp_stall))
-print("commits alu/lsu/sfu: %d/%d/%d  (valid&!ready backpressure cycles: %d/%d/%d)" % (*commit, *commit_bp))
+print("dispatch fires %s: %s  (valid&!ready stall cycles: %s)" % (UNITS, slash(disp), slash(disp_stall)))
+print("commits %s: %s  (valid&!ready backpressure cycles: %s)" % (UNITS, slash(commit), slash(commit_bp)))
 print("lsu requests: %d loads, %d stores, %d fences; req valid&!ready cycles: %d" % (req_rd, req_wr, req_fence, req_stall))
 print("  lane masks: %s" % ', '.join('%s x%d' % (format(m, '02b'), k) for m, k in sorted(mask_hist.items())))
 print("  byteen (rw, lane1|lane0): %s" % ', '.join('%s:%s x%d' % ('W' if rw else 'R', format(b, '08b'), k) for (rw, b), k in sorted(byteen_hist.items())))

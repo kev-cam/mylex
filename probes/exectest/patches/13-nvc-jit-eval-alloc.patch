@@ -1,0 +1,162 @@
+diff --git a/src/jit/jit-code.c b/src/jit/jit-code.c
+index 6c058f765..a767a7a7d 100644
+--- a/src/jit/jit-code.c
++++ b/src/jit/jit-code.c
+@@ -291,6 +291,7 @@ code_cache_t *code_cache_new(void)
+    shash_put(s, "__nvc_test_event", &__nvc_test_event);
+    shash_put(s, "__nvc_last_event", &__nvc_last_event);
+    shash_put(s, "__nvc_mspace_alloc", &__nvc_mspace_alloc);
++   shash_put(s, "__nvc_eval_alloc", &__nvc_eval_alloc);
+    shash_put(s, "__nvc_putpriv", &__nvc_putpriv);
+    shash_put(s, "__nvc_do_exit", &__nvc_do_exit);
+    shash_put(s, "__nvc_pack", &__nvc_pack);
+diff --git a/src/jit/jit-exits.c b/src/jit/jit-exits.c
+index f631a6743..faad2aa0a 100644
+--- a/src/jit/jit-exits.c
++++ b/src/jit/jit-exits.c
+@@ -1365,11 +1365,8 @@ void _debug_dump(const uint8_t *ptr, int32_t len)
+    fflush(stdout);
+ }
+ 
+-DLLEXPORT
+-void *__nvc_mspace_alloc(uintptr_t size, jit_anchor_t *anchor)
++static inline uintptr_t alloc_check_size(uintptr_t size)
+ {
+-   jit_thread_local_t *thread = jit_attach_thread(anchor);
+-
+    if (unlikely(size > UINT32_MAX)) {
+       jit_msg(NULL, DIAG_FATAL, "attempting to allocate %zu byte object "
+               "which is larger than the maximum supported %u bytes",
+@@ -1377,7 +1374,38 @@ void *__nvc_mspace_alloc(uintptr_t size, jit_anchor_t *anchor)
+       __builtin_unreachable();
+    }
+    else if (size == 0)
+-      size = 1;   // Never return a NULL pointer
++      return 1;   // Never return a NULL pointer
++   else
++      return size;
++}
++
++// MACRO_GALLOC: objects that must outlive the process evaluation (`new`,
++// protected type state).  Always the collected heap, exactly as the
++// interpreter's interp_galloc: routing these to the eval arena handed out
++// storage that the next process evaluation reset and reused, so a textio
++// `line` allocated by a compiled readline was overwritten by the next
++// evaluation's transients (see __nvc_eval_alloc).
++DLLEXPORT
++void *__nvc_mspace_alloc(uintptr_t size, jit_anchor_t *anchor)
++{
++   jit_thread_local_t *thread = jit_attach_thread(anchor);
++
++   void *ptr = jit_mspace_alloc(alloc_check_size(size));
++
++   thread->anchor = NULL;
++   return ptr;
++}
++
++// MACRO_LALLOC slow path: the TLAB is exhausted, so the object has TLAB
++// (process evaluation) lifetime.  When the eval-lifetime arena is enabled
++// these escaping unconstrained results come from it instead of churning
++// the collected heap.
++DLLEXPORT
++void *__nvc_eval_alloc(uintptr_t size, jit_anchor_t *anchor)
++{
++   jit_thread_local_t *thread = jit_attach_thread(anchor);
++
++   size = alloc_check_size(size);
+ 
+    void *ptr = thread->eval_arena != NULL
+       ? eval_arena_alloc(thread->eval_arena, size)
+diff --git a/src/jit/jit-llvm.c b/src/jit/jit-llvm.c
+index e8b7d2f89..c1f9dca57 100644
+--- a/src/jit/jit-llvm.c
++++ b/src/jit/jit-llvm.c
+@@ -3301,9 +3301,19 @@ static void cgen_tlab_alloc_body(llvm_obj_t *obj)
+ 
+    LLVMPositionBuilderAtEnd(obj->builder, slow_bb);
+ 
++   // TLAB exhausted: eval-lifetime storage (the arena when enabled), never
++   // the persistent-object entry point used by MACRO_GALLOC.  Declared by
++   // name with __nvc_mspace_alloc's signature rather than as an llvm_fn_t
++   // (the helper table is full: the cache manifest's helper_mask is 64
++   // bits); the loader resolves it like every other __nvc_* symbol.
++   (void)llvm_get_fn(obj, LLVM_MSPACE_ALLOC);   // builds the shared fntype
++   LLVMTypeRef evaltype = obj->fntypes[LLVM_MSPACE_ALLOC];
++   LLVMValueRef evalfn = llvm_add_fn(obj, "__nvc_eval_alloc", evaltype);
++   llvm_add_func_attr(obj, evalfn, FUNC_ATTR_NOUNWIND, -1);
++
+    LLVMValueRef args[] = { bytes, anchor };
+-   LLVMValueRef slow_ptr = llvm_call_fn(obj, LLVM_MSPACE_ALLOC, args,
+-                                        ARRAY_LEN(args));
++   LLVMValueRef slow_ptr = LLVMBuildCall2(obj->builder, evaltype, evalfn,
++                                          args, ARRAY_LEN(args), "");
+ 
+    LLVMBuildRet(obj->builder, slow_ptr);
+ }
+diff --git a/src/jit/jit-priv.h b/src/jit/jit-priv.h
+index 69fcecf85..856a23cf8 100644
+--- a/src/jit/jit-priv.h
++++ b/src/jit/jit-priv.h
+@@ -405,7 +405,7 @@ struct _jit_thread_local {
+    jit_jmpbuf_t           abort_env;
+    volatile sig_atomic_t  jmp_buf_valid;
+    jit_anchor_t          *anchor;
+-   eval_arena_t          *eval_arena;   // non-NULL: route __nvc_mspace_alloc here
++   eval_arena_t          *eval_arena;   // non-NULL: route __nvc_eval_alloc here
+ };
+ 
+ typedef struct _code_cache code_cache_t;
+@@ -585,6 +585,7 @@ DLLEXPORT void __nvc_pack(const uint8_t *src, int32_t size, jit_scalar_t *args);
+ DLLEXPORT void __nvc_unpack(jit_scalar_t aval, jit_scalar_t bval,
+                             jit_scalar_t *args);
+ DLLEXPORT void *__nvc_mspace_alloc(uintptr_t size, jit_anchor_t *anchor);
++DLLEXPORT void *__nvc_eval_alloc(uintptr_t size, jit_anchor_t *anchor);
+ DLLEXPORT void _debug_out(intptr_t val, int32_t reg);
+ 
+ #endif  // _JIT_PRIV_H
+diff --git a/src/jit/jit-x86.c b/src/jit/jit-x86.c
+index 8bfea32e4..c503f88af 100644
+--- a/src/jit/jit-x86.c
++++ b/src/jit/jit-x86.c
+@@ -2444,7 +2444,7 @@ static void jit_x86_gen_tlab_stub(jit_x86_state_t *state)
+    MOV(CARG0_REG, __EAX, __DWORD);
+    LEA(CARG1_REG, ADDR(__EBP, ANCHOR_OFFSET));
+ 
+-   MOV(__EAX, PTR(__nvc_mspace_alloc), __QWORD);
++   MOV(__EAX, PTR(__nvc_eval_alloc), __QWORD);   // TLAB-lifetime object
+    CALL(__EAX);
+ 
+    jit_x86_pop_call_clobbered(blob);
+diff --git a/src/jit/jit.h b/src/jit/jit.h
+index a62d3b540..c6f740a7c 100644
+--- a/src/jit/jit.h
++++ b/src/jit/jit.h
+@@ -76,10 +76,12 @@ void jit_reset(jit_t *j);
+ bool jit_is_shutdown(jit_t *j);
+ 
+ // Per-thread eval-lifetime arena for the simulation runtime. When enabled,
+-// __nvc_mspace_alloc (escaping unconstrained results) is served from a
+-// growable arena that is reset each process eval instead of the collected
+-// heap — eliminating GC churn for static (RTL) designs. Enable only after
+-// initialisation, on the thread that will run process bodies.
++// __nvc_eval_alloc (the TLAB overflow path: escaping unconstrained results)
++// is served from a growable arena that is reset each process eval instead
++// of the collected heap — eliminating GC churn for static (RTL) designs.
++// __nvc_mspace_alloc (MACRO_GALLOC: `new`, protected state) stays on the
++// collected heap. Enable only after initialisation, on the thread that will
++// run process bodies.
+ void jit_eval_arena_enable(bool on);
+ void jit_eval_arena_reset(void);
+ typedef struct _eval_arena eval_arena_t;
+diff --git a/src/symbols.txt b/src/symbols.txt
+index 57c661fc8..a2bdba27a 100644
+--- a/src/symbols.txt
++++ b/src/symbols.txt
+@@ -83,6 +83,7 @@
+   __nvc_get_object;
+   __nvc_last_event;
+   __nvc_mspace_alloc;
++  __nvc_eval_alloc;
+   __nvc_putpriv;
+   __nvc_sched_waveform;
+   __nvc_sched_process;

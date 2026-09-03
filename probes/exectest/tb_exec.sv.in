@@ -7,8 +7,14 @@
 // (they never carry x), then every output bit-exact (%b, one character per
 // bit, so an x bit never masks its defined neighbours).  Sampling is 1 ns
 // after each falling edge; every input changes only at the falling edge.
-// The port map and the recorder are generated from ports_tierA.txt by
+// The port map and the recorder are generated from ports_<tier>.txt by
 // gen_tb.py (this file is the template tb_exec.sv.in).
+//
+// Tier B (F enabled, soft FPU; VX_CFG_EXT_F_DISABLE not defined) adds a
+// fourth stream on dispatch_if[3] (EX_FPU) and consumes commit_if[3]; the SFU
+// stream additionally programs FRM for warp 1 first and reads FFLAGS/FCSR
+// last.  Everything Tier B is under `ifndef VX_CFG_EXT_F_DISABLE, so the
+// Tier A stimulus (and its vectors) is unchanged.
 module tb_exec import VX_gpu_pkg::*; ();
     localparam NT   = `VX_CFG_NUM_THREADS;      // 2 lanes
     localparam DW   = $bits(dispatch_t);
@@ -49,6 +55,16 @@ module tb_exec import VX_gpu_pkg::*; ();
     wire                commit_if_0_valid, commit_if_1_valid, commit_if_2_valid;
     wire [CW-1:0]       commit_if_0_data, commit_if_1_data, commit_if_2_data;
     reg                 commit_if_0_ready = 1, commit_if_1_ready = 1, commit_if_2_ready = 1;
+`ifndef VX_CFG_EXT_F_DISABLE
+    // dispatch_if[3] / commit_if[3]  (EX_FPU)
+    reg                 dispatch_if_3_valid = 0;
+    dispatch_t          tx_fpu;
+    wire [DW-1:0]       dispatch_if_3_data = tx_fpu;
+    wire                dispatch_if_3_ready;
+    wire                commit_if_3_valid;
+    wire [CW-1:0]       commit_if_3_data;
+    reg                 commit_if_3_ready = 1;
+`endif
     // sched_csr_if (distinctive constants so CSR reads are checkable)
     reg [PERF_CTR_BITS-1:0]   sched_csr_if_cycles  = 44'h123_4567_89AB;
     reg [PERF_CTR_BITS-1:0]   sched_csr_if_instret = 44'h0AB_CDEF_0123;
@@ -116,12 +132,18 @@ module tb_exec import VX_gpu_pkg::*; ();
     // ------------------------------------------------------------------
     integer drain_blk_t0 = -1000;   // lsu_sched_drained low for [t0, t0+8)
     integer wsync_blk_t0 = -1000;   // warp_pending_alm_empty[1] low for [t0, t0+8)
+`ifndef VX_CFG_EXT_F_DISABLE
+    integer fpu_bp_t0 = -1000;      // commit_if[3].ready low for [t0, t0+12): fills the FPU response buffers
+`endif
     always @(negedge clk) begin
         commit_if_0_ready <= !(cyc % 7 == 3 || cyc % 7 == 4);
         // LSU: periodic, plus a 14-cycle stall during the load burst so the
         // response buffers fill and lsu_client_if.rsp_ready is driven low
         commit_if_1_ready <= !(cyc % 5 == 1) && !(cyc >= 36 && cyc < 50);
         commit_if_2_ready <= !(cyc % 6 == 2 || cyc % 6 == 3);
+`ifndef VX_CFG_EXT_F_DISABLE
+        commit_if_3_ready <= !(cyc % 9 == 4 || cyc % 9 == 5) && !(cyc >= fpu_bp_t0 && cyc < fpu_bp_t0 + 12);
+`endif
         lsu_client_if_0_req_ready <= !(cyc % 4 == 1);
         warp_ctl_if_lsu_sched_drained <= !(cyc >= drain_blk_t0 && cyc < drain_blk_t0 + 8);
         warp_ctl_if_warp_pending_alm_empty <= {!(cyc >= wsync_blk_t0 && cyc < wsync_blk_t0 + 8), 1'b1};
@@ -150,6 +172,9 @@ module tb_exec import VX_gpu_pkg::*; ();
     integer n_req_rd = 0, n_req_wr = 0, n_rsp = 0;
     integer n_commit0 = 0, n_commit1 = 0, n_commit2 = 0;
     integer n_sent0 = 0, n_sent1 = 0, n_sent2 = 0;
+`ifndef VX_CFG_EXT_F_DISABLE
+    integer n_commit3 = 0, n_sent3 = 0;
+`endif
     integer mi, mb;
 
     initial begin
@@ -184,6 +209,9 @@ module tb_exec import VX_gpu_pkg::*; ();
             if (commit_if_0_valid && commit_if_0_ready) n_commit0 = n_commit0 + 1;
             if (commit_if_1_valid && commit_if_1_ready) n_commit1 = n_commit1 + 1;
             if (commit_if_2_valid && commit_if_2_ready) n_commit2 = n_commit2 + 1;
+`ifndef VX_CFG_EXT_F_DISABLE
+            if (commit_if_3_valid && commit_if_3_ready) n_commit3 = n_commit3 + 1;
+`endif
         end
     end
 
@@ -303,13 +331,109 @@ module tb_exec import VX_gpu_pkg::*; ();
         end
     endtask
 
+`ifndef VX_CFG_EXT_F_DISABLE
+    // ---- FPU (dispatch_if[3]) ----
+    // op = INST_FPU_*, fmt = op_args.fpu.fmt (fmt[1] = SUB variant of ADD/MADD/NMADD;
+    // for FCVT fmt[0] = F32, fmt[1] = I32), frm = rounding mode or the sub-op
+    // selector of CMP (LE/LT/EQ) and MISC (SGNJ/SGNJN/SGNJX/CLASS/MVXW/MVWX/MIN/MAX).
+    // PC = 0x600 + sequence number, so a commit can be matched to its dispatch
+    // packet in the vectors (the FPU returns out of order across its four cores).
+    task automatic send_fpu(input [3:0] op, input [1:0] fmt, input [2:0] frm,
+                            input [31:0] a0, input [31:0] a1, input [31:0] b0, input [31:0] b1,
+                            input [31:0] c0, input [31:0] c1,
+                            input [NT-1:0] tmask, input wis, input [NUM_REGS_BITS-1:0] rd, input integer gap);
+        begin
+            tx_fpu = mk_hdr(tmask, wis, 30'h600 + n_sent3, 1'b1, rd);
+            tx_fpu.op_type = op;
+            tx_fpu.op_args.fpu.fmt = fmt;
+            tx_fpu.op_args.fpu.frm = frm;
+            tx_fpu.rs1_data[0] = a0; tx_fpu.rs1_data[1] = a1;
+            tx_fpu.rs2_data[0] = b0; tx_fpu.rs2_data[1] = b1;
+            tx_fpu.rs3_data[0] = c0; tx_fpu.rs3_data[1] = c1;
+            dispatch_if_3_valid = 1;
+            @(posedge clk); while (!dispatch_if_3_ready) @(posedge clk);
+            n_sent3 = n_sent3 + 1;
+            @(negedge clk); dispatch_if_3_valid = 0;
+            repeat (gap) @(negedge clk);
+        end
+    endtask
+
+    // F32 operands (IEEE-754 binary32 bit patterns)
+    localparam [31:0] F_P0     = 32'h0000_0000;  // +0
+    localparam [31:0] F_N0     = 32'h8000_0000;  // -0
+    localparam [31:0] F_PINF   = 32'h7F80_0000;  // +inf
+    localparam [31:0] F_NINF   = 32'hFF80_0000;  // -inf
+    localparam [31:0] F_QNAN   = 32'h7FC0_0000;  // canonical qNaN
+    localparam [31:0] F_QNANP  = 32'h7FC1_2345;  // qNaN with payload
+    localparam [31:0] F_NQNAN  = 32'hFFC0_0000;  // -qNaN
+    localparam [31:0] F_SNAN   = 32'h7F80_0001;  // sNaN (min payload)
+    localparam [31:0] F_SNAN2  = 32'h7FA0_0000;  // sNaN
+    localparam [31:0] F_NSNAN  = 32'hFFA0_0000;  // -sNaN
+    localparam [31:0] F_MINSUB = 32'h0000_0001;  // 2^-149, smallest subnormal
+    localparam [31:0] F_MAXSUB = 32'h007F_FFFF;  // largest subnormal
+    localparam [31:0] F_NMINSUB= 32'h8000_0001;  // -2^-149
+    localparam [31:0] F_SUB    = 32'h0040_0000;  // 2^-127 (subnormal)
+    localparam [31:0] F_NSUB   = 32'h8040_0000;  // -2^-127
+    localparam [31:0] F_MINNRM = 32'h0080_0000;  // 2^-126, smallest normal
+    localparam [31:0] F_MAXNRM = 32'h7F7F_FFFF;  // largest normal
+    localparam [31:0] F_NMAXNRM= 32'hFF7F_FFFF;  // -largest normal
+    localparam [31:0] F_1      = 32'h3F80_0000;
+    localparam [31:0] F_N1     = 32'hBF80_0000;
+    localparam [31:0] F_1P     = 32'h3F80_0001;  // 1 + 2^-23
+    localparam [31:0] F_2      = 32'h4000_0000;
+    localparam [31:0] F_N2     = 32'hC000_0000;
+    localparam [31:0] F_3      = 32'h4040_0000;
+    localparam [31:0] F_4      = 32'h4080_0000;
+    localparam [31:0] F_6      = 32'h40C0_0000;
+    localparam [31:0] F_7      = 32'h40E0_0000;
+    localparam [31:0] F_N7     = 32'hC0E0_0000;
+    localparam [31:0] F_10     = 32'h4120_0000;
+    localparam [31:0] F_100    = 32'h42C8_0000;
+    localparam [31:0] F_HALF   = 32'h3F00_0000;
+    localparam [31:0] F_N1P5   = 32'hBFC0_0000;
+    localparam [31:0] F_2P5    = 32'h4020_0000;
+    localparam [31:0] F_N2P5   = 32'hC020_0000;
+    localparam [31:0] F_0P1    = 32'h3DCC_CCCD;
+    localparam [31:0] F_N0P1   = 32'hBDCC_CCCD;
+    localparam [31:0] F_0P3    = 32'h3E99_999A;
+    localparam [31:0] F_PI     = 32'h4049_0FDB;
+    localparam [31:0] F_1E38   = 32'h7E96_7699;
+    localparam [31:0] F_1E20   = 32'h60AD_78EC;
+    localparam [31:0] F_1EN20  = 32'h1E3C_E508;
+    localparam [31:0] F_EPS24  = 32'h3380_0000;  // 2^-24
+    localparam [31:0] F_NEPS24 = 32'hB380_0000;  // -2^-24
+    localparam [31:0] F_3E9    = 32'h4F32_D05E;  // 3e9 (> INT_MAX, < UINT_MAX)
+    localparam [31:0] F_N3E9   = 32'hCF32_D05E;
+    localparam [31:0] F_2P31   = 32'h4F00_0000;  // 2^31
+    localparam [31:0] F_N2P31  = 32'hCF00_0000;  // -2^31 (INT_MIN, exact)
+    localparam [31:0] F_2P32   = 32'h4F80_0000;  // 2^32
+    localparam [31:0] F_1E10   = 32'h5015_02F9;
+    localparam [31:0] F_2P24   = 32'h4B80_0000;  // 16777216
+    localparam [31:0] F_12345  = 32'h4640_E6B6;  // 12345.678
+    localparam [1:0]  FMT_S   = 2'b00;           // fmt: single, plain op
+    localparam [1:0]  FMT_SUB = 2'b10;           // fmt: single, SUB variant (fmt[1])
+    localparam [2:0]  RNE = INST_FRM_RNE, RTZ = INST_FRM_RTZ, RDN = INST_FRM_RDN,
+                      RUP = INST_FRM_RUP, RMM = INST_FRM_RMM, DYN = INST_FRM_DYN;
+    localparam [2:0]  M_SGNJ = 3'd0, M_SGNJN = 3'd1, M_SGNJX = 3'd2, M_CLASS = 3'd3,
+                      M_MVXW = 3'd4, M_MVWX = 3'd5, M_MIN = 3'd6, M_MAX = 3'd7;
+    localparam [2:0]  C_LE = 3'd0, C_LT = 3'd1, C_EQ = 3'd2;
+    localparam [NUM_REGS_BITS-1:0] FR = 32;      // f-register destinations are rd = 32 + n, n in 0..31 (REG_TYPE_F; NUM_REGS_BITS is 6 with F)
+    integer frm_wr_target = -1;                  // n_sent2 after the SFU stream's FRM write
+`endif
+
     reg done_alu = 0, done_lsu = 0, done_sfu = 0;
+`ifndef VX_CFG_EXT_F_DISABLE
+    reg done_fpu = 0;
+`endif
 
     // ------------------------------------------------------------------
     // stimulus
     // ------------------------------------------------------------------
     initial begin
         tx_alu = '0; tx_lsu = '0; tx_sfu = '0; rsp_tx = '0;
+`ifndef VX_CFG_EXT_F_DISABLE
+        tx_fpu = '0;                             // dispatch_if[3] data and its combinational ready defined from row 0
+`endif
         cta = '0;
         cta.cta_id = 1; cta.cta_rank = 1; cta.cta_size = 2'd2;
         cta.block_idx[0] = 32'd3; cta.block_idx[1] = 32'd2; cta.block_idx[2] = 32'd1;
@@ -407,6 +531,12 @@ module tb_exec import VX_gpu_pkg::*; ();
     // SFU stream: CSR reads/writes and warp control
     initial begin
         wait (reset == 0); @(negedge clk);
+`ifndef VX_CFG_EXT_F_DISABLE
+        // Tier B: program FRM = RDN for warp 1 first; the FPU stream's frm=DYN
+        // ops on warp 1 resolve their rounding mode through fpu_csr_if.read_frm
+        send_csr(INST_SFU_CSRRW, 1, `VX_CSR_FRM, 5'd2, 32'd0, 32'd0, 2'b11, 1, 0);
+        frm_wr_target = n_sent2;
+`endif
         // CSR reads (CSRRS with rs1=0 is a pure read)
         send_csr(INST_SFU_CSRRS, 0, `VX_CSR_MCYCLE,        5'd0, 32'd0, 32'd0, 2'b11, 0, 0);
         send_csr(INST_SFU_CSRRS, 0, `VX_CSR_MCYCLE_H,      5'd0, 32'd0, 32'd0, 2'b11, 0, 0);
@@ -480,28 +610,180 @@ module tb_exec import VX_gpu_pkg::*; ();
         send_wctl(INST_SFU_JOIN,   0, 0, 0, 32'h0, 32'h0, 32'h0, 32'h0, 2'b10, 1, 0);
         send_csr(INST_SFU_CSRRS, 0, `VX_CSR_MHARTID,       5'd0, 32'd0, 32'd0, 2'b10, 0, 0);
         send_wctl(INST_SFU_TMC,    0, 0, 0, 32'h0, 32'h0, 32'h0, 32'h0, 2'b11, 0, 0);            // tmc 0 (warp exit)
+`ifndef VX_CFG_EXT_F_DISABLE
+        // Tier B: once the FPU stream has drained, read back the fflags the
+        // FPU accumulated into fcsr (per warp), FRM of warp 1, clear and re-read
+        wait (done_fpu && n_commit3 == n_sent3);
+        repeat (4) @(negedge clk);
+        send_csr(INST_SFU_CSRRS, 0, `VX_CSR_FFLAGS, 5'd0, 32'd0, 32'd0, 2'b11, 0, 0);            // warp 0 fflags
+        send_csr(INST_SFU_CSRRS, 0, `VX_CSR_FCSR,   5'd0, 32'd0, 32'd0, 2'b11, 1, 0);            // warp 1 {frm, fflags}
+        send_csr(INST_SFU_CSRRS, 0, `VX_CSR_FRM,    5'd0, 32'd0, 32'd0, 2'b11, 1, 0);            // warp 1 frm = RDN
+        send_csr(INST_SFU_CSRRC, 0, `VX_CSR_FFLAGS, 5'd0, 32'h1F, 32'h1F, 2'b11, 0, 0);          // clear warp 0 fflags
+        send_csr(INST_SFU_CSRRS, 0, `VX_CSR_FCSR,   5'd0, 32'd0, 32'd0, 2'b11, 0, 0);            // warp 0 fcsr now 0
+`endif
         done_sfu = 1;
     end
+
+`ifndef VX_CFG_EXT_F_DISABLE
+    // FPU stream (dispatch_if[3], EX_FPU): two lanes with different operands;
+    // expected results in the comments are IEEE-754 binary32 (lane0 ; lane1).
+    // send_fpu(op, fmt, frm, a0, a1, b0, b1, c0, c1, tmask, wis, rd, gap)
+    initial begin
+        wait (reset == 0); @(negedge clk);
+        // ---- FMA core: FADD/FSUB (fmt[1] = SUB), rounding modes, specials ----
+        send_fpu(INST_FPU_ADD, FMT_S,   RNE, F_1, F_2P5, F_2, F_N1P5, 0, 0, 2'b11, 0, FR+1, 0);            // 3 ; 1
+        send_fpu(INST_FPU_ADD, FMT_SUB, RNE, F_1, F_3, F_2, F_3, 0, 0, 2'b11, 1, FR+2, 0);                 // -1 ; +0
+        send_fpu(INST_FPU_ADD, FMT_SUB, RDN, F_3, F_1, F_3, F_1P, 0, 0, 2'b11, 0, FR+3, 0);                // -0 (RDN exact zero) ; -2^-23
+        send_fpu(INST_FPU_ADD, FMT_S,   RNE, F_1, F_1P, F_EPS24, F_EPS24, 0, 0, 2'b11, 0, FR+4, 0);        // 1 (tie->even, NX) ; 1+2^-22 (tie->even up)
+        send_fpu(INST_FPU_ADD, FMT_S,   RUP, F_1, F_N1, F_EPS24, F_EPS24, 0, 0, 2'b11, 1, FR+5, 0);        // 1+2^-23 ; -(1-2^-24) exact
+        send_fpu(INST_FPU_ADD, FMT_S,   RTZ, F_1, F_N1, F_EPS24, F_NEPS24, 0, 0, 2'b11, 0, FR+6, 0);       // 1 ; -1
+        send_fpu(INST_FPU_ADD, FMT_S,   RMM, F_1, F_0P1, F_EPS24, F_0P3, 0, 0, 2'b11, 0, FR+7, 0);         // 1+2^-23 (ties away) ; ~0.4
+        send_fpu(INST_FPU_ADD, FMT_S,   RNE, F_PINF, F_PINF, F_NINF, F_1, 0, 0, 2'b11, 1, FR+8, 0);        // qNaN NV ; +inf
+        send_fpu(INST_FPU_ADD, FMT_S,   RNE, F_QNANP, F_SNAN, F_1, F_1, 0, 0, 2'b11, 0, FR+9, 0);          // canonical qNaN ; qNaN NV
+        send_fpu(INST_FPU_ADD, FMT_S,   RNE, F_P0, F_N0, F_N0, F_N0, 0, 0, 2'b11, 0, FR+10, 0);            // +0 ; -0
+        send_fpu(INST_FPU_ADD, FMT_SUB, RNE, F_P0, F_N0, F_P0, F_P0, 0, 0, 2'b11, 1, FR+11, 0);            // +0 ; -0
+        send_fpu(INST_FPU_ADD, FMT_S,   RNE, F_MAXNRM, F_NMAXNRM, F_MAXNRM, F_NMAXNRM, 0, 0, 2'b11, 0, FR+12, 0); // +inf OF NX ; -inf
+        send_fpu(INST_FPU_ADD, FMT_S,   RTZ, F_MAXNRM, F_MAXNRM, F_MAXNRM, F_1, 0, 0, 2'b11, 0, FR+13, 0);   // MAXNRM (RTZ overflow) ; MAXNRM NX
+        send_fpu(INST_FPU_ADD, FMT_S,   RNE, F_MINSUB, F_MAXSUB, F_MINSUB, F_MINSUB, 0, 0, 2'b11, 1, FR+14, 0); // 2^-148 ; MINNRM (subnormal -> normal)
+        send_fpu(INST_FPU_ADD, FMT_S,   RNE, F_MINNRM, F_1E20, F_NSUB, F_1EN20, 0, 0, 2'b11, 0, FR+15, 0);   // 2^-127 (normal -> subnormal) ; 1e20 NX
+        send_fpu(INST_FPU_ADD, FMT_SUB, RNE, F_1, F_PI, F_1P, F_3, 0, 0, 2'b01, 0, FR+16, 0);              // lane0 only: -2^-23
+        send_fpu(INST_FPU_ADD, FMT_S,   RDN, F_0P1, F_12345, F_0P3, F_0P1, 0, 0, 2'b11, 1, FR+17, 0);      // ~0.4 RDN ; 12345.78 RDN
+        // ---- FMUL ----
+        send_fpu(INST_FPU_MUL, FMT_S,   RNE, F_2, F_N1P5, F_3, F_2, 0, 0, 2'b11, 0, FR+18, 0);             // 6 ; -3
+        send_fpu(INST_FPU_MUL, FMT_S,   RNE, F_1E38, F_1E38, F_10, 32'hC120_0000, 0, 0, 2'b11, 0, FR+19, 0); // +inf OF NX ; -inf
+        send_fpu(INST_FPU_MUL, FMT_S,   RTZ, F_1E38, F_1E20, F_10, F_1E20, 0, 0, 2'b11, 1, FR+20, 0);       // MAXNRM OF NX ; MAXNRM
+        send_fpu(INST_FPU_MUL, FMT_S,   RNE, F_MINSUB, F_MINNRM, F_HALF, F_HALF, 0, 0, 2'b11, 0, FR+21, 0);  // +0 UF NX ; 2^-127 exact
+        send_fpu(INST_FPU_MUL, FMT_S,   RUP, F_MINSUB, F_NMINSUB, F_HALF, F_HALF, 0, 0, 2'b11, 0, FR+22, 0); // MINSUB UF NX ; -0
+        send_fpu(INST_FPU_MUL, FMT_S,   RNE, F_P0, F_PINF, F_PINF, F_N2, 0, 0, 2'b11, 1, FR+23, 0);        // qNaN NV ; -inf
+        send_fpu(INST_FPU_MUL, FMT_S,   RNE, F_N0, F_0P1, 32'h40A0_0000, F_3, 0, 0, 2'b11, 0, FR+24, 0);   // -0 ; ~0.3 NX
+        send_fpu(INST_FPU_MUL, FMT_S,   RNE, F_SUB, F_MAXSUB, F_2, F_MAXSUB, 0, 0, 2'b11, 0, FR+25, 0);     // MINNRM exact ; +0 UF NX
+        send_fpu(INST_FPU_MUL, FMT_S,   RNE, F_PI, F_1P, F_PI, F_1P, 0, 0, 2'b11, 1, FR+26, 0);            // ~9.8696 ; 1+2^-22 NX
+        send_fpu(INST_FPU_MUL, FMT_S,   RNE, F_QNAN, F_SNAN2, F_1, F_PINF, 0, 0, 2'b11, 0, FR+27, 0);      // qNaN ; qNaN NV
+        // ---- FMADD / FMSUB / FNMADD / FNMSUB ----
+        send_fpu(INST_FPU_MADD,  FMT_S,   RNE, F_2, F_HALF, F_3, F_4, F_1, F_N2, 2'b11, 0, FR+28, 0);       // 7 ; +0
+        send_fpu(INST_FPU_MADD,  FMT_SUB, RNE, F_2, F_1, F_3, F_1, F_1, F_1P, 2'b11, 1, FR+29, 0);          // 5 ; -2^-23
+        send_fpu(INST_FPU_NMADD, FMT_S,   RNE, F_2, F_N2, F_3, F_3, F_1, F_N1, 2'b11, 0, FR+30, 0);         // -7 ; 7
+        send_fpu(INST_FPU_NMADD, FMT_SUB, RNE, F_2, F_2, F_3, F_3, F_1, F_6, 2'b11, 0, FR+31, 0);           // -5 ; +0
+        send_fpu(INST_FPU_MADD,  FMT_S,   RNE, F_PINF, F_PINF, F_P0, F_2, F_1, F_NINF, 2'b11, 1, FR+0, 0); // qNaN NV ; qNaN NV
+        send_fpu(INST_FPU_MADD,  FMT_S,   RNE, F_1E20, F_1E20, F_1E20, F_1E20, F_1, F_NINF, 2'b11, 0, FR+1, 0); // +inf OF NX ; -inf (exact product, no NV)
+        send_fpu(INST_FPU_MADD,  FMT_S,   RNE, F_MINSUB, F_MINNRM, F_MINSUB, F_HALF, F_1, F_SUB, 2'b11, 0, FR+2, 0); // 1 NX ; MINNRM exact
+        send_fpu(INST_FPU_MADD,  FMT_SUB, RTZ, F_PI, F_10, F_0P1, F_0P1, F_0P3, F_1, 2'b11, 1, FR+3, 0);   // pi*0.1-0.3 ; 10*0.1f-1 (fused, ~1.49e-8)
+        send_fpu(INST_FPU_NMADD, FMT_S,   RDN, F_PI, F_QNAN, F_2, F_1, F_1, F_1, 2'b11, 0, FR+4, 0);       // -(2pi)-1 RDN ; qNaN
+        wait (frm_wr_target >= 0 && n_commit2 >= frm_wr_target);                                           // FRM(warp1) = RDN is in fcsr
+        send_fpu(INST_FPU_MADD,  FMT_S,   DYN, F_1, F_N1, F_1, F_1, F_EPS24, F_NEPS24, 2'b11, 1, FR+5, 0); // DYN=RDN: 1 NX ; -(1+2^-23)
+        send_fpu(INST_FPU_MADD,  FMT_S,   DYN, F_1, F_N1, F_1, F_1, F_EPS24, F_NEPS24, 2'b11, 0, FR+6, 0); // DYN=RNE (warp 0): 1 ; -1
+        send_fpu(INST_FPU_MADD,  FMT_S,   RNE, F_1, F_3, F_1, F_3, F_1, F_1, 2'b10, 0, FR+7, 0);           // lane1 only: 10
+        // ---- FDIV / FSQRT (17-cycle), interleaved with NCP ops so results return out of order ----
+        send_fpu(INST_FPU_DIV,  FMT_S, RNE, F_1, F_10, F_3, F_4, 0, 0, 2'b11, 0, FR+8, 0);                // 0x3EAAAAAB NX ; 2.5
+        fpu_bp_t0 = cyc + 1;                                                                               // hold commit_if[3].ready low 12 cycles
+        send_fpu(INST_FPU_MISC, FMT_S, M_SGNJ, F_1, F_N1P5, F_N2, F_2, 0, 0, 2'b11, 1, FR+9, 0);           // -1 ; 1.5  (returns before the FDIV)
+        send_fpu(INST_FPU_DIV,  FMT_S, RTZ, F_1, F_2, F_3, F_3, 0, 0, 2'b11, 0, FR+10, 0);                 // 0x3EAAAAAA ; 2/3 RTZ
+        send_fpu(INST_FPU_MISC, FMT_S, M_CLASS, F_NINF, F_N1, 0, 0, 0, 0, 2'b11, 0, 12, 0);                // 0x001 ; 0x002
+        send_fpu(INST_FPU_DIV,  FMT_S, RDN, F_1, F_N1, F_3, F_3, 0, 0, 2'b11, 1, FR+11, 0);                // 0x3EAAAAAA ; 0xBEAAAAAB
+        send_fpu(INST_FPU_DIV,  FMT_S, RNE, F_1, F_N1, F_P0, F_P0, 0, 0, 2'b11, 0, FR+12, 0);              // +inf DZ ; -inf DZ
+        send_fpu(INST_FPU_MISC, FMT_S, M_CLASS, F_NMINSUB, F_N0, 0, 0, 0, 0, 2'b11, 1, 13, 0);             // 0x004 ; 0x008
+        send_fpu(INST_FPU_DIV,  FMT_S, RNE, F_P0, F_PINF, F_P0, F_PINF, 0, 0, 2'b11, 0, FR+13, 0);         // qNaN NV ; qNaN NV
+        send_fpu(INST_FPU_DIV,  FMT_S, RNE, F_NINF, F_2, F_2, F_PINF, 0, 0, 2'b11, 0, FR+14, 0);           // -inf ; +0
+        send_fpu(INST_FPU_MISC, FMT_S, M_CLASS, F_P0, F_SUB, 0, 0, 0, 0, 2'b11, 0, 14, 0);                 // 0x010 ; 0x020
+        send_fpu(INST_FPU_DIV,  FMT_S, RNE, F_MINNRM, F_1E38, F_4, F_0P1, 0, 0, 2'b11, 1, FR+15, 0);       // 2^-128 subnormal ; +inf OF NX
+        send_fpu(INST_FPU_DIV,  FMT_S, RNE, F_QNAN, F_1, F_1, F_SNAN, 0, 0, 2'b11, 0, FR+16, 0);           // qNaN ; qNaN NV
+        send_fpu(INST_FPU_MISC, FMT_S, M_CLASS, F_1, F_PINF, 0, 0, 0, 0, 2'b11, 0, 15, 0);                 // 0x040 ; 0x080
+        send_fpu(INST_FPU_DIV,  FMT_S, RNE, F_P0, F_SUB, 32'hC0A0_0000, F_2, 0, 0, 2'b11, 0, FR+17, 0);    // -0 ; 2^-128 exact
+        send_fpu(INST_FPU_DIV,  FMT_S, RNE, F_1, F_100, F_N0, F_7, 0, 0, 2'b11, 1, FR+18, 0);              // -inf DZ ; 14.2857 NX
+        send_fpu(INST_FPU_MISC, FMT_S, M_CLASS, F_SNAN, F_QNAN, 0, 0, 0, 0, 2'b11, 0, 16, 0);              // 0x100 ; 0x200
+        send_fpu(INST_FPU_SQRT, FMT_S, RNE, F_4, F_2, 0, 0, 0, 0, 2'b11, 0, FR+19, 0);                     // 2 ; sqrt2 NX
+        send_fpu(INST_FPU_SQRT, FMT_S, RNE, F_N1, F_N0, 0, 0, 0, 0, 2'b11, 0, FR+20, 0);                   // qNaN NV ; -0
+        send_fpu(INST_FPU_MISC, FMT_S, M_MVXW, 32'hDEAD_BEEF, F_N0, 0, 0, 0, 0, 2'b11, 1, 17, 0);          // 0xDEADBEEF ; 0x80000000
+        send_fpu(INST_FPU_SQRT, FMT_S, RNE, F_PINF, F_P0, 0, 0, 0, 0, 2'b11, 1, FR+21, 0);                 // +inf ; +0
+        send_fpu(INST_FPU_SQRT, FMT_S, RNE, F_SUB, F_MINSUB, 0, 0, 0, 0, 2'b11, 0, FR+22, 0);              // 2^-63.5 NX ; 2^-74.5 NX
+        send_fpu(INST_FPU_MISC, FMT_S, M_MVWX, 32'h1234_5678, 32'hFFFF_FFFF, 0, 0, 0, 0, 2'b11, 0, FR+23, 0); // 0x12345678 ; 0xFFFFFFFF
+        send_fpu(INST_FPU_SQRT, FMT_S, RTZ, F_0P1, F_1E38, 0, 0, 0, 0, 2'b11, 0, FR+24, 0);                // sqrt(0.1) RTZ ; 1e19 RTZ
+        send_fpu(INST_FPU_SQRT, FMT_S, RUP, F_2, F_PI, 0, 0, 0, 0, 2'b11, 1, FR+25, 0);                    // sqrt2 RUP ; sqrt(pi) RUP
+        send_fpu(INST_FPU_SQRT, FMT_S, RNE, F_QNAN, F_NINF, 0, 0, 0, 0, 2'b11, 0, FR+26, 0);               // qNaN ; qNaN NV
+        send_fpu(INST_FPU_SQRT, FMT_S, RNE, F_100, 32'h4110_0000, 0, 0, 0, 0, 2'b01, 0, FR+27, 0);         // lane0 only: 10
+        send_fpu(INST_FPU_DIV,  FMT_S, RNE, F_1, F_7, F_3, F_2, 0, 0, 2'b10, 1, FR+28, 0);                 // lane1 only: 3.5
+        send_fpu(INST_FPU_SQRT, FMT_S, RNE, F_1P, F_0P3, 0, 0, 0, 0, 2'b11, 0, FR+29, 0);                  // 1 NX (below the tie) ; sqrt(0.3)
+        // ---- FCVT: float -> int (F2I signed, F2U unsigned) with every rounding mode; int -> float ----
+        send_fpu(INST_FPU_F2I, FMT_S, RNE, F_2P5, F_N2P5, 0, 0, 0, 0, 2'b11, 0, 1, 0);                     // 2 NX ; -2 NX
+        send_fpu(INST_FPU_F2I, FMT_S, RMM, F_2P5, F_N2P5, 0, 0, 0, 0, 2'b11, 0, 2, 0);                     // 3 ; -3
+        send_fpu(INST_FPU_F2I, FMT_S, RTZ, F_2P5, F_N2P5, 0, 0, 0, 0, 2'b11, 1, 3, 0);                     // 2 ; -2
+        send_fpu(INST_FPU_F2I, FMT_S, RUP, F_2P5, F_N2P5, 0, 0, 0, 0, 2'b11, 0, 4, 0);                     // 3 ; -2
+        send_fpu(INST_FPU_F2I, FMT_S, RDN, F_2P5, F_N2P5, 0, 0, 0, 0, 2'b11, 0, 5, 0);                     // 2 ; -3
+        fpu_bp_t0 = cyc + 1;                                                                               // second backpressure window
+        send_fpu(INST_FPU_F2I, FMT_S, RNE, F_3E9, F_N3E9, 0, 0, 0, 0, 2'b11, 1, 6, 0);                     // INT_MAX NV ; INT_MIN NV
+        send_fpu(INST_FPU_F2I, FMT_S, RNE, F_QNAN, F_NINF, 0, 0, 0, 0, 2'b11, 0, 7, 0);                    // INT_MAX NV ; INT_MIN NV
+        send_fpu(INST_FPU_F2I, FMT_S, RNE, F_2P31, F_N2P31, 0, 0, 0, 0, 2'b11, 0, 8, 0);                   // INT_MAX NV ; INT_MIN exact
+        send_fpu(INST_FPU_F2I, FMT_S, RNE, F_MINSUB, F_N0P1, 0, 0, 0, 0, 2'b11, 1, 9, 0);                  // 0 NX ; 0 NX
+        send_fpu(INST_FPU_F2U, FMT_S, RNE, F_3E9, F_N1, 0, 0, 0, 0, 2'b11, 0, 10, 0);                      // 3000000000 ; 0 NV
+        send_fpu(INST_FPU_F2U, FMT_S, RNE, F_2P32, F_N0P1, 0, 0, 0, 0, 2'b11, 0, 11, 0);                   // UINT_MAX NV ; 0 NX
+        send_fpu(INST_FPU_F2U, FMT_S, RUP, F_N0P1, F_0P1, 0, 0, 0, 0, 2'b11, 1, 12, 0);                    // 0 NX ; 1 NX
+        send_fpu(INST_FPU_F2U, FMT_S, RNE, F_QNAN, F_PINF, 0, 0, 0, 0, 2'b11, 0, 13, 0);                   // UINT_MAX NV ; UINT_MAX NV
+        send_fpu(INST_FPU_F2U, FMT_S, DYN, F_2P5, F_0P1, 0, 0, 0, 0, 2'b11, 1, 14, 0);                     // DYN=RDN: 2 NX ; 0 NX
+        send_fpu(INST_FPU_I2F, FMT_S, RNE, 32'd7, 32'hFFFF_FFFF, 0, 0, 0, 0, 2'b11, 0, FR+15, 0);          // 7.0 ; -1.0
+        send_fpu(INST_FPU_I2F, FMT_S, RNE, 32'h7FFF_FFFF, 32'h8000_0000, 0, 0, 0, 0, 2'b11, 0, FR+16, 0);  // 2^31 NX ; -2^31 exact
+        send_fpu(INST_FPU_I2F, FMT_S, RTZ, 32'h7FFF_FFFF, 32'd16777217, 0, 0, 0, 0, 2'b11, 1, FR+17, 0);   // 0x4EFFFFFF NX ; 16777216 NX
+        send_fpu(INST_FPU_I2F, FMT_S, RUP, 32'd16777217, 32'hFEFF_FFFF, 0, 0, 0, 0, 2'b11, 0, FR+18, 0);   // 16777218 ; -16777216
+        send_fpu(INST_FPU_I2F, FMT_S, RMM, 32'd16777217, 32'd16777219, 0, 0, 0, 0, 2'b11, 0, FR+19, 0);    // 16777218 (tie away) ; 16777220
+        send_fpu(INST_FPU_U2F, FMT_S, RNE, 32'hFFFF_FFFF, 32'h8000_0000, 0, 0, 0, 0, 2'b11, 1, FR+20, 0);  // 2^32 NX ; 2^31 exact
+        send_fpu(INST_FPU_U2F, FMT_S, RNE, 32'd0, 32'd1, 0, 0, 0, 0, 2'b11, 0, FR+21, 0);                  // +0 ; 1.0
+        send_fpu(INST_FPU_U2F, FMT_S, DYN, 32'hFFFF_FFFF, 32'd3000000000, 0, 0, 0, 0, 2'b11, 1, FR+22, 0); // DYN=RDN: 0x4F7FFFFF NX ; 3e9 RDN
+        send_fpu(INST_FPU_I2F, FMT_S, RNE, 32'd12345, 32'd99, 0, 0, 0, 0, 2'b01, 0, FR+23, 0);             // lane0 only: 12345.0
+        // ---- NCP core: FMIN/FMAX, FSGNJ*, FEQ/FLT/FLE (FCLASS/FMV above) ----
+        send_fpu(INST_FPU_MISC, FMT_S, M_MIN,   F_1, F_P0, F_2, F_N0, 0, 0, 2'b11, 0, FR+24, 0);           // 1 ; -0
+        send_fpu(INST_FPU_MISC, FMT_S, M_MAX,   F_1, F_N0, F_2, F_P0, 0, 0, 2'b11, 1, FR+25, 0);           // 2 ; +0
+        send_fpu(INST_FPU_MISC, FMT_S, M_MIN,   F_QNAN, F_SNAN, F_1, F_1, 0, 0, 2'b11, 0, FR+26, 0);       // 1 ; 1 NV
+        send_fpu(INST_FPU_MISC, FMT_S, M_MAX,   F_QNAN, F_NINF, F_QNANP, 32'h40A0_0000, 0, 0, 2'b11, 0, FR+27, 0); // canonical qNaN ; 5
+        send_fpu(INST_FPU_MISC, FMT_S, M_MIN,   F_NINF, F_SUB, F_NMAXNRM, F_MINSUB, 0, 0, 2'b11, 1, FR+28, 0); // -inf ; MINSUB
+        send_fpu(INST_FPU_MISC, FMT_S, M_SGNJN, F_1, F_1, F_N2, F_2, 0, 0, 2'b11, 0, FR+29, 0);            // 1 ; -1
+        send_fpu(INST_FPU_MISC, FMT_S, M_SGNJX, F_N1, F_1, F_N2, F_N2, 0, 0, 2'b11, 0, FR+30, 0);          // 1 ; -1
+        send_fpu(INST_FPU_MISC, FMT_S, M_SGNJ,  F_QNANP, F_SUB, F_N1, F_N0, 0, 0, 2'b11, 1, FR+31, 0);     // 0xFFC12345 ; -2^-127
+        send_fpu(INST_FPU_CMP,  FMT_S, C_EQ, F_1, F_P0, F_1, F_N0, 0, 0, 2'b11, 0, 18, 0);                 // 1 ; 1
+        send_fpu(INST_FPU_CMP,  FMT_S, C_EQ, F_QNAN, F_SNAN, F_1, F_1, 0, 0, 2'b11, 0, 19, 0);             // 0 ; 0 NV (signalling only)
+        send_fpu(INST_FPU_CMP,  FMT_S, C_LT, F_1, F_2, F_2, F_1, 0, 0, 2'b11, 1, 20, 0);                   // 1 ; 0
+        send_fpu(INST_FPU_CMP,  FMT_S, C_LT, F_QNAN, F_NINF, F_1, F_NMAXNRM, 0, 0, 2'b11, 0, 21, 0);       // 0 NV ; 1
+        send_fpu(INST_FPU_CMP,  FMT_S, C_LE, F_1, F_N0, F_1, F_P0, 0, 0, 2'b11, 0, 22, 0);                 // 1 ; 1
+        send_fpu(INST_FPU_CMP,  FMT_S, C_LE, F_QNAN, F_2, F_QNAN, F_1, 0, 0, 2'b11, 1, 23, 0);             // 0 NV ; 0
+        send_fpu(INST_FPU_CMP,  FMT_S, C_LE, F_SUB, F_N1, F_MINSUB, F_N2, 0, 0, 2'b11, 0, 24, 0);          // 0 ; 0
+        send_fpu(INST_FPU_CMP,  FMT_S, C_LT, F_1, F_N2, F_1, F_N1, 0, 0, 2'b10, 0, 25, 0);                 // lane1 only: 1
+        done_fpu = 1;
+    end
+`endif
 
     // ------------------------------------------------------------------
     // end of test: all streams sent and every instruction committed
     // ------------------------------------------------------------------
     initial begin
+`ifdef VX_CFG_EXT_F_DISABLE
         wait (done_alu && done_lsu && done_sfu);
         wait (n_commit0 == n_sent0 && n_commit1 == n_sent1 && n_commit2 == n_sent2 && q_rd == q_wr);
+`else
+        wait (done_alu && done_lsu && done_sfu && done_fpu);
+        wait (n_commit0 == n_sent0 && n_commit1 == n_sent1 && n_commit2 == n_sent2 && n_commit3 == n_sent3 && q_rd == q_wr);
+`endif
         repeat (12) @(negedge clk);
         #2;
         $fclose(fd);
+`ifdef VX_CFG_EXT_F_DISABLE
         $display("ORACLE_DONE cycles=%0d sent=%0d/%0d/%0d commits=%0d/%0d/%0d lsu_rd=%0d lsu_wr=%0d lsu_rsp=%0d",
                  cyc, n_sent0, n_sent1, n_sent2, n_commit0, n_commit1, n_commit2, n_req_rd, n_req_wr, n_rsp);
+`else
+        $display("ORACLE_DONE cycles=%0d sent=%0d/%0d/%0d/%0d commits=%0d/%0d/%0d/%0d lsu_rd=%0d lsu_wr=%0d lsu_rsp=%0d",
+                 cyc, n_sent0, n_sent1, n_sent2, n_sent3, n_commit0, n_commit1, n_commit2, n_commit3, n_req_rd, n_req_wr, n_rsp);
+`endif
         $finish;
     end
 
     // watchdog
     initial begin
         #40000;
+`ifdef VX_CFG_EXT_F_DISABLE
         $display("ORACLE_TIMEOUT cycles=%0d sent=%0d/%0d/%0d commits=%0d/%0d/%0d q=%0d/%0d",
                  cyc, n_sent0, n_sent1, n_sent2, n_commit0, n_commit1, n_commit2, q_rd, q_wr);
+`else
+        $display("ORACLE_TIMEOUT cycles=%0d sent=%0d/%0d/%0d/%0d commits=%0d/%0d/%0d/%0d q=%0d/%0d done=%0d%0d%0d%0d",
+                 cyc, n_sent0, n_sent1, n_sent2, n_sent3, n_commit0, n_commit1, n_commit2, n_commit3, q_rd, q_wr,
+                 done_alu, done_lsu, done_sfu, done_fpu);
+`endif
         $fclose(fd);
         $finish;
     end

@@ -1,0 +1,18 @@
+generated tb_exec.sv (81 ports, 81 vector fields: 35 hex inputs + 46 binary outputs, 20 handshake guards) and tb_exec_replay.vhd (tierB, 4 commit ports) in /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/tierb/fresh/out_tierB
+== sv2v (tb_exec + DUT)
+sv2v rc=0
+== iverilog
+iverilog rc=0
+== vvp
+ORACLE_DONE cycles=641 sent=39/27/74/106 commits=39/27/74/106 lsu_rd=20 lsu_wr=7 lsu_rsp=20
+tb.v:12462: $finish called at 6412 (1s)
+vectors: 641 lines, 1033933 bytes
+== nvc -a (DUT + replay bench)
+nvc -a rc=0
+== nvc -e
+nvc -e rc=0
+== nvc -r
+** Note: 1315ns+2: accel-jit: NVC_FUSED_BLOCK â fused 100/100 member(s), two-entry 0 posedge-only + 100 every-event
+** Note: 6411ns+0: PASS: 641 cycles replayed and compared from cycle 0 (outputs bit-exact, x = don't-care); DUT commits alu/lsu/sfu/fpu=39/27/74/106, lsu req/rsp=27/20, branches=13, csr_wr=2, trap_csr_wr=5, warp_ctl=17 -- all outputs identical to the vvp oracle every cycle
+   Process :tb_exec_replay:replay at tb_exec_replay.vhd:282
+nvc -r rc=0

@@ -1,4 +1,4 @@
-generated tb_exec.sv (75 ports, 75 vector fields: 32 hex inputs + 43 binary outputs, 18 handshake guards) and tb_exec_replay.vhd
+generated tb_exec.sv (75 ports, 75 vector fields: 32 hex inputs + 43 binary outputs, 18 handshake guards) and tb_exec_replay.vhd (tierA, 3 commit ports) in /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/tierb/fresh/out_tierA
 == sv2v (tb_exec + DUT)
 sv2v rc=0
 == iverilog

@@ -1,4 +1,4 @@
-wrote /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/tierb/fresh/out_tierA/exec_top.sv: 74 flat ports (31 in, 43 out)
+wrote /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/tierb/fresh/out_tierB/exec_top.sv: 80 flat ports (34 in, 46 out)
 == sv2v
 sv2v rc=0
 == iverilog -tnull
