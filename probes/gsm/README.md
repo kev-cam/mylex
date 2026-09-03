@@ -47,3 +47,28 @@ landed 2026-08-14). Built with CMake 4.4.3 (static release binary) into
 yosys/gen_statemachine yosys/libgsm.so` in sv2ghdl. The sv2ghdl
 `docker/build_stack.sh` recipe (`make config-gcc`) is stale against
 current Yosys master, which is CMake-only.
+
+## Execute stage through the C model (generated harness)
+
+`gen_gsm_harness.py ports_tierA.txt exec.c harness_exec.c` generates a replay
+harness for any wrapper from its port manifest (the exectest vector layout:
+inputs as nibble-padded hex, outputs as nibble-padded `%b`, inputs then
+outputs in manifest order, `reset` recorded as an input). Against the
+committed Tier A vectors (`probes/exectest/vectors.txt`, 210 cycles):
+
+    FAIL: 210 cycles replayed through the gen_statemachine model, 10 mismatches
+
+The model matches the vvp/NVC oracle on 200 of 210 cycles including every
+LSU, SFU, MULDIV and warp-control event. The residual, open:
+
+- cycle 0 (reset asserted, before the first rising edge): `lsu rsp_ready`,
+  `dispatch_if_1/2_ready`, `branch trap_cause` differ -- time-0 initialisation
+  semantics (`sm_reset` state vs vvp's declaration-initialised registers).
+- cycles 12-13 (the two taken-branch commits): `branch_ctl_if_0_dest` reads 0
+  and `commit_if_0_data` lane 1 differs. The dest output is driven from the
+  `alu_int` `branch_reg` pipe register (`exec.c:4322`), so the value fed into
+  that register (`cbr_dest_r` out of the `rsp_buf` elastic buffer) is wrong
+  in the model; the ALU-only model (`alu.c`) passes the same branch shapes,
+  so the defect is in the flattened `VX_alu_unit`/`pe_switch`/elastic-buffer
+  path as gen_statemachine emits it. Needs the same minimal-repro treatment
+  as the slice-store bug.
