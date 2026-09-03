@@ -72,3 +72,35 @@ LSU, SFU, MULDIV and warp-control event. The residual, open:
   so the defect is in the flattened `VX_alu_unit`/`pe_switch`/elastic-buffer
   path as gen_statemachine emits it. Needs the same minimal-repro treatment
   as the slice-store bug.
+
+## NVC `--accel` with the in-process RTLIL walker on the translated ALU
+
+    NVC_GSM_LIB=<sv2ghdl>/yosys/libgsm.so NVC_ACCEL_RTLIL=1 NVC_ACCEL=auto GSM_LOG=1 \
+    nvc --std=2040 -r --accel tb_alu_replay        # evidence/accel_alu_run.log
+
+The simulation still PASSES (42 cycles identical to the oracle) -- accel never
+changes results -- but no scope was accelerated. Three precise gaps, all on the
+NVC/sv2ghdl side:
+
+1. **Direct RTLIL walker declines on function calls.**
+   `vhdl2rtlil: 'alu_top' declined (function VX_GPU_PKG_TO_FULLPC @?)` -- the
+   walker (`nvc/src/vhdl2vlog.c`, `NVC_ACCEL_RTLIL=1`) has no T_FCALL
+   lowering, so any translated module that calls a package function (all of
+   Vortex: `to_fullPC`, `inst_alu_class`, the sv2v `sv2v_cast_*` helpers)
+   falls back to the text path.
+2. **Text path: parameter-variant entity names do not map to Verilog modules.**
+   tgt-vhdl emits one entity per parameterisation (`VX_pipe_register1`,
+   attributes `nvc_verilog_src "alu.v:2370"`, `nvc_verilog_params
+   "DATAW=152 DEPTH=1 ..."`); the accel text path reconstructs the Verilog
+   source and then selects the module by the VHDL entity name:
+   `ERROR: Module 'vx_pipe_register1' not found!` -> `synth failed ... leaving
+   in nvc`. It needs to strip the variant suffix (or read the base name from
+   `nvc_verilog_src`) and apply `nvc_verilog_params` via `chparam`.
+3. **Text path: mangled `chparam` target.** The parameter application logs
+   `chparam NUM_LANES = 2 on VX_gpu_pk` -- the module name is truncated
+   (`VX_gpu_pk`), apparently by the `nvc_verilog_params` tokenizer treating
+   `VX_gpu_pkg_ALU_TYPE_BITS=2` as `<module>g_...`; the top's parameters are
+   therefore never applied to `alu_top`.
+
+Leaves were also attempted: `VX_priority_encoder` declined as comb-only
+(`allowcomb=`), consistent with gen_statemachine's own policy.
