@@ -1,0 +1,740 @@
+diff --git a/tgt-vhdl/expr.cc b/tgt-vhdl/expr.cc
+index 27e2915..983a1ac 100644
+--- a/tgt-vhdl/expr.cc
++++ b/tgt-vhdl/expr.cc
+@@ -117,7 +117,15 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
+    const char *renamed = get_renamed_signal(sig).c_str();
+ 
+    vhdl_decl *decl = scope->get_decl(renamed);
+-   assert(decl);
++   if (decl == NULL) {
++      // Same situation as make_assign_lhs: name the signal instead of
++      // aborting on an assertion.
++      error("reference to %s (declared in %s, scope type %d, VHDL name %s) "
++            "has no VHDL declaration in its scope",
++            ivl_signal_name(sig), ivl_scope_name(ivl_signal_scope(sig)),
++            (int)ivl_scope_type(ivl_signal_scope(sig)), renamed);
++      return NULL;
++   }
+ 
+    // Make sure we can read from this declaration
+    // E.g. if this is an `out' port then we need to make it a buffer
+@@ -797,7 +805,7 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
+    return result;
+ }
+ 
+-vhdl_expr *index_to_integer(ivl_expr_t e, vhdl_expr *v)
++vhdl_expr *index_to_integer(vhdl_expr *v, bool is_signed)
+ {
+    // A constant index converts at compile time -- bits_to_int knows the true
+    // signed value regardless of the emitted vector's width, and a constant
+@@ -813,14 +821,18 @@ vhdl_expr *index_to_integer(ivl_expr_t e, vhdl_expr *v)
+       // selects nothing).
+       vhdl_fcall *f = new vhdl_fcall("l3d_index", vhdl_type::integer());
+       f->add_expr(v);
+-      f->add_expr(new vhdl_const_bool(
+-         e != NULL && ivl_expr_signed(e) != 0));
++      f->add_expr(new vhdl_const_bool(is_signed));
+       return f;
+    }
+    vhdl_type integer(VHDL_TYPE_INTEGER);
+    return v->cast(&integer);
+ }
+ 
++vhdl_expr *index_to_integer(ivl_expr_t e, vhdl_expr *v)
++{
++   return index_to_integer(v, e != NULL && ivl_expr_signed(e) != 0);
++}
++
+ static vhdl_expr *translate_select(ivl_expr_t e)
+ {
+    vhdl_expr *from = translate_expr(ivl_expr_oper1(e));
+@@ -1001,7 +1013,7 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
+    }
+    assert(parent_ent);
+ 
+-   const char *funcname = ivl_scope_tname(defscope);
++   const std::string funcname = vhdl_function_name(defscope);
+ 
+    // The result type must track the function's declared return type: a real
+    // function's width-based type would be logic3d, and every caller would then
+@@ -1011,7 +1023,7 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
+       rettype = vhdl_type::real();
+    else
+       rettype = vhdl_type::type_for(ivl_expr_width(e), ivl_expr_signed(e) != 0);
+-   vhdl_fcall *fcall = new vhdl_fcall(funcname, rettype);
++   vhdl_fcall *fcall = new vhdl_fcall(funcname.c_str(), rettype);
+ 
+    int nparams = ivl_expr_parms(e);
+    for (int i = 0; i < nparams; i++) {
+diff --git a/tgt-vhdl/lpm.cc b/tgt-vhdl/lpm.cc
+index e8e2594..421eb30 100644
+--- a/tgt-vhdl/lpm.cc
++++ b/tgt-vhdl/lpm.cc
+@@ -24,6 +24,31 @@
+ #include <iostream>
+ #include <cassert>
+ 
++/*
++ * The Verilog signedness of the value carried by `nex': that of the LPM
++ * whose output it is, else of a signal on it, else of a constant driver.
++ */
++static bool nexus_is_signed(ivl_nexus_t nex)
++{
++   ivl_signal_t sig = NULL;
++   ivl_net_const_t con = NULL;
++   for (unsigned i = 0; i < ivl_nexus_ptrs(nex); i++) {
++      ivl_nexus_ptr_t p = ivl_nexus_ptr(nex, i);
++      ivl_lpm_t lpm = ivl_nexus_ptr_lpm(p);
++      if (lpm != NULL && ivl_lpm_q(lpm) == nex)
++         return ivl_lpm_signed(lpm) != 0;
++      if (sig == NULL)
++         sig = ivl_nexus_ptr_sig(p);
++      if (con == NULL)
++         con = ivl_nexus_ptr_con(p);
++   }
++   if (sig != NULL)
++      return ivl_signal_signed(sig) != 0;
++   if (con != NULL)
++      return ivl_const_signed(con) != 0;
++   return false;
++}
++
+ /*
+  * Return the base of a part select.
+  */
+@@ -31,10 +56,15 @@ static vhdl_expr *part_select_base(vhdl_scope *scope, ivl_lpm_t lpm)
+ {
+    vhdl_expr *off;
+    ivl_nexus_t base = ivl_lpm_data(lpm, 1);
+-   if (base != NULL)
++   if (base != NULL) {
+       off = readable_ref(scope, base);
+-   else
+-      off = new vhdl_const_int(ivl_lpm_base(lpm));
++      // A runtime base converts like an expression-path index (l3d_index in
++      // sv2vhdl mode, so an x/z index does not blow up in To_Integer, and
++      // a signed index keeps its sign: x[i] with a 4-bit i = -1 reads x,
++      // not x[15]).
++      return index_to_integer(off, nexus_is_signed(base));
++   }
++   off = new vhdl_const_int(ivl_lpm_base(lpm));
+ 
+    // Array indexes must be integers
+    vhdl_type integer(VHDL_TYPE_INTEGER);
+@@ -47,6 +77,7 @@ static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop
+    const vhdl_type *result_type =
+       vhdl_type::type_for(out_width, ivl_lpm_signed(lpm) != 0);
+    vhdl_binop_expr *expr = new vhdl_binop_expr(op, result_type);
++   bool all_scalar_l3d = true;
+ 
+    for (unsigned i = 0; i < ivl_lpm_size(lpm); i++) {
+       vhdl_expr *e = readable_ref(scope, ivl_lpm_data(lpm, i));
+@@ -57,6 +88,8 @@ static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop
+       // in which case we must cast them to the output type
+       e = e->cast(vhdl_type::type_for(e->get_type()->get_width(),
+                                       ivl_lpm_signed(lpm) != 0));
++      if (!e->get_type() || e->get_type()->get_name() != VHDL_TYPE_LOGIC3D)
++         all_scalar_l3d = false;
+ 
+       // Bit of a hack: the LPM inputs are in the wrong order for concatenation
+       if (op == VHDL_BINOP_CONCAT)
+@@ -65,6 +98,13 @@ static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop
+          expr->add_expr(e);
+    }
+ 
++   // sv2vhdl: a 1-bit product of two scalar logic3d bits is emitted as bit 0
++   // of the package's vector multiply (vhdl_binop_expr::emit) and is already
++   // the single logic3d the LPM produces; Resize has no scalar overload.
++   if (op == VHDL_BINOP_MULT && get_sv2vhdl_mode() && out_width == 1
++       && all_scalar_l3d)
++      return expr;
++
+    if (op == VHDL_BINOP_MULT) {
+       // Need to resize the output to the desired size,
+       // as this does not happen automatically in VHDL
+@@ -129,8 +169,62 @@ static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+    if (NULL == off)
+       return NULL;
+ 
+-   if (selfrom->get_type()->get_width() > 1)
+-      selfrom->set_slice(off, ivl_lpm_width(lpm) - 1);
++   const int w = ivl_lpm_width(lpm);
++
++   // sv2vhdl: a select whose base is a runtime value can fall outside the
++   // vector -- Verilog then reads x (an x index selects nothing), where a
++   // VHDL index raises a bounds error (`s_man(To_Integer(dsh - 1))` with dsh
++   // still x: "index 2147483647 outside of NATURAL range"). Route it through
++   // the bounds-safe readers exactly as translate_select does for the
++   // expression path; a constant base keeps the direct slice.
++   if (get_sv2vhdl_mode() && ivl_lpm_data(lpm, 1) != NULL
++       && selfrom->get_type()->get_name() == VHDL_TYPE_LOGIC3D_VECTOR) {
++      vhdl_fcall *f;
++      if (w == 1)
++         f = new vhdl_fcall("l3d_bit_read", vhdl_type::logic3d());
++      else
++         f = new vhdl_fcall("l3d_part_read", vhdl_type::logic3d_vector(w - 1, 0));
++      f->add_expr(selfrom);   // an array word keeps its word select
++      f->add_expr(off);
++      if (w != 1)
++         f->add_expr(new vhdl_const_int(w));
++      return f;
++   }
++
++   if (selfrom->get_type()->get_width() > 1) {
++      if (selfrom->get_slice() != NULL) {
++         // The nexus is one word of an unpacked array (nexus_to_var_ref
++         // selected it): the part select applies to that word,
++         // mem(word)(base + w downto base). set_slice would have replaced
++         // the word index with the bit offset, selecting the wrong word.
++         selfrom->slice_element(off, w - 1);
++      }
++      else
++         selfrom->set_slice(off, w - 1);
++      return selfrom;
++   }
++
++   // A bit-select of a 1-bit value (a scalar wire, or a word of an
++   // unpacked array of 1-bit words: `wire [0:0] m [0:3]; m[2][idx]`):
++   // VHDL cannot index a scalar. Index 0 is the value itself (as
++   // translate_select does for the expression path); any other index
++   // reads x in Verilog, so in sv2vhdl mode a runtime (or non-zero) base
++   // goes through the bounds-safe reader on the bit lifted to a
++   // 1-element vector.
++   if (get_sv2vhdl_mode()
++       && (ivl_lpm_data(lpm, 1) != NULL || ivl_lpm_base(lpm) != 0)
++       && selfrom->get_type()->get_name() == VHDL_TYPE_LOGIC3D) {
++      vhdl_fcall *as_u = new vhdl_fcall("l3d_to_unsigned",
++                                        vhdl_type::nunsigned(1));
++      as_u->add_expr(selfrom);
++      vhdl_fcall *vec = new vhdl_fcall("unsigned_to_l3d",
++                                       vhdl_type::logic3d_vector(0, 0));
++      vec->add_expr(as_u);
++      vhdl_fcall *f = new vhdl_fcall("l3d_bit_read", vhdl_type::logic3d());
++      f->add_expr(vec);
++      f->add_expr(off);
++      return f;
++   }
+ 
+    return selfrom;
+ }
+@@ -144,7 +238,17 @@ static vhdl_expr *part_select_pv_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+ static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+ {
+    ivl_scope_t f_scope = ivl_lpm_define(lpm);
+-   vhdl_fcall *fcall = new vhdl_fcall(ivl_scope_basename(f_scope), NULL);
++   const std::string fname = vhdl_function_name(f_scope);
++   vhdl_fcall *fcall = new vhdl_fcall(fname.c_str(), NULL);
++
++   // The function's input formals, in order (port 0 may be the return
++   // value, see draw_function_in_entity).
++   std::vector<ivl_signal_t> formals;
++   for (unsigned p = 0; p < ivl_scope_ports(f_scope); p++) {
++      ivl_signal_t fsig = ivl_scope_port(f_scope, p);
++      if (ivl_signal_port(fsig) == IVL_SIP_INPUT)
++         formals.push_back(fsig);
++   }
+ 
+    for (unsigned i = 0; i < ivl_lpm_size(lpm); i++) {
+       vhdl_var_ref *ref = readable_ref(scope, ivl_lpm_data(lpm, i));
+@@ -153,7 +257,20 @@ static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+          return NULL;
+       }
+ 
+-      fcall->add_expr(ref);
++      // Verilog sizes the actual to the formal on the call (a wider
++      // expression is truncated, a narrower one extended); VHDL rejects
++      // an actual of a different length or signedness. Cast to the
++      // formal's type exactly as the procedural path (translate_ufunc)
++      // does, which covers width, sign and scalar/vector alike.
++      vhdl_expr *arg = ref;
++      if (i < formals.size() && ref->get_type() != NULL
++          && ref->get_type()->get_name() != VHDL_TYPE_ARRAY) {
++         vhdl_type *ft = vhdl_type_for_signal(formals[i]);
++         arg = ref->cast(ft);
++         delete ft;
++      }
++
++      fcall->add_expr(arg);
+    }
+ 
+    return fcall;
+diff --git a/tgt-vhdl/process.cc b/tgt-vhdl/process.cc
+index 945e347..c66db3c 100644
+--- a/tgt-vhdl/process.cc
++++ b/tgt-vhdl/process.cc
+@@ -870,22 +870,51 @@ static std::set<std::string> written_signals(vhdl_process *p, vhdl_entity *ent)
+    return out;
+ }
+ 
+-// Does this body's `<=` to `sig` make the process a driver of the WHOLE
+-// signal (or of an element it selects dynamically -- the same thing under
+-// VHDL's longest-static-prefix rule)? Mirrors nba_defer_commits' choice.
+-static bool drives_whole(stmt_container *body, const std::string &sig)
++// Does `body` assign `sig` as a whole, or through a slice whose bounds are
++// not compile-time constants (a dynamically selected element is the whole
++// signal under VHDL's longest-static-prefix rule, which is also what
++// nba_defer_commits keys its whole-signal shadow on)? This does NOT count
++// two different constant slices as a whole-signal write: a process that
++// keeps its direct slice assignments (no shadow variable -- a comb block)
++// drives exactly the union of those bits, one source per scalar
++// subelement, so two such processes on disjoint slices of one signal are
++// legal VHDL and match the Verilog. Used for the multi-writer census of
++// the processes the merge pass does not touch; the earlier rule there
++// (any write set that is not one static slice) warned on every per-lane
++// `always @*` that writes data[i*W +: W] and then a sub-slice of it
++// (VX_lsu_slice g_mem_req_data) although nothing clobbers anything.
++static void has_whole_or_dynamic_write_recurse(vhdl_seq_stmt *s,
++                                               const std::string &name,
++                                               bool &hit)
+ {
+-   WriteInfo info;
+-   find_write_info(body, sig, info);
+-   if (!info.found)
+-      return false;
+-   if (info.ambiguous || info.slice == NULL)
+-      return true;
+-   vhdl_expr *cl = clone_slice(info.slice);
+-   if (cl == NULL)
+-      return true;
+-   delete cl;
+-   return false;
++   if (hit)
++      return;
++   if (vhdl_nbassign_stmt *nb = dynamic_cast<vhdl_nbassign_stmt*>(s)) {
++      if (nb->get_lhs()->get_name() == name) {
++         vhdl_expr *slice = nb->get_lhs()->get_slice();
++         vhdl_expr *extra = nb->get_lhs()->last_extra_base();
++         int64_t v;
++         if (slice == NULL || !const_value_of(slice, v)
++             || (extra != NULL && !const_value_of(extra, v))) {
++            hit = true;
++            return;
++         }
++      }
++   }
++   std::vector<stmt_container*> subs;
++   s->get_sub_containers(subs);
++   for (stmt_container *sc : subs)
++      for (vhdl_seq_stmt *t : sc->get_stmts())
++         has_whole_or_dynamic_write_recurse(t, name, hit);
++}
++
++static bool has_whole_or_dynamic_write(stmt_container *body,
++                                       const std::string &sig)
++{
++   bool hit = false;
++   for (vhdl_seq_stmt *s : body->get_stmts())
++      has_whole_or_dynamic_write_recurse(s, sig, hit);
++   return hit;
+ }
+ 
+ // A signal `x` written with a BLOCKING assignment by member X and with a
+@@ -1458,7 +1487,7 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
+       w.where = where.str();
+       w.sigs = written_signals(vhdl_proc, ent);
+       for (const std::string &s : w.sigs)
+-         if (drives_whole(vhdl_proc->get_container(), s))
++         if (has_whole_or_dynamic_write(vhdl_proc->get_container(), s))
+             w.whole.insert(s);
+       if (!w.sigs.empty())
+          g_extra_writers.push_back(w);
+diff --git a/tgt-vhdl/scope.cc b/tgt-vhdl/scope.cc
+index 175485e..bf1b165 100644
+--- a/tgt-vhdl/scope.cc
++++ b/tgt-vhdl/scope.cc
+@@ -26,6 +26,9 @@
+ #include <sstream>
+ #include <cassert>
+ #include <cstring>
++#include <cctype>
++#include <algorithm>
++#include <vector>
+ 
+ using namespace std;
+ 
+@@ -608,61 +611,43 @@ static void avoid_name_collision(string& name, const vhdl_scope* scope)
+    }
+ }
+ 
+-// Concatenate the expanded genvar values together to make a unique
+-// instance name
++// Make a suffix that keeps the contents of one generate scope apart from
++// every other generate scope of the containing module, since generate
++// blocks are flattened into the enclosing architecture.
+ // This isn't ideal: it would be better to replace the Verilog
+ // generate with an equivalent VHDL generate, but this isn't possible
+ // with the current API
++//
++// The suffix is the path of generate-block names from the module down to
++// `scope', `name[idx]' loop iterations rendered as `name_idx'. Verilog
++// scope names are unique within their parent, so the path is unique by
++// construction and stays short. (Earlier versions folded the numeric
++// parameters of loop-iteration scopes in instead: two sibling conditional
++// blocks -- e.g. two interface-port modules that sv2v inlined as named
++// generate blocks -- got the same empty suffix, and two loops with equal
++// genvar values under different siblings collided as well, so `rsp_buf'
++// in alu_unit and in lsu_unit became one label.)
+ static string genvar_unique_suffix(ivl_scope_t scope)
+ {
+-   ostringstream suffix;
++   std::vector<std::string> path;
+    while (scope && ivl_scope_type(scope) == IVL_SCT_GENERATE) {
+-      // Only a loop-iteration scope (`name[idx]`) needs a suffix to keep
+-      // its instances apart. A conditional/case generate block -- or a
+-      // module that sv2v inlined as a named generate block, which carries
+-      // every localparam of that module -- has a single instance, and
+-      // folding all of its parameters into every identifier makes names
+-      // hundreds of characters long for no gain.
+-      if (strchr(ivl_scope_basename(scope), '[') == NULL) {
+-         scope = ivl_scope_parent(scope);
+-         continue;
++      std::string part(ivl_scope_basename(scope));
++      for (std::string::size_type i = 0; i < part.size(); i++) {
++         if (part[i] == '[')
++            part[i] = '_';
++         else if (!isalnum((unsigned char)part[i]) && part[i] != '_')
++            part[i] = '\0';
+       }
+-      for (unsigned i = 0; i < ivl_scope_params(scope); i++) {
+-         ivl_parameter_t param = ivl_scope_param(scope, i);
+-         ivl_expr_t e = ivl_parameter_expr(param);
+-
+-         if (ivl_expr_type(e) == IVL_EX_NUMBER) {
+-            vhdl_expr* value = translate_expr(e);
+-            assert(value);
+-
+-            value = value->cast(vhdl_type::integer());
+-
+-            suffix << "_" << ivl_parameter_basename(param);
+-            value->emit(suffix, 0);
+-
+-            delete value;
+-         }
+-         else if (ivl_expr_type(e) == IVL_EX_STRING
+-                  || ivl_expr_type(e) == IVL_EX_REALNUM) {
+-            // Not a genvar: a string or real parameter carried by the
+-            // scope (sv2v inlines a module with interface ports as a
+-            // named generate block that keeps the module's parameters,
+-            // e.g. `localparam INSTANCE_ID = "alu0"`). It cannot index an
+-            // instance, so it contributes nothing to the suffix.
+-            continue;
+-         }
+-         else {
+-            error("Only numeric genvars supported at the moment "
+-                  "(scope %s, parameter %s, expression type %d)",
+-                  ivl_scope_name(scope), ivl_parameter_basename(param),
+-                  (int)ivl_expr_type(e));
+-            return "_ERROR";  // Never used
+-         }
+-      }
+-
++      part.erase(std::remove(part.begin(), part.end(), '\0'), part.end());
++      path.push_back(part);
+       scope = ivl_scope_parent(scope);
+    }
+ 
++   ostringstream suffix;
++   for (std::vector<std::string>::reverse_iterator it = path.rbegin();
++        it != path.rend(); ++it)
++      suffix << "_" << *it;
++
+    return suffix.str();
+ }
+ 
+@@ -1205,6 +1190,22 @@ static void port_map(ivl_scope_t scope, const vhdl_entity *parent,
+ /*
+  * Create a VHDL function from a Verilog function definition.
+  */
++// The VHDL name of the function defined by Verilog scope `fscope'.
++// A function declared inside a generate block is a distinct function per
++// generate instance -- sv2v emits one sv2v_cast_<hash> per scope and its
++// formal width follows that scope's localparams (VX_csa_tree: WI = W +
++// level) -- and generate blocks are flattened into the architecture, so
++// it takes the same suffix as the scope's signals. Every declaration and
++// call site must go through here.
++string vhdl_function_name(ivl_scope_t fscope)
++{
++   string name(ivl_scope_tname(fscope));
++   ivl_scope_t parent = ivl_scope_parent(fscope);
++   if (parent != NULL && ivl_scope_type(parent) == IVL_SCT_GENERATE)
++      name += genvar_unique_suffix(parent);
++   return name;
++}
++
+ int draw_function_in_entity(ivl_scope_t scope, vhdl_entity *ent)
+ {
+    assert(ivl_scope_type(scope) == IVL_SCT_FUNCTION);
+@@ -1212,7 +1213,8 @@ int draw_function_in_entity(ivl_scope_t scope, vhdl_entity *ent)
+    debug_msg("Generating function %s (%s)", ivl_scope_tname(scope),
+              ivl_scope_name(scope));
+ 
+-   const char *funcname = ivl_scope_tname(scope);
++   const string funcname_str = vhdl_function_name(scope);
++   const char *funcname = funcname_str.c_str();
+ 
+    // Already emitted here (e.g. a package function drawn on demand by an
+    // earlier call site in this entity)
+@@ -1562,9 +1564,9 @@ extern "C" int draw_constant_drivers(ivl_scope_t scope, void *)
+ 
+             if (priv->const_driver
+                 && ivl_signal_port(sig) != IVL_SIP_INPUT) { // Don't drive inputs
+-               // TODO: Make work for more words (multi-element arrays)
+-               if (j != 0) continue;
+-
++               // nexus_to_var_ref selects the word of an unpacked array
++               // (`m(j) <= const'), so every word's constant driver is
++               // drawn, not only word 0's.
+                vhdl_var_ref *ref = nexus_to_var_ref(arch_scope, nex);
+ 
+                ent->get_arch()->add_stmt
+diff --git a/tgt-vhdl/state.cc b/tgt-vhdl/state.cc
+index 04955b2..a250e3b 100644
+--- a/tgt-vhdl/state.cc
++++ b/tgt-vhdl/state.cc
+@@ -25,6 +25,7 @@
+ #include <algorithm>
+ #include <string>
+ #include <map>
++#include <set>
+ #include <vector>
+ #include <cstring>
+ #include <iostream>
+@@ -224,11 +225,39 @@ void fuse_comb_in_all_entities()
+       fuse_comb_processes(*it);
+ }
+ 
++// Emit `ent' after every entity its architecture instantiates (post-order
++// over the `entity work.X' references), so a direct instantiation never
++// names a design unit that has not been analysed yet.
++static void emit_entity_after_deps(vhdl_entity *ent, std::ostream& os,
++                                   std::set<vhdl_entity*>& done)
++{
++   if (!done.insert(ent).second)
++      return;   // already emitted (an elaborated hierarchy has no cycles)
++
++   vhdl_arch *arch = ent->get_arch();
++   if (arch) {
++      conc_stmt_list_t& stmts = arch->get_stmts();
++      for (conc_stmt_list_t::iterator it = stmts.begin();
++           it != stmts.end(); ++it) {
++         vhdl_comp_inst *inst = dynamic_cast<vhdl_comp_inst*>(*it);
++         if (inst == NULL)
++            continue;
++         vhdl_entity *dep = find_entity(inst->get_comp_name());
++         if (dep != NULL && dep != ent)
++            emit_entity_after_deps(dep, os, done);
++      }
++   }
++
++   ent->emit(os);
++}
++
+ // Print all VHDL entities to the specified output stream.
+-// Emit in reverse discovery order: the skeleton walker uses DFS which
+-// visits parents before children, so reversing gives children first.
+-// This ensures entity instantiation targets are analyzed before the
+-// entities that instantiate them.
++// The skeleton walker discovers entities parent-first (DFS), so the
++// reverse of that order is child-first for a tree -- but a module reused
++// under two parents is discovered once, where it was first met, and a
++// parent discovered later (in a sibling's subtree) then comes out BEFORE
++// it: top -> {leaf, mid -> leaf} emits mid before leaf. Walk the reversed
++// list and emit each entity after its instantiation targets instead.
+ void emit_all_entities(std::ostream& os, int max_depth)
+ {
+    std::vector<vhdl_entity*> all;
+@@ -240,8 +269,9 @@ void emit_all_entities(std::ostream& os, int max_depth)
+    }
+    // Reverse: DFS discovery order is parent-first, we need child-first
+    std::reverse(all.begin(), all.end());
++   std::set<vhdl_entity*> done;
+    for (auto *ent : all)
+-      ent->emit(os);
++      emit_entity_after_deps(ent, os, done);
+ }
+ 
+ // Release all memory for the VHDL objects. No vhdl_element pointers
+@@ -331,6 +361,9 @@ bool get_sv2vhdl_mode()
+  */
+ static bool same_scope_type_name(ivl_scope_t a, ivl_scope_t b)
+ {
++   if (ivl_scope_type(a) != ivl_scope_type(b))
++      return false;
++
+    const char *ta = ivl_scope_tname(a), *tb = ivl_scope_tname(b);
+    if (strcmp(ta, tb) != 0)
+       return false;
+@@ -397,11 +430,25 @@ static bool same_scope_type_name(ivl_scope_t a, ivl_scope_t b)
+    // per-iteration outer genvar in the comparison; jumping straight to
+    // the module collapsed B[0].G[0]..B[7].G[0] to one "default" scope,
+    // so only B[0]'s child logic got drawn.)
+-   if (ivl_scope_type(a) == IVL_SCT_GENERATE) {
++   // The same holds for a function, task or named block: its tname is
++   // just its name, so `function cast' in module m1 and `function cast'
++   // in module m2 (sv2v emits one sv2v_cast_<hash> per module) matched
++   // as one type and only the first module's body was ever drawn --
++   // "no visible declaration for CAST" in the second architecture.
++   switch (ivl_scope_type(a)) {
++   case IVL_SCT_GENERATE:
++   case IVL_SCT_FUNCTION:
++   case IVL_SCT_TASK:
++   case IVL_SCT_BEGIN:
++   case IVL_SCT_FORK: {
+       ivl_scope_t pa = ivl_scope_parent(a);
+       ivl_scope_t pb = ivl_scope_parent(b);
+       if (pa != NULL && pb != NULL)
+          return same_scope_type_name(pa, pb);
++      break;
++   }
++   default:
++      break;
+    }
+ 
+    return true;
+diff --git a/tgt-vhdl/stmt.cc b/tgt-vhdl/stmt.cc
+index 63bdaea..617d3da 100644
+--- a/tgt-vhdl/stmt.cc
++++ b/tgt-vhdl/stmt.cc
+@@ -894,10 +894,15 @@ static int draw_block(vhdl_procedural *proc, stmt_container *container,
+          // Guard against re-entry: when a parent module elaborates this same
+          // block via different paths (e.g. in iterated/loop unrolling), the
+          // signal may already be remembered. remember_signal asserts on dups.
+-         if (!seen_signal_before(sig))
++         std::string safe_name = make_safe_name(sig);
++         if (!seen_signal_before(sig)) {
+             remember_signal(sig, proc->get_scope());
++            // The variable is declared under its VHDL-safe name; every
++            // reference must use that name too (sv2v's `integer __i' is
++            // declared as `sig_i' -- looked up as `__i' it was never found).
++            rename_signal(sig, safe_name);
++         }
+ 
+-         std::string safe_name = make_safe_name(sig);
+          if (!proc->get_scope()->have_declared(safe_name)) {
+             proc->get_scope()->add_decl
+                (new vhdl_var_decl(safe_name, vhdl_type_for_signal(sig)));
+@@ -955,7 +960,16 @@ static vhdl_var_ref *make_assign_lhs(ivl_lval_t lval, vhdl_scope *scope)
+ 
+    string signame(get_renamed_signal(sig));
+    vhdl_decl *decl = scope->get_decl(signame);
+-   assert(decl);
++   if (decl == NULL) {
++      // Nothing declared this signal in the scope chain the statement is
++      // drawn into: report where it lives rather than trip an assertion
++      // the user cannot act on.
++      error("assignment to %s (declared in %s, scope type %d) has no VHDL "
++            "declaration visible from the process/function that assigns it",
++            ivl_signal_name(sig), ivl_scope_name(ivl_signal_scope(sig)),
++            (int)ivl_scope_type(ivl_signal_scope(sig)));
++      return NULL;
++   }
+ 
+    // Verilog allows assignments to elements that are constant in VHDL:
+    // function parameters, for example
+diff --git a/tgt-vhdl/vhdl_syntax.cc b/tgt-vhdl/vhdl_syntax.cc
+index 30f579a..2c9c4cc 100644
+--- a/tgt-vhdl/vhdl_syntax.cc
++++ b/tgt-vhdl/vhdl_syntax.cc
+@@ -833,6 +833,21 @@ void vhdl_var_ref::set_slice(vhdl_expr *s, int w)
+    }
+ }
+ 
++void vhdl_var_ref::slice_element(vhdl_expr *s, int w)
++{
++   assert(type_);
++   assert(slice_);   // the element select must already be in place
++
++   add_extra_slice(s, w);
++
++   vhdl_type_name_t tname = type_->get_name();
++   if (tname == VHDL_TYPE_LOGIC3D_VECTOR)
++      type_ = (w > 0) ? vhdl_type::logic3d_vector(w, 0) : vhdl_type::logic3d();
++   else if (tname == VHDL_TYPE_UNSIGNED || tname == VHDL_TYPE_SIGNED)
++      type_ = (w > 0) ? new vhdl_type(tname, w) : vhdl_type::std_logic();
++   // a scalar element stays a scalar
++}
++
+ void vhdl_var_ref::find_vars(vhdl_var_set_t& read)
+ {
+    read.insert(this);
+@@ -1430,6 +1445,41 @@ void vhdl_binop_expr::emit(std::ostream &of, int level) const
+          return;
+       }
+       }  // end logic3d type check
++
++      // Arithmetic on two SCALAR logic3d operands (a 1-bit Verilog context,
++      // e.g. VX_lane_dispatch's `wire [0:0] pid = a + b`): logic3d is a
++      // subtype of natural, so the predefined integer operator would combine
++      // the 3-bit ENCODINGS (L3D_0 + L3D_0 = 2 + 2 = 4 = L3D_Z). Lift both
++      // bits to 1-element logic3d_vectors (the same value-plane round trip
++      // cast.cc uses to widen a bit), apply the package's vector operator so
++      // the 1-bit case has exactly the semantics of every wider add/sub/mul/
++      // div/mod, and keep bit 0 of the result.
++      const char *arith = NULL;
++      switch (op_) {
++      case VHDL_BINOP_ADD:  arith = "+";   break;
++      case VHDL_BINOP_SUB:  arith = "-";   break;
++      case VHDL_BINOP_MULT: arith = "*";   break;
++      case VHDL_BINOP_DIV:  arith = "/";   break;
++      case VHDL_BINOP_MOD:  arith = "mod"; break;
++      default: break;
++      }
++      const auto scalar_l3d = [](const vhdl_expr *e) {
++         return e->get_type()
++            && e->get_type()->get_name() == VHDL_TYPE_LOGIC3D;
++      };
++      if (arith && scalar_l3d(operands_.front())
++          && scalar_l3d(operands_.back())) {
++         of << "l3d_bit_read(";
++         auto it = operands_.begin();
++         for (int k = 0; k < 2; k++, ++it) {
++            if (k) of << " " << arith << " ";
++            of << "unsigned_to_l3d(l3d_to_unsigned(";
++            (*it)->emit(of, level);
++            of << "))";
++         }
++         of << ", 0)";
++         return;
++      }
+    }
+ 
+    open_parens(of);
+diff --git a/tgt-vhdl/vhdl_syntax.hh b/tgt-vhdl/vhdl_syntax.hh
+index e98e6c4..225823f 100644
+--- a/tgt-vhdl/vhdl_syntax.hh
++++ b/tgt-vhdl/vhdl_syntax.hh
+@@ -82,6 +82,10 @@ public:
+    void set_slice(vhdl_expr *s, int w=0);
+    vhdl_expr *get_slice() const { return slice_; }
+    unsigned get_slice_width() const { return slice_width_; }
++   // Bit/part-select of an array element that set_slice already picked:
++   // mem(word)(idx) for w==0, mem(word)(base + w downto base) otherwise.
++   // Unlike add_extra_slice this also narrows the type as set_slice would.
++   void slice_element(vhdl_expr *s, int w = 0);
+    // Append an additional select to the chain (emits as `(idx)` for w==0 or
+    // `(idx + w downto idx)` for a range). Used by `$set_val(arr, i, j, val)`
+    // and by array-word part-selects: mem(word)(base+w-1 downto base).
+diff --git a/tgt-vhdl/vhdl_target.h b/tgt-vhdl/vhdl_target.h
+index 5c2d08c..6a6aed7 100644
+--- a/tgt-vhdl/vhdl_target.h
++++ b/tgt-vhdl/vhdl_target.h
+@@ -38,12 +38,18 @@ void ensure_signal_declared(ivl_signal_t sig);
+ // Emit a function scope's VHDL function into a specific entity (used to draw
+ // package functions on demand into whichever entity first calls them).
+ int draw_function_in_entity(ivl_scope_t scope, vhdl_entity *ent);
++// The VHDL name of a function scope: its Verilog name plus the flattening
++// suffix of an enclosing generate block (see scope.cc).
++std::string vhdl_function_name(ivl_scope_t fscope);
+ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus);
+ // Convert a bit/part/word index expression to a VHDL integer honouring the
+ // VERILOG signedness of the index (a signed -1 index must become -1, not
+ // 2**32-1: unsigned to_integer saturates it to integer'high and every
+ // bounds-guard then misfires).
+ vhdl_expr *index_to_integer(ivl_expr_t e, vhdl_expr *v);
++// Same for an index that is a net (an LPM part-select base): the caller
++// supplies the signedness it derived from the nexus.
++vhdl_expr *index_to_integer(vhdl_expr *v, bool is_signed);
+ vhdl_var_ref* readable_ref(vhdl_scope* scope, ivl_nexus_t nex);
+ std::string make_safe_name(ivl_signal_t sig);
+ void require_support_function(support_function_t f);

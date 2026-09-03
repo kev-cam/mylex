@@ -1,0 +1,2 @@
+ORACLE_DONE cycles=210 sent=39/27/68 commits=39/27/68 lsu_rd=20 lsu_wr=7 lsu_rsp=20
+tb.v:8291: $finish called at 2102 (1s)

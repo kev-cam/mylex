@@ -1,0 +1,83 @@
+diff --git a/tgt-vhdl/expr.cc b/tgt-vhdl/expr.cc
+--- a/tgt-vhdl/expr.cc
++++ b/tgt-vhdl/expr.cc
+@@ -1009,7 +1009,7 @@
+    }
+    assert(parent_ent);
+ 
+-   const char *funcname = ivl_scope_tname(defscope);
++   const std::string funcname = vhdl_function_name(defscope);
+ 
+    // The result type must track the function's declared return type: a real
+    // function's width-based type would be logic3d, and every caller would then
+@@ -1019,7 +1019,7 @@
+       rettype = vhdl_type::real();
+    else
+       rettype = vhdl_type::type_for(ivl_expr_width(e), ivl_expr_signed(e) != 0);
+-   vhdl_fcall *fcall = new vhdl_fcall(funcname, rettype);
++   vhdl_fcall *fcall = new vhdl_fcall(funcname.c_str(), rettype);
+ 
+    int nparams = ivl_expr_parms(e);
+    for (int i = 0; i < nparams; i++) {
+diff --git a/tgt-vhdl/lpm.cc b/tgt-vhdl/lpm.cc
+--- a/tgt-vhdl/lpm.cc
++++ b/tgt-vhdl/lpm.cc
+@@ -178,7 +178,8 @@
+ static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+ {
+    ivl_scope_t f_scope = ivl_lpm_define(lpm);
+-   vhdl_fcall *fcall = new vhdl_fcall(ivl_scope_basename(f_scope), NULL);
++   const std::string fname = vhdl_function_name(f_scope);
++   vhdl_fcall *fcall = new vhdl_fcall(fname.c_str(), NULL);
+ 
+    // The function's input formals, in order (port 0 may be the return
+    // value, see draw_function_in_entity).
+diff --git a/tgt-vhdl/scope.cc b/tgt-vhdl/scope.cc
+--- a/tgt-vhdl/scope.cc
++++ b/tgt-vhdl/scope.cc
+@@ -1190,6 +1190,22 @@
+ /*
+  * Create a VHDL function from a Verilog function definition.
+  */
++// The VHDL name of the function defined by Verilog scope `fscope'.
++// A function declared inside a generate block is a distinct function per
++// generate instance -- sv2v emits one sv2v_cast_<hash> per scope and its
++// formal width follows that scope's localparams (VX_csa_tree: WI = W +
++// level) -- and generate blocks are flattened into the architecture, so
++// it takes the same suffix as the scope's signals. Every declaration and
++// call site must go through here.
++string vhdl_function_name(ivl_scope_t fscope)
++{
++   string name(ivl_scope_tname(fscope));
++   ivl_scope_t parent = ivl_scope_parent(fscope);
++   if (parent != NULL && ivl_scope_type(parent) == IVL_SCT_GENERATE)
++      name += genvar_unique_suffix(parent);
++   return name;
++}
++
+ int draw_function_in_entity(ivl_scope_t scope, vhdl_entity *ent)
+ {
+    assert(ivl_scope_type(scope) == IVL_SCT_FUNCTION);
+@@ -1197,7 +1213,8 @@
+    debug_msg("Generating function %s (%s)", ivl_scope_tname(scope),
+              ivl_scope_name(scope));
+ 
+-   const char *funcname = ivl_scope_tname(scope);
++   const string funcname_str = vhdl_function_name(scope);
++   const char *funcname = funcname_str.c_str();
+ 
+    // Already emitted here (e.g. a package function drawn on demand by an
+    // earlier call site in this entity)
+diff --git a/tgt-vhdl/vhdl_target.h b/tgt-vhdl/vhdl_target.h
+--- a/tgt-vhdl/vhdl_target.h
++++ b/tgt-vhdl/vhdl_target.h
+@@ -38,6 +38,9 @@
+ // Emit a function scope's VHDL function into a specific entity (used to draw
+ // package functions on demand into whichever entity first calls them).
+ int draw_function_in_entity(ivl_scope_t scope, vhdl_entity *ent);
++// The VHDL name of a function scope: its Verilog name plus the flattening
++// suffix of an enclosing generate block (see scope.cc).
++std::string vhdl_function_name(ivl_scope_t fscope);
+ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus);
+ // Convert a bit/part/word index expression to a VHDL integer honouring the
+ // VERILOG signedness of the index (a signed -1 index must become -1, not

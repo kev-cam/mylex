@@ -1,0 +1,16 @@
+wrote /usr/local/src/mylex/probes/exectest/out_tierA/exec_top.sv: 74 flat ports (31 in, 43 out)
+== sv2v
+sv2v rc=0
+== iverilog -tnull
+tnull rc=0
+== iverilog vvp compile
+vvp-compile rc=0
+== iverilog -tvhdl
+tvhdl rc=0
+== nvc -a
+0
+nvc -a rc=0
+== nvc -e
+nvc -e rc=0
+== nvc -r --stop-time=100ns (sanity: no runtime faults with undriven inputs)
+nvc -r rc=0
