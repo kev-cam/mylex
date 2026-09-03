@@ -1,0 +1,12 @@
+# baseline: sv2v-flattened Vortex Verilog straight into Yosys (as Vortex's own flow does)
+read_verilog -sv /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/alutest/alu.v
+hierarchy -check -top alu_top
+proc; flatten; opt -full; wreduce; opt_clean
+stat -width
+write_rtlil alu.baseline.il
+synth -top alu_top -flatten
+abc -g AND,NAND,OR,NOR,XOR,XNOR,MUX
+opt_clean
+stat -width
+write_rtlil alu.gates.il
+write_verilog -noattr alu.gates.v
