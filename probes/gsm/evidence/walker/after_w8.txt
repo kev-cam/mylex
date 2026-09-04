@@ -1,0 +1,16 @@
+== after_w8: nvc 1.19-devel (1.18.0.r550.g112bc4b3a) (Using LLVM 14.0.0); libgsm 2026-09-03 16:59:09
+r1_fcap [after_w8]: gold Y=306925053 accel Y=306925053 MATCH | INSTALLED via rtlil builder | fits=0
+r2_nest [after_w8]: gold Y=181931914 accel Y=181931914 MATCH | INSTALLED via rtlil builder | fits=1
+r3_nba [after_w8]: gold Y=1884217231 accel Y=1884217231 MATCH | INSTALLED via rtlil builder | fits=0
+r4_slice_arm [after_w8]: gold Y=2071611942 accel Y=2071611942 MATCH | INSTALLED via rtlil builder | fits=0
+r5_pvar_read [after_w8]: gold Y=28511394 accel Y=28511394 MATCH | INSTALLED via rtlil builder | fits=0
+r6_bitread [after_w8]: gold Y=1161847658 accel Y=1161847658 MATCH | INSTALLED via rtlil builder | fits=0
+r7_sra [after_w8]: gold Y=1705980168 accel Y=1705980168 MATCH | INSTALLED via rtlil builder | fits=1
+r8_dynslice [after_w8]: gold Y=991293447 accel Y=991293447 MATCH | INSTALLED via rtlil builder | fits=0
+r9_formal_elem [after_w8]: gold Y=1014012354 accel Y=1014012354 MATCH | INSTALLED via rtlil builder | fits=0
+r10_dynmulti [after_w8]: gold Y=251702219 accel Y=251702219 MATCH | INSTALLED via rtlil builder | fits=0
+r11_oob [after_w8]: gold Y=2059360878 accel Y=2059360878 MATCH | INSTALLED via rtlil builder | fits=0
+r12_casez [after_w8]: gold Y=1466356956 accel Y=1466356956 MATCH | INSTALLED via rtlil builder | fits=0
+r13_ternary [after_w8]: gold Y=1133968205 accel Y=1133968205 MATCH | INSTALLED via rtlil builder | fits=0
+r14_castsigned [after_w8]: gold Y=1799038197 accel Y=1799038197 MATCH | INSTALLED via rtlil builder | fits=0
+r15_resize_s [after_w8]: gold Y=1333803737 accel Y=1333803737 MATCH | INSTALLED via rtlil builder | fits=2

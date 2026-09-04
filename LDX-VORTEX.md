@@ -298,3 +298,58 @@ Ordering by payoff: items 1+2+6 (trivial) admit every package/sv2v function; 3 (
 | Diagnostics of the decline path itself (so the next attempt is measurable) | vhdl2vlog.c: `fw` uninitialised when r2_func_inlinable returns true and the cap is hit (HEAD L5696-5704: the message `function X @?` carried stack garbage); g_r2_site breadcrumb never reset between concurrent statements (HEAD L3063 — `proc-extra-stmt@cont-rhs` in the old logs was really `@?`); `fcall`/`expr-kind`/`binop`/`unop`/`conc-kind` messages carried no name/kind; several `return false` paths carry no reason; a crash in the fork child gives only `status 139`. | Keep the census patch (/tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/rtlil_catalog/04-nvc-rtlil-census.patch, env NVC_ACCEL_RTLIL_CENSUS=1, null builder, per-statement stream + per-module tally, silent-path tagging, per-process crash guard) as the measuring tool for the implementation; rerun `run_rtlil.sh <workdir> <bench> <tag> NVC_ACCEL_RTLIL_CENSUS=1` and `agg.py`/`procsum.py` after each item to watch the leaf totals go to zero (ALU 13 -> 0, Tier A 76 -> 0, Tier B 1841 -> 0). Correct README/LDX-VORTEX: the walker declines on the 8-function cap, not on T_FCALL. | done (diagnostic patch in the NVC working tree, review/revert as noted in the summary) |
 
 The census mode used to produce this is nvc commit `vhdl2rtlil: census mode` (patch 04 in `probes/gsm/`); it changes nothing in normal operation but the decline messages.
+
+## 13. The direct VHDL→RTLIL walker admits and installs translated Vortex (2026-09-04)
+
+`NVC_ACCEL_RTLIL=1 nvc -r --accel` now builds the translated Vortex ALU and
+the Tier A execute stage **in-process**, VHDL → `RTLIL::Design` through the
+walker (`nvc/src/vhdl2vlog.c`, `vhdl2rtlil_module`) and the builder facade
+(`sv2ghdl/yosys/gen_statemachine.cpp`, `gsm_rtlil_*`), with no text-path
+fallback, and the compiled model is hot-swapped in:
+
+    alu_top   via rtlil builder: 183 comb cells / 2 registers   → ACTIVE (installed) → PASS 42 cycles;  NVC_ACCEL_VERIFY=1 clean
+    exec_top  via rtlil builder: 1102 comb cells / 66 registers → ACTIVE (installed) → PASS 210 cycles; NVC_ACCEL_VERIFY=1 clean
+    census:   ALU 9/9 modules and Tier A 51/51 modules walk with 0 declines
+
+This is the leg ASYNC-PLAN §5 turns on: NVC now holds Vortex's RTLIL in its
+own process, so an NCL mapper can be a Yosys pass over that design with NVC
+simulating the result without leaving the process.
+
+**How it got there.** §12's catalogue was worked in order (items 1–6), then
+the census exposed two more (`l3d_sra`, dynamic part-select reads), and the
+first *real* builds — which the null-builder census cannot see — exposed
+four more: bare-name leaks of inlined formals, a user function mistaken for
+a numeric_std conversion, RTLIL's equal-width rule on assignments (a
+builder-facade gap: `rtlil_fit`, logged, sv2ghdl `ddcad3b`), and, caught
+only by `NVC_ACCEL_VERIFY=1` on the first Tier A install, `l3d_resize_s`
+treated as an unsigned pass-through (LSU LB/LH sign extension, multiplier
+operands) — the case for keeping the passive verifier in the loop. Fifteen
+minimal repros (`probes/gsm/repros/walker/r1`…`r15`) each decline on the
+previous binary and install with Y = gold on the new one. Design rules in
+the walker: arm-scoped substitutions poisoned on arm exit (read_verilog's
+`subst_rvalue_map` without the `$1` merge), dynamic-index writes lowered to
+case actions per reachable position (read_verilog's own lowering), and a
+decline wherever the walker cannot be exact.
+
+**Verification on the final build (nvc HEAD + patch 05, sv2ghdl `ddcad3b`,
+iverilog `86eba14`).** All 15 repros MATCH; ALU and Tier A census/real/VERIFY
+as above; the genuine text path (variable unset) still installs both designs
+and passes; `rtlil-selftest` PASS; NVC `test/accel` 8/8 (six MATCH, one
+DECLINED-SAFE, one OK); ivtest `vhdl_nvc_reg.pl` 285/294 with the baseline
+failure set; NVC full `run_regr`: 1,147 ok / 112 failed / 4 skipped with the failure set identical to the pre-walker binary (`probes/gsm/evidence/walker/nvc_run_regr_w8.txt`). Committed: nvc walker commit on top of `112bc4b3a`, sv2ghdl `ddcad3b`.
+
+*Provenance.* The workflow's ALU agent completed; the execute, review and
+verify agents were lost to the account's spend limit after the execute
+agent had implemented items 10–15 and rebuilt once. The final edit (r15)
+was unbuilt; I rebuilt, re-ran every check above by hand, and reviewed the
+diff at the level of its design comments and the r15 lowering. Tier B
+(soft FPU) was only censused through the walker, with model compilation
+disabled: **109 of 119 modules walk with zero declines** and the
+interpreted run still passes 641 cycles. The declines sit in ten modules
+and two reasons — `array-ref@cont-rhs` / `process@cont-rhs` (unpacked
+signal arrays of vectors used as wire arrays in continuous assignments,
+§12 item 9: `vx_ks_adder` 2,818, the three `vx_find_first` variants,
+`vx_fdivsqrt_unit` 200, `vx_fpu_std` 20) and the `VX_csa_tree` constant
+function `get_cnt_at_lev` (item 11) — plus one walker crash (`SIGSEGV` in
+`vx_wallace_mul`, the long `&` concatenation chain). Evidence:
+`probes/gsm/evidence/walker/tierB_census_w8.summary.log`.

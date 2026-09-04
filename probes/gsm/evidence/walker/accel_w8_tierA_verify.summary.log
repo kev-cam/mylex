@@ -1,0 +1,60 @@
+** Note: accel-jit: params CORE_ID=0 VX_gpu_pkg_ALU_TYPE_BITS=2 VX_gpu_pkg_BAR_ADDR_BITS=4 VX_gpu_pkg_BAR_ADDR_W=4 VX_gpu_pkg_BAR_SIZE_W=5 VX_gpu_pkg_BYTESEL_BITS=4 VX_gpu_pkg_CTA_TID_LANE_BITS=6 VX_gpu_pkg_CTA_TID_WIDTH=2 VX_gpu_pkg_DV_STACK_SIZE=1 VX_gpu_pkg_DV_STACK_SIZEW=1 VX_gpu_pkg_EX_FPU=2 VX_gpu_pkg_EX_SFU=2 VX_gpu_pkg_EX_TCU=2 VX_gpu_pkg_HART_ID_BITS=2 VX_gpu_pkg_HART_ID_WIDTH=2 VX_gpu_pkg_INST_ARGS_BITS=27 VX_gpu_pkg_INST_FMT_BITS=2 VX_gpu_pkg_INST_FRM_BITS=3 VX_gpu_pkg_INST_LSU_BITS=4 VX_gpu_pkg_INST_OP_BITS=4 VX_gpu_pkg_ISSUE_WIS_BITS=1 VX_gpu_pkg_ISSUE_WIS_W=1 VX_gpu_pkg_LANE_LAUNCH_BITS=6 VX_gpu_pkg_LSU_ADDR_WIDTH=30 VX_gpu_pkg_LSU_CLIENT_TAG_WIDTH=62 VX_gpu_pkg_LSU_WORD_SIZE=4 VX_gpu_pkg_MEM_ATTR_WIDTH=12 VX_gpu_pkg_NB_BITS=3 VX_gpu_pkg_NB_WIDTH=3 VX_gpu_pkg_NCTA_BITS=1 VX_gpu_pkg_NCTA_WIDTH=1 VX_gpu_pkg_NC_BITS=0 VX_gpu_pkg_NC_WIDTH=1 VX_gpu_pkg_NT_BITS=1 VX_gpu_pkg_NUM_CTA_MAX=2 VX_gpu_pkg_NUM_EX_UNITS=3 VX_gpu_pkg_NUM_REGS=32 VX_gpu_pkg_NUM_REGS_BITS=5 VX_gpu_pkg_NUM_XREGS=2 VX_gpu_pkg_NW_BITS=1 VX_gpu_pkg_NW_WIDTH=1 VX_gpu_pkg_PC_BITS=30 VX_gpu_pkg_PERF_CTR_BITS=44 VX_gpu_pkg_PER_ISSUE_WARPS=2 VX_gpu_pkg_REG_TYPES=1 VX_gpu_pkg_RV_REGS=32 VX_gpu_pkg_SIMD_COUNT=1 VX_gpu_pkg_SIMD_IDX_BITS=0 VX_gpu_pkg_SIMD_IDX_W=1 VX_gpu_pkg_UUID_WIDTH=1 VX_gpu_pkg_VX_DCR_DATA_WIDTH=32 VX_gpu_pkg_XLENB=4 VX_gpu_pkg_XLENB_W=2 _bbase_07E29_branch_ctl_if=0 _bbase_07E29_commit_if=0 _bbase_07E29_dispatch_if=0 _bbase_07E29_lsu_client_if=0 _param_07E29_CORE_ID=0
+** Note: accel-jit: synth 'exec_top' (top module 'exec_top') from 1 source(s)
+** Note: accel-jit: synth 'exec_top' via rtlil builder (pid 522300)
+gsm_rtlil: case_assign 'g0pv181_v_vote_result_execute_alu_unit_g_blocks_0_alu_int[31:0]' (32 bits) <- 'vote_all_execute_alu_unit_g_blocks_0_alu_int' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv181_v_vote_result_execute_alu_unit_g_blocks_0_alu_int[31:0]' (32 bits) <- 'vote_any_execute_alu_unit_g_blocks_0_alu_int' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv181_v_vote_result_execute_alu_unit_g_blocks_0_alu_int[31:0]' (32 bits) <- 'vote_uni_execute_alu_unit_g_blocks_0_alu_int' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv181_v_vote_result_execute_alu_unit_g_blocks_0_alu_int[31:0]' (32 bits) <- 'vote_true_execute_alu_unit_g_blocks_0_alu_int' (2 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv182_v_vote_result_execute_alu_unit_g_blocks_0_alu_int[63:32]' (32 bits) <- 'vote_all_execute_alu_unit_g_blocks_0_alu_int' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv182_v_vote_result_execute_alu_unit_g_blocks_0_alu_int[63:32]' (32 bits) <- 'vote_any_execute_alu_unit_g_blocks_0_alu_int' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv182_v_vote_result_execute_alu_unit_g_blocks_0_alu_int[63:32]' (32 bits) <- 'vote_uni_execute_alu_unit_g_blocks_0_alu_int' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv182_v_vote_result_execute_alu_unit_g_blocks_0_alu_int[63:32]' (32 bits) <- 'vote_true_execute_alu_unit_g_blocks_0_alu_int' (2 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv196_v_rsp_data_execute_lsu_unit_g_blocks_0_lsu_slice[31:0]' (32 bits) <- 'rsp_data8_execute_lsu_unit_g_blocks_0_lsu_slice_g_rsp_data_0' (8 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv196_v_rsp_data_execute_lsu_unit_g_blocks_0_lsu_slice[31:0]' (32 bits) <- 'rsp_data16_execute_lsu_unit_g_blocks_0_lsu_slice_g_rsp_data_0' (16 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv197_v_rsp_data_execute_lsu_unit_g_blocks_0_lsu_slice[63:32]' (32 bits) <- 'rsp_data8_execute_lsu_unit_g_blocks_0_lsu_slice_g_rsp_data_1' (8 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv197_v_rsp_data_execute_lsu_unit_g_blocks_0_lsu_slice[63:32]' (32 bits) <- 'rsp_data16_execute_lsu_unit_g_blocks_0_lsu_slice_g_rsp_data_1' (16 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv205_v_read_data_rw_w_execute_sfu_unit_csr_unit_csr_data' (32 bits) <- 'cta_csrs_sched_csr_if[330]' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv205_v_read_data_rw_w_execute_sfu_unit_csr_unit_csr_data' (32 bits) <- 'cta_csrs_sched_csr_if[329]' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv205_v_read_data_rw_w_execute_sfu_unit_csr_unit_csr_data' (32 bits) <- 'cta_csrs_sched_csr_if[328:327]' (2 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv205_v_read_data_rw_w_execute_sfu_unit_csr_unit_csr_data' (32 bits) <- 'cta_csrs_sched_csr_if[224:222]' (3 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv205_v_read_data_rw_w_execute_sfu_unit_csr_unit_csr_data' (32 bits) <- 'cta_csrs_sched_csr_if[227:225]' (3 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv205_v_read_data_rw_w_execute_sfu_unit_csr_unit_csr_data' (32 bits) <- 'cta_csrs_sched_csr_if[230:228]' (3 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv205_v_read_data_ro_w_execute_sfu_unit_csr_unit_csr_data' (32 bits) <- 'read_wid_execute_sfu_unit_csr_unit_csr_data' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv205_v_read_data_ro_w_execute_sfu_unit_csr_unit_csr_data' (32 bits) <- 'rx355[1:0]' (2 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv205_v_read_data_ro_w_execute_sfu_unit_csr_unit_csr_data' (32 bits) <- 'active_warps_sched_csr_if' (2 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv205_v_read_data_ro_w_execute_sfu_unit_csr_unit_csr_data' (32 bits) <- 'cycles_sched_csr_if[43:32]' (12 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv205_v_read_data_ro_w_execute_sfu_unit_csr_unit_csr_data' (32 bits) <- 'instret_sched_csr_if[43:32]' (12 bits): rhs fitted
+gsm_rtlil: case_assign 'g0p218_tmp_ivl_116_execute_sfu_unit_wctl_unit' (30 bits) <- 'rx501' (32 bits): rhs fitted
+gsm_rtlil: case_assign 'g0p218_tmp_ivl_205_execute_sfu_unit_wctl_unit' (30 bits) <- 'rx525' (32 bits): rhs fitted
+gsm_rtlil: case_assign 'g0p223_tmp_ivl_218_execute_alu_unit_g_blocks_0_alu_int' (30 bits) <- 'rx535' (32 bits): rhs fitted
+gsm_rtlil: case_assign 'g0p232_cbr_dest_execute_alu_unit_g_blocks_0_alu_int' (30 bits) <- 'rx596' (32 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv1_oob_writev_idx_5' (32 bits) <- 'rx27' (33 bits): rhs fitted
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/rtlil_catalog/cache_w8_tierA_verify/aj_exec_top_b7c0d37e6df641c7_g522300.c: 1102 comb cells, 66 registers
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/rtlil_catalog/cache_w8_tierA_verify/aj_exec_top_b7c0d37e6df641c7_g522300_nvc.c (NVC-mapped version)
+** Note: accel-jit:   port clk        in  width=1 elem=4
+** Note: accel-jit:   port reset      in  width=1 elem=4
+** Note: accel-jit:   port lsu_client_if_0_req_valid out width=1 elem=4
+** Note: accel-jit:   port lsu_client_if_0_req_data out width=221 elem=4
+** Note: accel-jit:   port lsu_client_if_0_req_ready in  width=1 elem=4
+** Note: accel-jit:   port lsu_client_if_0_rsp_valid in  width=1 elem=4
+** Note: accel-jit:   port lsu_client_if_0_rsp_data in  width=130 elem=4
+** Note: accel-jit:   port lsu_client_if_0_rsp_ready out width=1 elem=4
+** Note: accel-jit:   port dispatch_if_0_valid in  width=1 elem=4
+** Note: accel-jit:   port dispatch_if_0_data in  width=273 elem=4
+** Note: accel-jit:   port dispatch_if_0_ready out width=1 elem=4
+** Note: accel-jit:   port dispatch_if_1_valid in  width=1 elem=4
+** Note: accel-jit:   port dispatch_if_1_data in  width=273 elem=4
+** Note: accel-jit:   port dispatch_if_1_ready out width=1 elem=4
+** Note: accel-jit:   port dispatch_if_2_valid in  width=1 elem=4
+** Note: accel-jit:   port dispatch_if_2_data in  width=273 elem=4
+** Note: accel-jit:   port dispatch_if_2_ready out width=1 elem=4
+** Note: accel-jit:   port commit_if_0_valid out width=1 elem=4
+** Note: accel-jit:   port commit_if_0_data out width=114 elem=4
+** Note: accel-jit:   port commit_if_0_ready in  width=1 elem=4
+** Note: accel-jit:   port commit_if_1_valid out width=1 elem=4
+** Note: accel-jit:   port commit_if_1_data out width=114 elem=4
+** Note: accel-jit:   port commit_if_1_ready in  width=1 elem=4
+** Note: accel-jit:   port commit_if_2_valid out width=1 elem=4
+** Note: accel-jit:   port commit_if_2_data out width=114 elem=4
+** Note: accel-jit:   port commit_if_2_ready in  width=1 elem=4
+** Note: accel-jit:   port sched_csr_if_cycles in  width=44 elem=4

@@ -343,3 +343,48 @@ the actuals-differ-from-defaults case the keep-default fix protects.
 | `repro/gsm_chparam_default/` | `chparam` of a default value on the sv2v hierarchical-reference shape (`hier.v`) |
 | `repro/gsm_keep_stale_default/` | derived defaults (`dep.v`, `chain.v`) and parser edges (`edge.v`); `run.sh` (dep), `run_cases.sh` (all); `run_head.log` (chparam everything), `run_stale.log` (the snapshot bug), `run_final.log`, `run_cases_{head,final}.log` |
 | `evidence/` | the logs cited above; `accel_alu_run.log` is the original no-install run, `accel_alu_nba_fail.log` the install that FAILed before gap 4 was fixed |
+
+## RTLIL walker: translated Vortex admitted and installed in-process (2026-09-04)
+
+`NVC_ACCEL_RTLIL=1 nvc -r --accel` now builds the translated Vortex ALU and
+execute stage (Tier A) through the **direct VHDL→RTLIL walker**
+(`nvc/src/vhdl2vlog.c`, `vhdl2rtlil_module`) and the in-process builder
+(`sv2ghdl/yosys/gen_statemachine.cpp` `gsm_rtlil_*`), with no text-path
+fallback:
+
+    alu_top   synth via rtlil builder -> 183 comb cells / 2 registers  -> ACTIVE (installed) -> PASS 42 cycles;  NVC_ACCEL_VERIFY=1 clean
+    exec_top  synth via rtlil builder -> 1102 comb cells / 66 registers -> ACTIVE (installed) -> PASS 210 cycles; NVC_ACCEL_VERIFY=1 clean
+    census:   ALU 9/9 modules, Tier A 51/51 modules with 0 declines
+
+Evidence: `evidence/walker/accel_w8_*.summary.log`, `after_w8.txt` (15 repros
+`r1`..`r15`, each declining on the previous binary and installing via the
+builder with Y = gold on the new one), `ivtest_w8.log` (285/294, baseline-
+identical). The genuine text path (variable unset) still installs both
+designs; `rtlil-selftest` PASS; NVC `test/accel` 8/8.
+
+Patches: `05-nvc-rtlil-walker.patch` (vhdl2vlog.c, +1289/-144 over the
+census-mode commit) and `06-gen_statemachine-rtlil-fit.patch` (builder
+facade: assignment width fitting, logged). Repros + harness:
+`repros/walker/` (`run.sh before|after <nvcdir> r1_fcap ...`, `phase.sh`,
+`run_rtlil.sh`).
+
+What the walker gained, in the catalogue's numbering (LDX-VORTEX §12) plus
+what the first REAL builds exposed (invisible to the null-builder census):
+1 growable inlinable-function table; 2 nested inlining (depth ≤ 4, actuals
+rendered in the caller's environment); 3 the tgt-vhdl `nba_init_run` tail
+and merged same-edge blocks; 4 slice/element writes to process variables
+inside case/if arms (variable promotion to a hold temp, arm-scoped
+substitutions with poisoning on arm exit); 5 reads of promoted/substituted
+variables; 6 `l3d_bit_read` width from the operand chain; 7 `l3d_sra` →
+`$sshr`; 8 dynamic part-select reads `a(b+K downto b)` → `(a >> b)[K:0]`;
+9 element reads of inlined formals and user functions named like
+numeric_std conversions; 10 (builder) assignment width fitting; 11–14
+dynamic multi-bit writes composed as case actions, the `OOB_WriteV` idiom,
+casez `'Z'` folding, ternaries, signed casts; 15 `l3d_resize_s` as a SIGNED
+resize (`$pos` with A signed) — found by `NVC_ACCEL_VERIFY=1` on the first
+real Tier A build (LSU LB/LH sign extension, multiplier operands), the
+case for keeping VERIFY in the loop: the census cannot see it.
+
+Not yet: Tier B (soft FPU) through the walker; `vx_serial_div` shapes that
+the last census flagged before the r10–r15 work are now clean, but the FPU
+modules have not been walked.

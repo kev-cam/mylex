@@ -1,0 +1,36 @@
+** Note: accel-jit: params NUM_LANES=2 VX_gpu_pkg_ALU_TYPE_BITS=2 VX_gpu_pkg_BYTESEL_BITS=4 VX_gpu_pkg_INST_ARGS_BITS=27 VX_gpu_pkg_INST_FMT_BITS=2 VX_gpu_pkg_INST_FRM_BITS=3 VX_gpu_pkg_INST_OP_BITS=4 VX_gpu_pkg_NCTA_BITS=1 VX_gpu_pkg_NCTA_WIDTH=1 VX_gpu_pkg_NUM_CTA_MAX=2 VX_gpu_pkg_NUM_REGS=64 VX_gpu_pkg_NUM_REGS_BITS=6 VX_gpu_pkg_NUM_XREGS=2 VX_gpu_pkg_NW_BITS=1 VX_gpu_pkg_NW_WIDTH=1 VX_gpu_pkg_PC_BITS=30 VX_gpu_pkg_REG_TYPES=2 VX_gpu_pkg_RV_REGS=32 VX_gpu_pkg_UUID_WIDTH=1 VX_gpu_pkg_XLENB=4 VX_gpu_pkg_XLENB_W=2 _param_8A91B_BLOCK_IDX=0 _param_8A91B_NUM_LANES=2
+** Note: accel-jit: synth 'alu_top' (top module 'alu_top') from 1 source(s)
+** Note: accel-jit: synth 'alu_top' via rtlil builder (pid 521869)
+gsm_rtlil: case_assign 'g0pv68_v_vote_result[31:0]' (32 bits) <- 'vote_all' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv68_v_vote_result[31:0]' (32 bits) <- 'vote_any' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv68_v_vote_result[31:0]' (32 bits) <- 'vote_uni' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv68_v_vote_result[31:0]' (32 bits) <- 'vote_true' (2 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv69_v_vote_result[63:32]' (32 bits) <- 'vote_all' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv69_v_vote_result[63:32]' (32 bits) <- 'vote_any' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv69_v_vote_result[63:32]' (32 bits) <- 'vote_uni' (1 bits): rhs fitted
+gsm_rtlil: case_assign 'g0pv69_v_vote_result[63:32]' (32 bits) <- 'vote_true' (2 bits): rhs fitted
+gsm_rtlil: case_assign 'g0p84_cbr_dest' (30 bits) <- 'rx362' (32 bits): rhs fitted
+gsm_rtlil: case_assign 'g0p86_tmp_ivl_218' (30 bits) <- 'rx375' (32 bits): rhs fitted
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/rtlil_catalog/cache_w8_alu_real/aj_alu_top_b52e28d919fea6bb_g521869.c: 183 comb cells, 2 registers
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/rtlil_catalog/cache_w8_alu_real/aj_alu_top_b52e28d919fea6bb_g521869_nvc.c (NVC-mapped version)
+** Note: accel-jit:   port clk        in  width=1 elem=4
+** Note: accel-jit:   port reset      in  width=1 elem=4
+** Note: accel-jit:   port ex_valid   in  width=1 elem=4
+** Note: accel-jit:   port ex_ready   out width=1 elem=4
+** Note: accel-jit:   port ex_data    in  width=274 elem=4
+** Note: accel-jit:   port rs_valid   out width=1 elem=4
+** Note: accel-jit:   port rs_ready   in  width=1 elem=4
+** Note: accel-jit:   port rs_data    out width=115 elem=4
+** Note: accel-jit:   port br_valid   out width=1 elem=4
+** Note: accel-jit:   port br_wid     out width=1 elem=4
+** Note: accel-jit:   port br_taken   out width=1 elem=4
+** Note: accel-jit:   port br_dest    out width=30 elem=4
+** Note: accel-jit:   port br_is_trap out width=1 elem=4
+** Note: accel-jit:   port br_is_mret out width=1 elem=4
+** Note: accel-jit:   port br_trap_cause out width=4 elem=4
+** Note: accel-jit: bridge 4 inputs, 10 outputs
+** Note: accel-jit: ACTIVE â 'alu_top' subtree rerouted to native model (accel installed)
+** Note: accel-jit: T0 audit: has_field 66 calls 0.0s, find_signal 15 calls 0.0s
+** Note: accel-jit: disconnected 194 driver(s) of rerouted procs (0 live fastclk skipped, 0 bound-output drivers synced)
+** Note: 421ns+0: PASS: 42 cycles replayed and compared from cycle 0, 27 results and 7 branch resolutions identical to the vvp oracle
+   wall 3.63s
