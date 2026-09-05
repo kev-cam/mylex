@@ -255,10 +255,12 @@ Planned:
   `~/src/xyce-build`; wrapper `~/tools/xyce/bin/Xyce` supplies the library
   path). It reproduces kestrel's `sim/kes_vco_xyce.cir` sweep: no oscillation
   below Vctrl 0.7 V, 295→470 MHz over 0.7–1.5 V saturating above 1.0 V, as
-  the kestrel plan records; 13 STEP points in 46 s. Still missing for the
-  cross-checks and for regenerating kestrel's GDS after its routing fixes: a
-  Python with pip so `klayout` and `gdsfactory` wheels can go in a venv (this
-  box's python3.10 has neither pip nor ensurepip).
+  the kestrel plan records; 13 STEP points in 46 s. The Python side is now
+  complete too: pip 22 + `klayout` 0.30.12 and `gdsfactory` 8.32.2 wheels in
+  the user site (`attrs` had to be upgraded over Ubuntu's 21.2, which lacks
+  the `attrs` module name). kestrel's `layout/gds_gen.py` regenerates the
+  committed GDS bit-identically (3741 rects), so its routing defects (§2) can
+  be fixed upstream and re-extracted here.
 - **L2 — standard-cell input.** `def2flat`: LEF/DEF placement + cell GDS →
   FlatLayout with `top/<inst>/<cell>` provenance. Target: a small placed
   block (sky130_fd_sc_hd) or ldx TH22 chain on SG13G2.
