@@ -1,0 +1,13 @@
+** Note: vhdl2rtlil-census: module alu_top: 0 decline(s), 0 distinct, 87 process(es) â census only, using the text path
+** Note: vhdl2rtlil-census: module sv_and_g32d9b04024427e85: 0 decline(s), 0 distinct, 1 process(es) â census only, using the text path
+** Note: vhdl2rtlil-census: module sv_or_gb14f677c97c96da7: 0 decline(s), 0 distinct, 1 process(es) â census only, using the text path
+** Note: vhdl2rtlil-census: module sv_xor_g34e9b2aae3ec6335: 0 decline(s), 0 distinct, 1 process(es) â census only, using the text path
+** Note: vhdl2rtlil-census: module vx_pipe_register: 0 decline(s), 0 distinct, 2 process(es) â census only, using the text path
+** Note: vhdl2rtlil-census: module vx_priority_encoder: 0 decline(s), 0 distinct, 5 process(es) â census only, using the text path
+** Note: vhdl2rtlil-census: module vx_elastic_buffer: 0 decline(s), 0 distinct, 3 process(es) â census only, using the text path
+** Note: vhdl2rtlil-census: module vx_pipe_buffer: 0 decline(s), 0 distinct, 3 process(es) â census only, using the text path
+** Note: vhdl2rtlil-census: module vx_pipe_register1: 0 decline(s), 0 distinct, 2 process(es) â census only, using the text path
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/rtlil_catalog/cache_tb13_alu_census/aj_alu_top_afd1e3c8b3594ab1_g602197.c: 189 comb cells, 2 registers
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/rtlil_catalog/cache_tb13_alu_census/aj_alu_top_afd1e3c8b3594ab1_g602197_nvc.c (NVC-mapped version)
+** Note: accel-jit: ACTIVE â 'alu_top' subtree rerouted to native model (accel installed)
+** Note: 421ns+0: PASS: 42 cycles replayed and compared from cycle 0, 27 results and 7 branch resolutions identical to the vvp oracle

@@ -1,0 +1,4 @@
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/rtlil_catalog/cache_tb13_alu_verify/aj_alu_top_afd1e3c8b3594ab1_g602341.c: 183 comb cells, 2 registers
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/rtlil_catalog/cache_tb13_alu_verify/aj_alu_top_afd1e3c8b3594ab1_g602341_nvc.c (NVC-mapped version)
+** Note: accel-jit: VERIFY â 'alu_top' companion installed (interp drives; accel checked per-net each step)
+** Note: 421ns+0: PASS: 42 cycles replayed and compared from cycle 0, 27 results and 7 branch resolutions identical to the vvp oracle

@@ -353,3 +353,165 @@ signal arrays of vectors used as wire arrays in continuous assignments,
 function `get_cnt_at_lev` (item 11) — plus one walker crash (`SIGSEGV` in
 `vx_wallace_mul`, the long `&` concatenation chain). Evidence:
 `probes/gsm/evidence/walker/tierB_census_w8.summary.log`.
+
+## 14. Tier B (soft FPU) through the walker — inline (2026-09-04)
+
+Continuation of §13, done by hand after the agents ran out of budget. The
+Tier B census started at 109/119 modules clean with the declines in ten
+modules; the walker now walks **119 of 119 with zero declines**, and the
+whole Tier B execute stage builds through the RTLIL builder as one subtree:
+
+    exec_top (Tier B) via rtlil builder: 14,170 comb cells / 168 registers → ACTIVE (installed)
+        → PASS 641 cycles bit-exact vs the vvp oracle, 0 mismatches (106 FPU results);
+        NVC_ACCEL_VERIFY=1: PASS, 0 divergences on the wrapper's 46 outputs
+
+Every construct on the way has a minimal repro (`r16`…`r30`) that declines,
+crashes or mis-simulates on the §13 binary and installs with Y = gold,
+VERIFY clean, on this one. Twenty-six repros in all (plus the r28/r29 stage-exposure diagnostics); ALU and Tier A are
+baseline-identical (census 0 declines, real builds ACTIVE, PASS, VERIFY
+clean).
+
+**What was added to the walker** (`nvc/src/vhdl2vlog.c`; the accel driver
+`nvc/src/rt/model.c` for the gate):
+
+1. *The `vx_wallace_mul` crash* (`r16_bigcat`) was a stack overflow: the
+   700-operand partial-product `&` chain is left-nested, and one `r2_expr`
+   frame per operand — each carrying tens of KB of sigspec buffers — blew
+   the 8 MB stack. Concatenation chains (and elaboration's folded
+   concat-aggregates) are now flattened iteratively; a rendered chain wider
+   than one sigspec buffer lands in temp wires chunk by chunk
+   (`r19_bigcat_vars`, 900 scalar-variable leaves). A depth guard
+   (`expr-depth`) declines instead of crashing on any other pathological
+   nesting.
+
+2. *Unpacked signal arrays of vectors used as wire arrays* (§12 item 9;
+   `r17_warr`; 2,818 of the ~4,000 Tier B declines: `vx_ks_adder`
+   `G_g_KS`/`P_g_KS`, the `vx_find_first` variants, `vx_fdivsqrt_unit`
+   `srt_stage`). A memory-shaped signal whose every index is a constant is
+   kept as ONE flat wire (NVC's flattening: leftmost element highest) and a
+   selection chain `s(i)(j downto k)` / `s(i)(b)` resolves to a bit range
+   of it — in reads, continuous-assign targets and process targets. A
+   dynamic outermost select over a constant word materialises the word
+   and reuses the plain-vector lowerings (`shr` + `[0]` / `[k:0]`). The
+   `(others => (others => L3D_X))` power-on fill folds like the flat one.
+
+3. *Constant-evaluable design functions* (§12 item 11; `r18_cfn`;
+   `VX_csa_tree`'s `get_cnt_at_lev`). A body the inliner rejects — a
+   `while` loop, `if`/`else`, `l3d_mod_s`/`l3d_div_s` — is admitted as a
+   constant function and evaluated at build time when every actual is a
+   constant. Two supporting rules: `r2_eval_int` follows integer/vector
+   constant declarations (generate indices) and *constant-driven signals*
+   — a signal whose only writer is a `s <= <constant>` continuous assign
+   is that constant (tgt-vhdl passes the function's actuals through such
+   temps: `tmp_ivl_92 <= "..0010"; tmp_ivl_97 <= get_cnt_at_lev(tmp_ivl_92,
+   tmp_ivl_94)`). The interpreter runs the body on the substitution table
+   under the same snapshot discipline as the inliner.
+
+   This one also needed the *accel driver*: a subtree the text emitter
+   cannot express was never a candidate (`not fully translatable` → descend
+   into children), so the walker never saw it. With `NVC_ACCEL_RTLIL=1` the
+   driver now dry-walks such a subtree through the walker's null builder in
+   a fork child and, if every module is admitted, carries it on the walker
+   alone — no text fallback from the partial emission (`walker-only … not
+   built — leaving in nvc` if the real build declines). The probe child
+   is silent (`NVC_ACCEL_RTLIL_PROBE`), so the repro harness's report is
+   not fooled by the testbench subtree's expected decline.
+
+4. *Promoted variables read inside a tree* (`r20_fflags`; `vx_fpu_std`'s
+   per-lane fflags merge `v(k) := v(k) or lane(i*5+k)` under `if
+   mask(i)`, k = 0..4, in a `while` over the lanes). Two changes, both in
+   the direction of read_verilog's `$N\v` renaming: a per-bit write inside
+   an arm now keeps a per-bit *substitution* (seeded by landing the value
+   so far) instead of poisoning the variable, so the next bit's read in the
+   same arm sees the value so far; and each top-level switch re-roots every
+   promoted variable in a fresh hold temp whose default — the previous
+   value — is the **first action of every arm** (a synthesized default arm
+   for a `case` without `others`). The first version of this rooted the new
+   temp with a process-root action; that is wrong by construction — root
+   actions run before all switches (`gsm_rtlil_case_assign_root`:
+   "actions-first however they interleave"), so the chain read each
+   previous temp before its own switch assigned it (`r15` mismatched,
+   `r4` failed to build). A second bug hid behind it: a value seeded in an
+   `if`'s implicit default arm survived to depth 0, because only explicit
+   arms were poisoned on exit. Both are repro-covered now.
+
+5. *`VX_dp_ram`* (`r21_dpram`), two bugs. The memory-usage census counted
+   the comb read process's sensitivity-list reference (`process (raddr,
+   ram)` is lowered to a trailing `wait on raddr, ram`) as an access, so
+   the NBA-shadow idiom failed its census (`mem-usage`). Once admitted, the
+   write port was **silently dropped**: a clocked process with no register
+   target returned success before emitting its sync, and the pending memory
+   write with it — a pre-existing silent-wrong-answer path, now closed
+   (a process with memory writes proceeds to the sync).
+
+6. *Comb processes that write one element of a wire array* (`r22_ffirst`;
+   found by the first real Tier B build: the FPU commit data was wrong from
+   cycle 13 on — a normalisation count). `VX_find_first` is a reduction
+   tree over `d_n : array (62 downto 0) of logic3d_vector(4 downto 0)`, one
+   comb process per node writing ONE element from its two children. The
+   flat-wire lowering gave every node a hold temp for the whole array,
+   rooted at the array itself, and committed the whole wire — 31 processes
+   contending for one wire through self-rooted temps. A comb process that
+   writes only a constant sub-range now drives exactly that range (hold
+   temp and `always` commit over `[shi:slo]`). The census cannot see this
+   class of error; the repro set and VERIFY can.
+
+7. *Two guards the text path had and the walker did not*, exposed by the
+   walker-only admission in (3) through NVC's `test/accel` suite run with
+   `NVC_ACCEL_RTLIL=1` (`l3did`, `l3dwrap`, `l3dmv` gave silent wrong
+   answers): a concatenation *element* now takes its declared width — an
+   identity conversion (`to_l3d(x, 8)`, `unsigned_to_l3d_bit(u)`) renders
+   its operand verbatim, so inside `{}` it is landed at the width its
+   declaration says; and a std_logic *character* metavalue (`'U'` `'X'`
+   `'W'` `'-'` `'Z'`) has no value-plane form and declines (the named
+   `L3D_X` keeps its 0; `folded_int` would otherwise have supplied the enum
+   *position*). `test/accel` is 8/8 in both modes now, and `l3did` installs
+   through the walker where the text path has to decline. One more of my
+   own errors is worth recording: `type_is_logic3d` is true of a *vector's*
+   element type too, so a declared-width test that took it for "scalar"
+   landed every slice in a concat as one bit and 17 repros mismatched at
+   once — the repro set is what makes this kind of inline work safe.
+
+8. *A scalar logic3d literal's encoding* (`r24_fcvt`, `r30_G`; found by
+   the second real Tier B build, which was bit-exact except the float→int
+   results — 2.5 → 10 instead of 2). Bisected stage by stage through the
+   fcvt unit (`r28`/`r29` expose each pipeline register and stage-0
+   signal through a debug port) to one statement, then construct by
+   construct (`r30_A`…`G`) to `cast12(resize((L3D_0 & fclass(4)), 12))`.
+   logic3d is `natural 0..7` with bit 0 the value plane; elaboration folds
+   the package constant `L3D_0` into the integer literal 2, and
+   `r2_const`'s integer-literal path rendered it as `1'd2` — so the
+   exponent gained 2 wherever that concat fed it. A scalar logic3d literal
+   now renders as its value-plane bit. (Also found on the way and fixed:
+   an inlined identity cast bound to a `resize` actual inherits the
+   operand's width, which is what the concat-element rule in 7 is for.)
+
+**Verification on the final build.** Twenty-six repros MATCH + INSTALLED
+via the RTLIL builder, `r17`–`r24` VERIFY clean (0 divergences); ALU census
+0/9 declines, real 183 cells ACTIVE PASS, VERIFY clean; Tier A census 0/51,
+real 1102 cells / 66 registers ACTIVE PASS, VERIFY clean; Tier B census
+119/119 clean, real 14,170 cells / 168 registers ACTIVE PASS 641 cycles,
+VERIFY clean (0 divergences);
+`rtlil-selftest` PASS (sv2ghdl untouched); NVC `test/accel` 8/8 text and
+8/8 walker; NVC full `run_regr` 1,147 ok / 112 failed / 4 skipped, failure
+set identical to the §13 baseline by name. iverilog was
+not touched in this leg, so ivtest was not re-run. Committed: nvc `428cd6948` (on top of `340ce5cba`); mylex: this commit.
+Evidence: `probes/gsm/evidence/walker/*tb1[12]*`, patch
+`probes/gsm/07-nvc-rtlil-walker-tierB.patch`.
+
+**Still open.** (a) VERIFY reports only the first divergence per net and
+only the candidate's ports, so localising the two Tier B failures took
+hand-built stage exposure (`r28`/`r29`); a probe-port facility in the
+accel driver (`NVC_ACCEL_PIN_COMPLETE` exists for census records, not for
+arbitrary internal nets) would make that a one-line knob. (b) The driver's
+oversized-subtree descend (`NVC_ACCEL_DESCEND_BIG`) keys on the text
+emission's size, which is a stub for a walker-only subtree — it cannot
+split one. (c) `r2_eval_int` still returns the logic3d *encoding* for a
+scalar literal (`L3D_0` = 2); only `r2_const` renders the value plane. It
+is consistent with the comparisons it feeds today (`l3d_eq1` on encodings)
+but is a trap for the next person. (d) The per-slice comb targets cover
+constant sub-ranges; a comb process writing a *dynamic* element of a wire
+array still takes the whole array (conservative, declines nothing). (e)
+The walker builds Tier B in ~10 min of yosys time on this laptop VM
+(text-path synth of the same design is comparable); nothing was done for
+speed.

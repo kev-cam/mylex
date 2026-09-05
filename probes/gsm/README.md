@@ -388,3 +388,60 @@ case for keeping VERIFY in the loop: the census cannot see it.
 Not yet: Tier B (soft FPU) through the walker; `vx_serial_div` shapes that
 the last census flagged before the r10–r15 work are now clean, but the FPU
 modules have not been walked.
+
+## RTLIL walker, Tier B (soft FPU) admitted and built inline (2026-09-04)
+
+Continuation of the section above, done by hand (LDX-VORTEX section 14 has
+the narrative).  Patch `07-nvc-rtlil-walker-tierB.patch` (nvc
+`src/vhdl2vlog.c`, `src/vhdl2vlog.h`, `src/rt/model.c`, on top of
+`340ce5cba`, committed in nvc as `428cd6948`) takes the Tier B census from 109/119 modules to 119/119, and
+the whole Tier B execute stage then builds through the RTLIL builder as one
+subtree: exec_top 14,170 comb cells / 168 registers, ACTIVE, PASS 641 cycles
+bit-exact (106 FPU results), `NVC_ACCEL_VERIFY=1` clean.
+
+What the patch adds, each with a repro in `repros/walker/`:
+
+| repro | construct | before (section 13 binary) | after |
+|---|---|---|---|
+| `r16_bigcat` | 700-operand `&` chain into a process variable (VX_wallace_mul partial products) | walker CRASH (SIGSEGV: one `r2_expr` frame per operand) | flattened iteratively; MATCH |
+| `r19_bigcat_vars` | the same chain over scalar-variable leaves, wider than one sigspec buffer | `concat-chain` (no leaf width) | chunked into temp wires; MATCH |
+| `r17_warr` | unpacked array-of-vector signal used as a wire array: `G(5) <= ..`, `G(6)(46)`, `G(5)(7 downto 0)`, dynamic bit/part of a constant word, nested-select register target, `(others => (others => X))` fill (VX_ks_adder, VX_find_first, VX_fdivsqrt_unit; 2,818 declines) | `cont-assign-target`, `array-ref@cont-rhs`, `comb-empty` | flat wire + bit ranges; MATCH, VERIFY clean |
+| `r18_cfn` | while-loop constant function (VX_csa_tree `get_cnt_at_lev`) with constant-driven signal actuals; the text path cannot emit it | module declined `function .. k..`; subtree never a candidate | evaluated at build time; the accel driver admits the subtree on the walker's word (fork-probe, no text fallback); MATCH, VERIFY clean |
+| `r20_fflags` | per-bit read-modify-write of a process variable inside `if` arms, iterated by a `while` over lanes (VX_fpu_std fflags merge) | `pvar-read-in-tree` | per-bit substitution kept across the arm; a fresh hold temp per top-level switch with the default as every arm's first action; MATCH, VERIFY clean |
+| `r21_dpram` | NBA-shadow RAM with a comb read (VX_dp_ram): `v := ram; if we then v(a) := d; .. ram <= v;` and `process (raddr, ram)` | `mem-usage` (the sensitivity-list reference counted as an access); once admitted, the write port was silently DROPPED — a clocked process with no register target returned before its sync | both fixed; MATCH, VERIFY clean |
+| `r24_fcvt`, `r30_G` | `cast12(resize((L3D_0 & fclass(4)), 12))` in VX_fcvt_unit's exponent unpack: a scalar logic3d literal (natural 0..7, bit 0 = value) folded to the integer 2 | rendered `1'd2`: every float->int result off by a factor 4 (the second real Tier B build, cycles 464..528) | value-plane bit; MATCH (r24 = the whole fcvt unit, VERIFY clean) |
+| `r22_ffirst` | one comb process per tree node writing ONE element of a wire array from its children (VX_find_first) | admitted, silently WRONG: every node held and committed the whole array through a self-rooted temp — the first real Tier B build had wrong FPU commit data from cycle 13 | a comb process that writes only a constant sub-range drives exactly that range; MATCH, VERIFY clean |
+
+Two guards the text path had and the walker lacked, exposed by the new
+walker-only admission through NVC's own `test/accel` (they gave silent
+wrong answers with `NVC_ACCEL_RTLIL=1`): a concatenation element takes its
+*declared* width (`to_l3d(x, 8)`, `unsigned_to_l3d_bit(u)` render their
+operand verbatim; elaboration's folded concat-aggregates now go through the
+same flattener), and a std_logic character metavalue (`'U'` etc.) declines
+instead of folding to its enum position.  `test/accel` is 8/8 in both
+modes now (`evidence/walker/nvc_test_accel_tb13.txt`); `l3did` even
+installs through the walker where the text path has to decline.
+
+Three of my own intermediate versions were wrong and are worth recording
+because the repros caught them: re-rooting a promoted variable with a
+process-*root* action (root actions run before every switch, so the chain
+read stale temps — r15 mismatched, r4 failed to build); a declared-width
+test that took `type_is_logic3d` as "scalar" (it is true of a vector's
+element type too — every slice in a concat landed as one bit; 17 repros
+mismatched at once); and the whole-array hold temp of r22 above, which
+only the real Tier B build (not the census, not the 21 repros) exposed.
+
+Verification on the final build: 26/26 repros MATCH + INSTALLED via the
+builder (`evidence/walker/repros_tb13.txt`), `r17`–`r24` VERIFY clean; ALU
+and Tier A census/real/VERIFY baseline-identical (183 cells / 2 regs and
+1102 cells / 66 regs, ACTIVE, PASS 42 / 210 cycles); Tier B census 119/119;
+Tier B real 14,170 cells / 168 regs ACTIVE PASS 641 cycles
+(`evidence/walker/accel_tb13_tierB_real.summary.log`); Tier B VERIFY clean
+(0 divergences);
+`rtlil-selftest` PASS (sv2ghdl untouched); `run_regr` 1,147 ok / 112 failed
+/ 4 skipped, failure set identical to the baseline by name
+(`evidence/walker/nvc_run_regr_tb13.txt`).  iverilog was
+not touched, so ivtest was not re-run.
+
+Harness: `repros/walker/phase.sh <tag> [repros|alu|tierA|tierAreal|tierAverify|tierB|tierBreal|tierBverify]`
+(the `$S` scratch layout is documented at the top of the script).

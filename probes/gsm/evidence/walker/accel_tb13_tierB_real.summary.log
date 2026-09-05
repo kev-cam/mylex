@@ -1,0 +1,4 @@
+** Note: accel-jit: synth 'exec_top' via rtlil builder (pid 602135)
+Generated /tmp/claude-1002/-home-claude/50726f3c-29a3-493b-90a6-ca98ad342bc6/scratchpad/cmp/rtlil_catalog/cache_tb13_tierB_real/aj_exec_top_382e7cabaaa67172_g602135.c: 14170 comb cells, 168 registers
+** Note: accel-jit: ACTIVE â 'exec_top' subtree rerouted to native model (accel installed)
+** Note: 6411ns+0: PASS: 641 cycles replayed and compared from cycle 0 (outputs bit-exact, x = don't-care); DUT commits alu/lsu/sfu/fpu=39/27/74/106, lsu req/rsp=27/20, branches=13, csr_wr=2, trap_csr_wr=5, warp_ctl=17 -

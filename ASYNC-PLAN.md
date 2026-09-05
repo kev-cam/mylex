@@ -272,7 +272,7 @@ frontend in tools we own and simulate with; which path the mapper trusts
 (sv2v → Yosys vs iverilog/sv2ghdl → NVC → RTLIL) is an open decision for
 P3.
 
-*Evidence as of 2026-09-03 (LDX-VORTEX.md §6–§10):* the chain is proven
+*Evidence as of 2026-09-04 (LDX-VORTEX.md §6–§14; the direct VHDL→RTLIL walker now builds the whole Tier B execute stage with the soft FPU in-process, 14,170 cells, bit-exact over 641 cycles — §13–§14):* the chain is proven
 through Vortex's whole execute stage including the soft FPU — with **sv2v
 in front**, because Icarus cannot parse SV interface ports — and the
 translated VHDL is cycle-for-cycle equivalent to Icarus on the same
