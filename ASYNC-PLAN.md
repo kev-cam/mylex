@@ -336,7 +336,11 @@ cosim), the `xyce` fork (analog, auto ADC/DAC bridge insertion at
 mixed-signal boundaries), `stat-sim` (variability AMS models, SPEF from
 layout, MTBF), `ldx` (runtime linker + many-core fabric), `arv` (async
 RISC-V testbed). PIPES.md's foreign endpoints are the intended transport
-between federation members.
+between federation members. Post-layout timing balance (dissolving standard-cell
+boundaries, resizing devices and power wiring against spread objectives, with
+the RT constraint set of §8 as its path-set input) is the `layopt` tool in this
+repository — see `LAYOUT-OPT.md`; it sits after place-and-route and feeds
+stat-sim's SPEF path.
 
 **License boundary — settled 2026-09-01.** All tools in the mylex
 repository, `bindings/ams.py` and the mylex compiler included, are PolyForm

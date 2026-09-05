@@ -1,0 +1,15 @@
+ref_devices          131
+our_devices          131
+wl_match             True
+wl_only_ours         {}
+wl_only_ref          {}
+ref_nets             335
+our_nets             335
+degree_hist_match    True
+degree_hist_ref      [(1, 287), (2, 43), (3, 4), (8, 1)]
+degree_hist_ours     [(1, 287), (2, 43), (3, 4), (8, 1)]
+isomorphic           True
+area_perim_match     True
+ap_only_ours         {}
+ap_only_ref          {}
+RESULT MATCH

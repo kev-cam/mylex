@@ -1,0 +1,8 @@
+357 nets, total C 246.6 fF, total lumped R 104.2 kohm
+  net 1      C   59.02 fF  R   1345.7 ohm  li=0.5 met1=1.4 met2=38.1 met3=19.0
+  net 3      C   17.11 fF  R     47.8 ohm  met1=1.8 met2=15.3
+  net 2      C    3.16 fF  R     22.3 ohm  met1=0.9 met2=2.3
+  net 242    C    2.72 fF  R      0.0 ohm  poly=2.7
+  net 5      C    1.99 fF  R   1234.7 ohm  li=0.6 met1=0.5 met2=0.9
+  net 41     C    1.99 fF  R   1234.7 ohm  li=0.6 met1=0.5 met2=0.9
+wrote probes/layopt/evidence/kestrel_pll.spef

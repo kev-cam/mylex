@@ -1,0 +1,39 @@
+== 1. extraction of /home/claude/src/kestrel/layout/kestrel_pll.gds
+   3741 rects -> 3869 shapes, 357 nets, 131 devices (44 n, 87 p) in 0.30s
+   largest net 1: 8 device terminals ['D'] -- the four stages' diff-pair drains are one net
+   41 PFET finger-to-finger S/D nets local to one transistor cell: fingers are chained in series, not strapped
+   VCO VDD rail: rect 64 [-7.56, 20.525, 65.48, 22.525] um, net 3 with 0 devices
+   delay-cell PMOS-source MET2 pads: {'kestrel_delay_cell#0': 2, 'kestrel_delay_cell#1': 2, 'kestrel_delay_cell#2': 2, 'kestrel_delay_cell#3': 2} (none reaches the rail; gap 6.79 um)
+== 2. repair: add MET2 stubs pad -> rail
+   VDD net now has 8 device terminals: [('M11', 'S'), ('M20', 'S'), ('M26', 'S'), ('M35', 'S'), ('M41', 'S'), ('M5', 'S'), ('M50', 'S'), ('M56', 'S')]
+   feed taken at the lowest VDD shape (PLL pin side): via1 [86.165, -25.275, 86.315, -25.125] um
+== 3. baseline: R(feed -> stub) per cell, ohm
+   kestrel_delay_cell#0   ['19.4', '18.7']
+   kestrel_delay_cell#1   ['18.2', '17.5']
+   kestrel_delay_cell#2   ['16.7', '16.8']
+   kestrel_delay_cell#3   ['16.6', '16.5']
+   mean 17.5  spread 2.9  (16.3%)  power-metal area 162.3 um2
+== 4. optimize rail width + per-cell stub widths (Nelder-Mead, 120 iters max)
+   baseline rule violations already in the layout (ignored unless a move adds one): 506
+  iter   0  cost 0.827365  x=['2.000', '0.600', '0.260', '0.260', '0.260']
+  iter  10  cost 0.40224  x=['3.725', '0.686', '0.360', '0.001', '-0.045']
+  iter  20  cost 0.35023  x=['4.103', '0.615', '0.288', '-0.057', '0.045']
+  iter  30  cost 0.35023  x=['4.103', '0.615', '0.288', '-0.057', '0.045']
+  iter  40  cost 0.337263  x=['3.963', '0.597', '0.302', '-0.038', '0.032']
+  iter  50  cost 0.328006  x=['3.865', '0.596', '0.297', '-0.114', '0.078']
+  iter  60  cost 0.327357  x=['3.868', '0.589', '0.296', '-0.123', '0.075']
+  iter  70  cost 0.327357  x=['3.868', '0.589', '0.296', '-0.123', '0.075']
+   148 evaluations in 70.4s; best legal=True topology_ok=True new_violations=0
+   rail_w                   3.868 um
+   kestrel_delay_cell#0_stub_w 0.589 um
+   kestrel_delay_cell#1_stub_w 0.296 um
+   kestrel_delay_cell#2_stub_w 0.140 um
+   kestrel_delay_cell#3_stub_w 0.140 um
+== 5. result: R(feed -> stub) per cell, ohm
+   kestrel_delay_cell#0   ['17.3', '17.0']
+   kestrel_delay_cell#1   ['17.3', '17.0']
+   kestrel_delay_cell#2   ['17.3', '17.2']
+   kestrel_delay_cell#3   ['17.0', '17.0']
+   mean 17.2  spread 0.4  (2.3%)  power-metal area 300.8 um2
+   spread 2.9 -> 0.4 ohm (x0.14), mean 17.5 -> 17.2 ohm, area x1.85
+   wrote /usr/local/src/mylex/probes/layopt/evidence/kestrel_pll_vdd_balanced.gds (+ .spef, .cir); total 72.1s

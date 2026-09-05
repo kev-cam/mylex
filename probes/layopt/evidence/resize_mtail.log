@@ -1,0 +1,6 @@
+kestrel_pll_top/kestrel_vco/kestrel_delay_cell#2/Mtail: W 4.610 -> 9.000 um, 6 rects touched, topology preserved, 0 new rule violations
+wrote /tmp/claude-1002/-home-claude/b6db4fc1-9057-4ac8-a778-6853422acb8f/scratchpad/r9.gds
+kestrel_pll_top/kestrel_vco/kestrel_delay_cell#2/Mtail: W 4.610 -> 12.000 um, 6 rects touched, topology preserved, 2 new rule violations
+   min_space diff: rect 1276 vs 1448 0.180 < 0.270 um
+   min_space li: rect 1279 vs 1455 0.100 < 0.170 um
+wrote /tmp/claude-1002/-home-claude/b6db4fc1-9057-4ac8-a778-6853422acb8f/scratchpad/r12.gds
