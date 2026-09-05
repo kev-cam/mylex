@@ -48,6 +48,26 @@ Variables at the optimum: rail 3.87 µm (from 2.0), stub widths 0.59 / 0.30 /
 evaluations, each a full re-extraction; all accepted points topology-identical
 to the start and free of new rule violations (506 pre-existing ones ignored).
 
+## L1 — SPICE in the loop (`l1_xyce_loop.py`, `evidence/l1_xyce_loop.log`)
+
+Needs Xyce (`~/tools/xyce/bin/Xyce`) and gdsfactory. Regenerates kestrel's PLL
+GDS at the oscillating VCO sizing into `$LAYOPT_SCRATCH`, extracts it with
+layopt, drives kestrel's Xyce testbench from the extracted sizes and the
+cell-local output wiring C, fits the T0 drive model from 5 Xyce runs, then
+applies layopt moves and compares T0's prediction with fresh Xyce runs:
+
+| move (all 4 delay cells) | Xyce shift | T0 error |
+|---|---|---|
+| Mtail 40→50 µm (×1.25) | +6.41 % | 1.34 % |
+| output stubs ×2 width (C 1.58→1.63 fF) | −0.06 % | 0.02 % |
+| both | +6.37 % | 1.34 % |
+| Mtail 40→44 µm (×1.10, held out) | +2.86 % | 0.41 % |
+
+Fitted model (Vctrl 0.9 V): f = k·(W_tail/40 µm)^0.338 / (110.8 fF + C_par);
+`evidence/l1_t0_drive_model.json`. The replica-bias transistor is held fixed
+because it is not in the layout; scaling it with the tail (kestrel's
+`current_scale`) is a different circuit and gives a = 0.10.
+
 ## Findings about the kestrel layout (report upstream)
 
 1. Inter-stage MET3 routes share track y≈8.43 µm and overlap: all four stages'

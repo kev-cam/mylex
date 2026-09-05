@@ -130,6 +130,26 @@ and free of new rule violations. Small numbers (the feed is a single MET2
 route), but the mechanism is the one that matters for async: equalize the
 gradient, not the drop.
 
+**Probe `probes/layopt/l1_xyce_loop.py` — L1, SPICE in the loop (2026-09-05,
+log `evidence/l1_xyce_loop.log`, model `evidence/l1_t0_drive_model.json`):**
+kestrel's PLL layout is regenerated with gdsfactory at the known-good VCO
+sizing (the committed GDS uses the analytical sizing that kestrel itself says
+undersizes for sky130), layopt extracts it (Mtail 40 µm as 8 fingers, diff
+pair 20 µm as 4, loads 10 µm as 2, 1.58 fF of cell-local output wiring per
+node), and kestrel's own Xyce testbench and `run_xyce` are driven from those
+extracted numbers. A five-run Xyce sweep (tail ×0.8/1.0/1.25, +5/+10 fF) fits
+the first-order T0 drive model f = k·(W_tail/W0)^a / (C_int + C_par) with
+a = 0.338 and C_int = 110.8 fF at Vctrl 0.9 V. Then layopt moves the geometry
+and T0 predicts the result before Xyce checks it: Mtail ×1.25 in all four
+cells (80 rects, +6.4 % in Xyce, T0 error 1.34 %), output stubs ×2 width
+(56 rects, −0.06 %, error 0.02 %), both together (error 1.34 %), and a
+true held-out Mtail ×1.10 (+2.86 %, error 0.41 %). Every move
+topology-identical, no new rule violations. Lesson recorded: sweep only what
+the move changes — kestrel's `current_scale` scales tail and replica bias
+together, which the Maneatis replica largely compensates (fitted a = 0.10,
+4 % miss on the tail-only move) until the bias, which is not in the layout,
+was held fixed.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -174,8 +194,12 @@ extractor, worth fixing upstream in `layout/gds_gen.py`):
 | T2 | stat-sim: variability models, quantified MTBF, EM/IR hot-spots (`klayout2spef`, `hotspot`) | accept under variation; async gradient margins |
 | T3 | nvc with SPEF taps (stat-sim `spef.py` → `pl_wire/pl_load`) | system-level check of the balanced design |
 
-T0 is deliberately cheap and deliberately approximate (C within ~15 % of
-KLayout on the PLL, R within ~4 %). Its job is to rank moves; T1/T2 decide.
+T0 is deliberately cheap: exact geometry (§2), analytic RC, and a drive
+model whose constants come from T1 — L1 fitted f = k·W^a/(C_int + C_par) from
+five Xyce runs and predicted layout moves within 1.34 %. Its job is to rank
+moves; T1/T2 decide. The drive constants are per cell type and operating
+point (`evidence/l1_t0_drive_model.json` is for the kestrel delay cell at
+Vctrl 0.9 V) — a library of them is what a `drive.py` module will hold.
 
 ## 5. Moves
 
@@ -246,10 +270,11 @@ Planned:
 - **L0 — DONE (2026-09-05).** Extractor matches KLayout on kestrel's PLL; RC
   and SPEF; W and wire moves under topology + delta-DRC guard; Nelder-Mead
   loop; supply-gradient balance demonstrated on the VCO rail.
-- **L1 — kestrel loop re-hosted.** Run kestrel's Xyce VCO testbench on the
-  layopt-extracted netlist before/after a device or rail move; confirm the
-  frequency shift predicted by T0 within kestrel's own ±3 % tolerance.
-  Xyce is now available (2026-09-05): Trilinos 14.4 (`~/tools/trilinos`,
+- **L1 — kestrel loop re-hosted — DONE (2026-09-05).** kestrel's Xyce VCO
+  testbench driven from layopt-extracted sizes and wiring C; layopt moves
+  (Mtail ×1.25 / ×1.10, stubs ×2) predicted by the fitted T0 drive model
+  within 1.34 % worst case, 0.41 % on the held-out point, against kestrel's
+  3 % tolerance (§2, `probes/layopt/l1_xyce_loop.py`). Xyce provenance: Trilinos 14.4 (`~/tools/trilinos`,
   Fortran off, system BLAS/LAPACK/AMD runtimes) and Xyce 7.11 from
   `/usr/local/src/xyce` were both built with smak (`~/src/trilinos-build`,
   `~/src/xyce-build`; wrapper `~/tools/xyce/bin/Xyce` supplies the library

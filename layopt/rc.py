@@ -209,3 +209,19 @@ def write_spef(nets: Sequence[NetRC], path: str, design: str = "layopt") -> int:
     with open(path, 'w') as fh:
         fh.write('\n'.join(lines) + '\n')
     return len(nets)
+
+
+def shapes_c_fF(ex: Extraction, shape_ids: Sequence[int]) -> float:
+    """Capacitance of a subset of shapes (e.g. one cell's share of a net):
+    exact union area + perimeter per layer, same formula as net_rc."""
+    tech, dbu = ex.tech, ex.dbu_um
+    by: Dict[str, List[Rect]] = {}
+    for s in shape_ids:
+        by.setdefault(ex.shapes[s].layer, []).append(ex.shapes[s].rect)
+    c = 0.0
+    for layer, rects in by.items():
+        if layer not in tech.carea and layer not in tech.cfringe:
+            continue
+        a, p = geom.union_area_perimeter(rects)
+        c += tech.carea.get(layer, 0.0) * a * dbu * dbu + tech.cfringe.get(layer, 0.0) * p * dbu
+    return c
