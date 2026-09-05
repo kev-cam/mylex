@@ -139,6 +139,26 @@ END DESIGN"""
             print("  (sky130_fd_sc_hd cells not found, geometric part skipped)")
 
 
+def test_elmore_single_wire():
+    """Distributed-RC Elmore on one met2 wire: R_drv*C_total + R*C_wire/2 + R*C_in."""
+    fl = gds.FlatLayout(dbu_um=0.001, top="w")
+    L, w = 100.0, 0.14                                 # um
+    _r(fl, "met2", 0.0, 0.0, L, w, "w/wire")
+    _r(fl, "met2", -0.2, -0.03, 0.0, w + 0.03, "w/drv")   # driver pad touching the left end
+    _r(fl, "met2", L, -0.03, L + 0.2, w + 0.03, "w/rcv")  # receiver pad touching the right end
+    ex = extract.extract(fl, T)
+    net = ex.net_of_shape[0]
+    ids = {ex.shapes[s].prov: s for s in ex.nets[net].shapes}
+    drv, rcv, wire = ids["w/drv"], ids["w/rcv"], ids["w/wire"]
+    r_drv, c_in = 3000.0, 2.0
+    got = rc.elmore_delays(ex, net, drv, [rcv], r_drv, {rcv: c_in})[rcv]
+    R = T.rsh["met2"] * L / w
+    cw = rc.shape_c_fF(ex, wire); c_tot = sum(rc.shape_c_fF(ex, s) for s in (drv, rcv, wire)) + c_in
+    c_rcv = rc.shape_c_fF(ex, rcv) + c_in
+    want = (r_drv * c_tot + R * cw / 2 + R * c_rcv) * 1e-3
+    assert abs(got - want) / want < 0.02, (got, want, R)
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):

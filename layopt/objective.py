@@ -47,3 +47,12 @@ def elmore_balance(ex: Extraction, net_ids: Sequence[int], r_drive: float, c_in_
 def metal_area_um2(fl: FlatLayout, ids: Sequence[int]) -> float:
     d = fl.dbu_um
     return sum(fl.rects[i].area for i in ids) * d * d
+
+
+def fork_balance(ex: Extraction, net_id: int, driver_sid: int, receiver_sids: Sequence[int],
+                 r_drive: float, c_in_fF: float) -> Spread:
+    """Isochronic-fork check as a spread: Elmore delay from the fork's driver
+    to each receiver (ps).  The path set (driver, receivers) is what nulex's
+    constraint extraction will supply; here it is given by hand."""
+    d = rc.elmore_delays(ex, net_id, driver_sid, receiver_sids, r_drive, {r: c_in_fF for r in receiver_sids})
+    return spread([d[r] for r in receiver_sids])

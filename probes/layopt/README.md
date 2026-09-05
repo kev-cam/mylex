@@ -88,6 +88,18 @@ the nand2 PMOS strip in both directions.
 `evidence/stdcells_vs_klayout.log`: layopt vs KLayout per cell — W/L equal and
 isomorphic for inv_1, nand2_1, nor2_1, a21o_1, buf_1, dfxtp_1.
 
+## L3 — isochronic fork balance (`l3_fork_balance.py`, `evidence/l3_fork_balance.log`)
+
+L2 row plus a forked net (inv u1 → u2 one cell away, and → v4 in the other
+row), each branch with a met2 detour (60 / 180 µm). Elmore delay from the
+driver pin to each receiver on the extracted RC tree (`rc.elmore_delays`,
+driver 3 kΩ, receiver 2.1 fF); the optimizer scales branch widths.
+
+| long branch on | path R A / B | imbalance before | after sizing | verdict |
+|---|---|---|---|---|
+| met2 | 66 / 117 Ω | 0.96 ps (1.2 %) | 0.10 ps (B widened 6×) | balanced |
+| li1 | 66 / 6780 Ω | 74.9 ps (59 %) | 17.0 ps (B at 6× bound) | reroute to metal or buffer |
+
 ## Findings about the kestrel layout (report upstream)
 
 1. Inter-stage MET3 routes share track y≈8.43 µm and overlap: all four stages'

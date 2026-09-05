@@ -171,6 +171,26 @@ gate pieces split by polygon slabbing or by L-shaped poly were being dropped
 (nor2_1 2 of 4 devices, dfxtp_1 14 of 24); fixed by merging poly and diffusion
 before gate recognition, now equal to KLayout on all six cells.
 
+**Probe `probes/layopt/l3_fork_balance.py` — L3, the isochronic fork in
+geometry (2026-09-05, log `evidence/l3_fork_balance.log`):** the path set
+(driver pin, receiver pins) is given by hand — it is what nulex's constraint
+extraction will emit — and everything downstream is layopt: `rc.elmore_delays`
+builds the net's RC tree from the driver (shortest-resistance tree over the
+segment graph), gives each shape its capacitance and each receiver its Cin,
+and returns the Elmore delay to every receiver; `objective.fork_balance` is
+the spread. On the L2 row, net f leaves inv u1 and forks to u2 (60 µm met2
+detour) and to v4 in the other row (180 µm detour). With the long branch on
+met2: path R 66 vs 117 Ω, delays 81.2 vs 82.2 ps, imbalance 0.96 ps (1.2 %);
+the optimizer widens the long branch to its 6× bound and leaves the short one
+at minimum, imbalance 0.10 ps. With the long branch on li1 (12.8 Ω/sq): path R
+6.8 kΩ, delays 88.6 vs 163.5 ps, imbalance 74.9 ps — a real fork violation
+against a gate delay of tens of ps; sizing at its bound leaves 17 ps (14.7 %),
+so the verdict is "reroute to metal or buffer", which is what a designer needs
+to hear and what the met2 variant confirms. Two probe-routing mistakes on the
+way were caught by the tool itself (a met2 crossing that shorted the branches;
+widening that merged a detour's own legs): the RC tree simply reported the
+bypass.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -247,7 +267,8 @@ Placement moves are out of scope until a real router is in the loop.
 ## 6. Objectives
 
 Implemented: supply gradient (R_eff spread feed→taps), Elmore-delay spread
-across a set of nets with common driver R and receiver C, metal area.
+across a set of nets with common driver R and receiver C, **fork balance**
+(per-receiver Elmore on one net's RC tree, `rc.elmore_delays`), metal area.
 
 Planned:
 
@@ -319,9 +340,10 @@ Planned:
   whitespace to grow into: the payoff moves are L4's. Still to come here: a
   real P&R result (needs OpenROAD or a DEF from elsewhere) and the ldx TH
   cells on SG13G2.
-- **L3 — async objective.** Path sets from nulex's constraint extraction;
-  fork-branch Elmore balance and completion-tree drive balance on a QDI-bound
-  `VX_alu_int` slice.
+- **L3 — async objective — geometric half DONE (2026-09-05).** Fork-branch
+  Elmore balance on a real RC tree, sized under the guard, with the verdict
+  when sizing cannot close the gap (§2). Waiting on nulex for the path sets;
+  completion-tree drive balance and a QDI-bound `VX_alu_int` slice follow.
 - **L4 — dissolve for real.** Diffusion merge across cell edges, contact
   growth, whitespace reclaim.
 - **L5 — variation-aware acceptance** through stat-sim (T2) and nvc (T3).

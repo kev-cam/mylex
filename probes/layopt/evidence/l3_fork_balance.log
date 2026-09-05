@@ -1,0 +1,11 @@
+driver R 3000 ohm (inv_1 nominal), receiver Cin 2.1 fF; a gate delay here is tens of ps
+== variant: long branch detour on met2 -- fork net f: 76 shapes, device terminals [('M1', 'D'), ('M2', 'D'), ('M3', 'G'), ('M5', 'G'), ('M51', 'G'), ('M52', 'G')]
+   branch A detour: [('met2', 30.1, 0.14), ('met2', 29.6, 0.14)]   branch B detour: [('met2', 89.5, 0.14), ('met2', 86.1, 0.14)]
+   baseline: net C 21.33 fF; path R driver->u2.A 66 ohm, driver->v4.A 117 ohm; Elmore 81.19 / 82.15 ps; spread 0.96 ps (1.2% of mean)
+   optimized (57 evals, legal=True): A_scale 0.50 B_scale 6.00 -> widths A [0.14, 0.14] B [0.84, 0.84]
+   result: path R driver->v4.A 53 ohm; Elmore 91.89 / 91.98 ps; spread 0.10 ps (0.1%), was 0.96 ps; metal area x4.73
+== variant: long branch detour on li1 -- fork net f: 95 shapes, device terminals [('M1', 'D'), ('M2', 'D'), ('M3', 'G'), ('M5', 'G'), ('M51', 'G'), ('M52', 'G')]
+   branch A detour: [('met2', 30.1, 0.14), ('met2', 29.6, 0.14)]   branch B detour: [('li', 89.6, 0.17), ('li', 86.2, 0.17)]
+   baseline: net C 23.45 fF; path R driver->u2.A 66 ohm, driver->v4.A 6780 ohm; Elmore 88.55 / 163.45 ps; spread 74.90 ps (59.4% of mean)
+   optimized (57 evals, legal=True): A_scale 0.50 B_scale 6.00 -> widths A [0.14, 0.14] B [1.02, 1.02]
+   result: path R driver->v4.A 1246 ohm; Elmore 107.00 / 123.99 ps; spread 17.00 ps (14.7%), was 74.90 ps; metal area x4.91

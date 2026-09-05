@@ -225,3 +225,65 @@ def shapes_c_fF(ex: Extraction, shape_ids: Sequence[int]) -> float:
         a, p = geom.union_area_perimeter(rects)
         c += tech.carea.get(layer, 0.0) * a * dbu * dbu + tech.cfringe.get(layer, 0.0) * p * dbu
     return c
+
+
+def shape_c_fF(ex: Extraction, sid: int) -> float:
+    """Capacitance of one conducting shape from its own rectangle."""
+    sh = ex.shapes[sid]
+    tech, dbu = ex.tech, ex.dbu_um
+    if sh.layer not in tech.carea and sh.layer not in tech.cfringe:
+        return 0.0
+    w, h = (sh.rect[2] - sh.rect[0]) * dbu, (sh.rect[3] - sh.rect[1]) * dbu
+    return tech.carea.get(sh.layer, 0.0) * w * h + tech.cfringe.get(sh.layer, 0.0) * 2 * (w + h)
+
+
+def elmore_delays(ex: Extraction, net_id: int, driver_sid: int, receiver_sids: Sequence[int],
+                  r_drive: float = 0.0, c_in_fF: Optional[Dict[int, float]] = None,
+                  segments: Optional[Sequence[Segment]] = None) -> Dict[int, float]:
+    """Elmore delay (ps) from a driver shape to each receiver shape on one net.
+
+    The net's segment graph is reduced to its shortest-resistance-path tree
+    from the driver (via stacks make small loops; the tree keeps the
+    least-resistive route).  Each shape carries its own C plus any receiver
+    input capacitance; Elmore(receiver) = r_drive*C_total + sum over the path
+    of R_seg * C_downstream(seg).
+    """
+    import heapq
+    segs = list(segments) if segments is not None else net_segments(ex, net_id)
+    adj: Dict[int, List[Tuple[int, float]]] = {}
+    for s in segs:
+        r = max(s.r, 1e-3)
+        adj.setdefault(s.a, []).append((s.b, r)); adj.setdefault(s.b, []).append((s.a, r))
+    nodes = set(ex.nets[net_id].shapes) | set(adj)
+    dist = {driver_sid: 0.0}; parent: Dict[int, Tuple[int, float]] = {}
+    pq = [(0.0, driver_sid)]
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d > dist.get(u, float("inf")):
+            continue
+        for v, r in adj.get(u, []):
+            nd = d + r
+            if nd < dist.get(v, float("inf")):
+                dist[v] = nd; parent[v] = (u, r); heapq.heappush(pq, (nd, v))
+    c_in = c_in_fF or {}
+    cap = {n: shape_c_fF(ex, n) + c_in.get(n, 0.0) for n in nodes}
+    children: Dict[int, List[int]] = {}
+    for v, (u, r) in parent.items():
+        children.setdefault(u, []).append(v)
+    down: Dict[int, float] = {}
+    order = sorted(dist, key=lambda n: -dist[n])            # leaves first
+    for n in order:
+        down[n] = cap.get(n, 0.0) + sum(down[c] for c in children.get(n, []))
+    c_total = sum(cap[n] for n in dist)
+    out = {}
+    for rs in receiver_sids:
+        if rs not in dist:
+            out[rs] = float("inf"); continue
+        t = r_drive * c_total
+        n = rs
+        while n in parent:
+            u, r = parent[n]
+            t += r * down[n]
+            n = u
+        out[rs] = t * 1e-3                                  # ohm*fF -> ps
+    return out
