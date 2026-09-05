@@ -1,0 +1,10 @@
+layer     kl area um2    lo area um2      kl perim um    lo perim um
+poly          111.071        123.161          804.230        830.410
+li            168.688        168.688         1166.890       1166.890
+met1          124.070        164.084         1117.210       1189.290
+met2          320.008        533.590          922.104       1297.304
+met3          135.274        135.274          543.470        543.470
+nets: klayout 335 (device-connected, purged) layopt 357 (all)
+total C fF: klayout-geometry 220.00  layopt 246.61
+top-8 C fF klayout-geometry: [59.02, 1.99, 1.99, 1.99, 1.99, 1.14, 1.14, 1.14]
+top-8 C fF layopt          : [59.02, 17.11, 3.16, 2.72, 1.99, 1.99, 1.99, 1.99]

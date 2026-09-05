@@ -107,7 +107,7 @@ kestrel is github.com/kev-cam/kestrel `cd4757e` at `/usr/local/src/kestrel`
 | `tech.py` | sky130 + IHP SG13G2: layers, via stack, RC (kestrel/stat-sim numbers), min width/space/enclosure | — |
 | `extract.py` | connectivity (union-find over touching rects + cut stacks), MOS3 recognition (gate=poly∩diff, S/D=diff−poly, well decides N/P), AS/AD/PS/PD with shared-region split, parallel-finger combine, SPICE out | **vs KLayout golden:** 131 devices (44 N/87 P), W/L multiset equal, AS/AD/PS/PD multiset equal, 335 device nets with identical degree histogram, device/net graph **isomorphic** (colour refinement). 0.3 s. |
 | `compare.py` | reference-netlist comparison; topology signature (sizes excluded) used as the LVS-identity guard | as above; `layopt compare` → `RESULT MATCH` |
-| `rc.py` | per-net C from exact union area+perimeter; distributed R (centre-to-junction squares, via R per cut); Laplacian effective resistance (numpy pinv); SPEF writer | top net 59.0 fF / 1346 Ω vs stat-sim's KLayout-based 67.9 fF / 1.4 kΩ on the same GDS; SPEF read back by stat-sim `spef.py` (357 nets) |
+| `rc.py` | per-net C from exact union area+perimeter; distributed R (centre-to-junction squares, via R per cut); Laplacian effective resistance (numpy pinv); SPEF writer | **vs KLayout 0.30.12 merged regions** (`probes/layopt/klayout_rc_xcheck.py`): per-(net, layer) union area and perimeter identical on all 335 device-connected nets (li and met3 totals equal to the nm; poly/met1/met2 differ only by the 22 device-less nets KLayout's `purge()` drops, VDD rail included). stat-sim's larger figures for the same GDS (67.9 vs 59.0 fF top net, 34.7 vs 17.1 fF rail) are its unmerged per-polygon sum double-counting kestrel's overlapping rectangles. SPEF read back by stat-sim `spef.py` (357 nets) |
 | `moves.py` | `resize_device_w` (stretch along W: crossing rects grow, rects beyond shift, per finger), `set_wire_width`, `translate`, `add_rect`, provenance-based device footprint | Mtail of delay cell 2: 4.61→9.0 µm, 6 rects, topology preserved, 0 new violations; →12.0 µm: diff 0.18<0.27 and li 0.10<0.17 against the diff-pair row above — caught |
 | `drc.py` | min width, same-layer spacing between different conductors (touching different-net rects = violation), cut enclosure against the metal union; `new_violations` = delta vs baseline | synthetic-inverter test: NFET pushed flush against PFET diffusion is flagged |
 | `objective.py` | `supply_gradient` (R_eff feed→taps), `elmore_balance`, `metal_area_um2`, `Spread` | probe below |
@@ -279,9 +279,12 @@ Planned:
   same decision fixes layopt's path-set input format.
 - Rule-table fidelity: enough to keep moves legal, not to sign off. Do not let
   it grow into a DRC deck; call KLayout instead.
-- T0 accuracy: C is ~15 % under KLayout's on the PLL (no coupling term, fringe
-  on union perimeter). Calibrate against T1 at L1 before trusting rankings on
-  tight margins.
+- T0 accuracy: the geometry side is settled (exact agreement with KLayout's
+  merged regions, §2); what remains is the model — no coupling term, analytic
+  fringe, centre-to-junction R. Calibrate against T1 (Xyce) at L1 before
+  trusting rankings on tight margins. stat-sim's `klayout2spef.py` should
+  merge each net's region before summing (`.merged()`); as written it
+  over-reports C wherever a net's rectangles overlap.
 - kestrel's PLL is half-routed (§2). Ring-delay balance — the objective this
   tool exists for — cannot be demonstrated on it until the inter-stage
   routing is fixed upstream. The supply-gradient probe stands in.
