@@ -248,12 +248,17 @@ Planned:
   loop; supply-gradient balance demonstrated on the VCO rail.
 - **L1 — kestrel loop re-hosted.** Run kestrel's Xyce VCO testbench on the
   layopt-extracted netlist before/after a device or rail move; confirm the
-  frequency shift predicted by T0 within kestrel's own ±3 % tolerance. Needs
-  a built Xyce (source is at `/usr/local/src/xyce`, `build-xyce.sh`; sky130
-  models are in kestrel `sim/models/`) and, for cross-checks and for
-  regenerating kestrel's GDS after its routing fixes, a Python with pip so
-  `klayout` and `gdsfactory` wheels can go in a venv (this box's python3.10
-  has neither pip nor ensurepip).
+  frequency shift predicted by T0 within kestrel's own ±3 % tolerance.
+  Xyce is now available (2026-09-05): Trilinos 14.4 (`~/tools/trilinos`,
+  Fortran off, system BLAS/LAPACK/AMD runtimes) and Xyce 7.11 from
+  `/usr/local/src/xyce` were both built with smak (`~/src/trilinos-build`,
+  `~/src/xyce-build`; wrapper `~/tools/xyce/bin/Xyce` supplies the library
+  path). It reproduces kestrel's `sim/kes_vco_xyce.cir` sweep: no oscillation
+  below Vctrl 0.7 V, 295→470 MHz over 0.7–1.5 V saturating above 1.0 V, as
+  the kestrel plan records; 13 STEP points in 46 s. Still missing for the
+  cross-checks and for regenerating kestrel's GDS after its routing fixes: a
+  Python with pip so `klayout` and `gdsfactory` wheels can go in a venv (this
+  box's python3.10 has neither pip nor ensurepip).
 - **L2 — standard-cell input.** `def2flat`: LEF/DEF placement + cell GDS →
   FlatLayout with `top/<inst>/<cell>` provenance. Target: a small placed
   block (sky130_fd_sc_hd) or ldx TH22 chain on SG13G2.
