@@ -292,8 +292,8 @@ in-process on NVC's own RTLIL, and NVC can then simulate the mapped
 netlist — the equivalence loop closes without leaving the process.
 
 **Plugin boundary — the async/NCL emitter is a mylex shared library, not
-in-tree in nvc/sv2ghdl** (architecture directive relayed via the
-yosys-integration session, 2026-09-05; confirm with the architect). The
+in-tree in nvc/sv2ghdl** (architecture
+directive, ratified by the architect 2026-09-05). The
 actor-network / NCL emitter (task #60 — firing rules over the walker's
 RTLIL extraction, in place of the synchronous `sm_eval`+clock C model) is
 built as a mylex `.so`, dlopened by nvc/gsm over a **stable C ABI**,
