@@ -291,6 +291,26 @@ process in the toolchain: the NCL mapper can be a Yosys pass invoked
 in-process on NVC's own RTLIL, and NVC can then simulate the mapped
 netlist — the equivalence loop closes without leaving the process.
 
+**Plugin boundary — the async/NCL emitter is a mylex shared library, not
+in-tree in nvc/sv2ghdl** (architecture directive relayed via the
+yosys-integration session, 2026-09-05; confirm with the architect). The
+actor-network / NCL emitter (task #60 — firing rules over the walker's
+RTLIL extraction, in place of the synchronous `sm_eval`+clock C model) is
+built as a mylex `.so`, dlopened by nvc/gsm over a **stable C ABI**,
+env-pinned like `NVC_GSM_LIB`, with a NULL-tolerant fallback when absent.
+It hooks the gsm design-ready seam (`g_design_ready` / `gsm_run_guarded`)
+and runs its NCL pass over the `RTLIL::Design` the walker built, as an
+added *consumer* alongside the C emitter. Rationale is the same containment
+that keeps a yosys header out of nvc: **mylex is PolyForm Noncommercial and
+must not become an in-tree derivative of GPL nvc** — so the PolyForm code
+links `libyosys` on the mylex side and implements the nvc/gsm-defined
+plugin ABI, and nvc never links or includes mylex. Division of the ABI: the
+yosys-integration session owns the nvc/gsm side (the walker, the
+`gsm_rtlil_*` builder, and the design-ready seam remain in-tree, GPL); this
+workstream owns the mylex plugin side. The small plugin ABI is defined
+jointly at the seam when the emitter is built — bake the boundary in from
+the first line, do not retrofit.
+
 ### C++ (planned)
 
 An HLS-shaped path to the same IR. Deferred; the contract language must
