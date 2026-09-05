@@ -515,3 +515,66 @@ array still takes the whole array (conservative, declines nothing). (e)
 The walker builds Tier B in ~10 min of yosys time on this laptop VM
 (text-path synth of the same design is comparable); nothing was done for
 speed.
+
+## 15. Merged the second Claude's SSA var-versioning; SSA authoritative for process-locals (2026-09-05)
+
+A second Claude session (the "yosys-integration" session) develops the same
+`vhdl2rtlil` walker and `gsm_rtlil_*` builder. Its commit `5cfda69ce` — SSA
+var-versioning, where a process-local write becomes a module-level
+`$mux(pathcond, newvalue, prev-version)` fed by a path-condition stack
+(feed-forward SSA, no proc-action ordering) — landed on `origin/master`. The
+user pulled it and **ratified SSA as authoritative for process-locals**,
+retiring the bits/hold-temp scheme this repo's Tier B work (§13–§14) used.
+
+**Merge `06c0ccf44`** (a real two-parent merge of `428cd6948` + `5cfda69ce`)
+resolves `src/vhdl2vlog.c` toward SSA:
+
+- **Kept** (orthogonal, still pass): iterative concat flattening (r16/r19),
+  array-of-vector wire-array reads and targets (r17), the constant-function
+  interpreter and constant-driven signals (r18), the FPU fflags path via
+  SSA's versioned partial-write (r20), the `VX_dp_ram` write-port fix (r21),
+  the scalar logic3d-literal value-plane fix in `r2_const` (r24/r30), and the
+  concat-element-width and std_logic-metavalue guards.
+- **Dropped**: the hold-temp / arm-defaults / tree re-rooting scheme,
+  bits-mode per-bit substitution writes, and the per-slice comb-target
+  narrowing (r22). The last is important: it narrowed `t->width` in
+  `r2_collect_cb`, which SSA's target-range check reads, producing spurious
+  `target-range@var-part` declines on `alu_top` — **my artifact, not SSA's
+  gap** (removing it cleared alu_top's target-range declines 7→0).
+
+**Consequence — a correctness-safe acceleration-coverage dip.** SSA does not
+yet cover several Vortex shapes the retired scheme did, so the walker
+declines more and falls back to the text path. Tier A census 51→44 clean;
+Tier B census 119→75, and `exec_top` declines wholesale to the text path
+(the dominant Tier B gap is `while-eval` ×19 — a static loop bound the SSA
+`r2_eval_int` does not yet fold — then `var-elem` const-index ×6 and
+`var-read` ×5). **The text path still simulates Tier B bit-exact — 641
+cycles, 106 FPU ops.** Verified on the merged binary: `run_regr` 1,147 ok / 112
+failed with the failure set identical to the pre-merge binary (zero NVC
+regression); `test/accel` 8/8 on the walker path with no silent-wrong
+answers; 24/26 walker repros MATCH.
+
+**One regression is a soundness issue, not just coverage.** `r22_ffirst`
+(the `VX_find_first` reduction tree: N comb processes each writing one
+constant element of one array-of-vector signal) **installs-but-wrong**
+rather than declining. Root cause is MERGE-SPECIFIC, not a pure gap in the
+SSA base: the other session's SSA-alone walker does not reproduce it (their
+minimal disjoint-element and priority fixtures install and match). It is the
+interaction of the wire-array TARGET support kept from this repo's work
+(`r2_sel_nested`, needed for `r17`/`vx_ks_adder`) with the multi-process
+pattern — `r2_sel_nested` makes the array-of-vector element writes
+installable, and origin's `r2_collect_cb` then collects the array once with
+a whole-array hold temp so the N processes each commit the whole wire and
+contend. It installs clean (no census decline) and runs wrong. The fix is a
+decline guard in the shared collect/commit layer — detect >1 process driving
+disjoint constant elements of one array target and fall to text. Masked in
+real Vortex because `exec_top` declines wholesale.
+
+**Ownership.** The gap-closing (order: the r22 decline-guard, var-elem
+const-index reads, the while-bound fold for pipe/shift registers, var-read
+on `alu_top`) and the bits-mode single-scheme consolidation are the
+yosys-integration session's, on top of this merge — coordinated over the
+cross-session channel (both sides froze the shared files during the merge to
+avoid re-conflict). The merge is committed, not pushed. The async/NCL mapper
+still consumes that session's in-process `RTLIL::Design` (ASYNC-PLAN §5), so
+the interface contract is unchanged by this merge.
