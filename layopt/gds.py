@@ -126,12 +126,15 @@ def read(path: str) -> Library:
             el.pathtype = struct.unpack(">h", body)[0]
         elif rt == SNAME:
             ref.sname = body.decode("ascii", "replace").rstrip("\0")
-        elif rt == STRANS:
-            ref.mirror_x = bool(body[0] & 0x80)
+        elif rt == STRANS:                  # also legal inside TEXT (presentation transform): ignore there
+            if ref is not None:
+                ref.mirror_x = bool(body[0] & 0x80)
         elif rt == MAG:
-            ref.mag = _real8(body)
+            if ref is not None:
+                ref.mag = _real8(body)
         elif rt == ANGLE:
-            ref.angle = _real8(body)
+            if ref is not None:
+                ref.angle = _real8(body)
         elif rt == COLROW:
             ref.cols, ref.rows = struct.unpack(">hh", body)
         elif rt == STRING:

@@ -1,0 +1,50 @@
+== 1. DEF written: /tmp/claude-1002/-home-claude/b6db4fc1-9057-4ac8-a778-6853422acb8f/scratchpad/l2row.def (12 components, 2 rows, second row FS)
+== 2. def2flat + extract: 1034 rects, 968 shapes, 52 nets, 52 devices
+   u1   sky130_fd_sc_hd__inv_1    2 devices (cell alone  2) ok
+   u2   sky130_fd_sc_hd__nand2_1  4 devices (cell alone  4) ok
+   u3   sky130_fd_sc_hd__inv_2    2 devices (cell alone  2) ok
+   u4   sky130_fd_sc_hd__dfxtp_1 24 devices (cell alone 24) ok
+   u5   sky130_fd_sc_hd__decap_4  2 devices (cell alone  2) ok
+   u6   sky130_fd_sc_hd__fill_1   0 devices (cell alone  0) ok
+   v1   sky130_fd_sc_hd__buf_1    4 devices (cell alone  4) ok
+   v2   sky130_fd_sc_hd__nor2_1   4 devices (cell alone  4) ok
+   v3   sky130_fd_sc_hd__a21o_1   8 devices (cell alone  8) ok
+   v4   sky130_fd_sc_hd__inv_1    2 devices (cell alone  2) ok
+   v5   sky130_fd_sc_hd__fill_1   0 devices (cell alone  0) ok
+   v6   sky130_fd_sc_hd__decap_4  0 devices (cell alone  2) MISMATCH
+   named nets: ['VGND', 'VPWR', 'm1', 'm2', 'n1', 'n2', 'n3', 'q']
+   VPWR: one net, 22 device terminals, spans 12/12 instances ok
+   VGND: one net, 22 device terminals, spans 12/12 instances ok
+   n1  4 device terminals across ['u1', 'u2']
+   n2  5 device terminals across ['u2', 'u3']
+   n3  4 device terminals across ['u3', 'u4']
+   m1  4 device terminals across ['v1', 'v2']
+   m2  5 device terminals across ['v2', 'v3']
+   q   4 device terminals across ['u4', 'v1']
+== 3. move on a standard cell: u2 (nand2_1) PMOS strip, headroom search (shared-provenance footprint)
+   footprint [1.235, 1.185, 2.925, 2.785] um, 41 rects (prov shared by 4 devices)
+   W -> 1.30 um (high side): PMOS W [1.3, 1.3], 11 rects, topology CHANGED, 6 new violations
+      enclosure li/licon: rect 58 vs 623 0.000 < 0.080 um   [li u2/sky130_fd_sc_hd__nand2_1 vs licon v2/sky130_fd_sc_hd__nor2_1]
+      enclosure li/licon: rect 60 vs 619 0.000 < 0.080 um   [li u2/sky130_fd_sc_hd__nand2_1 vs licon v2/sky130_fd_sc_hd__nor2_1]
+      min_space met1: rect 69 vs 944 0.091 < 0.140 um   [met1 u2/sky130_fd_sc_hd__nand2_1 vs met1 net:m1]
+      min_space met1: rect 69 vs 948 0.070 < 0.140 um   [met1 u2/sky130_fd_sc_hd__nand2_1 vs met1 net:m1]
+   W -> 1.10 um (high side): PMOS W [1.1, 1.1], 11 rects, topology preserved, 4 new violations
+      min_space li: rect 58 vs 605 0.085 < 0.170 um   [li u2/sky130_fd_sc_hd__nand2_1 vs li v2/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 86 vs 626 0.111 < 0.210 um   [poly u2/sky130_fd_sc_hd__nand2_1 vs poly v2/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 86 vs 627 0.110 < 0.210 um   [poly u2/sky130_fd_sc_hd__nand2_1 vs poly v2/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 89 vs 631 0.110 < 0.210 um   [poly u2/sky130_fd_sc_hd__nand2_1 vs poly v2/sky130_fd_sc_hd__nor2_1]
+   W -> 1.05 um (high side): PMOS W [1.05, 1.05], 11 rects, topology preserved, 4 new violations
+      min_space li: rect 58 vs 605 0.135 < 0.170 um   [li u2/sky130_fd_sc_hd__nand2_1 vs li v2/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 86 vs 626 0.161 < 0.210 um   [poly u2/sky130_fd_sc_hd__nand2_1 vs poly v2/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 86 vs 627 0.160 < 0.210 um   [poly u2/sky130_fd_sc_hd__nand2_1 vs poly v2/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 89 vs 631 0.160 < 0.210 um   [poly u2/sky130_fd_sc_hd__nand2_1 vs poly v2/sky130_fd_sc_hd__nor2_1]
+   W -> 1.30 um (low side): PMOS W [1.3, 1.3], 9 rects, topology CHANGED, 2 new violations
+      enclosure diff/licon: rect 95 vs 81 0.000 < 0.040 um   [diff u2/sky130_fd_sc_hd__nand2_1 vs licon u2/sky130_fd_sc_hd__nand2_1]
+      enclosure diff/licon: rect 95 vs 83 0.000 < 0.040 um   [diff u2/sky130_fd_sc_hd__nand2_1 vs licon u2/sky130_fd_sc_hd__nand2_1]
+   W -> 1.20 um (low side): PMOS W [1.2, 1.2], 9 rects, topology CHANGED, 0 new violations
+   W -> 1.10 um (low side): PMOS W [1.1, 1.1], 9 rects, topology preserved, 1 new violations
+      min_space li: rect 65 vs 56 0.070 < 0.170 um   [li u2/sky130_fd_sc_hd__nand2_1 vs li u2/sky130_fd_sc_hd__nand2_1]
+   W -> 1.05 um (low side): PMOS W [1.05, 1.05], 9 rects, topology preserved, 1 new violations
+      min_space li: rect 65 vs 56 0.120 < 0.170 um   [li u2/sky130_fd_sc_hd__nand2_1 vs li u2/sky130_fd_sc_hd__nand2_1]
+   no legal growth in either direction: nand2_1's PMOS strip has no whitespace in this placement
+   wrote evidence/l2row_flat.gds, l2row_layopt.cir

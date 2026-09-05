@@ -77,17 +77,54 @@ class Extraction:
         return graph_signature(self)
 
 
-def _flow_axis(g: Rect, d: Rect) -> str:
-    """Axis along which current flows: the one where diffusion extends beyond
-    the gate on both sides."""
+def _flow_axis(g: Rect, d: Rect, p: Optional[Rect] = None) -> str:
+    """Axis along which current flows.  Primary evidence: the poly overhang --
+    poly extends beyond the gate along W, so if poly sticks out top and
+    bottom, W is along y and current flows along x.  Fallback: the axis where
+    the diffusion extends beyond the gate on both sides; then gate aspect."""
+    if p is not None:
+        over_y = p[1] < g[1] and p[3] > g[3]
+        over_x = p[0] < g[0] and p[2] > g[2]
+        if over_y and not over_x:
+            return "x"
+        if over_x and not over_y:
+            return "y"
     ext_x = d[0] < g[0] and d[2] > g[2]
     ext_y = d[1] < g[1] and d[3] > g[3]
     if ext_x and not ext_y:
         return "x"
     if ext_y and not ext_x:
         return "y"
-    # ambiguous: pick the longer gate dimension as W
     return "x" if (g[3] - g[1]) >= (g[2] - g[0]) else "y"
+
+
+def _merge_gate_pieces(gates, shapes):
+    """Gate pieces that abut along either axis with identical extent in the
+    other (same kind) are one gate: merge them so every gate has a terminal on
+    both sides.  Returns (merged gates, set of absorbed gate shape ids)."""
+    rects = [shapes[g[0]].rect for g in gates]
+    merged = []
+    dropped = set()
+    for grp in geom.clusters(rects):
+        grp = sorted(grp, key=lambda k: (rects[k][0], rects[k][1]))
+        while grp:
+            k = grp.pop(0); gsid, mpi, drect, kind = gates[k]
+            r = rects[k]; dr = list(drect)
+            changed = True
+            while changed:
+                changed = False
+                for k2 in list(grp):
+                    r2 = rects[k2]
+                    same_x = r2[0] == r[0] and r2[2] == r[2] and (r2[1] == r[3] or r2[3] == r[1])
+                    same_y = r2[1] == r[1] and r2[3] == r[3] and (r2[0] == r[2] or r2[2] == r[0])
+                    if (same_x or same_y) and gates[k2][3] == kind:
+                        r = (min(r[0], r2[0]), min(r[1], r2[1]), max(r[2], r2[2]), max(r[3], r2[3]))
+                        d2 = gates[k2][2]
+                        dr = [min(dr[0], d2[0]), min(dr[1], d2[1]), max(dr[2], d2[2]), max(dr[3], d2[3])]
+                        dropped.add(gates[k2][0]); grp.remove(k2); changed = True
+            shapes[gsid].rect = r
+            merged.append((gsid, mpi, tuple(dr), kind))
+    return merged, dropped
 
 
 def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, float, float]]] = None,
@@ -134,7 +171,10 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
             if lname == tech.poly:
                 polys.append(sid)
 
-    # gates = poly & diff ; S/D = diff - poly
+    # gates = poly & diff ; S/D = diff - poly.  Both layers are first merged into
+    # maximal rectangles per touching cluster: layouts store L-shaped poly and
+    # notched diffusion as several rectangles (or as polygons this reader slabs),
+    # and a gate must be computed on the union or it arrives in pieces.
     poly_index = geom.BinIndex()
     for sid in polys:
         poly_index.add(sid, shapes[sid].rect)
@@ -142,24 +182,42 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
     for i, w in enumerate(wells):
         well_index.add(i, w)
 
-    gates: List[Tuple[int, int, Rect, str]] = []        # (gate sid, poly sid, diff rect, kind)
+    diff_rects = [d[0] for d in diffs]
+    diff_prov = geom.BinIndex()
+    for i, (drect, dprov, didx) in enumerate(diffs):
+        diff_prov.add(i, drect)
+    merged_diffs = geom.merge_rects(diff_rects)
+    merged_polys = geom.merge_rects([shapes[sid].rect for sid in polys])
+    mpoly_index = geom.BinIndex()
+    for i, r in enumerate(merged_polys):
+        mpoly_index.add(i, r)
+
+    def prov_of(rect: Rect):
+        cands = diff_prov.query_overlap(rect)
+        return (diffs[cands[0]][1], diffs[cands[0]][2]) if cands else ("", -1)
+
+    gates: List[Tuple[int, int, Rect, str]] = []        # (gate sid, merged-poly idx, diff rect, kind)
     sd_shapes: List[int] = []
-    gate_to_diff: Dict[int, int] = {}
-    for di, (drect, dprov, didx) in enumerate(diffs):
-        in_well = any(geom.contains(wells[w], drect) or geom.overlaps(wells[w], drect)
-                      for w in well_index.query_overlap(drect))
+    for drect in merged_diffs:
+        dprov, didx = prov_of(drect)
+        in_well = any(geom.overlaps(wells[w], drect) for w in well_index.query_overlap(drect))
         kind = "p" if in_well else "n"
         holes: List[Rect] = []
-        for psid in poly_index.query_overlap(drect):
-            g = geom.inter(shapes[psid].rect, drect)
+        for mpi in mpoly_index.query_overlap(drect):
+            g = geom.inter(merged_polys[mpi], drect)
             if g is None:
                 continue
             gsid = add("gate", g, dprov, didx)
-            gates.append((gsid, psid, drect, kind))
-            gate_to_diff[gsid] = di
+            gates.append((gsid, mpi, drect, kind))
             holes.append(g)
         for sd in geom.subtract(drect, holes):
             sd_shapes.append(add("sd_" + kind, sd, dprov, didx))
+
+    gates, dropped_gates = _merge_gate_pieces(gates, shapes)
+    for gsid in dropped_gates:                          # pieces absorbed into a merged gate
+        shapes[gsid].rect = (0, 0, 0, 0)
+        shapes[gsid].layer = "void"
+    by_layer["gate"] = [g for g in by_layer.get("gate", []) if g not in dropped_gates]
 
     # ---- connectivity ------------------------------------------------------
     uf = geom.UnionFind(len(shapes))
@@ -191,8 +249,9 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
     for lname in [tech.poly] + list(tech.routing):
         connect_same(lname)
     connect_same("sd_n"); connect_same("sd_p")
-    for gsid, psid, _, _ in gates:                      # gate <-> its poly
-        uf.union(gsid, psid)
+    for gsid, _, _, _ in gates:                         # gate <-> every poly rect over it
+        for psid in poly_index.query_overlap(shapes[gsid].rect):
+            uf.union(gsid, psid)
     # diffusion / poly contacts
     connect_pair("sd_n", tech.diff_contact, touch=False)
     connect_pair("sd_p", tech.diff_contact, touch=False)
@@ -222,13 +281,15 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
         bi = idx_of.get(layer)
         if not bi:
             return False
-        for sid in bi.query_touch((x, y, x, y)):
-            nets[net_of_shape[sid]].name = name
-            return True
+        for sid in bi.candidates((x, y, x, y)):
+            r = shapes[sid].rect
+            if r[0] <= x <= r[2] and r[1] <= y <= r[3]:
+                nets[net_of_shape[sid]].name = name
+                return True
         return False
 
     for tx in fl.texts:
-        lname = inv.get(tx.layer)
+        lname = tech.text_layers.get(tx.layer) or inv.get(tx.layer)
         if lname in idx_of:
             name_net_at(lname, tx.xy[0], tx.xy[1], tx.text)
     for name, (layer, xu, yu) in (labels or {}).items():
@@ -248,9 +309,9 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
         sd_share[sid] = max(1, len(gate_index.query_touch(shapes[sid].rect)))
 
     devices: List[Device] = []
-    for k, (gsid, psid, drect, kind) in enumerate(gates):
+    for k, (gsid, mpi, drect, kind) in enumerate(gates):
         g = shapes[gsid].rect
-        ax = _flow_axis(g, drect)
+        ax = _flow_axis(g, drect, merged_polys[mpi])
         if ax == "x":
             l_dbu, w_dbu = g[2] - g[0], g[3] - g[1]
             side_a = (g[0], g[1], g[0], g[3])          # left edge

@@ -158,3 +158,60 @@ def bbox(rects: Iterable[Rect]) -> Optional[Rect]:
     if not rs:
         return None
     return (min(r[0] for r in rs), min(r[1] for r in rs), max(r[2] for r in rs), max(r[3] for r in rs))
+
+
+def clusters(rects: Sequence[Rect]) -> List[List[int]]:
+    """Group rectangle indices into touching/overlapping clusters."""
+    bi = BinIndex()
+    for i, r in enumerate(rects):
+        bi.add(i, r)
+    uf = UnionFind(len(rects))
+    for i, r in enumerate(rects):
+        for j in bi.query_touch(r):
+            if j > i:
+                uf.union(i, j)
+    groups: Dict[int, List[int]] = {}
+    for i in range(len(rects)):
+        groups.setdefault(uf.find(i), []).append(i)
+    return list(groups.values())
+
+
+def merge_rects(rects: Sequence[Rect]) -> List[Rect]:
+    """Union of rectangles as maximal vertical slabs (cells merged along y,
+    then equal-y-span neighbours merged along x).  Works per touching cluster
+    so the coordinate grid stays small."""
+    out: List[Rect] = []
+    for grp in clusters(rects):
+        rs = [rects[i] for i in grp]
+        if len(rs) == 1:
+            out.append(rs[0]); continue
+        xs = sorted({v for r in rs for v in (r[0], r[2])})
+        ys = sorted({v for r in rs for v in (r[1], r[3])})
+        xi = {v: i for i, v in enumerate(xs)}; yi = {v: i for i, v in enumerate(ys)}
+        nx, ny = len(xs) - 1, len(ys) - 1
+        cov = [[False] * ny for _ in range(nx)]
+        for r in rs:
+            for i in range(xi[r[0]], xi[r[2]]):
+                row = cov[i]
+                for j in range(yi[r[1]], yi[r[3]]):
+                    row[j] = True
+        slabs: List[Rect] = []
+        for i in range(nx):
+            j = 0
+            while j < ny:
+                if cov[i][j]:
+                    k = j
+                    while k < ny and cov[i][k]:
+                        k += 1
+                    slabs.append((xs[i], ys[j], xs[i + 1], ys[k])); j = k
+                else:
+                    j += 1
+        slabs.sort(key=lambda s: (s[1], s[3], s[0]))
+        merged: List[Rect] = []
+        for s in slabs:
+            if merged and merged[-1][1] == s[1] and merged[-1][3] == s[3] and merged[-1][2] == s[0]:
+                merged[-1] = (merged[-1][0], s[1], s[2], s[3])
+            else:
+                merged.append(s)
+        out.extend(merged)
+    return out

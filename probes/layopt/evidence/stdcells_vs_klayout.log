@@ -1,0 +1,6 @@
+inv_1    wl_match=True isomorphic=True area_perim_match=True RESULT=MATCH 
+nand2_1  wl_match=True isomorphic=True area_perim_match=False RESULT=MATCH 
+nor2_1   wl_match=True isomorphic=True area_perim_match=False RESULT=MATCH 
+a21o_1   wl_match=True isomorphic=True area_perim_match=False RESULT=MATCH 
+buf_1    wl_match=True isomorphic=True area_perim_match=True RESULT=MATCH 
+dfxtp_1  wl_match=True isomorphic=True area_perim_match=False RESULT=MATCH 

@@ -86,11 +86,12 @@ def device_footprint(fl: FlatLayout, ex: Extraction, dev: Device, margin_um: flo
 
 
 def resize_device_w(fl: FlatLayout, ex: Extraction, dev: Device, new_w_um: float,
-                    grid_um: float = 0.005) -> List[int]:
+                    grid_um: float = 0.005, side: str = "high") -> List[int]:
     """Stretch a transistor along its W axis by editing its footprint: rects
-    crossing the cut line at the gate's far W edge grow by dW; rects wholly
-    beyond it shift by dW.  Works per finger (all fingers of the device grow
-    by dW/fingers)."""
+    crossing the cut line at the gate's W edge grow by dW; rects wholly beyond
+    it shift by dW (unique-provenance devices only).  `side` picks the edge:
+    "high" grows toward +W (top / right), "low" toward -W.  Works per finger
+    (all fingers of the device grow by dW/fingers)."""
     d = fl.dbu_um
     g = max(1, int(round(grid_um / d)))
     fingers = max(1, dev.fingers)
@@ -99,32 +100,50 @@ def resize_device_w(fl: FlatLayout, ex: Extraction, dev: Device, new_w_um: float
     if dw == 0:
         return []
     fp, ids = device_footprint(fl, ex, dev)
-    own = {i for i in ids if fl.rects[i].prov == dev.prov}
+    shared = sum(1 for d in ex.devices if d.prov == dev.prov) > 1
+    # Unique provenance (kestrel: one cell per transistor): the device's own rects
+    # beyond the cut shift with it.  Shared provenance (a standard cell): nothing
+    # shifts -- taps, rails and neighbouring devices are the cell's contract; the
+    # stretched strip must fit the whitespace, and the rule check decides.
+    own = set() if shared else {i for i in ids if fl.rects[i].prov == dev.prov}
+    # Rects that span the whole footprint in the W-axis-orthogonal direction
+    # (power rails, well/implant frames) are the cell's boundary contract:
+    # they never shift.  Growth has to fit in the whitespace below them, and
+    # the rule check says whether it does.
+    cell_rects = [fl.rects[i].rect for i in range(len(fl.rects)) if fl.rects[i].prov == dev.prov]
+    cb = geom.bbox(cell_rects) or fp
+    cell_w = (cb[2] - cb[0]) if dev.flow_axis == "x" else (cb[3] - cb[1])
+    def is_frame(r: Rect) -> bool:
+        span = (r[2] - r[0]) if dev.flow_axis == "x" else (r[3] - r[1])
+        return span >= cell_w * 0.9
     touched: List[int] = []
     # process fingers from the far end so shifts compose
+    hi = side == "high"
     gates = sorted((ex.shapes[s].rect for s in dev.gate_ids),
-                   key=lambda r: -(r[3] if dev.flow_axis == "x" else r[2]))
+                   key=lambda r: (-(r[3] if dev.flow_axis == "x" else r[2])) if hi else (r[1] if dev.flow_axis == "x" else r[0]))
     for grect in gates:
-        if dev.flow_axis == "x":            # W along y; cut at gate top edge
-            cut = grect[3]
+        if dev.flow_axis == "x":            # W along y
+            cut = grect[3] if hi else grect[1]
             for i in ids:
                 x0, y0, x1, y1 = fl.rects[i].rect
                 if not (x0 < fp[2] and x1 > fp[0]):
                     continue
-                if y0 < cut < y1 or (y1 == cut and y0 < cut and _spans_gate(fl.rects[i].rect, grect, "x")):
-                    fl.rects[i].rect = (x0, y0, x1, y1 + dw); touched.append(i)
-                elif y0 >= cut and i in own:
-                    fl.rects[i].rect = (x0, y0 + dw, x1, y1 + dw); touched.append(i)
-        else:                               # W along x; cut at gate right edge
-            cut = grect[2]
+                crossing = (y0 < cut < y1) or ((y1 == cut if hi else y0 == cut) and _spans_gate(fl.rects[i].rect, grect, "x"))
+                if crossing:
+                    fl.rects[i].rect = (x0, y0, x1, y1 + dw) if hi else (x0, y0 - dw, x1, y1); touched.append(i)
+                elif ((y0 >= cut) if hi else (y1 <= cut)) and i in own and not is_frame(fl.rects[i].rect):
+                    fl.rects[i].rect = (x0, y0 + dw, x1, y1 + dw) if hi else (x0, y0 - dw, x1, y1 - dw); touched.append(i)
+        else:                               # W along x
+            cut = grect[2] if hi else grect[0]
             for i in ids:
                 x0, y0, x1, y1 = fl.rects[i].rect
                 if not (y0 < fp[3] and y1 > fp[1]):
                     continue
-                if x0 < cut < x1 or (x1 == cut and x0 < cut and _spans_gate(fl.rects[i].rect, grect, "y")):
-                    fl.rects[i].rect = (x0, y0, x1 + dw, y1); touched.append(i)
-                elif x0 >= cut and i in own:
-                    fl.rects[i].rect = (x0 + dw, y0, x1 + dw, y1); touched.append(i)
+                crossing = (x0 < cut < x1) or ((x1 == cut if hi else x0 == cut) and _spans_gate(fl.rects[i].rect, grect, "y"))
+                if crossing:
+                    fl.rects[i].rect = (x0, y0, x1 + dw, y1) if hi else (x0 - dw, y0, x1, y1); touched.append(i)
+                elif ((x0 >= cut) if hi else (x1 <= cut)) and i in own and not is_frame(fl.rects[i].rect):
+                    fl.rects[i].rect = (x0 + dw, y0, x1 + dw, y1) if hi else (x0 - dw, y0, x1 - dw, y1); touched.append(i)
     return sorted(set(touched))
 
 

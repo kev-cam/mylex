@@ -105,13 +105,14 @@ kestrel is github.com/kev-cam/kestrel `cd4757e` at `/usr/local/src/kestrel`
 |---|---|---|
 | `gds.py` | GDSII read (BOUNDARY/PATH/SREF/AREF/TEXT), rectilinear→rects, flatten with provenance path per rect, flat write | round trip of kestrel_pll.gds: 3741 rects, identical set |
 | `tech.py` | sky130 + IHP SG13G2: layers, via stack, RC (kestrel/stat-sim numbers), min width/space/enclosure | — |
-| `extract.py` | connectivity (union-find over touching rects + cut stacks), MOS3 recognition (gate=poly∩diff, S/D=diff−poly, well decides N/P), AS/AD/PS/PD with shared-region split, parallel-finger combine, SPICE out | **vs KLayout golden:** 131 devices (44 N/87 P), W/L multiset equal, AS/AD/PS/PD multiset equal, 335 device nets with identical degree histogram, device/net graph **isomorphic** (colour refinement). 0.3 s. |
-| `compare.py` | reference-netlist comparison; topology signature (sizes excluded) used as the LVS-identity guard | as above; `layopt compare` → `RESULT MATCH` |
+| `extract.py` | connectivity (union-find over touching rects + cut stacks), MOS3 recognition on the *merged* poly and diffusion (gate=poly∩diff, S/D=diff−poly, well decides N/P; L-shaped poly and notched diffusion arrive as rectangles/slabs, so gates are merged from pieces), AS/AD/PS/PD with shared-region split, parallel-finger combine, SPICE out | **vs KLayout golden:** 131 devices (44 N/87 P), W/L multiset equal, AS/AD/PS/PD multiset equal, 335 device nets with identical degree histogram, device/net graph **isomorphic** (colour refinement). 0.3 s. |
+| `compare.py` | reference-netlist comparison; topology signature (sizes excluded) used as the LVS-identity guard | as above; `layopt compare` → `RESULT MATCH`. **Standard cells vs KLayout** (`evidence/stdcells_vs_klayout.log`): inv_1, nand2_1, nor2_1, a21o_1, buf_1, dfxtp_1 all W/L-equal and isomorphic (2/4/4/8/4/24 devices); AS/AD/PS/PD agree on inv/buf and differ where S/D regions are shared (KLayout's split convention) |
 | `rc.py` | per-net C from exact union area+perimeter; distributed R (centre-to-junction squares, via R per cut); Laplacian effective resistance (numpy pinv); SPEF writer | **vs KLayout 0.30.12 merged regions** (`probes/layopt/klayout_rc_xcheck.py`): per-(net, layer) union area and perimeter identical on all 335 device-connected nets (li and met3 totals equal to the nm; poly/met1/met2 differ only by the 22 device-less nets KLayout's `purge()` drops, VDD rail included). stat-sim's larger figures for the same GDS (67.9 vs 59.0 fF top net, 34.7 vs 17.1 fF rail) are its unmerged per-polygon sum double-counting kestrel's overlapping rectangles. SPEF read back by stat-sim `spef.py` (357 nets) |
 | `moves.py` | `resize_device_w` (stretch along W: crossing rects grow, rects beyond shift, per finger), `set_wire_width`, `translate`, `add_rect`, provenance-based device footprint | Mtail of delay cell 2: 4.61→9.0 µm, 6 rects, topology preserved, 0 new violations; →12.0 µm: diff 0.18<0.27 and li 0.10<0.17 against the diff-pair row above — caught |
 | `drc.py` | min width, same-layer spacing between different conductors (touching different-net rects = violation), cut enclosure against the metal union; `new_violations` = delta vs baseline | synthetic-inverter test: NFET pushed flush against PFET diffusion is flagged |
 | `objective.py` | `supply_gradient` (R_eff feed→taps), `elmore_balance`, `metal_area_um2`, `Spread` | probe below |
 | `optimize.py` | `Problem` (deepcopy → moves → re-extract → signature + delta-DRC → cost, illegal penalty), pure-Python Nelder-Mead with bounds | probe below |
+| `lefdef.py` | LEF (tech + macro) and DEF readers; `def2flat`: cell GDS flattened under DEF placement/orientation (N/S/E/W/FN/FS/FE/FW) with provenance `top/<inst>/<macro>`, routed and special-net wires and vias as rectangles, nets labelled from the DEF | 12-cell two-row sky130_fd_sc_hd design (`probes/layopt/l2_stdcell_row.py`): every instance extracts the cell's own device count, all six routed nets reach both pins, VPWR and VGND span all 12 instances through rail abutment (FS row) and a met2 strap |
 | `render.py`, `cli.py` | SVG/PNG windows; `extract | rc | compare | flatten | render | resize` | evidence PNGs |
 | `tests/test_layopt.py` | synthetic inverter: write/read/extract/resize/DRC; kestrel golden if present | `python3 -m layopt.tests.test_layopt` → 3 PASS |
 
@@ -149,6 +150,26 @@ the move changes — kestrel's `current_scale` scales tail and replica bias
 together, which the Maneatis replica largely compensates (fitted a = 0.10,
 4 % miss on the tail-only move) until the bias, which is not in the layout,
 was held fixed.
+
+**Probe `probes/layopt/l2_stdcell_row.py` — L2, standard cells in
+(2026-09-05, log `evidence/l2_stdcell_row.log`):** a DEF is written from the
+LEF sizes — six sky130_fd_sc_hd cells in a row, six more in a flipped (FS) row
+sharing the VPWR rail, six nets routed li1→met1→met2→met3 with L1M1/M1M2/M2M3
+vias, a met2 strap between the two VGND rails — and `def2flat` builds the flat
+layout. Extraction: 52 devices, each instance equal to its cell alone; all six
+routed nets reach both pins; VPWR and VGND single nets across all 12 instances.
+The first standard-cell move is a headroom search on the nand2's shared PMOS
+strip (one resize grows both devices, nothing else in the cell moves): growing
+toward the rail is blocked immediately — the cell's poly ends already sit at
+minimum spacing from the flipped row's nor2 poly across the rail; growing
+toward the NMOS is blocked at +0.05 µm by the cell's own li strap; at +0.2 µm
+the strap is shorted, which the topology guard reports while the spacing check
+sees one net. Result: no legal growth in this placement without moving a
+neighbour — the whitespace is in the other cell, which is exactly the diffusion
+merge / whitespace-reclaim case of §5. Finding on the extractor along the way:
+gate pieces split by polygon slabbing or by L-shaped poly were being dropped
+(nor2_1 2 of 4 devices, dfxtp_1 14 of 24); fixed by merging poly and diffusion
+before gate recognition, now equal to KLayout on all six cells.
 
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
@@ -203,9 +224,10 @@ Vctrl 0.9 V) — a library of them is what a `drive.py` module will hold.
 
 ## 5. Moves
 
-Implemented: device W stretch (contact arrays do not grow yet — the stretched
-S/D region simply carries the same contacts), wire width about the
-centre-line, translate, add rectangle.
+Implemented: device W stretch toward either end of the gate (`side`;
+contact arrays do not grow yet — the stretched S/D region simply carries the
+same contacts; in a shared-provenance cell nothing else moves), wire width
+about the centre-line, translate, add rectangle.
 
 Planned, in the order the async objectives need them:
 
@@ -249,6 +271,9 @@ Planned:
 - Delta-DRC: min width, spacing between different conductors, cut enclosure
   against the metal union — only *new* violations relative to the input
   layout count. The rule table is deliberately minimal; signoff is KLayout.
+  A move that shorts two nets is seen by the topology guard, not by the
+  spacing check (after the move they are one net): the two guards are
+  complementary, neither is sufficient alone.
 - Bounds on every variable (min width from the tech table).
 
 ## 8. Interfaces to the federation
@@ -286,9 +311,14 @@ Planned:
   the `attrs` module name). kestrel's `layout/gds_gen.py` regenerates the
   committed GDS bit-identically (3741 rects), so its routing defects (§2) can
   be fixed upstream and re-extracted here.
-- **L2 — standard-cell input.** `def2flat`: LEF/DEF placement + cell GDS →
-  FlatLayout with `top/<inst>/<cell>` provenance. Target: a small placed
-  block (sky130_fd_sc_hd) or ldx TH22 chain on SG13G2.
+- **L2 — standard-cell input — DONE for the reader (2026-09-05).**
+  `lefdef.def2flat` builds the flat layout from LEF/DEF + cell GDS
+  (`top/<inst>/<macro>` provenance); verified on a 12-cell two-row
+  sky130_fd_sc_hd design and against KLayout per cell (§2). The first
+  standard-cell move showed that sky130_fd_sc_hd cells have no internal
+  whitespace to grow into: the payoff moves are L4's. Still to come here: a
+  real P&R result (needs OpenROAD or a DEF from elsewhere) and the ldx TH
+  cells on SG13G2.
 - **L3 — async objective.** Path sets from nulex's constraint extraction;
   fork-branch Elmore balance and completion-tree drive balance on a QDI-bound
   `VX_alu_int` slice.

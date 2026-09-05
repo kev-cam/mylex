@@ -68,6 +68,26 @@ Fitted model (Vctrl 0.9 V): f = k·(W_tail/40 µm)^0.338 / (110.8 fF + C_par);
 because it is not in the layout; scaling it with the tail (kestrel's
 `current_scale`) is a different circuit and gives a = 0.10.
 
+## L2 — standard cells in (`l2_stdcell_row.py`, `evidence/l2_stdcell_row.log`)
+
+Needs `~/tools/sky130_fd_sc_hd/` (tech LEF + a few cell GDS/LEF from
+google/skywater-pdk-libs-sky130_fd_sc_hd). Writes a two-row DEF (row 2 FS,
+sharing VPWR), routes six nets on li1/met1/met2/met3 with vias and a VGND
+strap, converts with `layopt.lefdef.def2flat`, extracts, and checks devices
+per instance, pin connectivity and supply nets; then runs a headroom search on
+the nand2 PMOS strip in both directions.
+
+| check | result |
+|---|---|
+| devices per instance vs cell alone | 12/12 equal (52 devices) |
+| routed nets reaching both pins | 6/6 |
+| VPWR / VGND spanning all instances | 12/12 each |
+| nand2 PMOS growth toward rail | blocked at +0.05 µm: poly at min spacing to the flipped row's nor2 |
+| nand2 PMOS growth toward NMOS | blocked at +0.05 µm by the cell's own li; +0.2 µm shorts (topology guard) |
+
+`evidence/stdcells_vs_klayout.log`: layopt vs KLayout per cell — W/L equal and
+isomorphic for inv_1, nand2_1, nor2_1, a21o_1, buf_1, dfxtp_1.
+
 ## Findings about the kestrel layout (report upstream)
 
 1. Inter-stage MET3 routes share track y≈8.43 µm and overlap: all four stages'

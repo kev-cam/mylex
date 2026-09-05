@@ -36,6 +36,7 @@ class Tech:
     enclosure: Dict[Tuple[str, str], float] = field(default_factory=dict)  # (metal, cut) -> um
     grid_um: float = 0.005
     supply_names: Tuple[str, ...] = ("VDD", "VSS", "VPWR", "VGND", "vdd", "vss")
+    text_layers: Dict[Layer, str] = field(default_factory=dict)   # label (layer, datatype) -> conducting layer it names
 
     def L(self, name: str) -> Layer:
         return self.layers[name]
@@ -76,6 +77,9 @@ SKY130 = Tech(
     enclosure={("diff", "licon"): 0.040, ("li", "licon"): 0.080, ("li", "mcon"): 0.000,
                ("met1", "mcon"): 0.030, ("met1", "via1"): 0.055, ("met2", "via1"): 0.055,
                ("met2", "via2"): 0.040, ("met3", "via2"): 0.065},
+    # sky130 label layers (li1/met1..met5 .label = datatype 5; .pin = datatype 16 also names nets)
+    text_layers={(67, 5): "li", (68, 5): "met1", (69, 5): "met2", (70, 5): "met3", (71, 5): "met4", (72, 5): "met5",
+                 (66, 5): "poly", (67, 16): "li", (68, 16): "met1", (69, 16): "met2", (70, 16): "met3"},
 )
 
 # IHP SG13G2 -- layer numbers from sg13g2.map; interconnect from sg13g2_tech.lef (via stat-sim)

@@ -84,6 +84,61 @@ def test_kestrel_golden():
     assert r["wl_match"] and r["isomorphic"] and r["degree_hist_match"] and r["area_perim_match"], r
 
 
+def test_lefdef_inline():
+    """LEF/DEF reader on inline text: tech layers/vias, a macro with pins, a DEF
+    with two placed components (one flipped) and one routed net with vias."""
+    from .. import lefdef
+    tlef = """VERSION 5.7 ; UNITS DATABASE MICRONS 1000 ; END UNITS
+PROPERTYDEFINITIONS LAYER LEF58_TYPE STRING ; END PROPERTYDEFINITIONS
+SITE unit SYMMETRY Y ; CLASS CORE ; SIZE 0.46 BY 2.72 ; END unit
+LAYER li1 TYPE ROUTING ; WIDTH 0.17 ; END li1
+LAYER mcon TYPE CUT ; WIDTH 0.17 ; END mcon
+LAYER met1 TYPE ROUTING ; WIDTH 0.14 ; END met1
+VIA L1M1 DEFAULT LAYER mcon ; RECT -0.085 -0.085 0.085 0.085 ; LAYER li1 ; RECT -0.085 -0.085 0.085 0.085 ;
+  LAYER met1 ; RECT -0.145 -0.115 0.145 0.115 ; END L1M1
+LAYER via TYPE CUT ; WIDTH 0.15 ; END via
+LAYER met2 TYPE ROUTING ; WIDTH 0.14 ; END met2
+VIA M1M2 DEFAULT LAYER via ; RECT -0.075 -0.075 0.075 0.075 ; LAYER met1 ; RECT -0.16 -0.13 0.16 0.13 ;
+  LAYER met2 ; RECT -0.13 -0.16 0.13 0.16 ; END M1M2
+END LIBRARY"""
+    lef = """MACRO inv CLASS CORE ; ORIGIN 0 0 ; SIZE 1.38 BY 2.72 ; SITE unit ;
+PIN A DIRECTION INPUT ; USE SIGNAL ; PORT LAYER li1 ; RECT 0.32 1.075 0.65 1.315 ; END END A
+PIN VPWR USE POWER ; PORT LAYER met1 ; RECT 0 2.48 1.38 2.96 ; END END VPWR
+OBS END END inv END LIBRARY"""
+    deftext = """VERSION 5.8 ; DESIGN t ; UNITS DISTANCE MICRONS 1000 ; DIEAREA ( 0 0 ) ( 2760 5440 ) ;
+COMPONENTS 2 ; - u1 inv + PLACED ( 0 0 ) N ; - u2 inv + PLACED ( 0 2720 ) FS ; END COMPONENTS
+SPECIALNETS 1 ; - VPWR ( u1 VPWR ) ( u2 VPWR ) + USE POWER ; END SPECIALNETS
+NETS 1 ; - n ( u1 A ) ( u2 A ) + ROUTED met1 ( 485 1195 ) L1M1 NEW met1 ( 485 1195 ) M1M2 NEW met2 ( 485 1195 ) ( 485 4245 ) NEW met1 ( 485 4245 ) M1M2 NEW met1 ( 485 4245 ) L1M1 ; END NETS
+END DESIGN"""
+    with tempfile.TemporaryDirectory() as td:
+        for name, txt in (("t.tlef", tlef), ("inv.lef", lef), ("t.def", deftext)):
+            open(os.path.join(td, name), "w").write(txt)
+        L = lefdef.read_lef(os.path.join(td, "t.tlef")); lefdef.read_lef(os.path.join(td, "inv.lef"), L)
+        assert L.layers["met1"].width_um == 0.14 and len(L.vias["L1M1"].rects) == 3, L.vias["L1M1"]
+        assert L.macros["inv"].size == (1.38, 2.72) and L.macros["inv"].pins["A"].ports[0][0] == "li1"
+        d = lefdef.read_def(os.path.join(td, "t.def"))
+        assert [(c.inst, c.x, c.y, c.orient) for c in d.components] == [("u1", 0, 0, "N"), ("u2", 0, 2720, "FS")]
+        nets = {n.name: n for n in d.nets}
+        assert nets["n"].wires[0].via == "L1M1" and any(w.layer == "met2" and w.points == [(485, 1195), (485, 4245)] for w in nets["n"].wires)
+        assert nets["VPWR"].special and nets["VPWR"].pins == [("u1", "VPWR"), ("u2", "VPWR")]
+        # a real cell placed twice, FS row on top: VPWR rails must abut into one net
+        lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
+        if os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__inv_1.gds")):
+            deftext2 = deftext.replace(" inv ", " sky130_fd_sc_hd__inv_1 ").replace("L1M1", "L1M1_PR").replace("M1M2", "M1M2_PR")
+            open(os.path.join(td, "t2.def"), "w").write(deftext2)
+            fl = lefdef.def2flat(os.path.join(td, "t2.def"), [os.path.join(lib, "sky130_fd_sc_hd.tlef"), os.path.join(lib, "sky130_fd_sc_hd__inv_1.lef")], lib, T)
+            ex = extract.extract(fl, T)
+            assert len(ex.devices) == 4 and {d.prov.split("/")[1] for d in ex.devices} == {"u1", "u2"}
+            nn = [n for n in ex.nets.values() if n.name == "n"]
+            assert len(nn) == 1 and sorted(t for _, t in nn[0].devices) == ["G", "G", "G", "G"], nn[0].devices if nn else None
+            vp = [n for n in ex.nets.values() if n.name == "VPWR"]
+            insts = {ex.shapes[s].prov.split("/")[1] for n in vp for s in n.shapes if ex.shapes[s].prov.count("/") >= 2}
+            assert len(vp) == 1 and insts >= {"u1", "u2"} and len(vp[0].devices) == 2, \
+                "VPWR rails of the N and FS rows should abut into one net (one PMOS source each)"
+        else:
+            print("  (sky130_fd_sc_hd cells not found, geometric part skipped)")
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):
