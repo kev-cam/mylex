@@ -1,0 +1,12 @@
+variation model (1 sigma): Rsh li 15%, metals 10%, C 8%, Cin 10%, driver R 15%; gate delay reference 40 ps; T2 samples 4000, T3 MC runs 60
+== fork with the long branch on met2
+   baseline  trunk R    18 C  1.21 fF | A R    48 C  3.09 | B R     99 C  7.89 fF
+            T0 Elmore skew    0.96 ps | T2 MC skew    0.96 +/-  0.12 ps, p_fail(|skew|>40 ps) = 0.0000 | T3 stat-sim/nvc skew    0.29 ps (ln2 x T0 =    0.67), nominal hazards 0/6, MC p_fail = 0.000 (60 runs)
+   sized     trunk R    18 C  1.21 fF | A R    48 C  3.09 | B R     35 C  9.70 fF
+            T0 Elmore skew    0.10 ps | T2 MC skew    0.10 +/-  0.02 ps, p_fail(|skew|>40 ps) = 0.0000 | T3 stat-sim/nvc skew    0.04 ps (ln2 x T0 =    0.07), nominal hazards 0/6, MC p_fail = 0.000 (60 runs)
+== fork with the long branch on li1
+   baseline  trunk R    18 C  1.21 fF | A R    48 C  3.09 | B R   6762 C 16.60 fF
+            T0 Elmore skew   74.90 ps | T2 MC skew   75.06 +/- 12.48 ps, p_fail(|skew|>40 ps) = 0.9978 | T3 stat-sim/nvc skew   48.62 ps (ln2 x T0 =   51.91), nominal hazards 6/6, MC p_fail = 0.917 (60 runs)
+   sized     trunk R    18 C  1.21 fF | A R    48 C  3.09 | B R   1228 C 22.71 fF
+            T0 Elmore skew   17.00 ps | T2 MC skew   17.05 +/-  2.76 ps, p_fail(|skew|>40 ps) = 0.0000 | T3 stat-sim/nvc skew   11.33 ps (ln2 x T0 =   11.78), nominal hazards 0/6, MC p_fail = 0.000 (60 runs)
+   (T3 skews carry stat-sim's ln2 50%-point convention; T0/T2 are Elmore. Acceptance = p_fail against the gate-delay reference.)

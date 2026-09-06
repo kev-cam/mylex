@@ -287,3 +287,59 @@ def elmore_delays(ex: Extraction, net_id: int, driver_sid: int, receiver_sids: S
             n = u
         out[rs] = t * 1e-3                                  # ohm*fF -> ps
     return out
+
+
+def fork_branches(ex: Extraction, net_id: int, driver_sid: int, receiver_sids: Sequence[int],
+                  segments: Optional[Sequence[Segment]] = None) -> Dict:
+    """Reduce a fork to lumped trunk + per-branch RC for a 2-port wire model
+    (stat-sim's statsim_pl_rc): trunk = driver to the receivers' lowest common
+    ancestor on the shortest-resistance tree; branch k = LCA to receiver k.
+    R = series resistance along the path, C = capacitance of the shapes on it
+    (plus, for the trunk, everything else hanging off the trunk).  Returns
+    {"trunk": (R, C_fF), "branches": {rsid: (R, C_fF)}, "lca": shape id}."""
+    import heapq
+    segs = list(segments) if segments is not None else net_segments(ex, net_id)
+    adj: Dict[int, List[Tuple[int, float]]] = {}
+    for s in segs:
+        r = max(s.r, 1e-3)
+        adj.setdefault(s.a, []).append((s.b, r)); adj.setdefault(s.b, []).append((s.a, r))
+    dist = {driver_sid: 0.0}; parent: Dict[int, Tuple[int, float]] = {}
+    pq = [(0.0, driver_sid)]
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d > dist.get(u, float("inf")):
+            continue
+        for v, r in adj.get(u, []):
+            if d + r < dist.get(v, float("inf")):
+                dist[v] = d + r; parent[v] = (u, r); heapq.heappush(pq, (d + r, v))
+    def path(n):
+        p = [n]
+        while p[-1] in parent:
+            p.append(parent[p[-1]][0])
+        return p[::-1]                                   # driver ... n
+    paths = {r: path(r) for r in receiver_sids}
+    common = None
+    for p in paths.values():
+        common = set(p) if common is None else common & set(p)
+    lca = max(common, key=lambda n: dist[n]) if common else driver_sid
+    def rc_of(nodes):
+        R = sum(parent[n][1] for n in nodes if n in parent)
+        C = sum(shape_c_fF(ex, n) for n in nodes)
+        return R, C
+    trunk_nodes = path(lca)
+    branch = {}
+    for r, p in paths.items():
+        i = p.index(lca)
+        branch[r] = rc_of(p[i + 1:])
+    Rt, Ct = rc_of(trunk_nodes[1:])                      # driver shape itself is the source
+    Ct += shape_c_fF(ex, driver_sid)
+    # side loads on the trunk (shapes whose tree path leaves the trunk but reaches no receiver)
+    on_paths = set().union(*paths.values())
+    for n in dist:
+        if n not in on_paths:
+            q = n
+            while q in parent and q not in on_paths:
+                q = parent[q][0]
+            if q in trunk_nodes:
+                Ct += shape_c_fF(ex, n)
+    return {"trunk": (Rt, Ct), "branches": branch, "lca": lca}

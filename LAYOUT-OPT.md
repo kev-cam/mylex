@@ -230,6 +230,26 @@ pfet W=3 µm, isomorphic (`evidence/l4_balanced_vs_klayout.log`). Deferred with
 a reason: same-net diffusion merge across abutting cells changes area, not
 timing, until a compaction move exists.
 
+**Probe `probes/layopt/l5_variation_accept.py` — L5, acceptance under
+variation, two tiers (2026-09-06, log `evidence/l5_variation_accept.log`):**
+the L3 fork before and after sizing, judged as an isochronic fork: the slow
+branch must arrive within one gate delay (40 ps) of the fast one. T2 is
+layopt's own RC tree with per-layer sheet-resistance and capacitance scale
+factors drawn from a stated variation model (1σ: li 15 %, metals 10 %, C 8 %,
+Cin 10 %, driver 15 %), 4000 samples. T3 is stat-sim's event-driven runtime
+under nvc: `rc.fork_branches` reduces the tree to trunk + branch RC, a
+generated testbench wires `statsim_pl_rc` elements and `pl_load` taps, and 60
+Monte-Carlo elaborations pass the same variation model in as top-level
+generics. Results — met2 fork: skew ≈1 ps, p_fail 0 in both tiers, sized or
+not. li1 fork, baseline: T0 74.9 ps, T2 75.1 ± 12.5 ps with p_fail 0.998, T3
+nominal 48.6 ps and 6/6 launches hazardous, MC p_fail 0.92 — rejected. li1
+fork, sized: T0 17.0 ps, T2 17.1 ± 2.8 ps with p_fail 0.000, T3 11.3 ps, 0/6
+hazards, MC p_fail 0.000 — accepted. T3's skews are ln2 × T0's (stat-sim's
+50 %-point convention against Elmore's first moment; 48.6 vs 51.9 and 11.3 vs
+11.8), so the tiers agree on every verdict. The variation model is an
+assumption stated in the probe, not a PDK fact — stat-sim's MC-characterized
+τ is the flop side; interconnect variation here is a documented σ table.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -272,7 +292,7 @@ extractor, worth fixing upstream in `layout/gds_gen.py`):
 | T0 | analytic RC, Elmore, Laplacian R_eff (this package) | inner loop, every evaluation |
 | T1 | Xyce on the extracted netlist + SPEF (kestrel `spice_loop.py`, `sim/opt/backends.py`) | calibrate T0, accept a candidate |
 | T2 | stat-sim: variability models, quantified MTBF, EM/IR hot-spots (`klayout2spef`, `hotspot`) | accept under variation; async gradient margins |
-| T3 | nvc with SPEF taps (stat-sim `spef.py` → `pl_wire/pl_load`) | system-level check of the balanced design |
+| T3 | nvc with SPEF taps (stat-sim `spef.py` → `pl_wire/pl_load`; `statsim_pl_rc` for RC in the path) | system-level check of the balanced design — exercised in L5 |
 
 T0 is deliberately cheap: exact geometry (§2), analytic RC, and a drive
 model whose constants come from T1 — L1 fitted f = k·W^a/(C_int + C_par) from
@@ -393,7 +413,11 @@ Planned:
   discrete search uses it to balance two paths 25.9 → 0.4 ps (§2). Remaining:
   diffusion merge across abutting cells (needs compaction to pay), contact
   growth, `remove_finger`.
-- **L5 — variation-aware acceptance** through stat-sim (T2) and nvc (T3).
+- **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
+  T2 (layopt MC over a stated variation model) and T3 (stat-sim's
+  `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1
+  fork passes, the unsized one fails (§2). Next: the flop side — stat-sim's
+  metastable latch as the receiver, so a fork skew becomes an MTBF.
 
 ## 10. Open decisions and risks
 

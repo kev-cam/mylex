@@ -130,6 +130,22 @@ Two inv_1 drivers with fillers beside them; path A over 2 fF, path B over a
 pfet W=3 µm, isomorphic (`evidence/l4_balanced_vs_klayout.log`). The third
 finger exercises the signal-net jumper (mcon + met1 to the drain strap).
 
+## L5 — acceptance under variation (`l5_variation_accept.py`, `evidence/l5_variation_accept.log`)
+
+The L3 fork before/after sizing as an isochronic fork (slow branch within a
+40 ps gate delay of the fast one). T2: layopt RC tree, 4000 samples of a
+stated variation model. T3: stat-sim `statsim_pl_rc` + `pl_load` under nvc,
+60 Monte-Carlo elaborations via generics. Needs nvc and stat-sim.
+
+| fork | T0 skew | T2 skew (p_fail) | T3 skew (MC p_fail) | verdict |
+|---|---|---|---|---|
+| met2, baseline | 0.96 ps | 0.96 ± 0.12 (0.000) | 0.29 (0.000) | pass |
+| met2, sized | 0.10 | 0.10 ± 0.02 (0.000) | 0.04 (0.000) | pass |
+| li1, baseline | 74.9 | 75.1 ± 12.5 (0.998) | 48.6 (0.917) | reject |
+| li1, sized | 17.0 | 17.1 ± 2.8 (0.000) | 11.3 (0.000) | pass |
+
+T3 skews are ln2 × T0 (50 %-point vs Elmore first moment).
+
 ## Findings about the kestrel layout (report upstream)
 
 1. Inter-stage MET3 routes share track y≈8.43 µm and overlap: all four stages'
