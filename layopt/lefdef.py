@@ -312,9 +312,10 @@ ORIENT = {"N": (False, 0), "W": (False, 90), "S": (False, 180), "E": (False, 270
 
 
 def def2flat(def_path: str, lef_paths: List[str], gds_dir: str, tech: Tech,
-             gds_name: Optional[str] = None) -> FlatLayout:
-    """Build the flat layout of a placed-and-routed DEF.  gds_dir holds one GDS
-    per macro named <macro>.gds (or gds_name(macro) -> path)."""
+             gds_name: Optional[str] = None, gds_lib: Optional[str] = None) -> FlatLayout:
+    """Build the flat layout of a placed-and-routed DEF.  Cell geometry comes
+    from gds_dir/<macro>.gds (or gds_name(macro) -> path), or, when gds_lib is
+    given, from that one merged GDS library holding every macro as a cell."""
     lef = Lef()
     for p in lef_paths:
         read_lef(p, lef)
@@ -327,19 +328,28 @@ def def2flat(def_path: str, lef_paths: List[str], gds_dir: str, tech: Tech,
                 "mcon": "mcon", "via": "via1", "via2": "via2", "via3": "via3", "via4": "via4",
                 "poly": "poly", "nwell": "nwell", "pwell": None}
     libs: Dict[str, gds.Library] = {}
+    merged = gds.read(gds_lib) if gds_lib else None
+    flat_cache: Dict[str, FlatLayout] = {}
 
     def cell_lib(macro: str) -> gds.Library:
+        if merged is not None:
+            return merged
         if macro not in libs:
             path = gds_name(macro) if gds_name else os.path.join(gds_dir, macro + ".gds")
             libs[macro] = gds.read(path)
         return libs[macro]
 
+    def cell_flat(macro: str) -> FlatLayout:
+        if macro not in flat_cache:
+            lib = cell_lib(macro)
+            flat_cache[macro] = gds.flatten(lib, top=macro if merged is not None else None)
+        return flat_cache[macro]
+
     # --- components: flatten each cell GDS under its placement transform ---
     for c in d.components:
         if not c.placed:
             continue
-        lib = cell_lib(c.macro)
-        sub = gds.flatten(lib)                                    # cell-local nm coordinates
+        sub = cell_flat(c.macro)                                  # cell-local nm coordinates
         m = lef.macros.get(c.macro)
         w_nm, h_nm = (int(round(m.size[0] * 1000)), int(round(m.size[1] * 1000))) if m else (0, 0)
         mirror, angle = ORIENT[c.orient]

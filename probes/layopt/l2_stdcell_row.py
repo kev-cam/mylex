@@ -67,7 +67,7 @@ def build_def(lef, path):
     lines += ["END COMPONENTS", "", "SPECIALNETS 2 ;",
               "- VPWR " + " ".join("( %s VPWR )" % c.inst for c in comps) + " + USE POWER ;",
               "- VGND " + " ".join("( %s VGND )" % c.inst for c in comps) +
-              " + ROUTED met1 ( %d 0 ) M1M2_PR NEW met2 200 ( %d 0 ) ( %d 5440 ) NEW met1 ( %d 5440 ) M1M2_PR + USE GROUND ;" % ((strap_x,) * 4),
+              " + ROUTED met1 140 ( %d 0 ) M1M2_PR NEW met2 200 ( %d 0 ) ( %d 5440 ) NEW met1 140 ( %d 5440 ) M1M2_PR + USE GROUND ;" % ((strap_x,) * 4),
               "END SPECIALNETS", "", "NETS %d ;" % len(conns)]
     # Routing: li1 pin -> L1M1 -> M1M2 -> met2 vertical -> M2M3 -> met3 track -> M2M3 -> met2 -> M1M2 -> L1M1.
     # Nothing but the via pads lands on met1, so cell-internal met1 (dfxtp has 12 rects) is never touched.
