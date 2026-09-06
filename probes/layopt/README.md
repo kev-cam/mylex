@@ -100,6 +100,20 @@ driver 3 kΩ, receiver 2.1 fF); the optimizer scales branch widths.
 | met2 | 66 / 117 Ω | 0.96 ps (1.2 %) | 0.10 ps (B widened 6×) | balanced |
 | li1 | 66 / 6780 Ω | 74.9 ps (59 %) | 17.0 ps (B at 6× bound) | reroute to metal or buffer |
 
+## L4 — dissolve: add a finger across the cell edge (`l4_dissolve_finger.py`, `evidence/l4_dissolve_finger.log`)
+
+Row fill_4 | inv_1 | fill_4 | nand2_1 | fill_1 | decap_4 (+ flipped fills).
+`moves.add_finger` on the inverter, growing right into the fill_4:
+
+| device | W before | W after | extraction | guard |
+|---|---|---|---|---|
+| inv_1 PMOS | 1.00 | 2.00 µm | one device, 2 fingers, same nets | topology preserved, 0 new violations |
+| inv_1 NMOS | 0.65 | 1.30 µm | one device, 2 fingers, same nets | topology preserved, 0 new violations |
+| nand2_1 PMOS (control) | 1.00 | — | netlist changed | refused: diff spacing 0 to the decap |
+
+KLayout extracts `evidence/l4_inv1_fingered.gds` as pfet 2 µm / nfet 1.3 µm,
+isomorphic to layopt (`evidence/l4_fingered_vs_klayout.log`).
+
 ## Findings about the kestrel layout (report upstream)
 
 1. Inter-stage MET3 routes share track y≈8.43 µm and overlap: all four stages'

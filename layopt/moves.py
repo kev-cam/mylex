@@ -152,3 +152,143 @@ def _spans_gate(r: Rect, g: Rect, flow: str) -> bool:
     if flow == "x":
         return r[1] <= g[1] and r[3] >= g[3]
     return r[0] <= g[0] and r[2] >= g[2]
+
+
+# ---------------------------------------------------------------------------
+# Dissolve move: add a finger to a transistor, growing across the cell edge
+# ---------------------------------------------------------------------------
+
+class MoveError(Exception):
+    pass
+
+
+def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") -> List[int]:
+    """Add one parallel finger to `dev` on the `side` of its flow axis, by
+    mirroring the existing gate + inner S/D column about the outer S/D region:
+
+        [S][G][D]  ->  [S][G][D][G'][S']        (side="high", flow along x)
+
+    The new outer S/D copies the inner S/D's contacts and strap (mirrored), so
+    it connects the way the original does (a strap to the rail for a supply
+    source); a poly bridge in the field beyond the diffusion ties G' to G.
+    Diffusion, implant and well are extended.  New rects take the device's
+    provenance -- the cell now extends into whatever was next to it (a
+    filler, whitespace, or a neighbour: the rule check decides).  Only the
+    standard-cell orientation (vertical gate, current along x) is implemented.
+    Returns the added/changed rect ids; raises MoveError when the geometry
+    around the device does not fit the pattern."""
+    if dev.flow_axis != "x":
+        raise MoveError("add_finger: only vertical gates (flow along x) are implemented")
+    tech = ex.tech
+    L = tech.layers
+    inv = {v: k for k, v in L.items()}
+    d = fl.dbu_um
+    nm = lambda um: int(round(um / d))
+    g = geom.bbox([ex.shapes[s].rect for s in dev.gate_ids])
+    if len(dev.gate_ids) != 1:
+        raise MoveError("add_finger: multi-finger device; add fingers to one finger at a time")
+    hi = side == "high"
+    # the diffusion rect holding this gate
+    diff_ids = [i for i, r in enumerate(fl.rects) if r.layer == L[tech.diff] and geom.overlaps(r.rect, g)]
+    if len(diff_ids) != 1:
+        raise MoveError("add_finger: gate not on exactly one diffusion rect (%d)" % len(diff_ids))
+    di = diff_ids[0]; D = fl.rects[di].rect
+    outer = (g[2], D[2]) if hi else (D[0], g[0])          # x-range of the outer S/D region
+    inner = (D[0], g[0]) if hi else (g[2], D[2])
+    if outer[1] - outer[0] <= 0 or inner[1] - inner[0] <= 0:
+        raise MoveError("add_finger: gate at the diffusion edge")
+    xc = (outer[0] + outer[1]) / 2.0
+    touched: List[int] = []
+    ystrip = (g[1], g[3])
+    def in_inner(r: Rect) -> bool:
+        return r[0] >= inner[0] - 1 and r[2] <= inner[1] + 1 and r[3] > ystrip[0] and r[1] < ystrip[1]
+    # inner S/D contacts and the strap(s) over them
+    licon_l = L[tech.diff_contact]
+    inner_licons = [i for i, r in enumerate(fl.rects) if r.layer == licon_l and in_inner(r.rect)]
+    if not inner_licons:
+        raise MoveError("add_finger: inner S/D has no contacts to mirror")
+    li_l = L[tech.routing[0]]
+    inner_straps = [i for i, r in enumerate(fl.rects) if r.layer == li_l
+                    and any(geom.overlaps(r.rect, fl.rects[k].rect) for k in inner_licons)
+                    and (r.x1 - r.x0) < nm(0.6)]                      # the vertical strap, not a rail
+    # mirroring about the outer region's centre may land the new strap too close to
+    # an asymmetric drain strap or poly of another net: shift the whole new column
+    # outward by the largest spacing deficit found (li and poly, other nets only)
+    shift = 0
+    li_l0 = L[tech.routing[0]]
+    def deficit(candidates):
+        worst = 0
+        for lname, rects in candidates:
+            sp = nm(tech.min_space.get(lname, 0.0))
+            for nr in rects:
+                for k, orr in enumerate(fl.rects):
+                    if orr.layer != L[lname] or not (orr.y1 > nr[1] and orr.y0 < nr[3]):
+                        continue
+                    sid = next((q for q, sh in enumerate(ex.shapes) if sh.src == k), None)
+                    if sid is not None and ex.net_of_shape[sid] in (dev.s, dev.d, dev.g):
+                        # same conductor as ours only if it is the net this new rect will join
+                        pass
+                    gap = (nr[0] - orr.x1) if hi else (orr.x0 - nr[2])
+                    if 0 <= gap < sp:
+                        worst = max(worst, sp - gap)
+        return worst
+    def mx_base(x):
+        return int(round(2 * xc - x))
+    probe_li = [(min(mx_base(fl.rects[k].x0), mx_base(fl.rects[k].x1)), fl.rects[k].y0, max(mx_base(fl.rects[k].x0), mx_base(fl.rects[k].x1)), fl.rects[k].y1)
+                for k in inner_straps]
+    shift = deficit([(tech.routing[0], probe_li)])
+    shift = int(round(shift / nm(tech.grid_um))) * nm(tech.grid_um) if shift else 0
+    mx = (lambda x: int(round(2 * xc - x)) + shift) if hi else (lambda x: int(round(2 * xc - x)) - shift)
+    def mrect(r: Rect) -> Rect:
+        return (min(mx(r[0]), mx(r[2])), r[1], max(mx(r[0]), mx(r[2])), r[3])
+    # 1. diffusion: extend to the mirror of the inner edge
+    x_new = mx(inner[0] if hi else inner[1])
+    fl.rects[di].rect = (D[0], D[1], x_new, D[3]) if hi else (x_new, D[1], D[2], D[3])
+    touched.append(di)
+    # 2. new gate finger: same x-width as the gate, mirrored; spans overhang to overhang
+    ext = nm(tech.poly_ext_diff)
+    gx0, gx1 = (mx(g[2]), mx(g[0]))
+    # poly bridge location: just beyond the overhang on the side with field (no other diffusion/gate)
+    bw = nm(max(tech.min_width.get(tech.poly, 0.15), 0.15))
+    cand = [((g[1] - ext - bw), (g[1] - ext)), ((g[3] + ext), (g[3] + ext + bw))]
+    bridge = None
+    span_x = (min(g[0], gx0), max(g[2], gx1))
+    for by0, by1 in cand:
+        br = (span_x[0], by0, span_x[1], by1)
+        blocked = False
+        for r in fl.rects:
+            if r.layer in (L[tech.diff], licon_l) and geom.overlaps(r.rect, br):
+                blocked = True; break
+            if r.layer == L[tech.poly] and geom.overlaps(r.rect, br):
+                # poly of another net?  the device's own poly is fine
+                sid = next((k for k, sh in enumerate(ex.shapes) if sh.src == fl.rects.index(r)), None)
+                if sid is not None and ex.net_of_shape[sid] != dev.g:
+                    blocked = True; break
+        if not blocked:
+            bridge = br; break
+    if bridge is None:
+        raise MoveError("add_finger: no field for the poly bridge on either side")
+    fy0 = min(g[1] - ext, bridge[1]); fy1 = max(g[3] + ext, bridge[3])
+    touched.append(add_rect_dbu(fl, L[tech.poly], (gx0, fy0, gx1, fy1), dev.prov))
+    touched.append(add_rect_dbu(fl, L[tech.poly], bridge, dev.prov))
+    # 3. mirrored contacts and strap(s)
+    for k in inner_licons:
+        touched.append(add_rect_dbu(fl, licon_l, mrect(fl.rects[k].rect), dev.prov))
+    for k in inner_straps:
+        touched.append(add_rect_dbu(fl, li_l, mrect(fl.rects[k].rect), dev.prov))
+    # 4. implant and well cover the new diffusion
+    D2 = fl.rects[di].rect
+    imp = L[tech.psdm if dev.kind == "p" else tech.nsdm] if (tech.psdm and tech.nsdm) else None
+    e = nm(tech.implant_enc)
+    for i, r in enumerate(fl.rects):
+        if imp is not None and r.layer == imp and geom.overlaps(r.rect, D):
+            fl.rects[i].rect = (min(r.x0, D2[0] - e), r.y0, max(r.x1, D2[2] + e), r.y1); touched.append(i)
+        if dev.kind == "p" and r.layer == L[tech.nwell] and geom.overlaps(r.rect, D):
+            ew = nm(tech.nwell_enc)
+            fl.rects[i].rect = (min(r.x0, D2[0] - ew), r.y0, max(r.x1, D2[2] + ew), r.y1); touched.append(i)
+    return sorted(set(touched))
+
+
+def add_rect_dbu(fl: FlatLayout, layer: Tuple[int, int], rect: Rect, prov: str) -> int:
+    fl.rects.append(FlatRect(layer, (min(rect[0], rect[2]), min(rect[1], rect[3]), max(rect[0], rect[2]), max(rect[1], rect[3])), prov))
+    return len(fl.rects) - 1

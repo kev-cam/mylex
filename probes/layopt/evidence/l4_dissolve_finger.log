@@ -1,0 +1,15 @@
+== 1. row: fill_4 | inv_1 | fill_4 | nand2_1 | fill_1 | decap_4  (+ flipped fills above); 292 rects, 8 devices
+   u2 inv_1 before: n W=0.65 L=0.15 fingers=1 G=3 S=VGND D=4; p W=1.00 L=0.15 fingers=1 G=3 S=VPWR D=4
+== 2. add a finger to u2's PMOS, growing right into the fill_4
+   PMOS +1 finger: 9 rects added/changed; n W=0.65 L=0.15 fingers=1 G=3 S=VGND D=4; p W=2.00 L=0.15 fingers=2 G=3 S=VPWR D=4; topology preserved; 0 new violations  LEGAL
+== 3. then the NMOS, same side
+   NMOS +1 finger: 7 rects added/changed; n W=1.30 L=0.15 fingers=2 G=3 S=4 D=VGND; p W=2.00 L=0.15 fingers=2 G=3 S=VPWR D=4; topology preserved; 0 new violations  LEGAL
+   u2's active geometry now spans x 1.84..3.29 um (cell box was 1.84..3.22): the boundary is dissolved into the filler
+== 4. control: the same move on u4 nand2_1's PMOS (right neighbour: 0.46 um fill_1, then a decap with diffusion)
+   nand2 PMOS +1 finger: 16 rects added/changed; n W=0.65 L=0.15 fingers=1 G=6 S=10 D=7; n W=0.65 L=0.15 fingers=1 G=5 S=VGND D=10; p W=1.00 L=0.15 fingers=1 G=6 S=7 D=VPWR; p W=1.00 L=0.15 fingers=1 G=6 S=VPWR D=VPWR; p W=1.00 L=0.15 fingers=1 G=5 S=VPWR D=7; topology CHANGED; 6 new violations
+      min_space diff: rect 137 vs 186 0.000 < 0.270 um   [diff u4/sky130_fd_sc_hd__nand2_1 vs diff u6/sky130_fd_sc_hd__decap_4]
+      min_space li: rect 300 vs 207 0.120 < 0.170 um   [li u4/sky130_fd_sc_hd__nand2_1 vs li u6/sky130_fd_sc_hd__decap_4]
+      min_space li: rect 301 vs 207 0.150 < 0.170 um   [li u4/sky130_fd_sc_hd__nand2_1 vs li u6/sky130_fd_sc_hd__decap_4]
+      enclosure li/licon: rect 301 vs 297 0.000 < 0.080 um   [li u4/sky130_fd_sc_hd__nand2_1 vs licon u4/sky130_fd_sc_hd__nand2_1]
+      min_width li: rect 302 0.095 < 0.170 um   [li u4/sky130_fd_sc_hd__nand2_1]
+   wrote evidence/l4_inv1_fingered.gds, .cir

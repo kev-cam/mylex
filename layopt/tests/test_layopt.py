@@ -159,6 +159,39 @@ def test_elmore_single_wire():
     assert abs(got - want) / want < 0.02, (got, want, R)
 
 
+def test_add_finger_inv1():
+    """Dissolve move on a real cell: inv_1 next to a fill_4; adding a finger to
+    each transistor doubles W, keeps the netlist, and is rule-clean."""
+    from .. import lefdef, moves as mv, drc as rules
+    lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
+    if not os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__fill_4.gds")):
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    deftext = """VERSION 5.8 ; DESIGN t ; UNITS DISTANCE MICRONS 1000 ; DIEAREA ( 0 0 ) ( 4600 2720 ) ;
+COMPONENTS 3 ; - f1 sky130_fd_sc_hd__fill_4 + PLACED ( 0 0 ) N ; - u1 sky130_fd_sc_hd__inv_1 + PLACED ( 1840 0 ) N ;
+- f2 sky130_fd_sc_hd__fill_4 + PLACED ( 3220 0 ) N ; END COMPONENTS
+SPECIALNETS 2 ; - VPWR ( u1 VPWR ) + USE POWER ; - VGND ( u1 VGND ) + USE GROUND ; END SPECIALNETS
+END DESIGN"""
+    with tempfile.TemporaryDirectory() as td:
+        open(os.path.join(td, "t.def"), "w").write(deftext)
+        lefs = [os.path.join(lib, f) for f in ("sky130_fd_sc_hd.tlef", "sky130_fd_sc_hd__inv_1.lef", "sky130_fd_sc_hd__fill_4.lef")]
+        fl = lefdef.def2flat(os.path.join(td, "t.def"), lefs, lib, T)
+    ex = extract.extract(fl, T)
+    sig = ex.signature(); base = {rules.key(v) for v in rules.check(fl, ex)}
+    for kind, w0 in (("p", 1.0), ("n", 0.65)):
+        ex = extract.extract(fl, T)
+        dev = [d for d in ex.devices if d.kind == kind][0]
+        assert abs(dev.w - w0) < 1e-6
+        touched = mv.add_finger(fl, ex, dev, side="high")
+        ex2 = extract.extract(fl, T)
+        d2 = [d for d in ex2.devices if d.kind == kind][0]
+        assert abs(d2.w - 2 * w0) < 1e-6 and d2.fingers == 2, (d2.w, d2.fingers)
+        assert len(ex2.devices) == 2 and ex2.signature() == sig
+        assert not rules.new_violations(fl, ex2, touched, base), rules.new_violations(fl, ex2, touched, base)
+        base = {rules.key(v) for v in rules.check(fl, ex2)}
+    # the cell's diffusion now crosses its LEF box (x = 1.84 + 1.38 = 3.22 um)
+    assert max(r.x1 for r in fl.rects if r.layer == T.layers["diff"] and "u1" in r.prov) > 3220
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):

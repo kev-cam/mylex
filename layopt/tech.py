@@ -37,6 +37,10 @@ class Tech:
     grid_um: float = 0.005
     supply_names: Tuple[str, ...] = ("VDD", "VSS", "VPWR", "VGND", "vdd", "vss")
     text_layers: Dict[Layer, str] = field(default_factory=dict)   # label (layer, datatype) -> conducting layer it names
+    # construction constants for generated geometry (um)
+    poly_ext_diff: float = 0.13        # poly overhang beyond diffusion along W
+    implant_enc: float = 0.125         # nsdm/psdm enclosure of diffusion
+    nwell_enc: float = 0.18            # nwell enclosure of p diffusion
 
     def L(self, name: str) -> Layer:
         return self.layers[name]

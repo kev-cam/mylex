@@ -191,6 +191,26 @@ way were caught by the tool itself (a met2 crossing that shorted the branches;
 widening that merged a detour's own legs): the RC tree simply reported the
 bypass.
 
+**Probe `probes/layopt/l4_dissolve_finger.py` — L4, the boundary dissolved
+(2026-09-06, log `evidence/l4_dissolve_finger.log`):** `moves.add_finger`
+grows a transistor across its cell edge by mirroring the gate and the inner
+S/D column about the outer S/D region — new diffusion, contacts, strap and a
+poly bridge in the field, shifted outward if the mirror image would violate
+spacing — with the new rectangles taking the cell's provenance. On a row
+fill_4 | inv_1 | fill_4 | nand2_1 | fill_1 | decap_4 the inverter's PMOS
+goes from W 1.00 to 2.00 µm and its NMOS from 0.65 to 1.30 µm, each
+re-extracting as ONE device of two combined fingers with the same nets,
+topology preserved, no new rule violations; the cell's active geometry now
+ends at x 3.29 µm against a LEF box ending at 3.22. KLayout extracts the
+result independently as pfet W=2 µm / nfet W=1.3 µm, isomorphic to layopt's
+netlist (`evidence/l4_fingered_vs_klayout.log`). The control — the same move
+on the nand2, whose neighbour is a 0.46 µm fill_1 and then a decap with its
+own diffusion — is refused: diffusion spacing 0 and a changed netlist. Two
+tool corrections fell out: the enclosure rule is now sky130's two-opposite-
+sides form (the four-sided version flagged every stock strap), and the new
+column is placed at the first legal offset rather than the exact mirror
+(asymmetric drain straps).
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -247,15 +267,18 @@ Vctrl 0.9 V) — a library of them is what a `drive.py` module will hold.
 Implemented: device W stretch toward either end of the gate (`side`;
 contact arrays do not grow yet — the stretched S/D region simply carries the
 same contacts; in a shared-provenance cell nothing else moves), wire width
-about the centre-line, translate, add rectangle.
+about the centre-line, translate, add rectangle, **add finger across the cell
+edge** (`add_finger`: mirrored gate + S/D column, poly bridge, implant/well
+extension; supply-connected sources connect through the rail that continues
+into the neighbour; a signal-net outer S/D would need a jumper, not done).
 
 Planned, in the order the async objectives need them:
 
-1. Contact-array growth and finger add/remove on W changes (keeps R_contact
-   proportional).
-2. **Same-net diffusion merge across a former cell edge** — the payoff move of
-   dissolving: two abutting cells with the same net on facing S/D regions
-   become one diffusion with a shared contact row.
+1. Contact-array growth on W changes (keeps R_contact proportional); the
+   signal-net jumper for `add_finger`.
+2. **Same-net diffusion merge across a former cell edge** — the other payoff
+   move: two abutting cells with the same net on facing S/D regions become one
+   diffusion with a shared contact row.
 3. Whitespace reclaim: shift a device column into neighbouring slack when a
    stretch would otherwise violate spacing (today the move is simply
    rejected).
@@ -344,8 +367,10 @@ Planned:
   Elmore balance on a real RC tree, sized under the guard, with the verdict
   when sizing cannot close the gap (§2). Waiting on nulex for the path sets;
   completion-tree drive balance and a QDI-bound `VX_alu_int` slice follow.
-- **L4 — dissolve for real.** Diffusion merge across cell edges, contact
-  growth, whitespace reclaim.
+- **L4 — dissolve for real — first move DONE (2026-09-06).** `add_finger`
+  grows a transistor into the neighbouring filler, verified by re-extraction,
+  the guards and KLayout (§2). Remaining: diffusion merge across abutting
+  cells, contact growth, the signal-net jumper.
 - **L5 — variation-aware acceptance** through stat-sim (T2) and nvc (T3).
 
 ## 10. Open decisions and risks
