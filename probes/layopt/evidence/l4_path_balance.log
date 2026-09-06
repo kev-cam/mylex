@@ -1,0 +1,10 @@
+== 1. two paths: A = u1(inv_1) -> u4 over 2 fF; B = u6(inv_1) -> u9 over a 120 um met2 detour, 10.2 fF
+   baseline delays: A 13.7 ps, B 39.6 ps  (driver R 3000 ohm each); imbalance 25.9 ps
+== 2. greedy search over finger counts (u6 P/N, u1 P/N in 1..4), each state rebuilt from the base layout
+  start  cost 1.05  {'u6_p': 1, 'u6_n': 1, 'u1_p': 1, 'u1_n': 1}
+  round 1  cost 0.30098  {'u6_p': 2, 'u6_n': 1, 'u1_p': 1, 'u1_n': 1}  {'A_ps': 13.702, 'B_ps': 20.151, 'spread_ps': 6.449}
+  round 2  cost 0.081023  {'u6_p': 3, 'u6_n': 1, 'u1_p': 1, 'u1_n': 1}  {'A_ps': 13.702, 'B_ps': 14.089, 'spread_ps': 0.387}
+== 3. result: {'u6_p': 3, 'u6_n': 1, 'u1_p': 1, 'u1_n': 1} -> A 13.7 ps, B 14.1 ps, imbalance 0.4 ps (was 25.9); legal=True topology_ok=True violations=0; 13 states evaluated
+   u1 devices: ['p W=1.00 fingers=1', 'n W=0.65 fingers=1']
+   u6 devices: ['p W=3.00 fingers=3', 'n W=0.65 fingers=1']
+   wrote evidence/l4_path_balanced.gds

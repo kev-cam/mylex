@@ -190,6 +190,15 @@ END DESIGN"""
         base = {rules.key(v) for v in rules.check(fl, ex2)}
     # the cell's diffusion now crosses its LEF box (x = 1.84 + 1.38 = 3.22 um)
     assert max(r.x1 for r in fl.rects if r.layer == T.layers["diff"] and "u1" in r.prov) > 3220
+    # a third PMOS finger: its outer S/D is the drain (signal net Y) -> needs the mcon/met1 jumper
+    ex = extract.extract(fl, T)
+    dev = [d for d in ex.devices if d.kind == "p"][0]
+    touched = mv.add_finger(fl, ex, dev, side="high")
+    ex3 = extract.extract(fl, T)
+    d3 = [d for d in ex3.devices if d.kind == "p"][0]
+    assert abs(d3.w - 3.0) < 1e-6 and d3.fingers == 3 and ex3.signature() == sig, (d3.w, d3.fingers)
+    assert any(fl.rects[i].layer == T.layers["met1"] for i in touched), "jumper expected on met1"
+    assert not rules.new_violations(fl, ex3, touched, base), rules.new_violations(fl, ex3, touched, base)
 
 
 if __name__ == "__main__":

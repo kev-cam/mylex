@@ -184,17 +184,22 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") 
     inv = {v: k for k, v in L.items()}
     d = fl.dbu_um
     nm = lambda um: int(round(um / d))
-    g = geom.bbox([ex.shapes[s].rect for s in dev.gate_ids])
-    if len(dev.gate_ids) != 1:
-        raise MoveError("add_finger: multi-finger device; add fingers to one finger at a time")
     hi = side == "high"
+    # the outermost finger on this side is the one we mirror; the region between
+    # it and the previous finger (or the diffusion edge) is the "inner" S/D
+    grects = sorted((ex.shapes[s].rect for s in dev.gate_ids), key=lambda r: r[0])
+    g = grects[-1] if hi else grects[0]
+    prev = grects[-2] if (hi and len(grects) > 1) else (grects[1] if (not hi and len(grects) > 1) else None)
     # the diffusion rect holding this gate
     diff_ids = [i for i, r in enumerate(fl.rects) if r.layer == L[tech.diff] and geom.overlaps(r.rect, g)]
     if len(diff_ids) != 1:
         raise MoveError("add_finger: gate not on exactly one diffusion rect (%d)" % len(diff_ids))
     di = diff_ids[0]; D = fl.rects[di].rect
     outer = (g[2], D[2]) if hi else (D[0], g[0])          # x-range of the outer S/D region
-    inner = (D[0], g[0]) if hi else (g[2], D[2])
+    if prev is None:
+        inner = (D[0], g[0]) if hi else (g[2], D[2])
+    else:
+        inner = (prev[2], g[0]) if hi else (g[2], prev[0])
     if outer[1] - outer[0] <= 0 or inner[1] - inner[0] <= 0:
         raise MoveError("add_finger: gate at the diffusion edge")
     xc = (outer[0] + outer[1]) / 2.0
@@ -274,8 +279,36 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") 
     # 3. mirrored contacts and strap(s)
     for k in inner_licons:
         touched.append(add_rect_dbu(fl, licon_l, mrect(fl.rects[k].rect), dev.prov))
+    new_straps = []
     for k in inner_straps:
-        touched.append(add_rect_dbu(fl, li_l, mrect(fl.rects[k].rect), dev.prov))
+        new_straps.append((k, add_rect_dbu(fl, li_l, mrect(fl.rects[k].rect), dev.prov)))
+        touched.append(new_straps[-1][1])
+    # 3b. the new outer S/D must join the inner S/D's net.  A supply source
+    # reaches it through the rail (the strap runs to the rail li, which continues
+    # into the neighbour).  A signal net needs a jumper: mcon on both straps and a
+    # met1 bar between them, at a height inside the gate's W range.
+    inner_sid = next((q for q, sh in enumerate(ex.shapes) if sh.src == inner_licons[0]), None)
+    inner_net = ex.net_of_shape[inner_sid] if inner_sid is not None else None
+    if inner_net is not None and ex.nets[inner_net].name not in tech.supply_names and len(tech.vias) >= 1:
+        cut = tech.vias[0][1]                                  # li -> met1 cut (mcon)
+        cs = nm(tech.min_width.get(cut, 0.17)); half = cs // 2
+        m1 = L[tech.routing[1]]
+        enc = nm(tech.enclosure.get((tech.routing[1], cut), 0.03))
+        # one jumper per strap group: the widest slab of the merged inner strap
+        # (the stock cells store T-shaped straps as a thin stub + a wide bar)
+        old_union = geom.merge_rects([fl.rects[k].rect for k, _ in new_straps])
+        wide = max(old_union, key=lambda rr: rr[2] - rr[0])
+        if wide[2] - wide[0] < cs:
+            raise MoveError("add_finger: inner strap too narrow for a contact")
+        y0 = max(wide[1], g[1]); y1 = min(wide[3], g[3])
+        if y1 - y0 < cs:
+            raise MoveError("add_finger: no room for the signal jumper on the strap")
+        yj = (y0 + y1) // 2
+        xa = (wide[0] + wide[2]) // 2
+        xb = mx(xa)
+        for cx in (xa, xb):
+            touched.append(add_rect_dbu(fl, L[cut], (cx - half, yj - half, cx + half, yj + half), dev.prov))
+        touched.append(add_rect_dbu(fl, m1, (min(xa, xb) - half - enc, yj - half - enc, max(xa, xb) + half + enc, yj + half + enc), dev.prov))
     # 4. implant and well cover the new diffusion
     D2 = fl.rects[di].rect
     imp = L[tech.psdm if dev.kind == "p" else tech.nsdm] if (tech.psdm and tech.nsdm) else None

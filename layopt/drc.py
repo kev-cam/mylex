@@ -69,7 +69,21 @@ def check(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = Non
             continue
         mw = tech.min_width.get(ln)
         if mw is not None and min(r.w, r.h) * d < mw - 1e-9:
-            out.append(Violation("min_width", ln, i, -1, min(r.w, r.h) * d, mw))
+            # a thin rectangle is legal if it is part of wider merged geometry:
+            # widen it to min width toward either edge and see if same-layer
+            # rectangles cover that (the stock cells store T-shapes as slabs)
+            m = int(round(mw / d))
+            if r.w < r.h:
+                cands = [(r.x0, r.y0, r.x0 + m, r.y1), (r.x1 - m, r.y0, r.x1, r.y1)]
+            else:
+                cands = [(r.x0, r.y0, r.x1, r.y0 + m), (r.x0, r.y1 - m, r.x1, r.y1)]
+            covered = False
+            for c in cands:
+                cover = [fl.rects[k].rect for k in by_layer[ln].query_overlap(c)]
+                if not geom.subtract(c, cover):
+                    covered = True; break
+            if not covered:
+                out.append(Violation("min_width", ln, i, -1, min(r.w, r.h) * d, mw))
         ms = tech.min_space.get(ln)
         if ms is not None:
             s = int(round(ms / d))

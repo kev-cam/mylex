@@ -134,3 +134,81 @@ def solve(problem: Problem, max_iter: int = 200, step_frac: float = 0.25,
 
     x, val = nelder_mead(f, x0, step, max_iter=max_iter, log=log)
     return problem.evaluate(x, keep=True)
+
+
+# ---------------------------------------------------------------------------
+# Discrete moves (fingers): greedy coordinate search over integer states
+# ---------------------------------------------------------------------------
+
+@dataclass
+class IntVariable:
+    name: str
+    lo: int
+    hi: int
+    x0: int
+    apply: Callable[[FlatLayout, "extract.Extraction", int], List[int]]   # rebuilds state from the BASE layout
+
+
+class DiscreteProblem:
+    """Like Problem, but each variable is an integer (e.g. a finger count) and
+    the moves are re-applied from the base layout for every state, because
+    geometry-generating moves are not reversible edits."""
+
+    def __init__(self, base: FlatLayout, tech: Tech, variables: Sequence[IntVariable], cost, labels=None,
+                 illegal_penalty: float = 1e3):
+        self.base, self.tech, self.vars, self.cost_fn, self.labels, self.penalty = base, tech, list(variables), cost, labels, illegal_penalty
+        self.base_ex = extract.extract(base, tech, labels)
+        self.base_sig = self.base_ex.signature()
+        self.baseline = {drc.key(v) for v in drc.check(base, self.base_ex)}
+        self.cache: Dict[Tuple[int, ...], Evaluation] = {}
+
+    def evaluate(self, x: Sequence[int], keep: bool = False) -> Evaluation:
+        key = tuple(int(v) for v in x)
+        if key in self.cache and not keep:
+            return self.cache[key]
+        fl = copy.deepcopy(self.base)
+        touched: List[int] = []
+        legal = True
+        ex = self.base_ex
+        for v, var in zip(key, self.vars):
+            try:
+                t = var.apply(fl, ex, v)
+            except Exception as e:                      # a move that cannot be made
+                legal = False; t = []
+            touched += t
+            if t:
+                ex = extract.extract(fl, self.tech, self.labels)   # later moves see the geometry so far
+        ex = extract.extract(fl, self.tech, self.labels)
+        sig_ok = ex.signature() == self.base_sig
+        viol = drc.new_violations(fl, ex, sorted(set(touched)), self.baseline)
+        legal = legal and sig_ok and not viol
+        c, terms = self.cost_fn(fl, ex, dict(zip([v.name for v in self.vars], key)))
+        if not legal:
+            c += self.penalty * (1 + len(viol))
+        ev = Evaluation(list(key), c, terms, legal, len(viol), sig_ok, fl if keep else None, ex if keep else None)
+        self.cache[key] = ev
+        return ev
+
+
+def greedy_search(problem: DiscreteProblem, max_rounds: int = 20, verbose: bool = True) -> Evaluation:
+    """Coordinate ascent: from the current state try +1/-1 on every variable,
+    take the best improving legal neighbour, repeat until none improves."""
+    x = [v.x0 for v in problem.vars]
+    best = problem.evaluate(x)
+    if verbose:
+        print("  start  cost %.5g  %s" % (best.cost, dict(zip([v.name for v in problem.vars], x))))
+    for rnd in range(max_rounds):
+        cands = []
+        for i, var in enumerate(problem.vars):
+            for dlt in (+1, -1):
+                y = list(x); y[i] += dlt
+                if var.lo <= y[i] <= var.hi:
+                    cands.append(problem.evaluate(y))
+        cands = [c for c in cands if c.legal and c.cost < best.cost - 1e-9]
+        if not cands:
+            break
+        best = min(cands, key=lambda c: c.cost); x = list(best.x)
+        if verbose:
+            print("  round %d  cost %.5g  %s  %s" % (rnd + 1, best.cost, dict(zip([v.name for v in problem.vars], x)),
+                                                    {k: round(v, 3) for k, v in best.terms.items()}))
+    return problem.evaluate(x, keep=True)

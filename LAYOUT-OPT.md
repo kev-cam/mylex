@@ -211,6 +211,25 @@ sides form (the four-sided version flagged every stock strap), and the new
 column is placed at the first legal offset rather than the exact mirror
 (asymmetric drain straps).
 
+**Probe `probes/layopt/l4_path_balance.py` — L4, a discrete move balances
+timing (2026-09-06, log `evidence/l4_path_balance.log`):** two inv_1 drivers,
+each followed by fillers, drive two receivers — path A over 2 fF, path B over
+a 120 µm met2 detour (10 fF). Baseline 13.7 vs 39.6 ps. Wire sizing cannot
+help B (metal R is negligible against a 3 kΩ driver), fingers can:
+`optimize.greedy_search` over integer finger counts for both drivers (P and N
+separately, each state rebuilt from the base layout because geometry-
+generating moves are not reversible edits) adds two fingers to B's PMOS,
+W 1 → 3 µm, and B falls to 14.1 ps: imbalance 25.9 → 0.4 ps, 13 states, every
+one legal and topology-identical; a fourth finger is declined as overshoot
+plus area. The third finger needed the signal-net jumper (`add_finger` now
+adds mcon + met1 from the inner strap to the new one when the inner S/D is
+not a supply), and two rule-check refinements came out of it: min width is
+judged on merged geometry (the stock drain strap is a 0.10 µm stub plus a wide
+bar), and the jumper lands on the widest slab. KLayout extracts the result as
+pfet W=3 µm, isomorphic (`evidence/l4_balanced_vs_klayout.log`). Deferred with
+a reason: same-net diffusion merge across abutting cells changes area, not
+timing, until a compaction move exists.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -270,12 +289,13 @@ same contacts; in a shared-provenance cell nothing else moves), wire width
 about the centre-line, translate, add rectangle, **add finger across the cell
 edge** (`add_finger`: mirrored gate + S/D column, poly bridge, implant/well
 extension; supply-connected sources connect through the rail that continues
-into the neighbour; a signal-net outer S/D would need a jumper, not done).
+into the neighbour, signal-net S/D through an mcon + met1 jumper; works on
+devices that already have fingers).
 
 Planned, in the order the async objectives need them:
 
-1. Contact-array growth on W changes (keeps R_contact proportional); the
-   signal-net jumper for `add_finger`.
+1. Contact-array growth on W changes (keeps R_contact proportional); a
+   `remove_finger` inverse for balancing by slowing.
 2. **Same-net diffusion merge across a former cell edge** — the other payoff
    move: two abutting cells with the same net on facing S/D regions become one
    diffusion with a shared contact row.
@@ -367,10 +387,12 @@ Planned:
   Elmore balance on a real RC tree, sized under the guard, with the verdict
   when sizing cannot close the gap (§2). Waiting on nulex for the path sets;
   completion-tree drive balance and a QDI-bound `VX_alu_int` slice follow.
-- **L4 — dissolve for real — first move DONE (2026-09-06).** `add_finger`
-  grows a transistor into the neighbouring filler, verified by re-extraction,
-  the guards and KLayout (§2). Remaining: diffusion merge across abutting
-  cells, contact growth, the signal-net jumper.
+- **L4 — dissolve for real — DONE for the finger move (2026-09-06).**
+  `add_finger` grows a transistor into the neighbouring filler (supply or
+  signal S/D), verified by re-extraction, the guards and KLayout, and the
+  discrete search uses it to balance two paths 25.9 → 0.4 ps (§2). Remaining:
+  diffusion merge across abutting cells (needs compaction to pay), contact
+  growth, `remove_finger`.
 - **L5 — variation-aware acceptance** through stat-sim (T2) and nvc (T3).
 
 ## 10. Open decisions and risks

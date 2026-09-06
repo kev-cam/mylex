@@ -114,6 +114,22 @@ Row fill_4 | inv_1 | fill_4 | nand2_1 | fill_1 | decap_4 (+ flipped fills).
 KLayout extracts `evidence/l4_inv1_fingered.gds` as pfet 2 µm / nfet 1.3 µm,
 isomorphic to layopt (`evidence/l4_fingered_vs_klayout.log`).
 
+## L4 — a discrete move balances two paths (`l4_path_balance.py`, `evidence/l4_path_balance.log`)
+
+Two inv_1 drivers with fillers beside them; path A over 2 fF, path B over a
+120 µm met2 detour (10 fF). `optimize.greedy_search` over finger counts
+(u6 P/N, u1 P/N in 1..4), each state rebuilt from the base layout:
+
+| state | A | B | imbalance |
+|---|---|---|---|
+| baseline | 13.7 ps | 39.6 ps | 25.9 ps |
+| u6 PMOS 2 fingers | 13.7 | 20.2 | 6.4 |
+| u6 PMOS 3 fingers (chosen) | 13.7 | 14.1 | 0.4 |
+
+13 states, all legal and topology-identical; KLayout extracts the result as
+pfet W=3 µm, isomorphic (`evidence/l4_balanced_vs_klayout.log`). The third
+finger exercises the signal-net jumper (mcon + met1 to the drain strap).
+
 ## Findings about the kestrel layout (report upstream)
 
 1. Inter-stage MET3 routes share track y≈8.43 µm and overlap: all four stages'
