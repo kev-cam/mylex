@@ -249,6 +249,13 @@ hazards, MC p_fail 0.000 — accepted. T3's skews are ln2 × T0's (stat-sim's
 11.8), so the tiers agree on every verdict. The variation model is an
 assumption stated in the probe, not a PDK fact — stat-sim's MC-characterized
 τ is the flop side; interconnect variation here is a documented σ table.
+Flop side, tried and put in its place: feeding the skew into stat-sim's
+MTBF = exp(slack/τ)/(T0·f_c·f_d) with slack = gate delay − skew gives
+microsecond MTBFs even for the balanced fork, because a 40 ps slack is below
+the sky130 dfxtp's own 90 ps setup. A fork is not a flop-sampling event: its
+acceptance is the tail probability of the skew distribution beyond the margin
+(p_fail above); the MTBF formula belongs to a CDC receiver with a cycle of
+settling, which stat-sim's latch already models.
 
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):

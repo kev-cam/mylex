@@ -47,6 +47,21 @@ NSAMP = int(sys.argv[sys.argv.index("--samples") + 1]) if "--samples" in sys.arg
 NMC = int(sys.argv[sys.argv.index("--mc") + 1]) if "--mc" in sys.argv else 60
 R_DRIVE, C_IN = L3.R_DRIVE, L3.C_IN
 T_GATE_PS = 40.0
+# flop side (stat-sim specs/sky130_dfxtp.json): tau = T0 = 15.7 ps; launches at 500 MHz
+TAU_PS, T0_PS, F_LAUNCH = 15.7, 15.7, 500e6
+
+
+def mtbf_s(skew_ps):
+    """stat-sim's MTBF = exp(t_slack/tau) / (T0 f_c f_d) with slack = T_GATE - |skew|."""
+    slack = (T_GATE_PS - abs(skew_ps)) * 1e-12
+    return math.exp(slack / (TAU_PS * 1e-12)) / (T0_PS * 1e-12 * F_LAUNCH * F_LAUNCH)
+
+
+def fmt_t(sec):
+    if sec == float("inf"): return "inf"
+    for unit, k in (("y", 3.156e7), ("d", 86400.0), ("h", 3600.0), ("s", 1.0), ("ms", 1e-3), ("us", 1e-6), ("ns", 1e-9)):
+        if sec >= k: return "%.3g %s" % (sec / k, unit)
+    return "%.3g s" % sec
 # variation model (1-sigma relative): thin li varies more than thick metal
 SIG_R = {"li": 0.15, "met1": 0.10, "met2": 0.10, "met3": 0.10, "poly": 0.12}
 SIG_C = 0.08
@@ -204,6 +219,11 @@ def main():
             print("            T0 Elmore skew %7.2f ps | T2 MC skew %7.2f +/- %5.2f ps, p_fail(|skew|>%.0f ps) = %.4f | "
                   "T3 stat-sim/nvc skew %7.2f ps (ln2 x T0 = %7.2f), nominal hazards %d/%d, MC p_fail = %.3f (%d runs)" % (
                       skew0, mu, sd, T_GATE_PS, pf2, skew3, skew0 * math.log(2), h0, n0, pf3, runs))
+            m_nom = mtbf_s(skew0)
+            m_var = 1.0 / (sum(1.0 / mtbf_s(x) for x in sk) / len(sk))     # harmonic mean over the variation samples
+            print("            if a sky130 dfxtp (tau=T0=%.1f ps) sampled the slow branch at the fast one's arrival, %.0f MHz: settling slack %.0f ps - |skew| gives MTBF %s nominal, %s under variation"
+                  " -- below the flop's 90 ps setup: a fork is judged by p_fail, MTBF belongs to the CDC receiver" % (
+                      TAU_PS, F_LAUNCH / 1e6, T_GATE_PS, fmt_t(m_nom), fmt_t(m_var)))
     print("   (T3 skews carry stat-sim's ln2 50%-point convention; T0/T2 are Elmore. Acceptance = p_fail against the gate-delay reference.)")
 
 
