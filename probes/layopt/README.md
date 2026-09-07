@@ -146,6 +146,15 @@ stated variation model. T3: stat-sim `statsim_pl_rc` + `pl_load` under nvc,
 
 T3 skews are ln2 × T0 (50 %-point vs Elmore first moment).
 
+## A real DEF: gcd through OpenROAD (`gcd/`, `l2_real_def.py`, `evidence/l2_real_def_gcd.log`)
+
+`gcd/` holds the Yosys script, the OpenROAD Tcl flow, the synthesized netlist
+and the routed DEF (784 instances, 0 DRC violations). `l2_real_def.py gcd/gcd.def`
+runs def2flat + extraction (2472 devices, 2102 nets, ~10 s) and KLayout's
+own DEF reader + full-stack LayoutToNetlist on the same inputs, then compares:
+W/L equal, degree histogram equal, isomorphic. Needs `~/tools/orfs-sky130hd`
+(ORFS sky130hd platform files) and the `klayout` wheel.
+
 ## Findings about the kestrel layout (report upstream)
 
 1. Inter-stage MET3 routes share track y≈8.43 µm and overlap: all four stages'

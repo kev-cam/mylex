@@ -257,6 +257,26 @@ acceptance is the tail probability of the skew distribution beyond the margin
 (p_fail above); the MTBF formula belongs to a CDC receiver with a cycle of
 settling, which stat-sim's latch already models.
 
+**A real place-and-route result (2026-09-07, `probes/layopt/gcd/`,
+`evidence/l2_real_def_gcd.log`):** OpenROAD `63fe72c` built from source on
+this box (no prebuilt package exists for Ubuntu 22.04 any more; dependencies
+via the project's installer with the OS check forced from Linux Mint to
+Ubuntu, GUI off, test binaries skipped), Yosys synthesis of the ORFS `gcd`
+design to sky130_fd_sc_hd, and a standalone Tcl flow — floorplan at 38 %
+utilization, tap cells, PDN on met1/met4/met5, global and detailed placement,
+CTS, global and detailed routing with 0 DRC violations, fillers — producing a
+784-instance DEF. `def2flat` reads it with the merged cell GDS: 57 k
+rectangles, 2472 devices, 2102 nets, 9 s; KLayout reading the same DEF with
+the real cell geometry and extracting with its own engine agrees exactly
+(W/L multiset, degree histogram, isomorphic). Three reader gaps were found and
+closed on the way: DEF-defined vias (`VIAS` section, VIARULE-generated
+geometry from cut size, spacing, enclosure and row/column count), DEF 5.8
+`RECT` wire pieces and `TAPER`, and — the one that shorted VSS into a signal
+net — special-net wires have flush ends where regular wires get the default
+half-width extension. The reference itself needed care: kestrel's KLayout
+recipe stops at met3 and fragments a power grid routed on met4/met5, so the
+probe carries a full-stack extraction.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -402,14 +422,14 @@ Planned:
   the `attrs` module name). kestrel's `layout/gds_gen.py` regenerates the
   committed GDS bit-identically (3741 rects), so its routing defects (§2) can
   be fixed upstream and re-extracted here.
-- **L2 — standard-cell input — DONE for the reader (2026-09-05).**
-  `lefdef.def2flat` builds the flat layout from LEF/DEF + cell GDS
-  (`top/<inst>/<macro>` provenance); verified on a 12-cell two-row
-  sky130_fd_sc_hd design and against KLayout per cell (§2). The first
+- **L2 — standard-cell input — DONE (2026-09-07).** `lefdef.def2flat`
+  builds the flat layout from LEF/DEF + cell GDS (`top/<inst>/<macro>`
+  provenance); verified on a 12-cell two-row design, per cell against KLayout,
+  and on a real OpenROAD place-and-route of `gcd` (784 instances, 2472
+  devices, isomorphic to KLayout's independent extraction, §2). The first
   standard-cell move showed that sky130_fd_sc_hd cells have no internal
-  whitespace to grow into: the payoff moves are L4's. Still to come here: a
-  real P&R result (needs OpenROAD or a DEF from elsewhere) and the ldx TH
-  cells on SG13G2.
+  whitespace to grow into: the payoff moves are L4's. Still to come: the ldx
+  TH cells on SG13G2.
 - **L3 — async objective — geometric half DONE (2026-09-05).** Fork-branch
   Elmore balance on a real RC tree, sized under the guard, with the verdict
   when sizing cannot close the gap (§2). Waiting on nulex for the path sets;
