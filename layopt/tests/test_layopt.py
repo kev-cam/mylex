@@ -221,6 +221,42 @@ END DESIGN"""
     assert len(d.vias["via_rect"].rects) == 3 and d.vias["via_rect"].rects[1][1] == (-0.075, -0.075, 0.075, 0.075)
 
 
+def test_contact_and_column_bridge_inv1():
+    """Forced contact mode on inv_1 beside a fill_4: the PMOS finger ties its gate
+    through a poly tab + licon + li pad + met1 jumper to the A pin; the NMOS
+    finger then joins the PMOS finger's poly with a column bridge.  Both legal."""
+    from .. import lefdef, moves as mv, drc as rules
+    lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
+    if not os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__fill_4.gds")):
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    deftext = """VERSION 5.8 ; DESIGN t ; UNITS DISTANCE MICRONS 1000 ; DIEAREA ( 0 0 ) ( 4600 2720 ) ;
+COMPONENTS 3 ; - f1 sky130_fd_sc_hd__fill_4 + PLACED ( 0 0 ) N ; - u1 sky130_fd_sc_hd__inv_1 + PLACED ( 1840 0 ) N ;
+- f2 sky130_fd_sc_hd__fill_4 + PLACED ( 3220 0 ) N ; END COMPONENTS
+SPECIALNETS 2 ; - VPWR ( u1 VPWR ) + USE POWER ; - VGND ( u1 VGND ) + USE GROUND ; END SPECIALNETS
+END DESIGN"""
+    with tempfile.TemporaryDirectory() as td:
+        open(os.path.join(td, "t.def"), "w").write(deftext)
+        lefs = [os.path.join(lib, f) for f in ("sky130_fd_sc_hd.tlef", "sky130_fd_sc_hd__inv_1.lef", "sky130_fd_sc_hd__fill_4.lef")]
+        fl = lefdef.def2flat(os.path.join(td, "t.def"), lefs, lib, T)
+    ex = extract.extract(fl, T)
+    sig = ex.signature(); base = {rules.key(v) for v in rules.check(fl, ex)}
+    layers_added = {}
+    for kind in ("p", "n"):
+        ex = extract.extract(fl, T)
+        dev = [d for d in ex.devices if d.kind == kind][0]
+        n0 = len(fl.rects)
+        touched = mv.add_finger(fl, ex, dev, side="high", bridge="contact")
+        ex2 = extract.extract(fl, T)
+        d2 = [d for d in ex2.devices if d.kind == kind][0]
+        assert d2.fingers == 2 and ex2.signature() == sig, (kind, d2.fingers)
+        assert not rules.new_violations(fl, ex2, touched, base), rules.new_violations(fl, ex2, touched, base)
+        layers_added[kind] = {fl.rects[i].layer for i in touched if i >= n0}
+        base = {rules.key(v) for v in rules.check(fl, ex2)}
+    inv = {v: k for k, v in T.layers.items()}
+    assert {"met1", "mcon", "licon"} <= {inv[l] for l in layers_added["p"]}, "PMOS should use the contact bridge"
+    assert "met1" not in {inv[l] for l in layers_added["n"]}, "NMOS should use the column bridge (poly only)"
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):

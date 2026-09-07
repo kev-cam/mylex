@@ -157,17 +157,21 @@ W/L equal, degree histogram equal, isomorphic. Needs `~/tools/orfs-sky130hd`
 
 ## L4 on the real layout (`l4_gcd_whitespace.py`, `evidence/l4_gcd_whitespace.log`)
 
-Fingers into the fillers OpenROAD placed in gcd. 33 candidates; six tried:
+Fingers into the fillers OpenROAD placed in gcd. 33 candidates; six tried,
+each transistor judged on its own:
 
-| cell | neighbour | result |
-|---|---|---|
-| _149_, _161_ nand2_1 | fill_4, fill_8 | refused: no field for a poly bridge |
-| _110_ clkinv_1, rebuffer12 buf_4 | fill_4 | refused: no met1 height clear of other nets for the jumper |
-| rebuffer3 buf_4 | fill_8 | LEGAL: 5 → 6 fingers/stage, net3 13.2 → 12.0 ps |
-| rebuffer13 buf_4 | fill_8 | LEGAL: 5 → 6 fingers/stage, net13 17.6 → 15.8 ps |
+| cell | neighbour | PMOS | NMOS | output net (Elmore) |
+|---|---|---|---|---|
+| _149_ nand2_1 | fill_4 | legal (contact/poly bridge) | refused: series stack, inner node uncontacted | 21.0 → 15.4 ps |
+| _161_ nand2_1 | fill_8 | legal | refused: series stack | 11.5 → 8.5 ps |
+| _110_ clkinv_1 | fill_4 | refused: no met1 height for the jumper | refused: same | — |
+| rebuffer12 buf_4 | fill_4 | legal | refused: no met1 height | 6.0 → 5.5 ps |
+| rebuffer3 buf_4 | fill_8 | legal | legal | 13.2 → 12.0 ps |
+| rebuffer13 buf_4 | fill_8 | legal | legal | 17.6 → 15.8 ps |
 
-`evidence/gcd_rebuffer3_fingered.gds` extracts isomorphic in KLayout
-(`evidence/l4_gcd_fingered_vs_klayout.log`).
+`evidence/gcd_149_fingered.gds` extracts isomorphic in KLayout
+(`evidence/l4_gcd_fingered_vs_klayout.log`). Refusal messages carry the
+obstacle; the contact planner adds a tally of rejected candidates.
 
 ## Findings about the kestrel layout (report upstream)
 
