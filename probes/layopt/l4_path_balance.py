@@ -26,7 +26,7 @@ SCR = sys.argv[sys.argv.index("--scratch") + 1] if "--scratch" in sys.argv else 
 EVID = os.path.join(HERE, "evidence")
 T = tech.SKY130
 P = "sky130_fd_sc_hd__"
-R0, W0 = 3000.0, 1.0      # ohm at PMOS W0 (inv_1); NMOS scales alongside (sky130 inv ratio kept)
+# driver resistances come from tech.SKY130.drive (two edges; probes/layopt/drive_fit.py)
 C_IN = 2.1                # fF receiver gate
 ROW = ["inv_1", "fill_4", "fill_4", "nand2_1", "fill_8", "inv_1", "fill_4", "fill_4", "nand2_1", "fill_8"]
 DETOUR_B = 60.0           # um out (and back): ~120 um of met2 on path B
@@ -81,16 +81,23 @@ def shape_at(ex, layer, x_um, y_um):
 
 
 def path_delays(ex, lef, comps):
-    """Elmore delay of path A and B (ps) with each driver's R from its PMOS width."""
+    """Elmore delay of path A and B (ps) on both edges: the driver's PMOS width
+    sets R_rise, its NMOS width R_fall (tech.SKY130.drive, fitted from the
+    Liberty).  Returns per path (worst edge, W_p, R_rise, C_fF, rise, fall,
+    W_n, R_fall)."""
     by = {c.inst: c for c in comps}
+    dm = T.drive
     out = {}
     for name, drv_inst, rcv_inst in (("a", "u1", "u4"), ("b", "u6", "u9")):
         net = [n for n in ex.nets.values() if n.name == name][0]
         wp = sum(d.w for d in ex.devices if d.prov.split("/")[1] == drv_inst and d.kind == "p")
-        r_drv = R0 * W0 / wp
+        wn = sum(d.w for d in ex.devices if d.prov.split("/")[1] == drv_inst and d.kind == "n")
+        r_rise, r_fall = dm.r_rise(wp), dm.r_fall(wn)
         xd, yd, _ = pin_center(lef, by[drv_inst], "Y"); xr, yr, _ = pin_center(lef, by[rcv_inst], "A")
         dd = shape_at(ex, "li", xd, yd); rr = shape_at(ex, "li", xr, yr)
-        out[name] = (rc.elmore_delays(ex, net.id, dd, [rr], r_drv, {rr: C_IN})[rr], wp, r_drv, rc.net_rc(ex, net.id).c_fF)
+        rise = rc.elmore_delays(ex, net.id, dd, [rr], r_rise, {rr: C_IN})[rr]
+        fall = rc.elmore_delays(ex, net.id, dd, [rr], r_fall, {rr: C_IN})[rr]
+        out[name] = (max(rise, fall), wp, r_rise, rc.net_rc(ex, net.id).c_fF, rise, fall, wn, r_fall)
     return out
 
 
@@ -106,7 +113,8 @@ def main():
     ex = extract.extract(fl, T)
     d0 = path_delays(ex, lef, comps)
     print("== 1. two paths: A = u1(inv_1) -> u4 over %.0f fF; B = u6(inv_1) -> u9 over a %.0f um met2 detour, %.1f fF" % (d0["a"][3], 2 * DETOUR_B, d0["b"][3]))
-    print("   baseline delays: A %.1f ps, B %.1f ps  (driver R %.0f ohm each); imbalance %.1f ps" % (d0["a"][0], d0["b"][0], d0["a"][2], abs(d0["a"][0] - d0["b"][0])))
+    print("   baseline delays (worst edge): A %.1f ps (rise %.1f / fall %.1f), B %.1f ps (rise %.1f / fall %.1f); driver R_rise %.0f / R_fall %.0f ohm; imbalance %.1f ps" % (
+        d0["a"][0], d0["a"][4], d0["a"][5], d0["b"][0], d0["b"][4], d0["b"][5], d0["a"][2], d0["a"][7], abs(d0["a"][0] - d0["b"][0])))
 
     def fingers(inst, kind):
         def apply(f_, e_, n):
@@ -119,19 +127,20 @@ def main():
         return apply
     variables = [optimize.IntVariable("u6_p", 1, 4, 1, fingers("u6", "p")), optimize.IntVariable("u6_n", 1, 4, 1, fingers("u6", "n")),
                  optimize.IntVariable("u1_p", 1, 4, 1, fingers("u1", "p")), optimize.IntVariable("u1_n", 1, 4, 1, fingers("u1", "n"))]
-    spread0 = abs(d0["a"][0] - d0["b"][0])
+    spread0 = abs(d0["a"][4] - d0["b"][4]) + abs(d0["a"][5] - d0["b"][5])
     mean0 = (d0["a"][0] + d0["b"][0]) / 2
     def cost(f_, e_, x):
         d = path_delays(e_, lef, comps)
-        sp = abs(d["a"][0] - d["b"][0]); mean = (d["a"][0] + d["b"][0]) / 2
+        # both edges must balance: rise against rise, fall against fall
+        sp = abs(d["a"][4] - d["b"][4]) + abs(d["a"][5] - d["b"][5]); mean = (d["a"][0] + d["b"][0]) / 2
         extra = sum(x.values()) - len(x)               # fingers added: an area/power price
-        return sp / spread0 + 0.05 * mean / mean0 + 0.02 * extra, {"A_ps": d["a"][0], "B_ps": d["b"][0], "spread_ps": sp}
+        return sp / spread0 + 0.05 * mean / mean0 + 0.02 * extra, {"A_rise": d["a"][4], "A_fall": d["a"][5], "B_rise": d["b"][4], "B_fall": d["b"][5], "spread_ps": sp}
     print("== 2. greedy search over finger counts (u6 P/N, u1 P/N in 1..4), each state rebuilt from the base layout")
     prob = optimize.DiscreteProblem(fl, T, variables, cost)
     best = optimize.greedy_search(prob, verbose=True)
     d1 = path_delays(best.ex, lef, comps)
-    print("== 3. result: %s -> A %.1f ps, B %.1f ps, imbalance %.1f ps (was %.1f); legal=%s topology_ok=%s violations=%d; %d states evaluated" % (
-        dict(zip([v.name for v in variables], best.x)), d1["a"][0], d1["b"][0], abs(d1["a"][0] - d1["b"][0]), spread0,
+    print("== 3. result: %s -> A rise/fall %.1f/%.1f ps, B %.1f/%.1f ps, imbalance rise+fall %.1f ps (was %.1f); legal=%s topology_ok=%s violations=%d; %d states evaluated" % (
+        dict(zip([v.name for v in variables], best.x)), d1["a"][4], d1["a"][5], d1["b"][4], d1["b"][5], abs(d1["a"][4] - d1["b"][4]) + abs(d1["a"][5] - d1["b"][5]), spread0,
         best.legal, best.signature_ok, best.violations, len(prob.cache)))
     for inst in ("u1", "u6"):
         print("   %s devices: %s" % (inst, ["%s W=%.2f fingers=%d" % (d.kind, d.w, d.fingers) for d in best.ex.devices if d.prov.split("/")[1] == inst]))

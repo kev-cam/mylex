@@ -8,7 +8,7 @@ for the PNGs). Design record: `../../LAYOUT-OPT.md`.
 ## Commands
 
     cd /usr/local/src/mylex
-    python3 -m layopt.tests.test_layopt                       # 13 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger)
+    python3 -m layopt.tests.test_layopt                       # 14 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model)
     python3 -m layopt compare  $K/layout/kestrel_pll.gds $K/layout/kestrel_pll_flat_extracted.cir
     python3 -m layopt extract  $K/layout/kestrel_pll.gds -o evidence/kestrel_pll_layopt.cir
     python3 -m layopt rc       $K/layout/kestrel_pll.gds -o evidence/kestrel_pll.spef
@@ -160,14 +160,14 @@ W/L equal, degree histogram equal, isomorphic. Needs `~/tools/orfs-sky130hd`
 Fingers into the fillers OpenROAD placed in gcd. 33 candidates; six tried,
 each transistor judged on its own (all twelve fingers legal in the six cells, `legal moves: 6 of 6`):
 
-| cell | neighbour | PMOS | NMOS | output net (Elmore) |
+| cell | neighbour | PMOS | NMOS | output net (worst-edge Elmore, Liberty-fitted driver) |
 |---|---|---|---|---|
-| _149_ nand2_1 | fill_4 | legal (contact/poly bridge) | legal: whole series stack, far gate bridged by a routed path around the P&R met1 | 21.0 → 15.4 ps |
-| _161_ nand2_1 | fill_8 | legal | legal: series stack, routed (two same-net notch repairs) | 11.5 → 8.5 ps |
-| _110_ clkinv_1 | fill_4 | legal: jumper routed on li | legal: same | 12.9 → 9.7 ps |
-| rebuffer12 buf_4 | fill_4 | legal | legal (jumper kept in its strip) | 6.0 → 5.7 ps |
-| rebuffer3 buf_4 | fill_8 | legal | legal | 13.2 → 12.0 ps |
-| rebuffer13 buf_4 | fill_8 | legal | legal | 17.6 → 15.8 ps |
+| _149_ nand2_1 | fill_4 | legal (contact/poly bridge) | legal: whole series stack, far gate bridged by a routed path around the P&R met1 | 97.8 → 54.4 ps |
+| _161_ nand2_1 | fill_8 | legal | legal: series stack, routed (two same-net notch repairs) | 56.4 → 32.1 ps |
+| _110_ clkinv_1 | fill_4 | legal: jumper routed on li | legal: same | 48.3 → 29.8 ps |
+| rebuffer12 buf_4 | fill_4 | legal | legal (jumper kept in its strip) | 21.2 → 19.4 ps |
+| rebuffer3 buf_4 | fill_8 | legal | legal | 47.6 → 41.6 ps |
+| rebuffer13 buf_4 | fill_8 | legal | legal | 64.7 → 55.9 ps |
 
 `evidence/gcd_149_fingered.gds` extracts isomorphic in KLayout
 (`evidence/l4_gcd_fingered_vs_klayout.log`). Refusal messages carry the
@@ -208,18 +208,30 @@ notch-fill pass then deal with it -- `_161_` still passes that way).
 The inverse move. Stock buf_4 alone on a row: output stage 4 → 3 fingers per
 polarity (P 4.0 → 3.0 µm, N 2.6 → 1.95 µm), same netlist, no new violations,
 KLayout isomorphic (`evidence/remove_finger_buf4*`). gcd rebuffer3: the same
-removal in place, driven net Elmore 13.2 → 15.6 ps, KLayout isomorphic on the
+removal in place, driven net worst-edge Elmore 47.6 → 59.6 ps, KLayout isomorphic on the
 whole design (`evidence/gcd_rebuffer3_removed*`). Round trip add → remove on
 the bare nand2 row returns the original rectangle count (`test_remove_finger_roundtrip`).
 
 ## Two-way path balance (`l4_path_balance_twoway.py`, `evidence/l4_path_balance_twoway.log`)
 
-inv_4 over a short wire (A, 3.8 ps) against inv_1 over 120 µm of met2 (B,
-39.6 ps). The greedy search may add fingers to either driver or remove them:
-result u6 PMOS 1 → 4 fingers, u1 PMOS 4 → 2 (NMOS 4 → 1 on the area credit
-alone -- the delay model is PMOS-only), A 7.5 / B 10.7 ps, imbalance 35.8 →
-3.2 ps, 10 → 8 fingers in total, 46 states, all guards passed
-(`evidence/l4_path_balanced_twoway.gds`).
+inv_4 over a short wire (A) against inv_1 over 120 µm of met2 (B), both
+edges costed with the Liberty-fitted driver model: baseline A 13.6/6.6 ps
+rise/fall, B 113.8/62.9. The greedy search may add fingers to either driver
+or remove them: u1 PMOS 4 → 1 and NMOS 4 → 3 (the fourth NMOS finger stays
+because removing it opens the falling edge), u6 PMOS 1 → 2 and NMOS 1 → 4;
+A 43.2/8.6, B 65.8/18.3 ps, combined imbalance 156.5 → 32.4 ps, 10 → 10
+fingers, 53 states, all guards passed (`evidence/l4_path_balanced_twoway.gds`).
+The one-way probe (`l4_path_balance.py`) with the same model: 115 → 28 ps.
+
+## Two-edge driver model from the Liberty (`drive_fit.py`, `evidence/drive_fit.log`)
+
+Per cell and timing arc: the output stage's effective P and N widths from
+layopt's extraction of the cell GDS, and the Liberty's slope of delay vs load
+(÷ ln 2) on each edge. Fit over 24 cells: R_rise = 8733 · Wp^−0.839 Ω,
+R_fall = 3209 · Wn^−0.933 Ω; a series stack of two costs 2.28× (PMOS, nor2)
+and 1.64× (NMOS, nand2) a same-size inverter, not 2×; residuals within ±9 %
+except buf_16. The constants are `tech.SKY130.drive`; the probe prints OK /
+UPDATE against them. The path-balance and gcd probes use both edges.
 
 ## Findings about the kestrel layout (report upstream)
 

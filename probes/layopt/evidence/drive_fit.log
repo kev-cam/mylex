@@ -1,0 +1,39 @@
+== 24 cells from sky130_fd_sc_hd__tt_025C_1v80.lib; slope taken at input slew 50 ps
+   cell       pin     Wp   stk  Rrise      kp     t0r |    Wn   stk  Rfall      kn     t0f
+   inv_1      A     1.00     1   8165    8165    36.0 |  0.65     1   4823    3135    27.8
+   inv_2      A     2.00     1   4465    8930    35.5 |  1.30     1   2323    3020    24.7
+   inv_4      A     4.00     1   2630   10519    37.8 |  2.60     1   1245    3236    24.2
+   inv_6      A     6.00     1   1896   11375    39.5 |  3.90     1    842    3283    24.0
+   inv_8      A     8.00     1   1443   11541    39.9 |  5.20     1    639    3323    24.1
+   inv_12     A    12.00     1   1049   12591    42.0 |  7.80     1    454    3542    25.0
+   inv_16     A    16.00     1    851   13613    43.8 | 10.40     1    380    3953    26.9
+   buf_1      A     0.79     1  11411    9015    61.4 |  0.52     1   6063    3153    79.4
+   buf_2      A     2.00     1   4767    9534    85.4 |  1.30     1   2404    3125   117.2
+   buf_4      A     4.00     1   2698   10791    91.5 |  2.60     1   1262    3282   132.9
+   buf_8      A     8.00     1   1545   12360    71.1 |  5.20     1    667    3469   108.9
+   buf_12     A    12.00     1   1088   13060    77.3 |  7.80     1    465    3628   114.7
+   buf_16     A    16.00     1    972   15551    81.4 | 10.40     1    463    4817   117.5
+   clkinv_1   A     1.68     1   5498    9237    33.9 |  0.42     1   8256    3467    37.6
+   clkinv_2   A     3.00     1   3422   10266    34.9 |  0.84     1   3971    3335    33.9
+   clkinv_4   A     6.00     1   1868   11206    36.0 |  1.68     1   1983    3332    32.9
+   clkbuf_1   A     0.79     1  11418    9020    61.1 |  0.52     1   6065    3154    79.3
+   clkbuf_4   A     4.00     1   2920   11679   113.2 |  1.68     1   2002    3364   130.9
+   nand2_1    A     1.00     1   8991    8991    38.8 |  0.65     2   7318    2378    32.2
+   nand2_1    B    no output-stage devices found
+   nand2_2    A     2.00     1   4989    9977    41.8 |  1.30     2   3973    2582    32.1
+   nand2_2    B    no output-stage devices found
+   nand2_4    A     4.00     1   2813   11254    43.4 |  2.60     2   2112    2745    32.3
+   nand2_4    B    no output-stage devices found
+   nor2_1     A    no output-stage devices found
+   nor2_1     B     1.00     2  17555    8777    50.5 |  0.65     1   4705    3058    28.7
+   nor2_2     A    no output-stage devices found
+   nor2_2     B     2.00     2  10692   10692    52.1 |  1.30     1   2402    3122    27.0
+   nor2_4     A    no output-stage devices found
+   nor2_4     B     4.00     2   6014   12028    56.2 |  2.60     1   1256    3265    26.6
+== fit: R_rise = 8733 * Wp^-0.839, R_fall = 3209 * Wn^-0.933  [ohm, um]; at W=1: ratio 2.72
+   residuals (per cell, fitted/measured R): p inv_1 1.07, inv_2 1.09, inv_4 1.04, inv_6 1.02, inv_8 1.06, inv_12 1.04, inv_16 1.00, buf_1 0.93, buf_2 1.02, buf_4 1.01, buf_8 0.99, buf_12 1.00, buf_16 0.88, clkinv_1 1.03, clkinv_2 1.02, clkinv_4 1.04, clkbuf_1 0.93, clkbuf_4 0.94, nand2_1 0.97, nand2_2 0.98, nand2_4 0.97
+                                          n inv_1 0.99, inv_2 1.08, inv_4 1.06, inv_6 1.07, inv_8 1.08, inv_12 1.04, inv_16 0.95, buf_1 0.97, buf_2 1.05, buf_4 1.04, buf_8 1.03, buf_12 1.01, buf_16 0.78, clkinv_1 0.87, clkinv_2 0.95, clkinv_4 1.00, clkbuf_1 0.97, clkbuf_4 0.99, nor2_1 1.02, nor2_2 1.05, nor2_4 1.05
+   series stacks of 2 vs the same-size inverter: PMOS (nor2) nor2_1 2.15, nor2_2 2.39, nor2_4 2.29 -> 2.28; NMOS (nand2) nand2_1 1.52, nand2_2 1.71, nand2_4 1.70 -> 1.64
+   intrinsic t0 (inv_1, zero load): rise 36.0 ps, fall 27.8 ps
+   tech.SKY130.drive: k_p 8733 beta_p 0.839 k_n 3209 beta_n 0.933 stack_p 2.28 stack_n 1.64 -> OK
+RESULT k_p=8733 beta_p=0.839 k_n=3209 beta_n=0.933 stack_p=2.28 stack_n=1.64 t0_rise=36.0 t0_fall=27.8

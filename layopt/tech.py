@@ -7,6 +7,7 @@ sky130 numbers are the kestrel/stat-sim set (kestrel layout/parasitics.py,
 stat-sim klayout2spef.py); IHP SG13G2 numbers are the ones stat-sim took from
 sg13g2_tech.lef.  Both are analytic-estimate grade, not signoff.
 """
+from .drive import DriveModel
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
@@ -41,6 +42,9 @@ class Tech:
     poly_ext_diff: float = 0.13        # poly overhang beyond diffusion along W
     implant_enc: float = 0.125         # nsdm/psdm enclosure of diffusion
     nwell_enc: float = 0.18            # nwell enclosure of p diffusion
+    # two-edge driver model (drive.py): R_rise = k_p * Wp^-beta_p, R_fall = k_n * Wn^-beta_n,
+    # series stacks x(1 + (n-1)(stack-1)); fitted from the Liberty by probes/layopt/drive_fit.py
+    drive: Optional["DriveModel"] = None
 
     def L(self, name: str) -> Layer:
         return self.layers[name]
@@ -59,6 +63,8 @@ class Tech:
 
 SKY130 = Tech(
     name="sky130",
+    # sky130_fd_sc_hd tt 25C 1.8V, slope of delay vs load at 50 ps input slew (evidence/drive_fit.log)
+    drive=DriveModel(k_p=8733.0, k_n=3209.0, beta_p=0.839, beta_n=0.933, stack_p=2.28, stack_n=1.64, t0_rise_ps=36.0, t0_fall_ps=27.8),
     layers={"diff": (65, 20), "tap": (65, 44), "nwell": (64, 20), "poly": (66, 20),
             "nsdm": (93, 44), "psdm": (94, 20), "licon": (66, 44), "li": (67, 20),
             "mcon": (67, 44), "met1": (68, 20), "via1": (68, 44), "met2": (69, 20),

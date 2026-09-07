@@ -457,7 +457,8 @@ difference in coordinates); a stock buf_4 alone on a row loses one PMOS and
 one NMOS finger of its output stage (4 → 3, W 4.0 → 3.0 and 2.6 → 1.95)
 with the same netlist, no new violations and KLayout isomorphic; on gcd,
 rebuffer3 loses a finger per stage the same way and its driven net's Elmore
-delay rises 13.2 → 15.6 ps (`probes/layopt/l4_remove_finger.py`,
+delay rises 13.2 → 15.6 ps (47.6 → 59.6 ps worst-edge under the Liberty-fitted
+model of the next entry) (`probes/layopt/l4_remove_finger.py`,
 `evidence/l4_remove_finger.log`, `remove_finger_buf4*`,
 `gcd_rebuffer3_removed*`). Writing the inverse found a bug in the forward
 move: `add_finger` had been extending every implant and well rectangle that
@@ -477,6 +478,66 @@ than it started with (10 fingers → 8), every state rebuilt from the base and
 passed by both guards. One honest caveat: the driver model is PMOS-only, so the
 search also strips A's NMOS to one finger purely for the area credit; a
 two-edge model would stop it, and that is the model's job, not the move's.
+
+**The two-edge driver model, from the Liberty (2026-09-08, `layopt/drive.py`,
+`probes/layopt/drive_fit.py`, `evidence/drive_fit.log`).** Until here the
+driver was one number, R = 3 kΩ · (1 µm / W_p), an assumption. A stage drives
+its net through the PMOS on the rising edge and through the NMOS on the
+falling one, so the model needs a resistance per edge, and the numbers should
+come from something measured. sky130_fd_sc_hd's Liberty is that measurement:
+for every cell, 50 % delay against input slew and output load on each edge.
+The slope of delay against load at a fixed slew, divided by ln 2, is the
+Elmore-equivalent driver resistance of that edge; the intercept is the stage's
+intrinsic delay. Against layopt's own extraction of the same cells' GDS (the
+cell alone in a DEF, nets named from the LEF pin ports since labels do not
+survive the merged-GDS flatten; the width the arc's input pin switches in the
+output stage, parallel devices adding, a series stack counted by its depth)
+this gives R·W per edge across 24 cells — inverters, buffers, clock variants,
+nand2, nor2, sizes 1 to 16:
+
+| | NMOS | PMOS |
+|---|---|---|
+| R·W at W = 1 µm | 3209 Ω·µm | 8733 Ω·µm |
+| exponent β in R ∝ W^−β (1 is ideal) | 0.933 | 0.839 |
+| R·W spread, inv_1 → inv_16 | 3135 → 3953 | 8165 → 13613 |
+| series stack of 2 vs same-size inverter | 1.52 – 1.71 (nand2) → 1.64 | 2.15 – 2.39 (nor2) → 2.28 |
+| intrinsic t₀ (inv_1, zero load) | 27.8 ps | 36.0 ps |
+
+Three things the table says that the old constant did not. The old 3 kΩ was
+2.7× too optimistic for a PMOS and 1.6× for an NMOS (Elmore basis), which
+matters when layopt's delays are compared with anything else. PMOS strength
+does not scale with width: a 16× wider inverter has 65 % more R·W, so the
+model carries β per polarity (`R = k · W^−β`) and fits every unstacked cell
+within ±9 % except the two biggest buffers. And a series stack costs 1.6×
+for NMOS and 2.3× for PMOS, not the schematic 2× — the model carries a
+stack factor per polarity, fitted against the same-size inverter. The
+constants live in `tech.SKY130.drive` (a `DriveModel`) and the fit probe
+reports OK/UPDATE against them; a unit test re-derives inv_1, inv_4 and the
+nand2 stack from the Liberty and checks the model within 10 %.
+
+With both edges in the cost (rise against rise, fall against fall) the path
+probes tell a different, more honest story than their single-edge numbers
+above. The one-way probe (two inv_1 drivers, 120 µm of met2 on B): baseline
+A 39.7/21.8 ps rise/fall, B 113.8/62.9; the search adds one PMOS and two NMOS
+fingers to B's driver and ends at B 65.8/23.7 — combined imbalance 115 → 28 ps
+(a third PMOS finger alongside three NMOS fingers is refused by the guards in
+that gap). The two-way probe (inv_4 against inv_1): baseline A 13.6/6.6, B
+113.8/62.9, combined 156.5 ps; the search takes A's PMOS from four fingers to
+one but stops A's NMOS at three — removing the fourth would open the falling
+edge, which the single-edge model had let it do for the area credit — and
+gives B two PMOS and four NMOS fingers: A 43.2/8.6, B 65.8/18.3, combined
+32.4 ps, with the transistor count unchanged (10 → 10). Two bugs surfaced on
+the way and were the kind the inverse move was meant to find: the discrete
+problem's touched-id list was stale after a deletion (it now checks the whole
+layout when a move removed rectangles), and the delta-DRC's baseline was keyed
+by rect id, so after `remove_finger` shifted ids every pre-existing flag read
+as new and every removal state was illegal — violations are now keyed by the
+geometry of the rectangles involved. The gcd whitespace figures under this
+model (worst edge, receivers' Elmore): both nand2 output nets 97.8 → 54.4 and
+56.4 → 32.1 ps with the stacks mirrored, clkinv_1 48.3 → 29.8 ps, the three
+buf_4 rebuffers 21.2 → 19.4, 47.6 → 41.6 and 64.7 → 55.9 ps — the earlier
+single-edge numbers in this section were computed with the 3 kΩ assumption and
+stand as history.
 
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
@@ -514,6 +575,10 @@ extractor, worth fixing upstream in `layout/gds_gen.py`):
   with sizes excluded: the LVS identity a move must preserve.
 
 ## 4. Evaluation tiers
+
+T0's driver is the two-edge Liberty-fitted model of §2 (`tech.SKY130.drive`):
+R_rise from the stage's PMOS width, R_fall from its NMOS width, series stacks
+by their fitted factor; a path is judged on both edges.
 
 | Tier | Evaluator | Use |
 |---|---|---|
@@ -670,9 +735,10 @@ Planned:
   gcd candidate cells now take fingers, twelve in total, KLayout-confirmed.
   Same-net notch rule in the delta-DRC with a notch-fill pass after each
   move. `remove_finger` as the inverse (stock cells and added fingers alike,
-  KLayout-confirmed on gcd). Remaining: moving a P&R wire when no path
-  exists, diffusion merge across abutting cells (needs compaction to pay),
-  contact growth.
+  KLayout-confirmed on gcd). Two-edge driver model fitted from the Liberty
+  (§2, §4); the balance probes cost both edges. Remaining: moving a P&R wire
+  when no path exists, diffusion merge across abutting cells (needs
+  compaction to pay), contact growth, slew (the model is load-slope only).
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
   T2 (layopt MC over a stated variation model) and T3 (stat-sim's
   `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1

@@ -27,7 +27,6 @@ DEF = sys.argv[sys.argv.index("--def") + 1] if "--def" in sys.argv else os.path.
 MAXC = int(sys.argv[sys.argv.index("--max") + 1]) if "--max" in sys.argv else 6
 EVID = os.path.join(HERE, "evidence")
 T = tech.SKY130
-R0, W0 = 3000.0, 1.0           # inv_1-class driver: 3 kohm at PMOS W 1 um; scaled by W0/W
 COX = 8.5                      # fF/um^2 gate capacitance for receiver Cin
 
 
@@ -60,10 +59,25 @@ def output_net(ex, inst):
 
 
 def net_delay(ex, net_id, inst):
-    """Elmore (ps) from the driver's output shape to each receiver gate on the net."""
+    """Elmore (ps) from the driver's output shape to each receiver gate on the
+    net, on the worse edge: R_rise from the cell's PMOS width, R_fall from its
+    NMOS width (tech.SKY130.drive; a series stack of n costs its fitted
+    factor).  Returns (W_p, (R_rise, R_fall), {receiver: max(rise, fall)})."""
     net = ex.nets[net_id]
-    wp = sum(dv.w for dv in ex.devices if dv.prov.split("/")[1] == inst and dv.kind == "p")
-    r_drv = R0 * W0 / max(wp, 1e-6)
+    sup = {i for i, n in ex.nets.items() if n.name in T.supply_names}
+    # the output stage: the cell's devices with a terminal on the output net; one whose
+    # other terminal is an internal node (not a supply) is a leg of a series stack
+    stage = [dv for dv in ex.devices if dv.prov.split("/")[1] == inst and net_id in (dv.s, dv.d)]
+    def eff(kind):
+        legs = [dv for dv in stage if dv.kind == kind]
+        stacked = [dv for dv in legs if (dv.d if dv.s == net_id else dv.s) not in sup]
+        if stacked and len(stacked) == len(legs):
+            return sum(dv.w for dv in legs), 2
+        return sum(dv.w for dv in legs), 1
+    wp, sp = eff("p"); wn, sn = eff("n")
+    dm = T.drive
+    r_rise, r_fall = dm.r_rise(wp, sp), dm.r_fall(wn, sn)
+    r_drv = (r_rise, r_fall)
     drv = next(s for s in net.shapes if ex.shapes[s].layer.startswith("sd_") and ex.shapes[s].prov.split("/")[1] == inst)
     recv = {}
     for name, term in net.devices:
@@ -73,8 +87,9 @@ def net_delay(ex, net_id, inst):
             recv[gs] = recv.get(gs, 0.0) + COX * dv.w * dv.l
     if not recv:
         return wp, r_drv, {}
-    d = rc.elmore_delays(ex, net_id, drv, list(recv), r_drv, recv)
-    return wp, r_drv, d
+    dr = rc.elmore_delays(ex, net_id, drv, list(recv), r_rise, recv)
+    df = rc.elmore_delays(ex, net_id, drv, list(recv), r_fall, recv)
+    return wp, r_drv, {k: max(dr[k], df[k]) for k in dr}
 
 
 def main():
@@ -121,8 +136,8 @@ def main():
         devs = ["%s W=%.2f f=%d" % (x.kind, x.w, x.fingers) for x in ex3.devices if x.prov.split("/")[1] == inst]
         print("      result (%s): %s" % ("+".join(done), "; ".join(devs)))
         if net is not None and d0 and d1:
-            print("      output net %s: PMOS W %.2f -> %.2f um, R_drv %.0f -> %.0f ohm; Elmore to %d receivers max %.1f -> %.1f ps, mean %.1f -> %.1f ps" % (
-                ex.nets[net].name, wp0, wp1, r0, r1, len(d0), max(d0.values()), max(d1.values()),
+            print("      output net %s: PMOS W %.2f -> %.2f um, R_rise/R_fall %.0f/%.0f -> %.0f/%.0f ohm; worst-edge Elmore to %d receivers max %.1f -> %.1f ps, mean %.1f -> %.1f ps" % (
+                ex.nets[net].name, wp0, wp1, r0[0], r0[1], r1[0], r1[1], len(d0), max(d0.values()), max(d1.values()),
                 sum(d0.values()) / len(d0), sum(d1.values()) / len(d1)))
         results.append((inst, legal))
         if legal and not any(r[1] for r in results[:-1]):

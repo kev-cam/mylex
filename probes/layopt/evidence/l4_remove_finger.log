@@ -5,6 +5,6 @@
 == 2. gcd rebuffer3
    P: M2429 fingers 4 -> 3, W 4.00 -> 3.00; new violations 0
    N: M2431 fingers 4 -> 3, W 2.60 -> 1.95; new violations 0
-   output net net3: PMOS W 5.00 -> 4.00 um, R_drv 600 -> 750 ohm; Elmore to 4 receivers max 13.2 -> 15.6 ps
+   output net net3: PMOS W 4.00 -> 3.00 um, R_rise/R_fall 2729/1316 -> 3474/1721 ohm; worst-edge Elmore to 4 receivers max 47.6 -> 59.6 ps
    KLayout: devices 2472/2472, W/L match True, nets 1353/1353, isomorphic True
 RESULT MATCH

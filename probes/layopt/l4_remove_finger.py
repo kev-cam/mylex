@@ -70,8 +70,8 @@ def main():
     remove_both(fl, lambda x: x.prov.split("/")[1] == inst)
     ex2 = extract.extract(fl, T)
     wp1, r1, d1 = net_delay(ex2, net, inst)
-    print("   output net %s: PMOS W %.2f -> %.2f um, R_drv %.0f -> %.0f ohm; Elmore to %d receivers max %.1f -> %.1f ps" % (
-        ex.nets[net].name, wp0, wp1, r0, r1, len(d0), max(d0.values()), max(d1.values())))
+    print("   output net %s: PMOS W %.2f -> %.2f um, R_rise/R_fall %.0f/%.0f -> %.0f/%.0f ohm; worst-edge Elmore to %d receivers max %.1f -> %.1f ps" % (
+        ex.nets[net].name, wp0, wp1, r0[0], r0[1], r1[0], r1[1], len(d0), max(d0.values()), max(d1.values())))
     ok2 = klayout(fl, ex2, "gcd_rebuffer3_removed")
     print("RESULT", "MATCH" if ok1 and ok2 else "MISMATCH")
 

@@ -170,17 +170,22 @@ class DiscreteProblem:
         touched: List[int] = []
         legal = True
         ex = self.base_ex
+        deleted = False
         for v, var in zip(key, self.vars):
+            n0 = len(fl.rects)
             try:
                 t = var.apply(fl, ex, v)
             except Exception as e:                      # a move that cannot be made
                 legal = False; t = []
+            if any(i >= len(fl.rects) for i in t) or len(fl.rects) < n0 + len([i for i in t if i >= n0]):
+                deleted = True                           # a move removed rects: earlier ids are stale
             touched += t
             if t:
                 ex = extract.extract(fl, self.tech, self.labels)   # later moves see the geometry so far
         ex = extract.extract(fl, self.tech, self.labels)
         sig_ok = ex.signature() == self.base_sig
-        viol = drc.new_violations(fl, ex, sorted(set(touched)), self.baseline)
+        # after a deletion (remove_finger) ids have shifted: check the whole layout
+        viol = drc.new_violations(fl, ex, None if deleted else sorted(set(touched)), self.baseline)
         legal = legal and sig_ok and not viol
         c, terms = self.cost_fn(fl, ex, dict(zip([v.name for v in self.vars], key)))
         if not legal:

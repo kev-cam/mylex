@@ -21,6 +21,8 @@ class Violation:
     b: int
     value_um: float
     limit_um: float
+    ra: Optional[Rect] = None          # geometry of a and b: the baseline key survives id shifts
+    rb: Optional[Rect] = None
 
     def __str__(self):
         return "%s %s: rect %d%s %.3f < %.3f um" % (self.rule, self.layer, self.a,
@@ -64,7 +66,10 @@ def _gap_rect(a: Rect, b: Rect) -> Optional[Rect]:
 
 
 def key(v: "Violation") -> Tuple:
-    return (v.rule, v.layer, frozenset((v.a, v.b)))
+    """Identity of a violation for the delta: rule, layer and the geometry of
+    the rects involved (not their ids -- a move that deletes rects shifts ids,
+    and a baseline keyed by id would then call every old flag new)."""
+    return (v.rule, v.layer, frozenset(x for x in (v.ra, v.rb) if x is not None))
 
 
 def new_violations(fl: FlatLayout, ex: Extraction, changed: Sequence[int], baseline: Set[Tuple]) -> List[Violation]:
@@ -73,6 +78,14 @@ def new_violations(fl: FlatLayout, ex: Extraction, changed: Sequence[int], basel
 
 
 def check(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = None) -> List[Violation]:
+    out = _check(fl, ex, changed)
+    for v in out:
+        v.ra = fl.rects[v.a].rect if v.a >= 0 else None
+        v.rb = fl.rects[v.b].rect if v.b >= 0 else None
+    return out
+
+
+def _check(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = None) -> List[Violation]:
     tech = ex.tech
     inv = {v: k for k, v in tech.layers.items()}
     d = fl.dbu_um

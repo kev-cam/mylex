@@ -460,6 +460,33 @@ def test_remove_finger_stock_buf4():
     print("  buf_4: %s -> %s" % (sorted(before.items()), sorted({(x.kind, x.fingers): round(x.w, 3) for x in ex2.devices}.items())))
 
 
+def test_drive_model_liberty():
+    """The Liberty reader gets inv_1/inv_4/nand2_1 delay tables; the slope
+    fits give R*W consistent with tech.SKY130.drive within 10% for the
+    inverters, and nand2's NMOS stack costs the fitted stack factor, not 2."""
+    from .. import drive
+    lib_path = os.path.expanduser("~/tools/orfs-sky130hd/sky130_fd_sc_hd__tt_025C_1v80.lib")
+    if not os.path.exists(lib_path):
+        print("  (liberty not found, skipped)"); return
+    P = "sky130_fd_sc_hd__"
+    lib = drive.read_liberty(lib_path, [P + "inv_1", P + "inv_4", P + "nand2_1"])
+    assert len(lib) == 3
+    dm = T.drive
+    for name, wp, wn in (("inv_1", 1.0, 0.65), ("inv_4", 4.0, 2.6)):
+        arc = lib[P + name].output().arcs[0]
+        fr = drive.edge_fit(arc, "rise", 50.0); ff = drive.edge_fit(arc, "fall", 50.0)
+        assert abs(fr.r_ohm / dm.r_rise(wp) - 1) < 0.10, (name, fr.r_ohm, dm.r_rise(wp))
+        assert abs(ff.r_ohm / dm.r_fall(wn) - 1) < 0.10, (name, ff.r_ohm, dm.r_fall(wn))
+    nand = lib[P + "nand2_1"].output()
+    arc = [a for a in nand.arcs if a.related_pin == "A"][0]
+    ff = drive.edge_fit(arc, "fall", 50.0)
+    assert abs(ff.r_ohm / dm.r_fall(0.65, stack=2) - 1) < 0.12, (ff.r_ohm, dm.r_fall(0.65, stack=2))
+    assert ff.r_ohm / dm.r_fall(0.65) < 1.8                      # a stack of two is not twice
+    print("  inv_1 R_rise %.0f / R_fall %.0f ohm; nand2 A fall %.0f (stack %.2f)" % (
+        drive.edge_fit(lib[P + "inv_1"].output().arcs[0], "rise", 50.0).r_ohm,
+        drive.edge_fit(lib[P + "inv_1"].output().arcs[0], "fall", 50.0).r_ohm, ff.r_ohm, ff.r_ohm / dm.r_fall(0.65)))
+
+
 
 if __name__ == "__main__":
     fails = 0
