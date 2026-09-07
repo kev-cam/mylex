@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# SPDX-FileCopyrightText: 2026 D. Kevin Cameron
+"""layopt L4 on a real place-and-route result: grow drivers into the filler
+cells OpenROAD left beside them (gcd on sky130hd, probes/layopt/gcd/gcd.def).
+
+For each candidate cell with a fill_4/fill_8 flush on its right: add a finger
+to its PMOS and NMOS, re-extract the whole 57k-rect layout, apply the
+topology + delta-DRC guard, and report the Elmore delay of the cell's output
+net before/after with R_drv scaled by 1/W (receivers' Cin from their gate
+area at 8.5 fF/um^2).
+
+Usage: l4_gcd_whitespace.py [--def path] [--max N]
+"""
+import copy
+import glob
+import os
+import sys
+import time
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.abspath(os.path.join(HERE, "..", "..")))
+from layopt import drc, extract, gds, lefdef, moves, rc, tech          # noqa: E402
+
+ORFS = os.path.expanduser("~/tools/orfs-sky130hd")
+DEF = sys.argv[sys.argv.index("--def") + 1] if "--def" in sys.argv else os.path.join(HERE, "gcd", "gcd.def")
+MAXC = int(sys.argv[sys.argv.index("--max") + 1]) if "--max" in sys.argv else 4
+EVID = os.path.join(HERE, "evidence")
+T = tech.SKY130
+R0, W0 = 3000.0, 1.0           # inv_1-class driver: 3 kohm at PMOS W 1 um; scaled by W0/W
+COX = 8.5                      # fF/um^2 gate capacitance for receiver Cin
+
+
+def candidates(lef, d, sizes):
+    rows = {}
+    for c in d.components:
+        rows.setdefault(c.y, []).append(c)
+    out = []
+    for y, cs in rows.items():
+        cs.sort(key=lambda c: c.x)
+        for a, b in zip(cs, cs[1:]):
+            if any(k in a.macro for k in ("fill", "tap", "decap")):
+                continue
+            if ("fill_4" in b.macro or "fill_8" in b.macro) and a.orient == "N" and a.x + sizes[a.macro] == b.x:
+                out.append((a, b))
+    prio = {"nand2_1": 0, "clkinv_1": 1, "inv_1": 1, "buf_4": 2, "nor2_1": 0}
+    out.sort(key=lambda ab: prio.get(ab[0].macro.replace("sky130_fd_sc_hd__", ""), 9))
+    return out
+
+
+def output_net(ex, inst):
+    """The cell's output net: the net driven by its PMOS drains that is not a supply."""
+    for dv in ex.devices:
+        if dv.prov.split("/")[1] == inst and dv.kind == "p":
+            for n in (dv.d, dv.s):
+                nm = ex.nets[n].name
+                if nm not in ("VDD", "VSS", "VPWR", "VGND"):
+                    return n
+    return None
+
+
+def net_delay(ex, net_id, inst):
+    """Elmore (ps) from the driver's output shape to each receiver gate on the net."""
+    net = ex.nets[net_id]
+    wp = sum(dv.w for dv in ex.devices if dv.prov.split("/")[1] == inst and dv.kind == "p")
+    r_drv = R0 * W0 / max(wp, 1e-6)
+    drv = next(s for s in net.shapes if ex.shapes[s].layer.startswith("sd_") and ex.shapes[s].prov.split("/")[1] == inst)
+    recv = {}
+    for name, term in net.devices:
+        dv = ex.devices[int(name[1:]) - 1]
+        if term == "G" and dv.prov.split("/")[1] != inst:
+            gs = dv.gate_ids[0]
+            recv[gs] = recv.get(gs, 0.0) + COX * dv.w * dv.l
+    if not recv:
+        return wp, r_drv, {}
+    d = rc.elmore_delays(ex, net_id, drv, list(recv), r_drv, recv)
+    return wp, r_drv, d
+
+
+def main():
+    os.makedirs(EVID, exist_ok=True)
+    lefs = [os.path.join(ORFS, "sky130_fd_sc_hd.tlef"), os.path.join(ORFS, "sky130_fd_sc_hd_merged.lef")]
+    lef = lefdef.Lef()
+    for f in lefs:
+        lefdef.read_lef(f, lef)
+    d = lefdef.read_def(DEF)
+    sizes = {m.name: int(round(m.size[0] * 1000)) for m in lef.macros.values()}
+    t0 = time.time()
+    fl = lefdef.def2flat(DEF, lefs, "", T, gds_lib=os.path.join(ORFS, "sky130_fd_sc_hd.gds"))
+    ex = extract.extract(fl, T)
+    sig = ex.signature()
+    base = {drc.key(v) for v in drc.check(fl, ex)}
+    print("== %s: %d instances, %d rects, %d devices; baseline rule flags %d (%.0fs)" % (
+        os.path.basename(DEF), len(d.components), len(fl.rects), len(ex.devices), len(base), time.time() - t0))
+    cands = candidates(lef, d, sizes)
+    print("   %d logic cells have a fill_4/fill_8 flush on their right; trying %d" % (len(cands), min(MAXC, len(cands))))
+    results = []
+    for a, b in cands[:MAXC]:
+        inst = a.inst
+        net = output_net(ex, inst)
+        wp0, r0, d0 = net_delay(ex, net, inst) if net is not None else (0, 0, {})
+        fl2 = copy.deepcopy(fl)
+        touched = []
+        ok = True
+        for kind in ("p", "n"):
+            ex2 = extract.extract(fl2, T) if touched else ex
+            dev = [x for x in ex2.devices if x.prov.split("/")[1] == inst and x.kind == kind]
+            if not dev:
+                continue
+            dev.sort(key=lambda x: -max(ex2.shapes[g].rect[2] for g in x.gate_ids))       # outermost gate on the right
+            try:
+                touched += moves.add_finger(fl2, ex2, dev[0], side="high")
+            except moves.MoveError as e:
+                print("   %s (%s, %s to its right): %s finger refused -- %s" % (inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), kind.upper(), e))
+                ok = False; break
+        if not ok:
+            continue
+        ex3 = extract.extract(fl2, T)
+        viol = drc.new_violations(fl2, ex3, touched, base)
+        topo = ex3.signature() == sig
+        try:
+            wp1, r1, d1 = net_delay(ex3, net, inst) if (net is not None and topo) else (0, 0, {})
+        except StopIteration:
+            wp1, r1, d1 = 0, 0, {}
+        devs = ["%s W=%.2f f=%d" % (x.kind, x.w, x.fingers) for x in ex3.devices if x.prov.split("/")[1] == inst]
+        legal = topo and not viol
+        inv = {v: k for k, v in T.layers.items()}
+        print("   %s (%s, %s to its right): %s; %d rects; topology %s; %d new violations%s" % (
+            inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), "; ".join(devs), len(touched),
+            "preserved" if topo else "CHANGED", len(viol), "  LEGAL" if legal else ""))
+        for v in viol[:3]:
+            ra = fl2.rects[v.a]; rb = fl2.rects[v.b] if v.b >= 0 else None
+            print("      %s  [%s %s%s]" % (v, inv.get(ra.layer, ra.layer), ra.prov.split("/", 1)[1], "" if rb is None else " vs %s %s" % (inv.get(rb.layer, rb.layer), rb.prov.split("/", 1)[1])))
+        if net is not None and d0 and d1:
+            print("      output net %s: PMOS W %.2f -> %.2f um, R_drv %.0f -> %.0f ohm; Elmore to %d receivers max %.1f -> %.1f ps, mean %.1f -> %.1f ps" % (
+                ex.nets[net].name, wp0, wp1, r0, r1, len(d0), max(d0.values()), max(d1.values()),
+                sum(d0.values()) / len(d0), sum(d1.values()) / len(d1)))
+        results.append((inst, legal))
+        if legal and not any(r[1] for r in results[:-1]):
+            gds.write_flat(fl2, os.path.join(EVID, "gcd_%s_fingered.gds" % inst.strip("_")))
+    print("   legal moves: %d of %d attempted" % (sum(1 for _, l in results if l), len(results)))
+
+
+if __name__ == "__main__":
+    main()

@@ -196,6 +196,16 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") 
         raise MoveError("add_finger: gate not on exactly one diffusion rect (%d)" % len(diff_ids))
     di = diff_ids[0]; D = fl.rects[di].rect
     outer = (g[2], D[2]) if hi else (D[0], g[0])          # x-range of the outer S/D region
+    # the gate must be the outermost one on this side of the WHOLE diffusion strip
+    # (a nand2's two PMOS share one strip): otherwise the mirror lands on a neighbour
+    for other in ex.devices:
+        if other is dev:
+            continue
+        for gs in other.gate_ids:
+            og = ex.shapes[gs].rect
+            if og[3] > D[1] and og[1] < D[3] and ((hi and outer[0] <= og[0] < D[2]) or ((not hi) and D[0] < og[2] <= outer[1])):
+                raise MoveError("add_finger: %s is not the outermost transistor on the %s side of its diffusion (%s is); add the finger there"
+                                % (dev.name, side, other.name))
     if prev is None:
         inner = (D[0], g[0]) if hi else (g[2], D[2])
     else:
@@ -258,17 +268,20 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") 
     cand = [((g[1] - ext - bw), (g[1] - ext)), ((g[3] + ext), (g[3] + ext + bw))]
     bridge = None
     span_x = (min(g[0], gx0), max(g[2], gx1))
+    src2net = {sh.src: ex.net_of_shape[k] for k, sh in enumerate(ex.shapes) if sh.src >= 0}
+    sp_poly = nm(tech.min_space.get(tech.poly, 0.21)); sp_diff = nm(tech.min_space.get(tech.diff, 0.27))
     for by0, by1 in cand:
         br = (span_x[0], by0, span_x[1], by1)
+        grown_p = (br[0] - sp_poly, br[1] - sp_poly, br[2] + sp_poly, br[3] + sp_poly)
+        grown_d = (br[0] - sp_diff, br[1] - sp_diff, br[2] + sp_diff, br[3] + sp_diff)
         blocked = False
-        for r in fl.rects:
-            if r.layer in (L[tech.diff], licon_l) and geom.overlaps(r.rect, br):
+        for k, r in enumerate(fl.rects):
+            if r.layer == licon_l and geom.overlaps(r.rect, br):
                 blocked = True; break
-            if r.layer == L[tech.poly] and geom.overlaps(r.rect, br):
-                # poly of another net?  the device's own poly is fine
-                sid = next((k for k, sh in enumerate(ex.shapes) if sh.src == fl.rects.index(r)), None)
-                if sid is not None and ex.net_of_shape[sid] != dev.g:
-                    blocked = True; break
+            if r.layer == L[tech.diff] and geom.overlaps(r.rect, grown_d) and r.rect != D and not geom.overlaps(r.rect, D):
+                blocked = True; break                                  # another diffusion within spacing
+            if r.layer == L[tech.poly] and geom.overlaps(r.rect, grown_p) and src2net.get(k) != dev.g:
+                blocked = True; break                                  # poly of another net within spacing
         if not blocked:
             bridge = br; break
     if bridge is None:
@@ -303,12 +316,30 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") 
         y0 = max(wide[1], g[1]); y1 = min(wide[3], g[3])
         if y1 - y0 < cs:
             raise MoveError("add_finger: no room for the signal jumper on the strap")
-        yj = (y0 + y1) // 2
         xa = (wide[0] + wide[2]) // 2
         xb = mx(xa)
+        bar_x = (min(xa, xb) - half - enc, max(xa, xb) + half + enc)
+        # the met1 bar must clear existing met1 of other nets (P&R routes cross cells on
+        # met1): scan the strap overlap for a height that satisfies met1 spacing
+        sp_m1 = nm(tech.min_space.get(tech.routing[1], 0.14))
+        m1_others = [r.rect for k, r in enumerate(fl.rects) if r.layer == m1 and src2net.get(k) != inner_net
+                     and r.x1 > bar_x[0] - sp_m1 and r.x0 < bar_x[1] + sp_m1 and r.y1 > y0 - sp_m1 - cs and r.y0 < y1 + sp_m1 + cs]
+        step = nm(tech.grid_um)
+        yj = None
+        lo, hi_y = y0 + half, y1 - half
+        for k in range(0, (hi_y - lo) // step + 1):
+            cand_y = ((lo + hi_y) // 2 + ((k + 1) // 2) * step * (1 if k % 2 else -1))
+            if cand_y < lo or cand_y > hi_y:
+                continue
+            bar = (bar_x[0], cand_y - half - enc, bar_x[1], cand_y + half + enc)
+            grown = (bar[0] - sp_m1, bar[1] - sp_m1, bar[2] + sp_m1, bar[3] + sp_m1)
+            if not any(geom.overlaps(grown, o) for o in m1_others):
+                yj = cand_y; break
+        if yj is None:
+            raise MoveError("add_finger: no met1 height for the signal jumper clear of other nets' met1")
         for cx in (xa, xb):
             touched.append(add_rect_dbu(fl, L[cut], (cx - half, yj - half, cx + half, yj + half), dev.prov))
-        touched.append(add_rect_dbu(fl, m1, (min(xa, xb) - half - enc, yj - half - enc, max(xa, xb) + half + enc, yj + half + enc), dev.prov))
+        touched.append(add_rect_dbu(fl, m1, (bar_x[0], yj - half - enc, bar_x[1], yj + half + enc), dev.prov))
     # 4. implant and well cover the new diffusion
     D2 = fl.rects[di].rect
     imp = L[tech.psdm if dev.kind == "p" else tech.nsdm] if (tech.psdm and tech.nsdm) else None

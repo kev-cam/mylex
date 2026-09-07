@@ -1,0 +1,11 @@
+== gcd.def: 784 instances, 57263 rects, 2472 devices; baseline rule flags 936 (38s)
+   33 logic cells have a fill_4/fill_8 flush on their right; trying 6
+   _149_ (nand2_1, fill_4 to its right): N finger refused -- add_finger: no field for the poly bridge on either side
+   _161_ (nand2_1, fill_8 to its right): P finger refused -- add_finger: no field for the poly bridge on either side
+   _110_ (clkinv_1, fill_4 to its right): P finger refused -- add_finger: no met1 height for the signal jumper clear of other nets' met1
+   rebuffer12 (buf_4, fill_4 to its right): N finger refused -- add_finger: no met1 height for the signal jumper clear of other nets' met1
+   rebuffer3 (buf_4, fill_8 to its right): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1; 21 rects; topology preserved; 0 new violations  LEGAL
+      output net net3: PMOS W 5.00 -> 6.00 um, R_drv 600 -> 500 ohm; Elmore to 4 receivers max 13.2 -> 12.0 ps, mean 12.9 -> 11.7 ps
+   rebuffer13 (buf_4, fill_8 to its right): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1; 21 rects; topology preserved; 0 new violations  LEGAL
+      output net net13: PMOS W 5.00 -> 6.00 um, R_drv 600 -> 500 ohm; Elmore to 8 receivers max 17.6 -> 15.8 ps, mean 17.3 -> 15.5 ps
+   legal moves: 2 of 2 attempted

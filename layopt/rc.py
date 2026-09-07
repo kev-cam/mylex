@@ -117,6 +117,11 @@ def net_segments(ex: Extraction, net_id: int) -> List[Segment]:
                     continue
                 seen.add((i, j))
                 segs.append(Segment(i, j, _junction_r(ex, i, j, layer), layer, "wire"))
+    # gate regions ride on their poly (negligible R): so receivers may be given as gate shapes
+    if "gate" in idx and tech.poly in idx:
+        for gsid in by_layer["gate"]:
+            for psid in idx[tech.poly].query_overlap(ex.shapes[gsid].rect):
+                segs.append(Segment(gsid, psid, 1e-3, tech.poly, "wire"))
     # cuts: diff contact -> first routing layer; via stack
     stacks = list(tech.vias)
     lower_of_contact = ["sd_n", "sd_p", tech.poly]
