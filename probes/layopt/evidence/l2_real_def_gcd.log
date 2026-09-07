@@ -1,0 +1,11 @@
+== layopt def2flat: 57263 rects (784 instances), extract: 53831 shapes, 2102 nets, 2472 devices (1235 n / 1237 p) in 9.0s
+   named nets 257 (e.g. ['VSS', 'VDD', 'dpath.a_lt_b$in0\\[11\\]', '_003_', 'dpath.a_lt_b$in0\\[6\\]', '_004_']); supply nets: {'VSS': 857, 'VDD': 846}
+   wrote gcd.layopt.{cir,gds,spef}; total C 2067.1 fF over 2102 nets
+== KLayout: DEF+LEF+macro GDS -> flat GDS (gcd) -> LayoutToNetlist -> gcd.klayout.cir
+   ref_devices        2472
+   our_devices        2472
+   wl_match           True
+   degree_hist_match  True
+   isomorphic         True
+   area_perim_match   False
+RESULT MATCH

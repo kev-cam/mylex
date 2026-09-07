@@ -201,6 +201,26 @@ END DESIGN"""
     assert not rules.new_violations(fl, ex3, touched, base), rules.new_violations(fl, ex3, touched, base)
 
 
+def test_def_vias():
+    """DEF VIAS: a VIARULE-generated 1x2 via and an explicit RECT via."""
+    from .. import lefdef
+    txt = """VERSION 5.8 ; DESIGN v ; UNITS DISTANCE MICRONS 1000 ;
+VIAS 2 ;
+- via_gen + VIARULE M1M2_PR + CUTSIZE 150 150 + LAYERS met1 via met2 + CUTSPACING 170 170 + ENCLOSURE 85 165 55 85 + ROWCOL 1 2 ;
+- via_rect + RECT met1 ( -100 -100 ) ( 100 100 ) + RECT via ( -75 -75 ) ( 75 75 ) + RECT met2 ( -100 -100 ) ( 100 100 ) ;
+END VIAS
+END DESIGN"""
+    with tempfile.TemporaryDirectory() as td:
+        open(os.path.join(td, "v.def"), "w").write(txt)
+        d = lefdef.read_def(os.path.join(td, "v.def"))
+    g = d.vias["via_gen"]
+    cuts = [r for l, r in g.rects if l == "via"]
+    assert len(cuts) == 2 and abs((cuts[1][0] - cuts[0][0]) - 0.32) < 1e-9, cuts          # pitch = 0.15 + 0.17
+    m1 = [r for l, r in g.rects if l == "met1"][0]
+    assert abs((m1[2] - m1[0]) - (0.47 + 2 * 0.085)) < 1e-9 and abs((m1[3] - m1[1]) - (0.15 + 2 * 0.165)) < 1e-9, m1
+    assert len(d.vias["via_rect"].rects) == 3 and d.vias["via_rect"].rects[1][1] == (-0.075, -0.075, 0.075, 0.075)
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):

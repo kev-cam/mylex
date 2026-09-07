@@ -172,6 +172,8 @@ class DefWire:
     width: int                    # 0 -> layer default
     points: List[Tuple[int, int]]
     via: Optional[str] = None     # via placed at the last point
+    rect: Optional[Tuple[int, int, int, int]] = None   # DEF 5.8 `RECT ( dx1 dy1 dx2 dy2 )` relative to the last point
+    special: bool = False         # SPECIALNETS wire: ends are flush (no default half-width extension)
 
 
 @dataclass
@@ -199,6 +201,45 @@ class Def:
     components: List[DefComponent] = field(default_factory=list)
     nets: List[DefNet] = field(default_factory=list)
     pins: List[DefPin] = field(default_factory=list)
+    vias: Dict[str, LefVia] = field(default_factory=dict)       # DEF-defined vias, rects in um
+
+
+def _def_via(t, i, dbu_per_um):
+    """Parse one `- name ... ;` entry of a DEF VIAS section into a LefVia (um).
+    Handles the VIARULE-generated form (CUTSIZE/LAYERS/CUTSPACING/ENCLOSURE/
+    ROWCOL) and the explicit `+ RECT layer ( ) ( )` form."""
+    name = t[i + 1]; i += 2
+    v = LefVia(name)
+    cut = spacing = None; layers = None; enc = (0, 0, 0, 0); rows = cols = 1
+    sc = 1.0 / dbu_per_um
+    while t[i] != ";":
+        if t[i] == "+":
+            key = t[i + 1]
+            if key == "CUTSIZE": cut = (int(float(t[i + 2])), int(float(t[i + 3]))); i += 4
+            elif key == "LAYERS": layers = (t[i + 2], t[i + 3], t[i + 4]); i += 5
+            elif key == "CUTSPACING": spacing = (int(float(t[i + 2])), int(float(t[i + 3]))); i += 4
+            elif key == "ENCLOSURE": enc = tuple(int(float(x)) for x in t[i + 2:i + 6]); i += 6
+            elif key == "ROWCOL": rows, cols = int(t[i + 2]), int(t[i + 3]); i += 4
+            elif key == "RECT":
+                lay = t[i + 2]
+                nums = [int(float(x)) for x in (t[i + 4], t[i + 5], t[i + 8], t[i + 9])]
+                v.rects.append((lay, (nums[0] * sc, nums[1] * sc, nums[2] * sc, nums[3] * sc))); i += 11
+            else:
+                i += 2
+        else:
+            i += 1
+    if cut and layers and spacing:
+        cw, ch = cut; sx, sy = spacing
+        aw = cols * cw + (cols - 1) * sx; ah = rows * ch + (rows - 1) * sy      # cut array extent, centred at 0
+        x0, y0 = -aw // 2, -ah // 2
+        for r in range(rows):
+            for c in range(cols):
+                cx0 = x0 + c * (cw + sx); cy0 = y0 + r * (ch + sy)
+                v.rects.append((layers[1], (cx0 * sc, cy0 * sc, (cx0 + cw) * sc, (cy0 + ch) * sc)))
+        bx, by, tx, ty = enc
+        v.rects.append((layers[0], ((x0 - bx) * sc, (y0 - by) * sc, (x0 + aw + bx) * sc, (y0 + ah + by) * sc)))
+        v.rects.append((layers[2], ((x0 - tx) * sc, (y0 - ty) * sc, (x0 + aw + tx) * sc, (y0 + ah + ty) * sc)))
+    return v, i + 1
 
 
 def read_def(path: str) -> Def:
@@ -221,6 +262,13 @@ def read_def(path: str) -> Def:
                     nums.append(int(float(t[j])))
                 j += 1
             d.diearea = (min(nums[0::2]), min(nums[1::2]), max(nums[0::2]), max(nums[1::2])); i = j + 1
+        elif tok == "VIAS":
+            i += 3
+            while t[i] != "END":
+                assert t[i] == "-", t[i]
+                v, i = _def_via(t, i, d.dbu_per_um)
+                d.vias[v.name] = v
+            i += 2
         elif tok == "COMPONENTS":
             i += 3
             while t[i] != "END":
@@ -288,9 +336,21 @@ def _parse_wires(t, i, net: DefNet, special: bool) -> int:
                 width = int(float(t[i])); i += 1
         while t[i] == "+" and t[i + 1] in ("SHAPE", "STYLE", "MASK"):
             i += 3
+        if t[i] == "TAPER":
+            i += 1
+        elif t[i] == "TAPERRULE":
+            i += 2
         pts: List[Tuple[int, int]] = []
         via = None
-        while i < len(t) and t[i] == "(":
+        while i < len(t) and t[i] in ("(", "MASK", "VIRTUAL", "RECT"):
+            if t[i] == "MASK":
+                i += 2; continue
+            if t[i] == "VIRTUAL":
+                i += 1; continue
+            if t[i] == "RECT":                                  # ( dx1 dy1 dx2 dy2 ) relative to the last point
+                nums = [int(float(x)) for x in t[i + 2:i + 6]]
+                net.wires.append(DefWire(layer, width, [pts[-1]] if pts else [(0, 0)], None, tuple(nums), special))
+                i += 7; continue
             x = t[i + 1]; y = t[i + 2]
             px, py = pts[-1] if pts else (0, 0)
             xv = px if x == "*" else int(float(x)); yv = py if y == "*" else int(float(y))
@@ -299,11 +359,11 @@ def _parse_wires(t, i, net: DefNet, special: bool) -> int:
                 j += 1
             i = j + 1
             pts.append((xv, yv))
-            if i < len(t) and t[i] not in ("(", "NEW", ";", "+") and not t[i][0].isdigit():
+            if i < len(t) and t[i] not in ("(", "NEW", ";", "+", "RECT", "MASK", "VIRTUAL") and not t[i][0].isdigit():
                 via = t[i]; i += 1
-                net.wires.append(DefWire(layer, width, list(pts), via)); pts = [pts[-1]]; via = None
+                net.wires.append(DefWire(layer, width, list(pts), via, None, special)); pts = [pts[-1]]; via = None
         if len(pts) >= 1:
-            net.wires.append(DefWire(layer, width, pts, None))
+            net.wires.append(DefWire(layer, width, pts, None, None, special))
     return i
 
 
@@ -320,6 +380,8 @@ def def2flat(def_path: str, lef_paths: List[str], gds_dir: str, tech: Tech,
     for p in lef_paths:
         read_lef(p, lef)
     d = read_def(def_path)
+    for name, v in d.vias.items():                        # DEF-defined vias join the LEF via table
+        lef.vias.setdefault(name, v)
     dbu = 1.0 / tech.grid_um if False else 0.001                    # FlatLayout in 1 nm
     scale = 1000.0 / d.dbu_per_um                                    # DEF units -> nm
     fl = FlatLayout(dbu_um=0.001, top=d.design)
@@ -372,14 +434,19 @@ def def2flat(def_path: str, lef_paths: List[str], gds_dir: str, tech: Tech,
         width_nm = int(round((w.width * scale) if w.width else lef.layers[w.layer].width_um * 1000))
         hw = width_nm // 2
         pts = [(int(round(x * scale)), int(round(y * scale))) for x, y in w.points]
+        if w.rect is not None:
+            x, y = pts[-1]
+            dx1, dy1, dx2, dy2 = (int(round(v * scale)) for v in w.rect)
+            return [(lname, (x + min(dx1, dx2), y + min(dy1, dy2), x + max(dx1, dx2), y + max(dy1, dy2)))]
         if len(pts) == 1:
             x, y = pts[0]
             out.append((lname, (x - hw, y - hw, x + hw, y + hw)))
+        ext = 0 if w.special else hw                     # regular wires: default half-width end extension
         for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
             if x0 == x1:
-                ya, yb = sorted((y0, y1)); out.append((lname, (x0 - hw, ya - hw, x0 + hw, yb + hw)))
+                ya, yb = sorted((y0, y1)); out.append((lname, (x0 - hw, ya - ext, x0 + hw, yb + ext)))
             elif y0 == y1:
-                xa, xb = sorted((x0, x1)); out.append((lname, (xa - hw, y0 - hw, xb + hw, y0 + hw)))
+                xa, xb = sorted((x0, x1)); out.append((lname, (xa - ext, y0 - hw, xb + ext, y0 + hw)))
             else:
                 raise ValueError("non-manhattan DEF wire in net")
         if w.via:

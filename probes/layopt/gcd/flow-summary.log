@@ -1,0 +1,40 @@
+[INFO DRT-0028]   Complete met2.
+[INFO DRT-0028]   Complete via2.
+[INFO DRT-0028]   Complete met3.
+[INFO DRT-0028]   Complete via3.
+[INFO DRT-0028]   Complete met4.
+[INFO DRT-0028]   Complete via4.
+[INFO DRT-0028]   Complete met5.
+[INFO DRT-0179] Init gr pin query.
+[INFO DRT-0267] cpu time = 00:00:00, elapsed time = 00:00:00, memory = 244.97 (MB), peak = 244.97 (MB)
+[INFO DRT-0181] Start track assignment.
+[INFO DRT-0184] Done with 919 vertical wires in 1 frboxes and 570 horizontal wires in 1 frboxes.
+[INFO DRT-0186] Done with 91 vertical wires in 1 frboxes and 161 horizontal wires in 1 frboxes.
+[INFO DRT-0182] Complete track assignment.
+[INFO DRT-0267] cpu time = 00:00:00, elapsed time = 00:00:00, memory = 244.97 (MB), peak = 244.97 (MB)
+[INFO DRT-0187] Start routing data preparation.
+[INFO DRT-0267] cpu time = 00:00:00, elapsed time = 00:00:00, memory = 244.97 (MB), peak = 244.97 (MB)
+[INFO DRT-0194] Start detail routing.
+[INFO DRT-0195] Start 0th optimization iteration.
+[INFO DRT-0199]   Number of violations = 109.
+[INFO DRT-0267] cpu time = 00:00:20, elapsed time = 00:00:20, memory = 585.87 (MB), peak = 585.87 (MB)
+Total number of vias = 1635.
+[INFO DRT-0195] Start 1st optimization iteration.
+[INFO DRT-0199]   Number of violations = 27.
+[INFO DRT-0267] cpu time = 00:00:23, elapsed time = 00:00:23, memory = 585.87 (MB), peak = 585.87 (MB)
+Total number of vias = 1635.
+[INFO DRT-0195] Start 2nd optimization iteration.
+[INFO DRT-0199]   Number of violations = 40.
+[INFO DRT-0267] cpu time = 00:00:25, elapsed time = 00:00:25, memory = 585.87 (MB), peak = 585.87 (MB)
+Total number of vias = 1630.
+[INFO DRT-0199]   Number of violations = 0.
+[INFO DRT-0267] cpu time = 00:00:25, elapsed time = 00:00:25, memory = 585.87 (MB), peak = 585.87 (MB)
+Total number of vias = 1650.
+[INFO DRT-0198] Complete detail routing.
+Total number of vias = 1650.
+[INFO DRT-0267] cpu time = 00:01:34, elapsed time = 00:01:34, memory = 585.87 (MB), peak = 585.87 (MB)
+[INFO DRT-0180] Post processing.
+[INFO DRT-0501] Runtime: 210.76s
+wns max -2.80
+tns max -111.96
+Design area 2743 um^2 50% utilization.

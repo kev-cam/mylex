@@ -76,6 +76,40 @@ def klayout_flat_gds(def_path, lefs, gds_lib, out_gds):
     return top.name
 
 
+def klayout_extract(gds_path, cir_path):
+    """KLayout LayoutToNetlist with the FULL sky130 stack (li1 .. met5) -- kestrel's
+    extract.py stops at met3, which fragments a power grid routed on met4/met5."""
+    import klayout.db as kdb
+    ly = kdb.Layout(); ly.read(gds_path)
+    tc = ly.top_cells()[0]
+    l2n = kdb.LayoutToNetlist(kdb.RecursiveShapeIterator(ly, tc, []))
+    L = {}
+    for name, (ln, dt) in T.layers.items():
+        if name == "text":
+            continue
+        li = ly.find_layer(ln, dt)
+        L[name] = l2n.make_layer(li, name) if li is not None else l2n.make_layer(name)
+    gate = L["poly"] & L["diff"]; sd = L["diff"] - L["poly"]
+    nsd = (sd & L["nsdm"]) - L["nwell"]; psd = (sd & L["psdm"]) & L["nwell"]
+    ngate = gate - L["nwell"]; pgate = gate & L["nwell"]
+    l2n.extract_devices(kdb.DeviceExtractorMOS3Transistor(T.nfet_model), {"SD": nsd, "G": ngate, "P": ngate})
+    l2n.extract_devices(kdb.DeviceExtractorMOS3Transistor(T.pfet_model), {"SD": psd, "G": pgate, "P": pgate})
+    for name in [T.poly] + list(T.routing) + [cut for _, cut, _ in T.vias] + [T.diff_contact]:
+        if name in L:
+            l2n.connect(L[name])
+    for r in (nsd, psd, ngate, pgate):
+        l2n.connect(r)
+    l2n.connect(ngate, L["poly"]); l2n.connect(pgate, L["poly"])
+    l2n.connect(nsd, L["licon"]); l2n.connect(psd, L["licon"]); l2n.connect(L["poly"], L["licon"])
+    l2n.connect(L["licon"], L["li"])
+    for lo, cut, up in T.vias:
+        if cut in L and lo in L and up in L:
+            l2n.connect(L[lo], L[cut]); l2n.connect(L[cut], L[up])
+    l2n.extract_netlist()
+    nl = l2n.netlist(); nl.combine_devices(); nl.purge()
+    nl.write(cir_path, kdb.NetlistSpiceWriter())
+
+
 def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -104,13 +138,7 @@ def main():
     kl_gds = os.path.join(out, base + ".klayout.gds")
     top = klayout_flat_gds(def_path, lefs, gds_lib, kl_gds)
     kl_cir = os.path.join(out, base + ".klayout.cir")
-    r = subprocess.run([sys.executable, os.path.join(KESTREL, "layout", "extract.py"), kl_gds, "--output", kl_cir],
-                       capture_output=True, text=True)
-    if r.returncode != 0:
-        print("   KLayout extraction failed:", r.stderr[-800:]); return 1
-    for junk in (os.path.splitext(kl_cir)[0] + ".l2n",):
-        if os.path.exists(junk):
-            os.remove(junk)
+    klayout_extract(kl_gds, kl_cir)
     print("== KLayout: DEF+LEF+macro GDS -> flat GDS (%s) -> LayoutToNetlist -> %s" % (top, os.path.basename(kl_cir)))
     res = compare.compare_to_reference(ex, kl_cir)
     for k in ("ref_devices", "our_devices", "wl_match", "degree_hist_match", "isomorphic", "area_perim_match"):
