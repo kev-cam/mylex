@@ -191,6 +191,12 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
                 attempt, LAST_ROUTE_STATS.get("cost"), len(path), len(rects), len(faults)))
             for lid, r in rects:
                 print("         %s %s" % (layers[lay_ids.index(lid)] if lid in lay_ids else cuts[cut_ids.index(lid)], [round(v * dbu, 3) for v in r]))
+        # a notch against the net's own shape that the move's fill pass can fill
+        # (the gap, grown to min width, keeps spacing from every other net) is
+        # not worth a detour: accept the path and let the fill merge them
+        if faults and all(_fillable(fl, li, o, rects, own_rects, by_layer, lay_ids, width, space, own) for li, o, _ in faults):
+            LAST_ROUTE_STATS["fillable_faults"] = len(faults)
+            faults = []
         if not faults or os.environ.get("LAYOPT_ROUTE_NO_REPAIR"):
             # (the env switch returns the unrepaired path so the delta-DRC's
             # same-net notch rule can be shown to catch what the repair fixes)
@@ -234,6 +240,34 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
             blocked[li] |= band & ~inside & ~corridor
     LAST_ROUTE_STATS["error"] = "own-net spacing could not be repaired"
     return None
+
+
+def _fillable(fl, li, o, rects, own_rects, by_layer, lay_ids, width, space, own) -> bool:
+    """Can the notch between own shape `o` and the routed rects on layer li be
+    filled: the gap rectangle, grown to min width, clear of every other net's
+    shape on that layer by spacing?"""
+    from .drc import _gap_rect
+    lid = lay_ids[li]; sp = space[li]; w = width[li]
+    for lid2, r in rects:
+        if lid2 != lid or geom.touches(r, o):
+            continue
+        grown = (o[0] - sp, o[1] - sp, o[2] + sp, o[3] + sp)
+        if not geom.overlaps(r, grown):
+            continue
+        hole = _gap_rect(r, o)
+        if hole is None:
+            return False
+        gx = max(0, w - (hole[2] - hole[0])); gy = max(0, w - (hole[3] - hole[1]))
+        hole = (hole[0] - (gx + 1) // 2, hole[1] - (gy + 1) // 2, hole[2] + gx // 2, hole[3] + gy // 2)
+        probe = (hole[0] - sp, hole[1] - sp, hole[2] + sp, hole[3] + sp)
+        for k, fr in by_layer.get(lid, []):
+            if not own(k) and geom.overlaps(fr, probe):
+                return False
+        # the fill must not sit within spacing of our own other routed rects either, unless it touches them
+        for lid3, r3 in rects:
+            if lid3 == lid and r3 is not r and geom.overlaps(r3, probe) and not geom.touches(r3, hole):
+                return False
+    return True
 
 
 def _own_spacing_faults(tagged, own_rects, lay_ids, space):
@@ -383,7 +417,8 @@ def reroute_around(fl, tech, net: int, src2net: Dict[int, int], sources, window:
         return None
     res = maze_route(fl, tech, net, src2net, sources, window, new_ids=new_ids, own_ids=own_ids, soft_ids=soft_ids)
     if res is None:
-        LAST_ROUTE_STATS["reroute"] = "no path even through P&R wires"
+        LAST_ROUTE_STATS["reroute"] = "no path even through P&R wires" if LAST_ROUTE_STATS.get("error") == "no path" \
+            else "through P&R wires: %s" % LAST_ROUTE_STATS.get("error")
         return None
     si, path_rects = res
     blockers = list(LAST_ROUTE_STATS.get("blockers", []))

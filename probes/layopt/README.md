@@ -203,6 +203,14 @@ unrepaired path (the delta-DRC's same-net notch rule and the move's
 notch-fill pass then deal with it -- `_161_` still passes that way).
 `LAYOPT_FILL_DEBUG=1` traces the notch fills.
 
+All 33 candidates (`--max 33`): 23 take at least one finger. Refusals: seven
+strap conflicts with the neighbouring cell's li/licon (cell geometry), one
+diffusion corner touch caught by the guard (`_135_`), the nor4 PMOS stack with
+no room for a contact head (`_257_`). Newly legal after the router accepts
+fillable same-net notches: rebuffer15 (both fingers, net15 25.8 → 23.0 ps)
+and `_258_` (whole nand3 NMOS stack, `_102_` 112 → 60 ps,
+`evidence/gcd_258_stack_routed*`).
+
 When even the router finds no path, `route.reroute_around` moves the P&R wire
 in the way: a second search may cross other nets' DEF wires at a penalty, the
 wires it crosses are cut around the path (slivers dropped), our geometry goes

@@ -1,0 +1,24 @@
+== gcd.def: 784 instances, 57263 rects, 2472 devices; baseline rule flags 1008 (29s)
+   4 logic cells have a fill_4/fill_8 flush on their right; trying 4
+   rebuffer15 (buf_4, fill_4 to its right) [PN]: P finger LEGAL (10 rects)
+   rebuffer15 (buf_4, fill_4 to its right) [PN]: N finger LEGAL (9 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      output net net15: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 4 receivers max 25.8 -> 23.0 ps, mean 25.8 -> 23.0 ps
+   _135_ (nand2b_1, fill_8 to its right): P finger REJECTED by the guard: topology preserved, 1 new violations
+      min_space diff: rect 14386 vs 14385 0.000 < 0.270 um  [diff _135_/sky130_fd_sc_hd__nand2b_1 vs diff _135_/sky130_fd_sc_hd__nand2b_1]
+   _135_ (nand2b_1, fill_8 to its right): N finger REJECTED by the guard: topology preserved, 1 new violations
+      min_space diff: rect 14388 vs 14387 0.000 < 0.270 um  [diff _135_/sky130_fd_sc_hd__nand2b_1 vs diff _135_/sky130_fd_sc_hd__nand2b_1]
+   _135_ (nand2b_1, fill_8 to its right): N finger REJECTED by the guard: topology preserved, 1 new violations
+      min_space diff: rect 14388 vs 14387 0.000 < 0.270 um  [diff _135_/sky130_fd_sc_hd__nand2b_1 vs diff _135_/sky130_fd_sc_hd__nand2b_1]
+   _135_ (nand2b_1, fill_8 to its right): P finger REJECTED by the guard: topology preserved, 1 new violations
+      min_space diff: rect 14386 vs 14385 0.000 < 0.270 um  [diff _135_/sky130_fd_sc_hd__nand2b_1 vs diff _135_/sky130_fd_sc_hd__nand2b_1]
+   _257_ (nor4_1, fill_4 to its right) [PN]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M1143 (dpath.a_lt_b$in1\[4\]); candidates rejected by: {'head vs other poly': 9801, 'head vs diffusion': 9801}
+   _257_ (nor4_1, fill_4 to its right) [PN]: N finger LEGAL (9 rects)
+   _257_ (nor4_1, fill_4 to its right) [NP]: N finger LEGAL (9 rects)
+   _257_ (nor4_1, fill_4 to its right) [NP]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M1143 (dpath.a_lt_b$in1\[4\]); candidates rejected by: {'head vs other poly': 9801, 'head vs diffusion': 9801}
+      result (N): n W=0.65 f=1; n W=0.65 f=1; n W=1.30 f=2; n W=0.65 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1
+   _258_ (nand3_1, fill_8 to its right) [PN]: P finger LEGAL (8 rects)
+   _258_ (nand3_1, fill_8 to its right) [PN]: N finger LEGAL (37 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      output net _102_: PMOS W 3.00 -> 4.00 um, R_rise/R_fall 3474/7866 -> 2729/4120 ohm; worst-edge Elmore to 2 receivers max 112.4 -> 59.8 ps, mean 112.4 -> 59.8 ps
+   legal moves: 3 of 3 attempted

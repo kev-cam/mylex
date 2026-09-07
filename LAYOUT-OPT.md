@@ -602,6 +602,32 @@ stack's far gate has no path, the wall is cut around the connection's pad and
 reconnected with a met1 detour above it, the stack goes in, the wall's net
 stays one net, no new violation.
 
+What it bought on gcd, honestly: nothing yet, and the search for a case
+where it would found something else. All 33 candidate cells were tried
+(`--max 33`). Without the wire move 21 take at least one finger. The twelve
+refusals split three ways. Seven are the mirrored strap meeting foreign li or
+a licon of the neighbouring cell inside the contact span — cell geometry, not
+wiring, and not a wire move's business. One (`_135_`, nand2b) is the guard
+catching the extended diffusion corner-touching another diffusion of its own
+cell; the move should check diffusion spacing when it extends, and does not
+yet. Four were routing refusals, and with the wire move available every one
+of them still failed — the refusal now says why: *not* "no path", but the
+router's own same-net notch repair failing to converge among the driver's own
+output geometry (rebuffer15's buf_4 comb, the nand3's pins). Since the move
+ends with a fill pass that fills exactly such notches, the router now accepts
+a path whose remaining notches are fillable (the gap grown to min width keeps
+spacing from every other net) instead of repairing them away. With that,
+rebuffer15 takes both fingers (net15 25.8 → 23.0 ps) and `_258_` mirrors its
+whole three-transistor nand3 NMOS stack (output `_102_` 112 → 60 ps), 23 of
+33 cells. The nor4's four-PMOS stack still has no room for a contact head
+(diffusion and poly under every position) — geometry again. So the wire move
+stands as a capability the synthetic case proves and gcd, so far, does not
+need: on this placed-and-routed design the walls that stop a finger are the
+neighbouring cells' own metal, and the wire move by design leaves those
+alone. That is the correct restraint; it is also where the next lever is (a
+neighbour's li strap is as movable as a P&R wire once the neighbour is
+dissolved too).
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
