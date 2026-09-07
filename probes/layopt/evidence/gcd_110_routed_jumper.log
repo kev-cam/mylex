@@ -1,0 +1,17 @@
+P finger ok: 11 rects; jumper tally {'met1 bar vs other met1': 294, 'mcon vs other cuts': 232, 'met2 bar vs other met2': 8, 'met1 pad vs other met1': 286, 'maze route': {'cells': 173864, 'layers': 3, 'obstacles': 293, 'targets': 16729, 'pops': 9024, 'path_cells': 35, 'cost': 34, 'repairs': 0}}
+   new li    [13.885, 62.815, 14.21, 65.025]
+   new li    [13.622, 63.41, 14.132, 63.58]
+   signature equal: True
+   new violations: 0 []
+N finger ok: 7 rects; jumper tally {'met1 bar vs other met1': 294, 'mcon vs other cuts': 232, 'met2 bar vs other met2': 8, 'met1 pad vs other met1': 286, 'maze route': {'cells': 173864, 'layers': 3, 'obstacles': 293, 'targets': 24278, 'pops': 13, 'path_cells': 2, 'cost': 1, 'repairs': 0}}
+   new li    [13.885, 62.815, 14.21, 65.025]
+   new li    [13.952, 62.9, 14.132, 63.07]
+   signature equal: True
+   new violations: 0 []
+devices: ['p W=2.52 f=3', 'n W=0.84 f=2']
+ref_devices          2472
+our_devices          2472
+wl_match             True
+ref_nets             1353
+our_nets             1353
+isomorphic           True

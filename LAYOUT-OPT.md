@@ -339,9 +339,60 @@ PMOS poly bridge preferred the gap side; it now takes the rail side first.
 The S/D jumper searched heights middle-out over the whole strap and landed in
 the gap; it now searches its own strip first. With those, PMOS-then-NMOS
 succeeds and the probes try both orders and keep the better. On the real gcd
-layout the nand2 NMOS stacks are still refused — the tally names the P&R
-met1 in the gap and diffusion under every head candidate — and rebuffer12's
-NMOS became legal because its jumper stays in its strip.
+layout the nand2 NMOS stacks were still refused at this point — the tally
+named the P&R met1 in the gap and diffusion under every head candidate — and
+rebuffer12's NMOS became legal because its jumper stays in its strip.
+
+**Routing around the P&R wiring (2026-09-08, `layopt/route.py`).** Every
+connection a move makes had been a straight bar, and a straight bar is what
+a placed-and-routed layout does not have room for: next to gcd's `_149_` two
+met1 wires of other nets cross the 0.6 µm field gap, one of them right over
+every position the far gate's contact could take, so no mcon could sit on
+the pad. The pieces of a route existed though — li up out of the gap past
+the PMOS diffusion edge, a free met1 track at y ≈ 31.4, and the target net's
+*own* P&R wire to land on. `route.maze_route` finds such paths: a Dijkstra
+search over a 10 nm raster of the three lowest routing layers (li, met1,
+met2) with mcon and via1 between them, other nets' shapes blocked after
+growing by spacing plus half a wire width (and their cuts, which would short
+a wire drawn over them), via cells requiring the cut clear of every cut on
+that layer and both landing pads clear of other nets, and *any shape of the
+connection's own net* a legal landing — its pin, or the wire the router
+already gave it. The result is plain rectangles the move adds and the guards
+then judge like everything else. The contact bridge and the S/D jumper call
+it when no straight bar fits; a move's own new rects are passed as free
+space for the route to start from, never as landings.
+
+Two things it had to learn. (1) *Same-net spacing.* Own-net shapes are free
+space because a wire merging into its own net is the point — but a wire
+passing beside an own shape closer than spacing without touching it is a
+notch, and a landing pad wider than the wire makes one where a wire would
+not. The raster cannot say this per cell (a straight run's rectangle is the
+union of its cells), so the router checks the finished rectangles against
+own shapes and repairs: a faulty wire blocks the spacing band around the
+shape except the corridors from which a run enters it head-on; a faulty pad
+blocks via placement in the band unless the pad centre is inside the shape.
+`_161_` took two repairs — its target net's own via stack sits exactly where
+the natural landing was — and then a path of cost 200 (≈ 2 µm of wire) that
+the guards accept. layopt's delta-DRC does not check same-net notches, so
+this check is the only one until it does. (2) *A landing is a real overlap.*
+The first landing rule accepted any touch and produced a 10 nm corner
+overlap that the extractor did not treat as a connection (nor should it);
+now the wire's centre line must lie inside the target. A third fix was older
+than the router: a contact head placed beyond its first position had no poly
+between it and the finger's overhang — a stem now joins them.
+
+Result on gcd: both nand2_1 cells take the whole NMOS stack (`_149_`: li,
+met1, via1, met2 hop, via1 onto the net's own met1 pad; `_161_` after two
+repairs), and clkinv_1 `_110_`, refused before for want of any met1 height,
+takes both fingers with a jumper routed on li alone — the two straps were
+0.5 µm apart with nothing between them on li, a layer the straight-bar
+planners never considered. Every result re-extracts with the original
+netlist, adds no violation, and matches KLayout's extraction of the written
+GDS (`evidence/gcd_149_stack_routed*`, `gcd_161_stack_routed*`,
+`gcd_110_routed_jumper*`). Ten unit tests, including a bare nand2 row with a
+foreign met1 wire laid straight through its gap (`test_route_around_met1`).
+The router runs once per connection (≈ 0.1–3 s, 100–500k cells); the tally
+on refusal now includes its statistics.
 
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
@@ -410,9 +461,12 @@ inside the device's own strip when it can be; the mirrored strap is trimmed
 clear of foreign li on the side away from its rail; works on devices that
 already have fingers; refuses when the transistor is not the outermost on its
 strip, when the stack reaches the diffusion edge without a contacted node,
-when no bridge fits, or when no jumper height clears other nets' met1 —
+or when neither a straight bar nor the maze router (`route.py`: li/met1/met2
+with mcon/via1, landing on any shape of the net) can make the connection —
 every refusal names the obstacle, the planners with a tally of rejected
-candidates; `LAYOUT_PLAN_DEBUG=1` prints the surviving candidates).
+candidates and the router's statistics; `LAYOPT_PLAN_DEBUG=1` prints the
+surviving head candidates, `LAYOPT_ROUTE_PROBE=layer:x:y,...` the raster
+state at given points and each repair attempt).
 
 Planned, in the order the async objectives need them:
 
@@ -462,7 +516,8 @@ Planned:
   layout count. The rule table is deliberately minimal; signoff is KLayout.
   A move that shorts two nets is seen by the topology guard, not by the
   spacing check (after the move they are one net): the two guards are
-  complementary, neither is sufficient alone.
+  complementary, neither is sufficient alone. Same-net spacing (notches) is
+  not checked here yet; the router checks its own results for it (§2).
 - Bounds on every variable (min width from the tech table).
 
 ## 8. Interfaces to the federation
@@ -519,10 +574,11 @@ Planned:
   grows five of six candidate cells into real filler whitespace, nand2
   included, through poly, column or contact bridges; series stacks mirror
   whole (nand NMOS, legal on a bare row, guard made stack-canonical) (§2).
-  Remaining: the far-gate bridge in a gap already holding P&R met1 (route
-  around, or move the route), the S/D jumper on met2 where met1 is full,
-  diffusion merge across abutting cells (needs compaction to pay), contact
-  growth, `remove_finger`.
+  Connections route around P&R wiring on li/met1/met2 (`route.py`): all six
+  gcd candidate cells now take fingers, twelve in total, KLayout-confirmed.
+  Remaining: same-net notch rule in the delta-DRC, moving a P&R wire when no
+  path exists, diffusion merge across abutting cells (needs compaction to
+  pay), contact growth, `remove_finger`.
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
   T2 (layopt MC over a stated variation model) and T3 (stat-sim's
   `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1

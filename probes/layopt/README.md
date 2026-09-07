@@ -158,13 +158,13 @@ W/L equal, degree histogram equal, isomorphic. Needs `~/tools/orfs-sky130hd`
 ## L4 on the real layout (`l4_gcd_whitespace.py`, `evidence/l4_gcd_whitespace.log`)
 
 Fingers into the fillers OpenROAD placed in gcd. 33 candidates; six tried,
-each transistor judged on its own (eight fingers legal in five cells):
+each transistor judged on its own (all twelve fingers legal in the six cells, `legal moves: 6 of 6`):
 
 | cell | neighbour | PMOS | NMOS | output net (Elmore) |
 |---|---|---|---|---|
-| _149_ nand2_1 | fill_4 | legal (contact/poly bridge) | refused: stack mirrored, no bridge for the far gate (P&R met1 in the gap, diffusion under every head) | 21.0 → 15.4 ps |
-| _161_ nand2_1 | fill_8 | legal | refused: same | 11.5 → 8.5 ps |
-| _110_ clkinv_1 | fill_4 | refused: no met1 height for the jumper | refused: same | — |
+| _149_ nand2_1 | fill_4 | legal (contact/poly bridge) | legal: whole series stack, far gate bridged by a routed path around the P&R met1 | 21.0 → 15.4 ps |
+| _161_ nand2_1 | fill_8 | legal | legal: series stack, routed (two same-net notch repairs) | 11.5 → 8.5 ps |
+| _110_ clkinv_1 | fill_4 | legal: jumper routed on li | legal: same | 12.9 → 9.7 ps |
 | rebuffer12 buf_4 | fill_4 | legal | legal (jumper kept in its strip) | 6.0 → 5.7 ps |
 | rebuffer3 buf_4 | fill_8 | legal | legal | 13.2 → 12.0 ps |
 | rebuffer13 buf_4 | fill_8 | legal | legal | 17.6 → 15.8 ps |
@@ -183,6 +183,22 @@ mirrored (both gates, uncontacted middle node, far gate by contact bridge).
 KLayout: 6 devices, W/L multisets equal, isomorphic — four 0.65 µm NMOS in two
 parallel A–B stacks, which the stack-canonical topology guard treats as the
 original nand2 (LAYOUT-OPT §2, §7).
+
+## Routing around the P&R wiring (`l4_gcd_route_stack.py`, `l4_gcd_route_jumper.py`, `layopt/route.py`)
+
+When no straight met1/met2 bar fits, the contact bridge and the S/D jumper
+call a maze router (Dijkstra on a 10 nm raster of li/met1/met2 with mcon and
+via1; other nets blocked by spacing, the connection's own net free and any
+of its shapes a landing; results checked for same-net notches and repaired).
+
+| case | before | routed | verified |
+|---|---|---|---|
+| `_149_` nand2_1 NMOS stack | far gate: P&R met1 over every head position | li up out of the gap, met1 across the free track, via1/met2 hop, via1 down onto the net's own met1 pad (cost 253) | signature equal, 0 new violations, KLayout isomorphic (`evidence/gcd_149_stack_routed*`) |
+| `_161_` nand2_1 NMOS stack | target net's own via stack where the landing would be | two same-net notch repairs, then a 2 µm path (cost 200) | same (`evidence/gcd_161_stack_routed*`) |
+| `_110_` clkinv_1 P+N fingers | no met1 height for the jumper | jumper routed on li alone between the two straps | same (`evidence/gcd_110_routed_jumper*`); P 1.68 → 2.52 µm, N 0.42 → 0.84 µm |
+
+`LAYOPT_ROUTE_PROBE="met1:65550:57970,..."` (dbu) prints the raster state at
+those points and every repair attempt.
 
 ## Findings about the kestrel layout (report upstream)
 

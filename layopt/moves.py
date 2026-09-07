@@ -406,7 +406,22 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", 
         xb = mx(xa)
         plan = _plan_sd_jumper(fl, ex, dev, inner_net, xa, xb, y0, y1, src2net, nm, L, tech)
         if plan is None:
-            raise MoveError("add_finger: no legal S/D jumper (met1 bar, or met1 pads + via1 + met2 bar); heights rejected by: %s" % dict(LAST_JUMPER_TALLY))
+            # no straight bar on met1 or met2: route around the P&R wiring from the
+            # new strap to any shape of the net (the inner strap, its mcons, its routes)
+            from . import route
+            new_span = [fl.rects[j].rect for _, j in new_straps]
+            sources = []
+            for nr in new_span:
+                xs_ = (nr[0] + nr[2]) // 2
+                for yy in range(nr[1] + cs, nr[3] - cs + 1, max(cs, nm(0.1))):
+                    sources.append((0, xs_, yy))
+            xs = [r[0] for r in new_span] + [xa]; ys = [r[1] for r in new_span] + [y0]
+            rwin = (min(xs) - nm(1.5), min(ys) - nm(1.0), max(r[2] for r in new_span) + nm(1.5), max(r[3] for r in new_span) + nm(1.0))
+            res = route.maze_route(fl, tech, inner_net, src2net, sources, rwin, own_ids=[j for _, j in new_straps])
+            LAST_JUMPER_TALLY["maze route"] = dict(route.LAST_ROUTE_STATS)
+            if res is None:
+                raise MoveError("add_finger: no legal S/D jumper (met1 bar, met1 pads + via1 + met2 bar, or routed path); rejected by: %s" % dict(LAST_JUMPER_TALLY))
+            plan = res[1]
         for layer, rect in plan:
             touched.append(add_rect_dbu(fl, layer, rect, dev.prov))
     # 4. implant and well cover the new diffusion
@@ -538,13 +553,18 @@ def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, ne
         grown = (rect[0] - space, rect[1] - space, rect[2] + space, rect[3] + space)
         for k in bi.query_overlap(grown):
             if exclude_own and own(k):
-                continue
+                # own-net geometry is fine when the new shape merges with it;
+                # near but apart is a spacing violation like any other
+                if geom.overlaps(rect, bi.rects[k]) or _touches(rect, bi.rects[k]):
+                    continue
             return False
         return True
     gate_li = [(k, r.rect) for k, r in enumerate(fl.rects) if r.layer == li_l and own(k) and (r.x1 - r.x0) >= ms and geom.overlaps(r.rect, win)]
     if not gate_li:
         tally["no gate li pin in window"] = 1
         return None
+    # heads whose pad fits but that no straight met1 bar can serve: the maze router's sources
+    fallback: List[Tuple[Rect, Rect, Rect]] = []
     # vertical search range on each side of the gate: from just past the overhang out to 1.2 um
     for lo_side in (True, False):
         ys = []
@@ -560,9 +580,16 @@ def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, ne
                     continue
                 licon = (lx0, (hy0 + hy1) // 2 - cs // 2, lx0 + cs, (hy0 + hy1) // 2 + cs // 2)
                 head = (gx0, hy0, licon[2] + enc_poly, hy1)
-                if not clear(diff_l, head, sp_diff, exclude_own=False):
+                # a head beyond the first position needs a finger-width poly stem
+                # from the overhang out to it, or it is not connected to anything
+                stem = None
+                if lo_side and hy1 < g[1] - ext:
+                    stem = (gx0, hy1, gx1, g[1] - ext)
+                elif not lo_side and hy0 > g[3] + ext:
+                    stem = (gx0, g[3] + ext, gx1, hy0)
+                if not clear(diff_l, head, sp_diff, exclude_own=False) or (stem and not clear(diff_l, stem, sp_diff, exclude_own=False)):
                     tally["head vs diffusion"] = tally.get("head vs diffusion", 0) + 1; continue
-                if not clear(poly_l, head, sp_poly):
+                if not clear(poly_l, head, sp_poly) or (stem and not clear(poly_l, stem, sp_poly)):
                     tally["head vs other poly"] = tally.get("head vs other poly", 0) + 1; continue
                 if not (clear(licon_l, licon, sp_cut, exclude_own=False) and clear(mcon_l, licon, sp_cut, exclude_own=False)):
                     tally["licon vs cuts"] = tally.get("licon vs cuts", 0) + 1; continue
@@ -573,6 +600,9 @@ def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, ne
                 if not pads:
                     tally["li pad vs other li"] = tally.get("li pad vs other li", 0) + 1; continue
                 pad = pads[0]
+                head_rects = [(poly_l, head)] + ([(poly_l, stem)] if stem else [])
+                if len(fallback) < 600:
+                    fallback.append((head_rects, licon, pad))
                 fx = (licon[0] + licon[2]) // 2
                 if os.environ.get("LAYOPT_PLAN_DEBUG") and tally.get("_dbg", 0) < 6:
                     tally["_dbg"] = tally.get("_dbg", 0) + 1
@@ -605,10 +635,25 @@ def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, ne
                             tally["met1 bar vs other met1"] = tally.get("met1 bar vs other met1", 0) + 1; continue
                         if not all(clear(mcon_l, m, sp_cut, exclude_own=False) for m in m_new):
                             tally["mcon vs cuts"] = tally.get("mcon vs cuts", 0) + 1; continue
-                        plan = [(poly_l, head), (licon_l, licon), (li_l, pad), (mcon_l, m_new[0]), (mcon_l, m_new[1]), (m1, bar)]
+                        plan = head_rects + [(licon_l, licon), (li_l, pad), (mcon_l, m_new[0]), (mcon_l, m_new[1]), (m1, bar)]
                         if pin_ext is not None:
                             plan.append((li_l, pin_ext))
                         return plan
+    # No straight bar: route around whatever occupies the tracks (P&R met1 in
+    # the field gap, typically) on li / met1 / met2, landing on any shape of
+    # the gate net -- its pin or its own P&R wire.
+    if fallback:
+        from . import route
+        sources = [(0, (pd[0] + pd[2]) // 2, (pd[1] + pd[3]) // 2) for _, _, pd in fallback]
+        xs = [pd[0] for _, _, pd in fallback] + [tr[0] for _, tr in gate_li] + [tr[2] for _, tr in gate_li]
+        ys = [pd[1] for _, _, pd in fallback] + [tr[1] for _, tr in gate_li] + [tr[3] for _, tr in gate_li]
+        rwin = (min(xs) - nm(1.5), min(ys) - nm(1.5), max(xs) + nm(1.5), max(ys) + nm(1.5))
+        res = route.maze_route(fl, tech, dev.g, src2net, sources, rwin, new_ids=new_ids)
+        tally["maze route"] = dict(route.LAST_ROUTE_STATS)
+        if res is not None:
+            si, wires = res
+            head_rects, licon, pad = fallback[si]
+            return head_rects + [(licon_l, licon), (li_l, pad)] + wires
     return None
 
 
@@ -720,6 +765,11 @@ def _plan_sd_jumper(fl, ex, dev, inner_net, xa, xb, y0, y1, src2net, nm, L, tech
             return plan + [(m2, bar)]
         tally["met2 bar vs other met2"] = tally.get("met2 bar vs other met2", 0) + 1
     return None
+
+
+def _touches(a: Rect, b: Rect) -> bool:
+    """Closed-rectangle contact (shared edge or overlap)."""
+    return a[0] <= b[2] and b[0] <= a[2] and a[1] <= b[3] and b[1] <= a[3]
 
 
 def inv_layers(tech) -> Dict[int, str]:

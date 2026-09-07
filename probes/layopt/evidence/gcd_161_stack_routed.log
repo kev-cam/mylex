@@ -1,0 +1,32 @@
+P finger ok: 17 rects
+N outer gate [64.775, 57.355, 64.925, 58.005] net _012_
+window [62.275, 57.805, 67.425, 59.305]
+N stack ok: 19
+route stats {'cells': 467670, 'layers': 3, 'obstacles': 496, 'targets': 17384, 'pops': 164699, 'path_cells': 177, 'cost': 200, 'repairs': 2}
+   new poly  [65.67, 57.225, 65.82, 58.135]
+   new poly  [65.25, 57.225, 65.4, 58.285]
+   new poly  [64.775, 58.135, 65.4, 58.285]
+   new licon [65.87, 57.755, 66.04, 57.925]
+   new licon [65.87, 57.415, 66.04, 57.585]
+   new li    [65.84, 57.035, 66.15, 58.005]
+   new poly  [65.67, 58.135, 66.14, 58.405]
+   new licon [65.92, 58.185, 66.09, 58.355]
+   new li    [65.84, 58.185, 66.17, 58.355]
+   new li    [65.88, 58.18, 66.09, 58.35]
+   new mcon  [65.88, 58.18, 66.05, 58.35]
+   new li    [65.88, 58.18, 66.05, 58.35]
+   new met1  [65.85, 58.15, 66.08, 58.38]
+   new met1  [65.855, 58.195, 66.035, 58.335]
+   new met1  [65.855, 57.555, 65.995, 58.335]
+   new met1  [65.105, 57.555, 65.995, 57.695]
+   new met1  [65.105, 57.555, 65.245, 57.975]
+signature equal: True
+new violations: 0 []
+devices: ['p W=2.00 f=2', 'p W=1.00 f=1', 'n W=0.65 f=1', 'n W=0.65 f=1', 'n W=0.65 f=1', 'n W=0.65 f=1']
+ref_devices          2474
+our_devices          2474
+wl_match             True
+ref_nets             1354
+our_nets             1354
+degree_hist_match    True
+isomorphic           True
