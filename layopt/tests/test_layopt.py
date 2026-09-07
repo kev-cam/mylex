@@ -257,6 +257,70 @@ END DESIGN"""
     assert "met1" not in {inv[l] for l in layers_added["n"]}, "NMOS should use the column bridge (poly only)"
 
 
+def test_series_stack_nand2():
+    """A nand2_1 beside a fill_8 with no routing in the way: the PMOS finger
+    (parallel pair) and the NMOS finger (series stack: both gates and the
+    uncontacted middle node mirrored, the far gate bridged by contact) are
+    both legal and keep the netlist."""
+    from .. import lefdef, moves as mv, drc as rules
+    lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
+    if not os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__fill_8.gds")):
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    deftext = """VERSION 5.8 ; DESIGN t ; UNITS DISTANCE MICRONS 1000 ; DIEAREA ( 0 0 ) ( 6900 2720 ) ;
+COMPONENTS 3 ; - f1 sky130_fd_sc_hd__fill_4 + PLACED ( 0 0 ) N ; - u1 sky130_fd_sc_hd__nand2_1 + PLACED ( 1840 0 ) N ;
+- f2 sky130_fd_sc_hd__fill_8 + PLACED ( 3220 0 ) N ; END COMPONENTS
+SPECIALNETS 2 ; - VPWR ( u1 VPWR ) + USE POWER ; - VGND ( u1 VGND ) + USE GROUND ; END SPECIALNETS
+END DESIGN"""
+    with tempfile.TemporaryDirectory() as td:
+        open(os.path.join(td, "t.def"), "w").write(deftext)
+        lefs = [os.path.join(lib, f) for f in ("sky130_fd_sc_hd.tlef", "sky130_fd_sc_hd__nand2_1.lef", "sky130_fd_sc_hd__fill_4.lef", "sky130_fd_sc_hd__fill_8.lef")]
+        fl = lefdef.def2flat(os.path.join(td, "t.def"), lefs, lib, T)
+    ex = extract.extract(fl, T)
+    sig = ex.signature(); base = {rules.key(v) for v in rules.check(fl, ex)}
+    # order matters in a 0.6 um field gap (the second finger's bridge has to
+    # dodge the first's); the claim is that one order legalizes both
+    import copy
+    fl0 = fl
+    best = None
+    for order in (("p", "n"), ("n", "p")):
+        fl = copy.deepcopy(fl0)
+        base0 = set(base)
+        done = []
+        for kind in order:
+            ex = extract.extract(fl, T)
+            devs = [d for d in ex.devices if d.kind == kind]
+            devs.sort(key=lambda x: -max(ex.shapes[g].rect[2] for g in x.gate_ids))
+            try:
+                touched = mv.add_finger(fl, ex, devs[0], side="high")
+            except mv.MoveError as e:
+                print("  (%s: %s finger refused after %s: %s)" % ("".join(order), kind, done, str(e)[:90])); continue
+            ex2 = extract.extract(fl, T)
+            assert ex2.signature() == sig, kind
+            nv = rules.new_violations(fl, ex2, touched, base0)
+            if nv:
+                print("  (%s: %s finger illegal after %s: %s)" % ("".join(order), kind, done, nv[:2])); continue
+            base0 = {rules.key(v) for v in rules.check(fl, ex2)}
+            done.append(kind)
+        print("  order %s: legal %s" % ("".join(order), done))
+        if best is None or len(done) > len(best[1]):
+            best = (fl, done)
+        if len(done) == 2:
+            break
+    fl, done = best
+    ex2 = extract.extract(fl, T)
+    assert "n" in done, "the NMOS series stack must mirror legally on a bare row"
+    assert "p" in done, "the PMOS finger must be legal alongside the mirrored stack in one order"
+    # NMOS stack: the whole stack mirrored, i.e. two parallel A-B stacks with
+    # their own uncontacted middle nodes (sky130's nand2_2 style); they extract
+    # as four 0.65 devices and the stack-canonical signature folds them
+    n = [x for x in ex2.devices if x.kind == "n"]
+    assert len(n) == 4 and all(abs(x.w - 0.65) < 1e-6 for x in n), {(x.kind, round(x.w, 2)) for x in ex2.devices}
+    assert sum(1 for x in ex2.devices if x.kind == "p" and abs(x.w - 2.0) < 1e-6) == 1
+    from .. import compare
+    devs, netmap = compare.reduce_stacks(ex2)
+    assert len(netmap) == 1, netmap                       # one middle node identified with the other
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):

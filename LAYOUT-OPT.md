@@ -95,7 +95,7 @@ Three principles:
   SPEF layopt writes is the form stat-sim's `spef.py` consumes, so the
   statistical/MTBF tier (ASYNC-PLAN §4) is already wired to accept the output.
 
-## 2. What exists (2026-09-05) — measured
+## 2. What exists (2026-09-08) — measured
 
 Package `layopt/` (this repository), probe and evidence in `probes/layopt/`.
 kestrel is github.com/kev-cam/kestrel `cd4757e` at `/usr/local/src/kestrel`
@@ -304,6 +304,45 @@ into net `_076_` with zero spacing flags before the jumper learned to look —
 the topology guard caught it, which is what it is for. The move also learned
 that the bridge must meet spacing, not just avoid overlap.
 
+**Series stacks (2026-09-08).** `add_finger` now mirrors a *whole* series
+stack when the node beyond the outermost gate is uncontacted: it walks inward
+gate by gate until a contacted region, mirrors every gate and the middle
+node(s) about the outer region, and bridges each new gate (poly bridge for
+the near one, column or contact bridge for the far ones). The result is what
+sky130 itself draws for a nand2_2: two parallel A–B stacks, each with its own
+uncontacted middle node. That forced a guard decision. The extractor rightly
+reports four 0.65 µm NMOS and two middle nets rather than two 1.3 µm devices —
+KLayout says the same of the written GDS (`evidence/nand2_stack_fingered_vs_klayout.log`,
+device W/L multisets equal, graph isomorphic) — so the plain graph signature
+changed although the circuit had not. `compare.reduce_stacks` now puts the
+netlist in series-parallel canonical form before hashing: an *internal node*
+is an unlabelled net whose shapes are only diffusion and whose two terminals
+are S/D of same-kind, same-L devices; devices chained through internal nodes
+form a stack (ordered gate sequence between two external nets, orientation
+canonicalized); parallel stacks with the same ends and gate sequence have
+their middle nodes identified, after which the parallel fingers collapse
+exactly as `combine_parallel` collapses single devices. The reference
+isomorphism check keeps the raw graph (`stacks=False, with_w=True`). This is
+the right identity for the guard: a middle node has no observable name, and
+merging the two middle nodes with metal would only add capacitance.
+
+On a bare nand2_1 between fillers both fingers are legal, PMOS pair 2.0 + 1.0
+and NMOS as two stacks (`test_series_stack_nand2`) — but only in the order
+PMOS then NMOS. The 0.6 µm field gap between the strips is the scarce
+resource: the far gate's contact bridge must cross it on met1, and three
+earlier habits took it first. The PMOS finger's mirrored Y strap ran the
+full row height (as the original does, to reach the NMOS drain) straight
+through the mirrored stack and shorted Y into B — the topology guard caught
+it, spacing could not; the strap is now trimmed on the side away from its
+rail wherever foreign li or cuts sit (never past its own contacts). The
+PMOS poly bridge preferred the gap side; it now takes the rail side first.
+The S/D jumper searched heights middle-out over the whole strap and landed in
+the gap; it now searches its own strip first. With those, PMOS-then-NMOS
+succeeds and the probes try both orders and keep the better. On the real gcd
+layout the nand2 NMOS stacks are still refused — the tally names the P&R
+met1 in the gap and diffusion under every head candidate — and rebuffer12's
+NMOS became legal because its jumper stays in its strip.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -362,14 +401,18 @@ contact arrays do not grow yet — the stretched S/D region simply carries the
 same contacts; in a shared-provenance cell nothing else moves), wire width
 about the centre-line, translate, add rectangle, **add finger across the cell
 edge** (`add_finger`: mirrored gate + S/D column, implant/well extension;
-gate tied by a poly bridge, a column bridge to aligned same-net poly, or a
-contact bridge (poly tab, licon, li pad, met1 bar to the pin); supply sources
-connect through the rail that continues into the neighbour, signal-net S/D
-through an mcon + met1 jumper; works on devices that already have fingers;
-refuses when the transistor is not the outermost on its strip, when the inner
-node has no contacts (series stack), when no bridge fits, or when no jumper
-height clears other nets' met1 — every refusal names the obstacle, the
-contact planner with a tally of rejected candidates).
+gate tied by a poly bridge (rail side first), a column bridge to aligned
+same-net poly, or a contact bridge (poly tab, licon, li pad, met1 bar to the
+pin); a series stack is mirrored whole, gates and uncontacted middle node,
+each new gate bridged; supply sources connect through the rail that continues
+into the neighbour, signal-net S/D through an mcon + met1 jumper placed
+inside the device's own strip when it can be; the mirrored strap is trimmed
+clear of foreign li on the side away from its rail; works on devices that
+already have fingers; refuses when the transistor is not the outermost on its
+strip, when the stack reaches the diffusion edge without a contacted node,
+when no bridge fits, or when no jumper height clears other nets' met1 —
+every refusal names the obstacle, the planners with a tally of rejected
+candidates; `LAYOUT_PLAN_DEBUG=1` prints the surviving candidates).
 
 Planned, in the order the async objectives need them:
 
@@ -410,7 +453,10 @@ Planned:
 
 - Topology signature equality (sizes excluded) — the netlist is the same
   netlist. Fast (ms) and exact up to colour-refinement resolution; a full VF2
-  isomorphism check is a drop-in if a case ever needs it.
+  isomorphism check is a drop-in if a case ever needs it. Series stacks are
+  hashed in series-parallel canonical form (§2, `compare.reduce_stacks`): a
+  stack drawn as two parallel fingers with separate uncontacted middle nodes
+  is the same netlist, as it is for KLayout's `combine_devices` in spirit.
 - Delta-DRC: min width, spacing between different conductors, cut enclosure
   against the metal union — only *new* violations relative to the input
   layout count. The rule table is deliberately minimal; signoff is KLayout.
@@ -471,8 +517,10 @@ Planned:
   signal S/D), verified by re-extraction, the guards and KLayout; the discrete
   search uses it to balance two paths 25.9 → 0.4 ps; on OpenROAD's gcd it
   grows five of six candidate cells into real filler whitespace, nand2
-  included, through poly, column or contact bridges (§2). Remaining: mirror a
-  whole series stack (nand NMOS), the S/D jumper on met2 where met1 is full,
+  included, through poly, column or contact bridges; series stacks mirror
+  whole (nand NMOS, legal on a bare row, guard made stack-canonical) (§2).
+  Remaining: the far-gate bridge in a gap already holding P&R met1 (route
+  around, or move the route), the S/D jumper on met2 where met1 is full,
   diffusion merge across abutting cells (needs compaction to pay), contact
   growth, `remove_finger`.
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**

@@ -1,25 +1,31 @@
-== gcd.def: 784 instances, 57263 rects, 2472 devices; baseline rule flags 935 (35s)
+== gcd.def: 784 instances, 57263 rects, 2472 devices; baseline rule flags 935 (30s)
    33 logic cells have a fill_4/fill_8 flush on their right; trying 6
-   _149_ (nand2_1, fill_4 to its right): P finger LEGAL (15 rects)
-   _149_ (nand2_1, fill_4 to its right): N finger refused -- add_finger: inner S/D has no contacts to mirror
+   _149_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (15 rects)
+   _149_ (nand2_1, fill_4 to its right) [PN]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M262 (_044_); candidates rejected by: {'head vs diffusion': 17415, 'head vs other poly': 1134, 'li pad vs other li': 48, 'met1 bar vs other met1': 39133, 'pad and gate pin do not share a height': 3015, 'pin li extension vs other li': 21652}
+   _149_ (nand2_1, fill_4 to its right): N finger REJECTED by the guard: topology CHANGED, 0 new violations
+   _149_ (nand2_1, fill_4 to its right) [NP]: P finger LEGAL (15 rects)
       result (P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
       output net _045_: PMOS W 2.00 -> 3.00 um, R_drv 1500 -> 1000 ohm; Elmore to 4 receivers max 21.0 -> 15.4 ps, mean 20.7 -> 15.1 ps
-   _161_ (nand2_1, fill_8 to its right): P finger LEGAL (17 rects)
-   _161_ (nand2_1, fill_8 to its right): N finger refused -- add_finger: inner S/D has no contacts to mirror
+   _161_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (17 rects)
+   _161_ (nand2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M350 (_056_); candidates rejected by: {'head vs diffusion': 16794, 'head vs other poly': 1755, 'li pad vs other li': 82, 'met1 bar vs other met1': 26660, 'pad and gate pin do not share a height': 3884, 'pin li extension vs other li': 21448}
+   _161_ (nand2_1, fill_8 to its right) [NP]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M350 (_056_); candidates rejected by: {'head vs diffusion': 7908, 'head vs other poly': 1893, 'met1 bar vs other met1': 32208, 'pad and gate pin do not share a height': 54351, 'pin li extension vs other li': 307705}
+   _161_ (nand2_1, fill_8 to its right) [NP]: P finger LEGAL (17 rects)
       result (P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
       output net _057_: PMOS W 2.00 -> 3.00 um, R_drv 1500 -> 1000 ohm; Elmore to 4 receivers max 11.5 -> 8.5 ps, mean 11.4 -> 8.5 ps
-   _110_ (clkinv_1, fill_4 to its right): P finger refused -- add_finger: no legal S/D jumper (met1 bar, or met1 pads + via1 + met2 bar); heights rejected by: {'met1 bar vs other met1': 294, 'mcon vs other cuts': 232, 'met
-   _110_ (clkinv_1, fill_4 to its right): N finger refused -- add_finger: no legal S/D jumper (met1 bar, or met1 pads + via1 + met2 bar); heights rejected by: {'met1 bar vs other met1': 294, 'mcon vs other cuts': 232, 'met
-   rebuffer12 (buf_4, fill_4 to its right): P finger LEGAL (12 rects)
-   rebuffer12 (buf_4, fill_4 to its right): N finger LEGAL (7 rects)
+   _110_ (clkinv_1, fill_4 to its right) [PN]: P finger refused -- add_finger: no legal S/D jumper (met1 bar, or met1 pads + via1 + met2 bar); heights rejected by: {'met1 bar vs other met1': 294, 'mcon vs other cuts': 232, 'met2 bar vs other met2': 8, 'met1 pad vs other met1': 286}
+   _110_ (clkinv_1, fill_4 to its right) [PN]: N finger refused -- add_finger: no legal S/D jumper (met1 bar, or met1 pads + via1 + met2 bar); heights rejected by: {'met1 bar vs other met1': 294, 'mcon vs other cuts': 232, 'met2 bar vs other met2': 8, 'met1 pad vs other met1': 286}
+   _110_ (clkinv_1, fill_4 to its right) [NP]: N finger refused -- add_finger: no legal S/D jumper (met1 bar, or met1 pads + via1 + met2 bar); heights rejected by: {'met1 bar vs other met1': 294, 'mcon vs other cuts': 232, 'met2 bar vs other met2': 8, 'met1 pad vs other met1': 286}
+   _110_ (clkinv_1, fill_4 to its right) [NP]: P finger refused -- add_finger: no legal S/D jumper (met1 bar, or met1 pads + via1 + met2 bar); heights rejected by: {'met1 bar vs other met1': 294, 'mcon vs other cuts': 232, 'met2 bar vs other met2': 8, 'met1 pad vs other met1': 286}
+   rebuffer12 (buf_4, fill_4 to its right) [PN]: P finger LEGAL (12 rects)
+   rebuffer12 (buf_4, fill_4 to its right) [PN]: N finger LEGAL (7 rects)
       result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
       output net net12: PMOS W 5.00 -> 6.00 um, R_drv 600 -> 500 ohm; Elmore to 4 receivers max 6.0 -> 5.7 ps, mean 5.8 -> 5.5 ps
-   rebuffer3 (buf_4, fill_8 to its right): P finger LEGAL (12 rects)
-   rebuffer3 (buf_4, fill_8 to its right): N finger LEGAL (7 rects)
+   rebuffer3 (buf_4, fill_8 to its right) [PN]: P finger LEGAL (12 rects)
+   rebuffer3 (buf_4, fill_8 to its right) [PN]: N finger LEGAL (7 rects)
       result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
       output net net3: PMOS W 5.00 -> 6.00 um, R_drv 600 -> 500 ohm; Elmore to 4 receivers max 13.2 -> 12.0 ps, mean 12.9 -> 11.7 ps
-   rebuffer13 (buf_4, fill_8 to its right): P finger LEGAL (12 rects)
-   rebuffer13 (buf_4, fill_8 to its right): N finger LEGAL (7 rects)
+   rebuffer13 (buf_4, fill_8 to its right) [PN]: P finger LEGAL (12 rects)
+   rebuffer13 (buf_4, fill_8 to its right) [PN]: N finger LEGAL (7 rects)
       result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
       output net net13: PMOS W 5.00 -> 6.00 um, R_drv 600 -> 500 ohm; Elmore to 8 receivers max 17.6 -> 15.8 ps, mean 17.3 -> 15.5 ps
    legal moves: 5 of 5 attempted

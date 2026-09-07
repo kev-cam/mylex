@@ -77,16 +77,105 @@ def _wl_signature(nodes: Dict[str, str], edges: List[Tuple[str, str, str]], roun
     return hashlib.md5(",".join(sorted(col.values())).encode()).hexdigest()
 
 
-def graph_signature(ex, with_w: bool = False) -> str:
+def internal_nodes(ex) -> set:
+    """Nets that are uncontacted diffusion between exactly two S/D terminals of
+    same-kind, same-L devices and carry no label: the middle nodes of series
+    stacks.  Such a node has no observable identity -- a stack mirrored into a
+    second finger (sky130's own nand2_2 style) has its own, separate middle
+    node and is the same circuit."""
+    out = set()
+    for nid, net in ex.nets.items():
+        if not net.name.isdigit() or len(net.devices) != 2:
+            continue
+        if any(t == "G" for _, t in net.devices):
+            continue
+        if not all(ex.shapes[i].layer.startswith("sd_") for i in net.shapes):
+            continue
+        dn = {d for d, _ in net.devices}
+        if len(dn) != 2:
+            continue
+        devs = [dv for dv in ex.devices if dv.name in dn]
+        if len(devs) == 2 and devs[0].kind == devs[1].kind and round(devs[0].l, 6) == round(devs[1].l, 6):
+            out.add(nid)
+    return out
+
+
+def reduce_stacks(ex):
+    """Series-parallel canonical form for the topology guard.  Returns
+    (devices as (name, kind, l, w, g, s, d) tuples, net id mapping).
+
+    Devices connected through internal nodes form a stack (an ordered gate
+    sequence between two external nets).  Parallel stacks with the same end
+    nets and gate sequence are the same stack drawn with more fingers: their
+    middle nodes are identified so the parallel fingers then collapse in the
+    signature, like combine_parallel does for single devices."""
+    internal = internal_nodes(ex)
+    by_name = {dv.name: dv for dv in ex.devices}
+    # chains: walk from each device that touches an external net on one side
+    seen = set()
+    stacks = []          # (key, [device names in order], [internal node ids in order])
+    for dv in ex.devices:
+        if dv.name in seen:
+            continue
+        ends = [dv.s not in internal, dv.d not in internal]
+        if not any(ends):
+            continue                                 # both S and D internal: reached from a chain end
+        if all(ends):
+            seen.add(dv.name)
+            continue                                 # not in a stack
+        start_net = dv.s if ends[0] else dv.d
+        chain = [dv.name]; nodes = []
+        cur = dv; other = dv.d if ends[0] else dv.s
+        while other in internal:
+            nodes.append(other)
+            nxt = [d for d, _ in ex.nets[other].devices if d != cur.name][0]
+            nd = by_name[nxt]
+            chain.append(nxt)
+            cur = nd
+            other = nd.d if nd.s == other else nd.s
+        seen.update(chain)
+        end_net = other
+        gates = [by_name[c].g for c in chain]
+        fwd = (start_net, tuple(gates), end_net)
+        rev = (end_net, tuple(reversed(gates)), start_net)
+        if rev < fwd:
+            chain = list(reversed(chain)); nodes = list(reversed(nodes)); fwd = rev
+        key = (dv.kind, round(dv.l, 6), fwd)
+        stacks.append((key, chain, nodes))
+    netmap = {}
+    first = {}
+    for key, chain, nodes in stacks:
+        if key in first:
+            for a, b in zip(nodes, first[key]):
+                netmap[a] = b
+        else:
+            first[key] = nodes
+    m = lambda n: netmap.get(n, n)
+    return [(dv.name, dv.kind, dv.l, dv.w, dv.g, m(dv.s), m(dv.d)) for dv in ex.devices], netmap
+
+
+def graph_signature(ex, with_w: bool = False, stacks: bool = True) -> str:
     """Topology signature.  Sizes are excluded by default so a resize move
-    compares equal (kind and L stay; connectivity must)."""
+    compares equal (kind and L stay; connectivity must).  With stacks=True
+    (the guard's default) series stacks are put in canonical form first, so a
+    stack mirrored into a second finger compares equal to the original; the
+    reference-netlist isomorphism check uses stacks=False, with_w=True."""
     nodes = {}
     edges = []
-    for dv in ex.devices:
-        nodes["D" + dv.name] = "%s:%g:%s" % (dv.kind, round(dv.l, 4), "%g" % round(dv.w, 3) if with_w else "-")
-        for t, n in (("G", dv.g), ("S", dv.s), ("D", dv.d)):
+    if stacks:
+        devs, _ = reduce_stacks(ex)
+        if not with_w:                              # parallel fingers collapse (sizes excluded)
+            uniq = {}
+            for t in devs:
+                uniq.setdefault((t[1], round(t[2], 6), t[4], frozenset((t[5], t[6]))), t)
+            devs = list(uniq.values())
+    else:
+        devs = [(dv.name, dv.kind, dv.l, dv.w, dv.g, dv.s, dv.d) for dv in ex.devices]
+    for name, kind, l, w, g, s, d in devs:
+        nodes["D" + name] = "%s:%g:%s" % (kind, round(l, 4), "%g" % round(w, 3) if with_w else "-")
+        for t, n in (("G", g), ("S", s), ("D", d)):
             nodes.setdefault("N%d" % n, "net")
-            edges.append(("D" + dv.name, "N%d" % n, "SD" if t in "SD" else "G"))
+            edges.append(("D" + name, "N%d" % n, "SD" if t in "SD" else "G"))
     return _wl_signature(nodes, edges)
 
 
@@ -132,7 +221,7 @@ def compare_to_reference(ex, ref_path: str) -> Dict:
         "degree_hist_match": Counter(ref_nets.values()) == Counter(our_nets.values()),
         "degree_hist_ref": sorted(Counter(ref_nets.values()).items()),
         "degree_hist_ours": sorted(Counter(our_nets.values()).items()),
-        "isomorphic": graph_signature(ex, with_w=True) == ref_signature(ref),
+        "isomorphic": graph_signature(ex, with_w=True, stacks=False) == ref_signature(ref),
         "area_perim_match": ap_o == ap_t,
         "ap_only_ours": ap_o - ap_t, "ap_only_ref": ap_t - ap_o,
     }

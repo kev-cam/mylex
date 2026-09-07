@@ -24,7 +24,7 @@ from layopt import drc, extract, gds, lefdef, moves, rc, tech          # noqa: E
 
 ORFS = os.path.expanduser("~/tools/orfs-sky130hd")
 DEF = sys.argv[sys.argv.index("--def") + 1] if "--def" in sys.argv else os.path.join(HERE, "gcd", "gcd.def")
-MAXC = int(sys.argv[sys.argv.index("--max") + 1]) if "--max" in sys.argv else 4
+MAXC = int(sys.argv[sys.argv.index("--max") + 1]) if "--max" in sys.argv else 6
 EVID = os.path.join(HERE, "evidence")
 T = tech.SKY130
 R0, W0 = 3000.0, 1.0           # inv_1-class driver: 3 kohm at PMOS W 1 um; scaled by W0/W
@@ -99,34 +99,16 @@ def main():
         inst = a.inst
         net = output_net(ex, inst)
         wp0, r0, d0 = net_delay(ex, net, inst) if net is not None else (0, 0, {})
-        fl2 = copy.deepcopy(fl)
-        touched = []
-        done = []
-        for kind in ("p", "n"):
-            ex2 = extract.extract(fl2, T) if touched else ex
-            dev = [x for x in ex2.devices if x.prov.split("/")[1] == inst and x.kind == kind]
-            if not dev:
-                continue
-            dev.sort(key=lambda x: -max(ex2.shapes[g].rect[2] for g in x.gate_ids))       # outermost gate on the right
-            trial = copy.deepcopy(fl2)
-            try:
-                t_new = moves.add_finger(trial, ex2, dev[0], side="high")
-            except moves.MoveError as e:
-                print("   %s (%s, %s to its right): %s finger refused -- %s" % (inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), kind.upper(), str(e)[:160]))
-                continue
-            ex_t = extract.extract(trial, T)
-            viol_t = drc.new_violations(trial, ex_t, t_new, base)
-            topo_t = ex_t.signature() == sig
-            if topo_t and not viol_t:
-                fl2 = trial; touched += t_new; done.append(kind.upper())
-                print("   %s (%s, %s to its right): %s finger LEGAL (%d rects)" % (inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), kind.upper(), len(t_new)))
-            else:
-                inv = {v: k for k, v in T.layers.items()}
-                print("   %s (%s, %s to its right): %s finger REJECTED by the guard: topology %s, %d new violations" % (
-                    inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), kind.upper(), "preserved" if topo_t else "CHANGED", len(viol_t)))
-                for v in viol_t[:3]:
-                    ra = trial.rects[v.a]; rb = trial.rects[v.b] if v.b >= 0 else None
-                    print("      %s  [%s %s%s]" % (v, inv.get(ra.layer, ra.layer), ra.prov.split("/", 1)[1], "" if rb is None else " vs %s %s" % (inv.get(rb.layer, rb.layer), rb.prov.split("/", 1)[1])))
+        # both orders: a series stack's far-gate bridge needs the field gap's met1 before a
+        # PMOS jumper takes it, and vice versa; keep whichever order legalizes more fingers
+        best_state = None
+        for order in (("p", "n"), ("n", "p")):
+            st = attempt_order(fl, ex, base, sig, inst, a, b, net, order)
+            if best_state is None or len(st[2]) > len(best_state[2]):
+                best_state = st
+            if len(best_state[2]) == 2:
+                break
+        fl2, touched, done = best_state
         if not done:
             continue
         ex3 = extract.extract(fl2, T)
@@ -146,6 +128,40 @@ def main():
         if legal and not any(r[1] for r in results[:-1]):
             gds.write_flat(fl2, os.path.join(EVID, "gcd_%s_fingered.gds" % inst.strip("_")))
     print("   legal moves: %d of %d attempted" % (sum(1 for _, l in results if l), len(results)))
+
+
+def attempt_order(fl, ex, base, sig, inst, a, b, net, order):
+    """Apply fingers in the given order; return (layout, touched, kinds done)."""
+    fl2 = copy.deepcopy(fl)
+    touched = []
+    done = []
+    if True:
+        for kind in order:
+            ex2 = extract.extract(fl2, T) if touched else ex
+            dev = [x for x in ex2.devices if x.prov.split("/")[1] == inst and x.kind == kind]
+            if not dev:
+                continue
+            dev.sort(key=lambda x: -max(ex2.shapes[g].rect[2] for g in x.gate_ids))       # outermost gate on the right
+            trial = copy.deepcopy(fl2)
+            try:
+                t_new = moves.add_finger(trial, ex2, dev[0], side="high")
+            except moves.MoveError as e:
+                print("   %s (%s, %s to its right) [%s]: %s finger refused -- %s" % (inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), "".join(order).upper(), kind.upper(), str(e)))
+                continue
+            ex_t = extract.extract(trial, T)
+            viol_t = drc.new_violations(trial, ex_t, t_new, base)
+            topo_t = ex_t.signature() == sig
+            if topo_t and not viol_t:
+                fl2 = trial; touched += t_new; done.append(kind.upper())
+                print("   %s (%s, %s to its right) [%s]: %s finger LEGAL (%d rects)" % (inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), "".join(order).upper(), kind.upper(), len(t_new)))
+            else:
+                inv = {v: k for k, v in T.layers.items()}
+                print("   %s (%s, %s to its right): %s finger REJECTED by the guard: topology %s, %d new violations" % (
+                    inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), kind.upper(), "preserved" if topo_t else "CHANGED", len(viol_t)))
+                for v in viol_t[:3]:
+                    ra = trial.rects[v.a]; rb = trial.rects[v.b] if v.b >= 0 else None
+                    print("      %s  [%s %s%s]" % (v, inv.get(ra.layer, ra.layer), ra.prov.split("/", 1)[1], "" if rb is None else " vs %s %s" % (inv.get(rb.layer, rb.layer), rb.prov.split("/", 1)[1])))
+    return fl2, touched, done
 
 
 if __name__ == "__main__":

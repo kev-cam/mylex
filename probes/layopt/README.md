@@ -8,7 +8,7 @@ for the PNGs). Design record: `../../LAYOUT-OPT.md`.
 ## Commands
 
     cd /usr/local/src/mylex
-    python3 -m layopt.tests.test_layopt                       # 3 PASS (synthetic inverter + kestrel golden)
+    python3 -m layopt.tests.test_layopt                       # 9 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack)
     python3 -m layopt compare  $K/layout/kestrel_pll.gds $K/layout/kestrel_pll_flat_extracted.cir
     python3 -m layopt extract  $K/layout/kestrel_pll.gds -o evidence/kestrel_pll_layopt.cir
     python3 -m layopt rc       $K/layout/kestrel_pll.gds -o evidence/kestrel_pll.spef
@@ -158,20 +158,31 @@ W/L equal, degree histogram equal, isomorphic. Needs `~/tools/orfs-sky130hd`
 ## L4 on the real layout (`l4_gcd_whitespace.py`, `evidence/l4_gcd_whitespace.log`)
 
 Fingers into the fillers OpenROAD placed in gcd. 33 candidates; six tried,
-each transistor judged on its own:
+each transistor judged on its own (eight fingers legal in five cells):
 
 | cell | neighbour | PMOS | NMOS | output net (Elmore) |
 |---|---|---|---|---|
-| _149_ nand2_1 | fill_4 | legal (contact/poly bridge) | refused: series stack, inner node uncontacted | 21.0 → 15.4 ps |
-| _161_ nand2_1 | fill_8 | legal | refused: series stack | 11.5 → 8.5 ps |
+| _149_ nand2_1 | fill_4 | legal (contact/poly bridge) | refused: stack mirrored, no bridge for the far gate (P&R met1 in the gap, diffusion under every head) | 21.0 → 15.4 ps |
+| _161_ nand2_1 | fill_8 | legal | refused: same | 11.5 → 8.5 ps |
 | _110_ clkinv_1 | fill_4 | refused: no met1 height for the jumper | refused: same | — |
-| rebuffer12 buf_4 | fill_4 | legal | refused: no met1 height | 6.0 → 5.5 ps |
+| rebuffer12 buf_4 | fill_4 | legal | legal (jumper kept in its strip) | 6.0 → 5.7 ps |
 | rebuffer3 buf_4 | fill_8 | legal | legal | 13.2 → 12.0 ps |
 | rebuffer13 buf_4 | fill_8 | legal | legal | 17.6 → 15.8 ps |
 
 `evidence/gcd_149_fingered.gds` extracts isomorphic in KLayout
 (`evidence/l4_gcd_fingered_vs_klayout.log`). Refusal messages carry the
-obstacle; the contact planner adds a tally of rejected candidates.
+obstacle; the planners add a tally of rejected candidates. The probe tries
+both orders (PMOS then NMOS, NMOS then PMOS) and keeps the better: the
+0.6 µm gap between the strips is shared by the far-gate bridge of a mirrored
+stack and the S/D jumper of the other transistor.
+
+**Series stack on a bare row** (`test_series_stack_nand2`,
+`evidence/nand2_stack_fingered.gds`, `evidence/nand2_stack_fingered_vs_klayout.log`):
+nand2_1 between fill_4 and fill_8, PMOS finger then the whole NMOS stack
+mirrored (both gates, uncontacted middle node, far gate by contact bridge).
+KLayout: 6 devices, W/L multisets equal, isomorphic — four 0.65 µm NMOS in two
+parallel A–B stacks, which the stack-canonical topology guard treats as the
+original nand2 (LAYOUT-OPT §2, §7).
 
 ## Findings about the kestrel layout (report upstream)
 

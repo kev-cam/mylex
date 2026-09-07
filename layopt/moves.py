@@ -6,6 +6,7 @@ Every move edits rectangles in place (or adds some) and returns the list of
 touched FlatRect indices, so the caller can re-extract, confirm the netlist
 signature is unchanged, and rule-check only what moved.  Coordinates are dbu.
 """
+import os
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from . import geom
@@ -215,19 +216,35 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", 
             if og[3] > D[1] and og[1] < D[3] and ((hi and outer[0] <= og[0] < D[2]) or ((not hi) and D[0] < og[2] <= outer[1])):
                 raise MoveError("add_finger: %s is not the outermost transistor on the %s side of its diffusion (%s is); add the finger there"
                                 % (dev.name, side, other.name))
-    if prev is None:
-        inner = (D[0], g[0]) if hi else (g[2], D[2])
-    else:
-        inner = (prev[2], g[0]) if hi else (g[2], prev[0])
-    if outer[1] - outer[0] <= 0 or inner[1] - inner[0] <= 0:
+    if outer[1] - outer[0] <= 0:
         raise MoveError("add_finger: gate at the diffusion edge")
+    # walk inward over uncontacted S/D nodes (a series stack): the mirrored image
+    # must include every gate up to the first contacted region
+    licon_l = L[tech.diff_contact]
+    def region_has_contacts(xr):
+        return any(r.layer == licon_l and r.x0 >= xr[0] - 1 and r.x1 <= xr[1] + 1 and r.y1 > D[1] and r.y0 < D[3] for r in fl.rects)
+    stack = [g]                       # gates to mirror, outermost first
+    cur = g
+    while True:
+        if prev is None:
+            inner = (D[0], cur[0]) if hi else (cur[2], D[2])
+        else:
+            inner = (prev[2], cur[0]) if hi else (cur[2], prev[0])
+        if inner[1] - inner[0] <= 0:
+            raise MoveError("add_finger: no S/D region inside the gate stack")
+        if region_has_contacts(inner) or prev is None:
+            break
+        stack.append(prev); cur = prev
+        gi2 = strip_gates.index(prev)
+        prev = (strip_gates[gi2 - 1] if gi2 > 0 else None) if hi else (strip_gates[gi2 + 1] if gi2 + 1 < len(strip_gates) else None)
+    if not region_has_contacts(inner):
+        raise MoveError("add_finger: the series stack reaches the diffusion edge without a contacted node")
     xc = (outer[0] + outer[1]) / 2.0
     touched: List[int] = []
     ystrip = (g[1], g[3])
     def in_inner(r: Rect) -> bool:
         return r[0] >= inner[0] - 1 and r[2] <= inner[1] + 1 and r[3] > ystrip[0] and r[1] < ystrip[1]
     # inner S/D contacts and the strap(s) over them
-    licon_l = L[tech.diff_contact]
     inner_licons = [i for i, r in enumerate(fl.rects) if r.layer == licon_l and in_inner(r.rect)]
     if not inner_licons:
         raise MoveError("add_finger: inner S/D has no contacts to mirror")
@@ -269,12 +286,19 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", 
     x_new = mx(inner[0] if hi else inner[1])
     fl.rects[di].rect = (D[0], D[1], x_new, D[3]) if hi else (x_new, D[1], D[2], D[3])
     touched.append(di)
-    # 2. new gate finger: same x-width as the gate, mirrored; spans overhang to overhang
+    # 2. new gate finger(s): every gate of the stack mirrored; spans overhang to overhang
     ext = nm(tech.poly_ext_diff)
     gx0, gx1 = (mx(g[2]), mx(g[0]))
+    for extra in stack[1:]:
+        touched.append(add_rect_dbu(fl, L[tech.poly], (min(mx(extra[0]), mx(extra[2])), extra[1] - ext, max(mx(extra[0]), mx(extra[2])), extra[3] + ext), dev.prov))
     # poly bridge location: just beyond the overhang on the side with field (no other diffusion/gate)
     bw = nm(max(tech.min_width.get(tech.poly, 0.15), 0.15))
     cand = [((g[1] - ext - bw), (g[1] - ext)), ((g[3] + ext), (g[3] + ext + bw))]
+    # rail side first: the mid-row gap between the strips is where gate contact
+    # bridges (the far gate of a mirrored series stack, say) have to go, so a
+    # poly bridge should use the rail side when it can
+    if dev.kind == "p":
+        cand.reverse()
     bridge = None
     span_x = (min(g[0], gx0), max(g[2], gx1))
     src2net = {sh.src: ex.net_of_shape[k] for k, sh in enumerate(ex.shapes) if sh.src >= 0}
@@ -306,16 +330,59 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", 
     # 3. mirrored contacts and strap(s)
     for k in inner_licons:
         touched.append(add_rect_dbu(fl, licon_l, mrect(fl.rects[k].rect), dev.prov))
+    # The original strap may run across the row to the other device type (a
+    # nand's Y strap ties the P drain to the N drain).  The mirrored copy must
+    # not run into whatever sits in the other strip -- that strip is not
+    # mirrored with us (a mirrored series stack's gate bridge sat there once
+    # and a full-height strap shorted Y to B).  Trim the strap on the side away
+    # from our rail back to clear of foreign li and cuts; it must still cover
+    # our contacts.  The jumper below carries the signal across if needed.
+    enc_li = nm(tech.enclosure.get((tech.routing[0], tech.diff_contact), 0.08))
+    sp_li = nm(tech.min_space.get(tech.routing[0], 0.17))
+    lic_lo = min(fl.rects[k].y0 for k in inner_licons) - enc_li
+    lic_hi = max(fl.rects[k].y1 for k in inner_licons) + enc_li
+    inner_sid = next((q for q, sh in enumerate(ex.shapes) if sh.src == inner_licons[0]), None)
+    inner_net = ex.net_of_shape[inner_sid] if inner_sid is not None else None
+    foreign_layers = {li_l, licon_l}
+    if tech.vias:
+        foreign_layers.add(L[tech.vias[0][1]])
+    def foreign(k):
+        n = src2net.get(k)
+        return n is not None and n != inner_net
+    trim_lo, trim_hi = None, None          # strap y bounds forced by conflicts (P: bottom, N: top)
+    for k in inner_straps:
+        nr = mrect(fl.rects[k].rect)
+        grown = (nr[0] - sp_li, nr[1] - sp_li, nr[2] + sp_li, nr[3] + sp_li)
+        for k2, r2 in enumerate(fl.rects):
+            if r2.layer not in foreign_layers or not foreign(k2) or not geom.overlaps(r2.rect, grown):
+                continue
+            if dev.kind == "p":
+                if r2.y0 >= lic_lo:
+                    raise MoveError("add_finger: foreign %s at %s conflicts with the mirrored strap over our contacts" % (inv_layers(tech).get(r2.layer, r2.layer), [round(v / 1000.0, 3) for v in r2.rect]))
+                trim_lo = max(trim_lo or -10**9, r2.y1 + sp_li)
+            else:
+                if r2.y1 <= lic_hi:
+                    raise MoveError("add_finger: foreign %s at %s conflicts with the mirrored strap over our contacts" % (inv_layers(tech).get(r2.layer, r2.layer), [round(v / 1000.0, 3) for v in r2.rect]))
+                trim_hi = min(trim_hi or 10**9, r2.y0 - sp_li)
+    def clip_strap(r: Rect) -> Rect:
+        if dev.kind == "p" and trim_lo is not None:
+            return (r[0], max(r[1], min(trim_lo, lic_lo)), r[2], r[3])
+        if dev.kind == "n" and trim_hi is not None:
+            return (r[0], r[1], r[2], min(r[3], max(trim_hi, lic_hi)))
+        return r
     new_straps = []
     for k in inner_straps:
-        new_straps.append((k, add_rect_dbu(fl, li_l, mrect(fl.rects[k].rect), dev.prov)))
+        nr = clip_strap(mrect(fl.rects[k].rect))
+        if nr[3] <= nr[1]:
+            continue
+        new_straps.append((k, add_rect_dbu(fl, li_l, nr, dev.prov)))
         touched.append(new_straps[-1][1])
+    if not new_straps:
+        raise MoveError("add_finger: no strap left over the mirrored contacts after trimming")
     # 3b. the new outer S/D must join the inner S/D's net.  A supply source
     # reaches it through the rail (the strap runs to the rail li, which continues
     # into the neighbour).  A signal net needs a jumper: mcon on both straps and a
     # met1 bar between them, at a height inside the gate's W range.
-    inner_sid = next((q for q, sh in enumerate(ex.shapes) if sh.src == inner_licons[0]), None)
-    inner_net = ex.net_of_shape[inner_sid] if inner_sid is not None else None
     if inner_net is not None and ex.nets[inner_net].name not in tech.supply_names and len(tech.vias) >= 1:
         cut = tech.vias[0][1]                                  # li -> met1 cut (mcon)
         cs = nm(tech.min_width.get(cut, 0.17)); half = cs // 2
@@ -327,8 +394,12 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", 
         wide = max(old_union, key=lambda rr: rr[2] - rr[0])
         if wide[2] - wide[0] < cs:
             raise MoveError("add_finger: inner strap too narrow for a contact")
-        # the jumper may sit anywhere along the strap (the mirrored strap has the same extent)
+        # the jumper may sit anywhere along the part of the strap the clipped mirror keeps
         y0, y1 = wide[1], wide[3]
+        if dev.kind == "p" and trim_lo is not None:
+            y0 = max(y0, min(trim_lo, lic_lo))
+        elif dev.kind == "n" and trim_hi is not None:
+            y1 = min(y1, max(trim_hi, lic_hi))
         if y1 - y0 < cs:
             raise MoveError("add_finger: no room for the signal jumper on the strap")
         xa = (wide[0] + wide[2]) // 2
@@ -348,6 +419,27 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", 
         if dev.kind == "p" and r.layer == L[tech.nwell] and geom.overlaps(r.rect, D):
             ew = nm(tech.nwell_enc)
             fl.rects[i].rect = (min(r.x0, D2[0] - ew), r.y0, max(r.x1, D2[2] + ew), r.y1); touched.append(i)
+    # 4b. the other gates of a mirrored series stack: each ties to its own original.
+    # A poly bridge cannot cross the gates in between, so use the column bridge
+    # (aligned same-net poly) or the contact bridge (poly tab + met1 jumper to the pin)
+    for extra in stack[1:]:
+        owner = next(d_ for d_ in ex.devices for gs in d_.gate_ids if ex.shapes[gs].rect == extra)
+        ex0_, ex1_ = min(mx(extra[0]), mx(extra[2])), max(mx(extra[0]), mx(extra[2]))
+        new_poly_ids = {i for i in touched if fl.rects[i].layer == L[tech.poly] and i not in src2net}
+        s2n = dict(src2net)
+        for i in new_poly_ids:
+            if fl.rects[i].x0 == ex0_ and fl.rects[i].x1 == ex1_:
+                s2n[i] = owner.g
+        col = _plan_column_bridge(fl, ex, owner, extra, ex0_, ex1_, ext, s2n, nm, L, tech, [i for i in touched if s2n.get(i) == owner.g])
+        if col is not None:
+            touched.append(add_rect_dbu(fl, L[tech.poly], col, dev.prov)); continue
+        new_ids_x = {i for i in touched if i not in src2net and fl.rects[i].layer != L[tech.poly]}
+        plan = _plan_contact_bridge(fl, ex, owner, extra, ex0_, ex1_, ext, s2n, nm, L, tech, new_ids_x)
+        if plan is None:
+            raise MoveError("add_finger: series stack: no bridge for the mirrored gate of %s (%s); candidates rejected by: %s"
+                            % (owner.name, ex.nets[owner.g].name, dict(LAST_PLAN_TALLY)))
+        for layer, rect in plan:
+            touched.append(add_rect_dbu(fl, layer, rect, dev.prov))
     if bridge is None:
         # 5a. column bridge: same-net poly already aligned with the new finger beyond the
         # overhang (the other transistor's added finger, or the cell's own gate poly):
@@ -482,8 +574,13 @@ def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, ne
                     tally["li pad vs other li"] = tally.get("li pad vs other li", 0) + 1; continue
                 pad = pads[0]
                 fx = (licon[0] + licon[2]) // 2
+                if os.environ.get("LAYOPT_PLAN_DEBUG") and tally.get("_dbg", 0) < 6:
+                    tally["_dbg"] = tally.get("_dbg", 0) + 1
+                    print("      plan-debug: head %s pad %s  gate li y-ranges %s" % ([round(v / 1000, 3) for v in head], [round(v / 1000, 3) for v in pad],
+                          [(round(tr[1] / 1000, 3), round(tr[3] / 1000, 3), round((tr[0] + tr[2]) / 2000, 3)) for _, tr in gate_li][:3]))
+                ext_max = nm(0.6)                                    # the pin's li may be extended this far
                 for k, tr in sorted(gate_li, key=lambda kr: abs((kr[1][0] + kr[1][2]) // 2 - fx)):
-                    y0 = max(pad[1] + ms // 2, tr[1] + ms // 2); y1 = min(pad[3] - ms // 2, tr[3] - ms // 2)
+                    y0 = max(pad[1] + ms // 2, tr[1] - ext_max + ms // 2); y1 = min(pad[3] - ms // 2, tr[3] + ext_max - ms // 2)
                     if y1 < y0:
                         tally["pad and gate pin do not share a height"] = tally.get("pad and gate pin do not share a height", 0) + 1; continue
                     tx = (tr[0] + tr[2]) // 2
@@ -492,6 +589,15 @@ def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, ne
                         yj = ((y0 + y1) // 2 + ((jj + 1) // 2) * step * (1 if jj % 2 else -1))
                         if yj < y0 or yj > y1:
                             continue
+                        # extend the pin li when the mcon would fall outside it (the pin's width gives the
+                        # two-sided enclosure along x; along y the cut only needs to be covered)
+                        pin_ext = None
+                        if yj + ms // 2 > tr[3] or yj - ms // 2 < tr[1]:
+                            pin_ext = (tr[0], min(tr[1], yj - ms // 2), tr[2], max(tr[3], yj + ms // 2))
+                            if not clear(li_l, pin_ext, sp_li):
+                                tally["pin li extension vs other li"] = tally.get("pin li extension vs other li", 0) + 1; continue
+                            if not (clear(licon_l, pin_ext, 0) and clear(mcon_l, pin_ext, 0)):
+                                tally["pin li extension over other cuts"] = tally.get("pin li extension over other cuts", 0) + 1; continue
                         # met1 encloses the mcons by enc on two opposite sides: along the bar (x) is free
                         bar = (bar_x[0], yj - ms // 2, bar_x[1], yj + ms // 2)
                         m_new = [(fx - ms // 2, yj - ms // 2, fx + ms // 2, yj + ms // 2), (tx - ms // 2, yj - ms // 2, tx + ms // 2, yj + ms // 2)]
@@ -499,7 +605,10 @@ def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, ne
                             tally["met1 bar vs other met1"] = tally.get("met1 bar vs other met1", 0) + 1; continue
                         if not all(clear(mcon_l, m, sp_cut, exclude_own=False) for m in m_new):
                             tally["mcon vs cuts"] = tally.get("mcon vs cuts", 0) + 1; continue
-                        return [(poly_l, head), (licon_l, licon), (li_l, pad), (mcon_l, m_new[0]), (mcon_l, m_new[1]), (m1, bar)]
+                        plan = [(poly_l, head), (licon_l, licon), (li_l, pad), (mcon_l, m_new[0]), (mcon_l, m_new[1]), (m1, bar)]
+                        if pin_ext is not None:
+                            plan.append((li_l, pin_ext))
+                        return plan
     return None
 
 
@@ -533,11 +642,24 @@ def _plan_sd_jumper(fl, ex, dev, inner_net, xa, xb, y0, y1, src2net, nm, L, tech
                 continue
             return False
         return True
-    def heights():
-        lo, hi_y = y0 + half, y1 - half
+    # heights inside the device's own strip (its gates' y range) first, middle
+    # out, then the rest of the strap middle out: a jumper needs no field gap,
+    # gate bridges do, so leave the gap for them
+    strip = (min(ex.shapes[q].rect[1] for q in dev.gate_ids), max(ex.shapes[q].rect[3] for q in dev.gate_ids))
+    def middle_out(lo, hi_y):
         for k in range(0, (hi_y - lo) // step + 1):
             y = ((lo + hi_y) // 2 + ((k + 1) // 2) * step * (1 if k % 2 else -1))
             if lo <= y <= hi_y:
+                yield y
+    def heights():
+        lo, hi_y = y0 + half, y1 - half
+        slo, shi = max(lo, strip[0] + half), min(hi_y, strip[1] - half)
+        seen = set()
+        if shi >= slo:
+            for y in middle_out(slo, shi):
+                seen.add(y); yield y
+        for y in middle_out(lo, hi_y):
+            if y not in seen:
                 yield y
     # existing same-net mcons on either strap column can be reused instead of adding one
     existing = [(k, r.rect) for k, r in enumerate(fl.rects) if r.layer == mcon_l and src2net.get(k) == inner_net
@@ -598,6 +720,10 @@ def _plan_sd_jumper(fl, ex, dev, inner_net, xa, xb, y0, y1, src2net, nm, L, tech
             return plan + [(m2, bar)]
         tally["met2 bar vs other met2"] = tally.get("met2 bar vs other met2", 0) + 1
     return None
+
+
+def inv_layers(tech) -> Dict[int, str]:
+    return {v: k for k, v in tech.layers.items()}
 
 
 def add_rect_dbu(fl: FlatLayout, layer: Tuple[int, int], rect: Rect, prov: str) -> int:
