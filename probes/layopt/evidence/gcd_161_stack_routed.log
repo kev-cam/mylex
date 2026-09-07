@@ -1,8 +1,7 @@
 P finger ok: 17 rects
 N outer gate [64.775, 57.355, 64.925, 58.005] net _012_
-window [62.275, 57.805, 67.425, 59.305]
-N stack ok: 19
-route stats {'cells': 467670, 'layers': 3, 'obstacles': 496, 'targets': 17384, 'pops': 164699, 'path_cells': 177, 'cost': 200, 'repairs': 2}
+gap window [62.275, 57.805, 67.425, 59.305]
+N stack ok: 22 rects; route {'cells': 467670, 'layers': 3, 'obstacles': 496, 'targets': 17384, 'pops': 164699, 'path_cells': 177, 'cost': 200, 'repairs': 2, 'unrepaired_faults': 0}
    new poly  [65.67, 57.225, 65.82, 58.135]
    new poly  [65.25, 57.225, 65.4, 58.285]
    new poly  [64.775, 58.135, 65.4, 58.285]
@@ -20,6 +19,9 @@ route stats {'cells': 467670, 'layers': 3, 'obstacles': 496, 'targets': 17384, '
    new met1  [65.855, 57.555, 65.995, 58.335]
    new met1  [65.105, 57.555, 65.995, 57.695]
    new met1  [65.105, 57.555, 65.245, 57.975]
+   new poly  [65.25, 58.23, 65.435, 58.38]
+   new poly  [65.155, 58.115, 65.4, 58.285]
+   new poly  [64.775, 58.135, 65.435, 58.475]
 signature equal: True
 new violations: 0 []
 devices: ['p W=2.00 f=2', 'p W=1.00 f=1', 'n W=0.65 f=1', 'n W=0.65 f=1', 'n W=0.65 f=1', 'n W=0.65 f=1']

@@ -176,8 +176,11 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
                 attempt, LAST_ROUTE_STATS.get("cost"), len(path), len(rects), len(faults)))
             for lid, r in rects:
                 print("         %s %s" % (layers[lay_ids.index(lid)] if lid in lay_ids else cuts[cut_ids.index(lid)], [round(v * dbu, 3) for v in r]))
-        if not faults:
+        if not faults or os.environ.get("LAYOPT_ROUTE_NO_REPAIR"):
+            # (the env switch returns the unrepaired path so the delta-DRC's
+            # same-net notch rule can be shown to catch what the repair fixes)
             LAST_ROUTE_STATS["repairs"] = attempt
+            LAST_ROUTE_STATS["unrepaired_faults"] = len(faults)
             return src_idx, rects
         # Block the spacing band around each offending own shape, except the
         # corridors from which a straight run enters the shape (its centre line

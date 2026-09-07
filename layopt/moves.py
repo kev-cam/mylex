@@ -164,6 +164,125 @@ class MoveError(Exception):
 
 
 def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", bridge: str = "auto") -> List[int]:
+    """See `_add_finger`; afterwards same-net notches the new geometry makes
+    against its own net are filled (`fill_notches`)."""
+    touched = _add_finger(fl, ex, dev, side, bridge)
+    for _ in range(8):                       # a fill can itself sit within spacing of another fill
+        new = fill_notches(fl, ex, touched)  # all new geometry: labels propagate through it
+        if not new:
+            break
+        touched += new
+    return sorted(set(touched))
+
+
+def fill_notches(fl: FlatLayout, ex: Extraction, new_ids: Sequence[int]) -> List[int]:
+    """Two shapes of one net on a spacing layer that neither overlap nor share
+    an edge, closer than spacing, form a notch (the delta-DRC flags it).  When
+    one of them is new geometry and the gap between them is field that other
+    nets keep spacing from, fill the gap: the two merge into one polygon,
+    which is what the rule wants.  A poly fill must not cross diffusion (that
+    would be a gate).  New rects are labelled with a net by same-layer contact
+    with extracted geometry, propagated through touching new rects; unlabelled
+    ones are left alone and the DRC has the last word.  Returns added ids."""
+    tech = ex.tech
+    L = tech.layers
+    inv = {v: k for k, v in L.items()}
+    nm = lambda v: int(round(v / fl.dbu_um))
+    src2net = {sh.src: ex.net_of_shape[k] for k, sh in enumerate(ex.shapes) if sh.src >= 0}
+    cut_layers = {L[c] for _, c, _ in tech.vias} | {L[tech.diff_contact]}
+    new_set = [i for i in set(new_ids) if 0 <= i < len(fl.rects) and fl.rects[i].layer not in cut_layers]
+    if not new_set:
+        return []
+    # label new rects by contact
+    label: Dict[int, int] = {}
+    by_layer: Dict[Tuple[int, int], geom.BinIndex] = {}
+    for k, r in enumerate(fl.rects):
+        by_layer.setdefault(r.layer, geom.BinIndex()).add(k, r.rect)
+    pending = list(new_set)
+    changed = True
+    while changed and pending:
+        changed = False
+        for i in list(pending):
+            r = fl.rects[i]
+            for k in by_layer[r.layer].query_touch(r.rect):
+                n = src2net.get(k) if k not in new_set else label.get(k)
+                if n is not None and k != i:
+                    label[i] = n; pending.remove(i); changed = True; break
+    added: List[int] = []
+    diff_l = L.get(tech.diff)
+    for i in new_set:
+        n = label.get(i)
+        if n is None:
+            continue
+        r = fl.rects[i]
+        ln = inv.get(r.layer)
+        ms = tech.min_space.get(ln)
+        if ms is None:
+            continue
+        s_ = nm(ms)
+        probe = (r.x0 - s_, r.y0 - s_, r.x1 + s_, r.y1 + s_)
+        for k in by_layer[r.layer].query_overlap(probe):
+            if k == i:
+                continue
+            nk = src2net.get(k) if k not in new_set else label.get(k)
+            if nk != n:
+                continue
+            o = fl.rects[k].rect
+            if geom.overlaps(r.rect, o) or _shares_edge(r.rect, o):
+                continue
+            hole = _gap_rect(r.rect, o)
+            dbg = os.environ.get("LAYOPT_FILL_DEBUG")
+            if dbg:
+                print("      fill-debug: %d (net %s) vs %d: hole %s" % (i, n, k, hole and [round(v / 1000.0, 3) for v in hole]))
+            if hole is None:
+                continue
+            cover = [fl.rects[q].rect for q in by_layer[r.layer].query_overlap(hole)]
+            if not geom.subtract(hole, cover):
+                continue                                   # already filled
+            # the fill is at least min width in both directions (a sliver would
+            # be a width violation, and a corner square would touch both shapes
+            # only at corners, which is no connection): grow it about its centre
+            mw = nm(tech.min_width.get(ln, 0.0)); grid = nm(tech.grid_um)
+            gx_ = max(0, mw - (hole[2] - hole[0])); gy_ = max(0, mw - (hole[3] - hole[1]))
+            snap = lambda v: int(round(v / grid)) * grid
+            hole = (snap(hole[0] - (gx_ + 1) // 2), snap(hole[1] - (gy_ + 1) // 2), snap(hole[2] + gx_ // 2), snap(hole[3] + gy_ // 2))
+            if hole[2] - hole[0] < mw:
+                hole = (hole[0], hole[1], hole[0] + mw, hole[3])
+            if hole[3] - hole[1] < mw:
+                hole = (hole[0], hole[1], hole[2], hole[1] + mw)
+            # align each edge of the fill to a nearby (within min width) edge of the two
+            # shapes it joins, outward: a fill edge a few nm off a neighbour's edge
+            # would leave a slit, and that slit is the next notch
+            def align(v, cands, outward):
+                near = [c for c in cands if abs(c - v) <= mw and (c <= v if outward < 0 else c >= v)]
+                return (min(near) if outward < 0 else max(near)) if near else v
+            hole = (align(hole[0], (r.rect[0], o[0]), -1), align(hole[1], (r.rect[1], o[1]), -1),
+                    align(hole[2], (r.rect[2], o[2]), +1), align(hole[3], (r.rect[3], o[3]), +1))
+            joins = lambda a, b: geom.overlaps(a, b) or _shares_edge(a, b)
+            if not (joins(hole, r.rect) and joins(hole, o)):
+                continue                                   # cannot bridge them (too short to reach)
+            # the fill must keep spacing from other nets on this layer ...
+            grown = (hole[0] - s_, hole[1] - s_, hole[2] + s_, hole[3] + s_)
+            ok = True
+            for q in by_layer[r.layer].query_overlap(grown):
+                nq = src2net.get(q) if q not in new_set else label.get(q)
+                if nq != n and not (q in new_set and nq is None):
+                    ok = False; break
+            # ... and poly must not cross diffusion
+            if ok and ln == tech.poly and diff_l in by_layer and by_layer[diff_l].query_overlap(hole):
+                ok = False
+            if dbg:
+                print("      fill-debug:    grown %s ok=%s joins=%s" % ([round(v / 1000.0, 3) for v in hole], ok, joins(hole, r.rect) and joins(hole, o)))
+            if not ok:
+                continue
+            j = add_rect_dbu(fl, r.layer, hole, fl.rects[i].prov)
+            by_layer[r.layer].add(j, hole)
+            label[j] = n
+            added.append(j)
+    return added
+
+
+def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", bridge: str = "auto") -> List[int]:
     """Add one parallel finger to `dev` on the `side` of its flow axis, by
     mirroring the existing gate + inner S/D column about the outer S/D region:
 
@@ -765,6 +884,9 @@ def _plan_sd_jumper(fl, ex, dev, inner_net, xa, xb, y0, y1, src2net, nm, L, tech
             return plan + [(m2, bar)]
         tally["met2 bar vs other met2"] = tally.get("met2 bar vs other met2", 0) + 1
     return None
+
+
+from .drc import _shares_edge, _gap_rect  # noqa: E402  (pure geometry helpers)
 
 
 def _touches(a: Rect, b: Rect) -> bool:

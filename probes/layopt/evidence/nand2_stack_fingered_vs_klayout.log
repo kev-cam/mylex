@@ -1,6 +1,6 @@
-P finger: legal, 15 new rects
-N finger: legal, 14 new rects
-layopt devices: ['n W=0.65 G=3 S=7 D=VGND', 'n W=0.65 G=3 S=VGND D=6', 'n W=0.65 G=4 S=5 D=7', 'n W=0.65 G=4 S=6 D=5', 'p W=1.00 G=3 S=VPWR D=5', 'p W=2.00 G=4 S=5 D=VPWR']
+P finger: legal, 16 new rects
+N finger: legal, 16 new rects
+layopt devices: ['n W=0.65 G=3 S=9 D=VGND', 'n W=0.65 G=3 S=VGND D=8', 'n W=0.65 G=4 S=5 D=9', 'n W=0.65 G=4 S=8 D=5', 'p W=1.00 G=3 S=VPWR D=5', 'p W=2.00 G=4 S=5 D=VPWR']
 ref_devices          6
 our_devices          6
 wl_match             True

@@ -360,6 +360,40 @@ END DESIGN"""
     print("  routed around the blocker: %d cells, cost %d" % (stats["path_cells"], stats["cost"]))
 
 
+def test_same_net_notch():
+    """Two parts of one net closer than spacing without touching are a notch;
+    the same pair with the gap filled by a third rectangle is one polygon and
+    legal; different-net spacing is unchanged."""
+    from .. import drc as rules, gds as g
+    fl = g.FlatLayout(dbu_um=0.001, top="t", rects=[])
+    li = T.layers["li"]
+    # a U of li: two arms 0.10 um apart on a base -- one net
+    base = moves.add_rect_dbu(fl, li, (0, 0, 1000, 200), "t/u")
+    arm_a = moves.add_rect_dbu(fl, li, (0, 200, 300, 1000), "t/u")
+    arm_b = moves.add_rect_dbu(fl, li, (400, 200, 1000, 1000), "t/u")
+    ex = extract.extract(fl, T)
+    assert len(ex.nets) == 1
+    v = [x for x in rules.check(fl, ex) if x.rule == "min_space"]
+    assert v and {x.a for x in v} >= {arm_a, arm_b}, v
+    assert abs(v[0].value_um - 0.10) < 1e-9
+    # fill the notch: the same geometry is one convex polygon, no violation
+    moves.add_rect_dbu(fl, li, (300, 200, 400, 1000), "t/u")
+    ex = extract.extract(fl, T)
+    assert not [x for x in rules.check(fl, ex) if x.rule == "min_space"]
+    # a slab decomposition (three stacked rects, none touching the far one) is fine too
+    fl2 = g.FlatLayout(dbu_um=0.001, top="t", rects=[])
+    for y in (0, 100, 200):
+        moves.add_rect_dbu(fl2, li, (0, y, 1000, y + 100), "t/u")
+    ex2 = extract.extract(fl2, T)
+    assert not [x for x in rules.check(fl2, ex2) if x.rule == "min_space"]
+    # a separate same-net island 0.05 um from the U (joined elsewhere by met1 is not
+    # modelled here, so it is its own net -- different-net spacing still flags it)
+    moves.add_rect_dbu(fl, li, (1050, 0, 1400, 1000), "t/u")
+    ex = extract.extract(fl, T)
+    assert [x for x in rules.check(fl, ex) if x.rule == "min_space"]
+
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):

@@ -394,6 +394,40 @@ foreign met1 wire laid straight through its gap (`test_route_around_met1`).
 The router runs once per connection (≈ 0.1–3 s, 100–500k cells); the tally
 on refusal now includes its statistics.
 
+**Same-net notches in the delta-DRC, and filling them (2026-09-08).** The
+spacing rule had skipped same-net pairs entirely ("they merge"). They do
+when they touch; two parts of one net that do *not* touch and lie closer
+than spacing are a notch, and sky130's spacing rules apply to them like any
+other pair. The rule now is: same layer, same net, neither overlapping nor
+sharing an edge, gap below spacing, and the gap rectangle between them
+(facing span, or the corner square when diagonal) not covered by other
+same-layer geometry — a slab decomposition of one polygon, or a wire landing
+on a pad beside its route, is covered and passes. Turning it on flagged the
+finger moves themselves: every mirrored gate finger had ended 0.07 µm from
+its own net's pin tab, a violation KLayout's *extraction* (which is what the
+evidence checked) does not see. So a move now ends with `fill_notches`: new
+rectangles are labelled with a net by same-layer contact with extracted
+geometry (propagated through touching new rectangles; the unlabelled are
+left to the DRC), and each same-net notch a new rectangle makes is filled
+when the fill keeps spacing from other nets and, on poly, crosses no
+diffusion. A fill is at least min width both ways (a sliver is a width
+violation, and a corner square touches its two shapes only at corners —
+which the extractor rightly does not call a connection), and its edges are
+aligned to nearby edges of the two shapes it joins, because a fill edge a few
+nanometres off a neighbour's edge is the next slit; the pass iterates until
+nothing is left. On the bare nand2 row the PMOS finger, the NMOS B' finger
+and the B pin tab end up joined by one poly block in the field gap — the
+same net, so the topology guard is unmoved, and the poly bridge the planner
+built separately became redundant in that case. The fill pass also covers
+the router's own repairs from the other side: the *unrepaired* `_161_` path
+(`LAYOPT_ROUTE_NO_REPAIR=1`) now passes the guards because its met1 notches
+against the target net's route are filled, i.e. wire and route merge.
+Eleven tests (`test_same_net_notch`: a U of li flagged, filled U and slab
+stack not, a separate island still flagged as different-net spacing). On gcd
+the rule adds 77 flags to the baseline (935 → 1012: notches already in the
+stock cells and P&R wiring, which the delta ignores by construction) and all
+twelve fingers in the six candidate cells stay legal, the fills included.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -516,8 +550,10 @@ Planned:
   layout count. The rule table is deliberately minimal; signoff is KLayout.
   A move that shorts two nets is seen by the topology guard, not by the
   spacing check (after the move they are one net): the two guards are
-  complementary, neither is sufficient alone. Same-net spacing (notches) is
-  not checked here yet; the router checks its own results for it (§2).
+  complementary, neither is sufficient alone. Same-net spacing: two parts of
+  one net that do not touch, closer than spacing, with the gap between them
+  uncovered, are a notch (§2); moves fill the notches they make
+  (`moves.fill_notches`) before the check.
 - Bounds on every variable (min width from the tech table).
 
 ## 8. Interfaces to the federation
@@ -576,9 +612,10 @@ Planned:
   whole (nand NMOS, legal on a bare row, guard made stack-canonical) (§2).
   Connections route around P&R wiring on li/met1/met2 (`route.py`): all six
   gcd candidate cells now take fingers, twelve in total, KLayout-confirmed.
-  Remaining: same-net notch rule in the delta-DRC, moving a P&R wire when no
-  path exists, diffusion merge across abutting cells (needs compaction to
-  pay), contact growth, `remove_finger`.
+  Same-net notch rule in the delta-DRC with a notch-fill pass after each
+  move. Remaining: moving a P&R wire when no path exists, diffusion merge
+  across abutting cells (needs compaction to pay), contact growth,
+  `remove_finger`.
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
   T2 (layopt MC over a stated variation model) and T3 (stat-sim's
   `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1

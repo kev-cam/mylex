@@ -8,7 +8,7 @@ for the PNGs). Design record: `../../LAYOUT-OPT.md`.
 ## Commands
 
     cd /usr/local/src/mylex
-    python3 -m layopt.tests.test_layopt                       # 9 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack)
+    python3 -m layopt.tests.test_layopt                       # 11 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch)
     python3 -m layopt compare  $K/layout/kestrel_pll.gds $K/layout/kestrel_pll_flat_extracted.cir
     python3 -m layopt extract  $K/layout/kestrel_pll.gds -o evidence/kestrel_pll_layopt.cir
     python3 -m layopt rc       $K/layout/kestrel_pll.gds -o evidence/kestrel_pll.spef
@@ -198,7 +198,10 @@ of its shapes a landing; results checked for same-net notches and repaired).
 | `_110_` clkinv_1 P+N fingers | no met1 height for the jumper | jumper routed on li alone between the two straps | same (`evidence/gcd_110_routed_jumper*`); P 1.68 → 2.52 µm, N 0.42 → 0.84 µm |
 
 `LAYOPT_ROUTE_PROBE="met1:65550:57970,..."` (dbu) prints the raster state at
-those points and every repair attempt.
+those points and every repair attempt; `LAYOPT_ROUTE_NO_REPAIR=1` returns the
+unrepaired path (the delta-DRC's same-net notch rule and the move's
+notch-fill pass then deal with it -- `_161_` still passes that way).
+`LAYOPT_FILL_DEBUG=1` traces the notch fills.
 
 ## Findings about the kestrel layout (report upstream)
 

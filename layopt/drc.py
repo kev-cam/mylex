@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 # SPDX-FileCopyrightText: 2026 D. Kevin Cameron
 """Minimal rule check for moved geometry: minimum width, same-layer spacing
-between different nets, and cut enclosure.  Not a signoff DRC -- it is the
-guard that keeps the optimizer's moves legal."""
+between different nets, same-net notches, and cut enclosure.  Not a signoff
+DRC -- it is the guard that keeps the optimizer's moves legal."""
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Set, Tuple
 
@@ -32,6 +32,35 @@ def _gap(a: Rect, b: Rect) -> int:
     dx = max(a[0] - b[2], b[0] - a[2], 0)
     dy = max(a[1] - b[3], b[1] - a[3], 0)
     return max(dx, dy) if (dx == 0 or dy == 0) else int((dx * dx + dy * dy) ** 0.5)
+
+
+def _shares_edge(a: Rect, b: Rect) -> bool:
+    """Closed contact along an edge segment of positive length (not a corner)."""
+    x_over = min(a[2], b[2]) - max(a[0], b[0])
+    y_over = min(a[3], b[3]) - max(a[1], b[1])
+    if x_over > 0 and (a[3] == b[1] or b[3] == a[1]):
+        return True
+    if y_over > 0 and (a[2] == b[0] or b[2] == a[0]):
+        return True
+    return False
+
+
+def _gap_rect(a: Rect, b: Rect) -> Optional[Rect]:
+    """The rectangle between two disjoint rectangles: the span they face each
+    other across (facing edges), or the corner square when they are diagonal.
+    None when the region is degenerate (a point)."""
+    x_lo, x_hi = min(a[2], b[2]), max(a[0], b[0])       # x gap: from the left one's right edge to the right one's left edge
+    y_lo, y_hi = min(a[3], b[3]), max(a[1], b[1])
+    dx = x_hi - x_lo; dy = y_hi - y_lo
+    if dx > 0 and dy <= 0:                                # side by side, overlapping in y
+        y0, y1 = max(a[1], b[1]), min(a[3], b[3])
+        return (x_lo, y0, x_hi, y1) if y1 > y0 else None
+    if dy > 0 and dx <= 0:                                # one above the other, overlapping in x
+        x0, x1 = max(a[0], b[0]), min(a[2], b[2])
+        return (x0, y_lo, x1, y_hi) if x1 > x0 else None
+    if dx > 0 and dy > 0:                                 # diagonal: the corner square
+        return (x_lo, y_lo, x_hi, y_hi)
+    return None
 
 
 def key(v: "Violation") -> Tuple:
@@ -96,7 +125,26 @@ def check(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = Non
                 ni, nj = net_of_src.get(i, frozenset()), net_of_src.get(j, frozenset())
                 is_cut = ln in cut_layers
                 if ni == nj and not is_cut:
-                    continue                       # same conductor (or no nets, e.g. wells): merge/notch, allowed
+                    if not ni:
+                        continue                   # no nets (wells, implants): merging is allowed
+                    # Same net.  Overlapping or edge-sharing rectangles merge into
+                    # one polygon and cannot violate spacing between themselves.
+                    # Two parts of the same net that do not touch and lie closer
+                    # than spacing form a notch -- unless the gap between them is
+                    # filled by other same-layer geometry (a slab decomposition of
+                    # one polygon, a wire landing on a pad beside its route).
+                    if geom.overlaps(r.rect, o.rect) or _shares_edge(r.rect, o.rect):
+                        continue
+                    gap = _gap(r.rect, o.rect)
+                    if gap >= s:
+                        continue
+                    hole = _gap_rect(r.rect, o.rect)
+                    if hole is None:
+                        continue                   # corner-to-corner touch: no facing edges
+                    cover = [fl.rects[k].rect for k in by_layer[ln].query_overlap(hole)]
+                    if geom.subtract(hole, cover):
+                        out.append(Violation("min_space", ln, i, j, gap * d, ms))
+                    continue
                 if is_cut and r.rect == o.rect:
                     continue                       # an identical duplicate cut is the same cut
                 if geom.touches(r.rect, o.rect):
