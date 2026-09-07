@@ -64,7 +64,11 @@ class Tech:
 SKY130 = Tech(
     name="sky130",
     # sky130_fd_sc_hd tt 25C 1.8V, slope of delay vs load at 50 ps input slew (evidence/drive_fit.log)
-    drive=DriveModel(k_p=8733.0, k_n=3209.0, beta_p=0.839, beta_n=0.933, stack_p=2.28, stack_n=1.64, t0_rise_ps=36.0, t0_fall_ps=27.8),
+    drive=DriveModel(k_p=8733.0, k_n=3209.0, beta_p=0.839, beta_n=0.933, stack_p=2.28, stack_n=1.64,
+                     # inv_1 intercepts at zero input slew, and the slew terms pooled over the single-stage cells
+                     t0_rise_ps=15.3, t0_fall_ps=11.2,
+                     kappa_rise=0.411, kappa_fall=0.380, mu_rise=0.014, mu_fall=0.064,
+                     lam_rise=0.99, lam_fall=0.93, tau0_rise_ps=15.8, tau0_fall_ps=7.5, nu_rise=0.215, nu_fall=0.224),
     layers={"diff": (65, 20), "tap": (65, 44), "nwell": (64, 20), "poly": (66, 20),
             "nsdm": (93, 44), "psdm": (94, 20), "licon": (66, 44), "li": (67, 20),
             "mcon": (67, 44), "met1": (68, 20), "via1": (68, 44), "met2": (69, 20),

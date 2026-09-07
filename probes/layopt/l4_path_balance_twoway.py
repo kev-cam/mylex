@@ -40,7 +40,8 @@ def main():
     f0 = {(inst, kind): max(d.fingers for d in ex.devices if d.prov.split("/")[1] == inst and d.kind == kind)
           for inst in ("u1", "u6") for kind in ("p", "n")}
     print("== 1. A = u1(inv_4: P %d / N %d fingers) -> u4 short; B = u6(inv_1) -> u9 over %.0f um of met2" % (f0[("u1", "p")], f0[("u1", "n")], 2 * pb.DETOUR_B))
-    print("   baseline: A rise/fall %.1f/%.1f ps, B %.1f/%.1f ps; imbalance rise+fall %.1f ps" % (d0["a"][4], d0["a"][5], d0["b"][4], d0["b"][5], abs(d0["a"][4] - d0["b"][4]) + abs(d0["a"][5] - d0["b"][5])))
+    print("   baseline 50%% delays driver+receiver: A rise/fall %.1f/%.1f ps (transitions %.0f/%.0f), B %.1f/%.1f ps (transitions %.0f/%.0f); imbalance rise+fall %.1f ps" % (
+        d0["a"][4], d0["a"][5], d0["a"][8], d0["a"][9], d0["b"][4], d0["b"][5], d0["b"][8], d0["b"][9], abs(d0["a"][4] - d0["b"][4]) + abs(d0["a"][5] - d0["b"][5])))
 
     def fingers(inst, kind):
         base_f = f0[(inst, kind)]

@@ -215,13 +215,14 @@ the bare nand2 row returns the original rectangle count (`test_remove_finger_rou
 ## Two-way path balance (`l4_path_balance_twoway.py`, `evidence/l4_path_balance_twoway.log`)
 
 inv_4 over a short wire (A) against inv_1 over 120 µm of met2 (B), both
-edges costed with the Liberty-fitted driver model: baseline A 13.6/6.6 ps
-rise/fall, B 113.8/62.9. The greedy search may add fingers to either driver
+edges costed through driver and receiver with the Liberty-fitted driver and
+slew model: baseline A 73.6/66.9 ps rise/fall (driver transitions 29/17 ps),
+B 163.2/130.2 (123/64 ps). The greedy search may add fingers to either driver
 or remove them: u1 PMOS 4 → 1 and NMOS 4 → 3 (the fourth NMOS finger stays
 because removing it opens the falling edge), u6 PMOS 1 → 2 and NMOS 1 → 4;
-A 43.2/8.6, B 65.8/18.3 ps, combined imbalance 156.5 → 32.4 ps, 10 → 10
+A 101.2/69.9, B 122.3/82.4 ps, combined imbalance 152.9 → 33.6 ps, 10 → 10
 fingers, 53 states, all guards passed (`evidence/l4_path_balanced_twoway.gds`).
-The one-way probe (`l4_path_balance.py`) with the same model: 115 → 28 ps.
+The one-way probe (`l4_path_balance.py`) with the same model: 110 → 27 ps.
 
 ## Two-edge driver model from the Liberty (`drive_fit.py`, `evidence/drive_fit.log`)
 
@@ -230,8 +231,12 @@ layopt's extraction of the cell GDS, and the Liberty's slope of delay vs load
 (÷ ln 2) on each edge. Fit over 24 cells: R_rise = 8733 · Wp^−0.839 Ω,
 R_fall = 3209 · Wn^−0.933 Ω; a series stack of two costs 2.28× (PMOS, nor2)
 and 1.64× (NMOS, nand2) a same-size inverter, not 2×; residuals within ±9 %
-except buf_16. The constants are `tech.SKY130.drive`; the probe prints OK /
-UPDATE against them. The path-balance and gcd probes use both edges.
+except buf_16. Slew: delay = t₀ + ln2·RC + κ·RC·s/(RC + μ·s), transition =
+√((τ₀ + λ·RC)² + (ν·s)²), fitted per single-stage cell within 5–20 ps rms
+(κ 0.41/0.38, μ 0.011/0.071, λ 0.99/0.93, τ₀ 15.5/7.2 ps, ν 0.22 rise/fall).
+The constants are `tech.SKY130.drive`; the probe prints OK / UPDATE against
+them. The path-balance probes judge driver + receiver on both edges with
+slew; the gcd probes report worst-edge Elmore moments.
 
 ## Findings about the kestrel layout (report upstream)
 

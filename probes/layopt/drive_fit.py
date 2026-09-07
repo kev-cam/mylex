@@ -97,6 +97,7 @@ def main():
     print("== %d cells from %s; slope taken at input slew %.0f ps" % (len(lib), os.path.basename(LIB), SLEW_PS))
     print("   %-10s %-4s %5s %5s %6s %7s %7s | %5s %5s %6s %7s %7s" % ("cell", "pin", "Wp", "stk", "Rrise", "kp", "t0r", "Wn", "stk", "Rfall", "kn", "t0f"))
     flat_p, flat_n, stacked = [], [], []
+    arcs_by_cell = {}
     for name in CELLS:
         c = lib.get(P + name)
         if c is None or c.output() is None:
@@ -129,6 +130,7 @@ def main():
             print("   %-10s %-4s %5.2f %5d %6.0f %7.0f %7.1f | %5.2f %5d %6.0f %7.0f %7.1f" % (name, arc.related_pin, wp, sp, fr.r_ohm, kp, fr.t0_ps, wn, sn, ff.r_ohm, kn, ff.t0_ps))
             (flat_p if sp == 1 else stacked).append((name, wp, sp, fr))
             (flat_n if sn == 1 else stacked).append((name, wn, sn, ff))
+            arcs_by_cell.setdefault(name, []).append((arc, fr, ff))
     # R = k * W^(alpha-1) in log space over the unstacked arcs (inverters and buffers;
     # the ideal 1/W would be alpha = 1)
     inv_p = {wp: fr.r_ohm for name, wp, _, fr in flat_p if name.startswith("inv_")}
@@ -145,6 +147,22 @@ def main():
     s_n = sum(f for _, f in facs_n) / len(facs_n) if facs_n else 2.0
     t0r = inv_p and sum(fr.t0_ps for name, _, _, fr in flat_p if name == "inv_1") or 0.0
     t0f = inv_n and sum(ff.t0_ps for name, _, _, ff in flat_n if name == "inv_1") or 0.0
+    # slew: per single-stage cell and edge, delay = t0 + ln2 RC + kappa RC s/(RC + mu s), trans = sqrt((tau0 + lam RC)^2 + (nu s)^2)
+    print("== slew fits (single-stage cells; rms over the 7x7 table with slews <= 700 ps):")
+    print("   %-10s %-4s %-4s %6s %6s %6s %5s %6s %6s %5s" % ("cell", "pin", "edge", "t0", "kappa", "mu", "lam", "tau0", "nu", "rms"))
+    sl = {"rise": [], "fall": []}
+    for name, arcs in arcs_by_cell.items():
+        if name.startswith(("buf", "clkbuf")):
+            continue
+        for arc, fr, ff in arcs:
+            for edge, f0 in (("rise", fr), ("fall", ff)):
+                sf = drive.slew_fit(arc, edge, f0.r_ohm)
+                sl[edge].append(sf)
+                print("   %-10s %-4s %-4s %6.1f %6.3f %6.3f %5.2f %6.1f %6.3f %5.1f" % (name, arc.related_pin, edge, sf.t0_ps, sf.kappa, sf.mu, sf.lam, sf.tau0_ps, sf.nu, sf.rms_ps))
+    mean = lambda fs, attr: sum(getattr(f, attr) for f in fs) / len(fs)
+    print("   pooled: rise kappa %.3f mu %.3f lam %.2f tau0 %.1f nu %.3f | fall kappa %.3f mu %.3f lam %.2f tau0 %.1f nu %.3f" % (
+        mean(sl["rise"], "kappa"), mean(sl["rise"], "mu"), mean(sl["rise"], "lam"), mean(sl["rise"], "tau0_ps"), mean(sl["rise"], "nu"),
+        mean(sl["fall"], "kappa"), mean(sl["fall"], "mu"), mean(sl["fall"], "lam"), mean(sl["fall"], "tau0_ps"), mean(sl["fall"], "nu")))
     print("== fit: R_rise = %.0f * Wp^-%.3f, R_fall = %.0f * Wn^-%.3f  [ohm, um]; at W=1: ratio %.2f" % (k_p, a_p, k_n, a_n, k_p / k_n))
     print("   residuals (per cell, fitted/measured R): p %s" % ", ".join("%s %.2f" % (n, k_p * wp ** (-a_p) / fr.r_ohm) for n, wp, _, fr in flat_p))
     print("                                          n %s" % ", ".join("%s %.2f" % (n, k_n * wn ** (-a_n) / ff.r_ohm) for n, wn, _, ff in flat_n))
@@ -154,7 +172,10 @@ def main():
     dm = getattr(T, "drive", None)
     if dm is not None:
         ok = all(abs(a - b) / b < 0.05 for a, b in ((dm.k_p, k_p), (dm.k_n, k_n), (dm.stack_p, s_p), (dm.stack_n, s_n))) and abs(dm.beta_p - a_p) < 0.02 and abs(dm.beta_n - a_n) < 0.02
-        print("   tech.SKY130.drive: k_p %.0f beta_p %.3f k_n %.0f beta_n %.3f stack_p %.2f stack_n %.2f -> %s" % (dm.k_p, dm.beta_p, dm.k_n, dm.beta_n, dm.stack_p, dm.stack_n, "OK" if ok else "UPDATE"))
+        ok = ok and abs(dm.kappa_rise - mean(sl["rise"], "kappa")) < 0.03 and abs(dm.kappa_fall - mean(sl["fall"], "kappa")) < 0.03 \
+            and abs(dm.nu_rise - mean(sl["rise"], "nu")) < 0.03 and abs(dm.nu_fall - mean(sl["fall"], "nu")) < 0.03
+        print("   tech.SKY130.drive: k_p %.0f beta_p %.3f k_n %.0f beta_n %.3f stack_p %.2f stack_n %.2f kappa %.3f/%.3f nu %.3f/%.3f -> %s" % (
+            dm.k_p, dm.beta_p, dm.k_n, dm.beta_n, dm.stack_p, dm.stack_n, dm.kappa_rise, dm.kappa_fall, dm.nu_rise, dm.nu_fall, "OK" if ok else "UPDATE"))
     print("RESULT k_p=%.0f beta_p=%.3f k_n=%.0f beta_n=%.3f stack_p=%.2f stack_n=%.2f t0_rise=%.1f t0_fall=%.1f" % (k_p, a_p, k_n, a_n, s_p, s_n, t0r, t0f))
 
 if __name__ == "__main__":

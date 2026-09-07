@@ -33,6 +33,8 @@ class Arc:
     loads: List[float]                          # fF
     rise: List[List[float]]                     # ps, [slew][load]
     fall: List[List[float]]
+    rise_tr: Optional[List[List[float]]] = None  # output transition tables, same axes
+    fall_tr: Optional[List[List[float]]] = None
 
 
 @dataclass
@@ -99,7 +101,7 @@ def read_liberty(path: str, cells: Optional[Sequence[str]] = None) -> Dict[str, 
                     elif line.startswith("timing_sense"):
                         arc["sense"] = line.split(":")[1].strip(" ;\"")
                     else:
-                        m = re.match(r'(cell_rise|cell_fall)\s*\(', line)
+                        m = re.match(r'(cell_rise|cell_fall|rise_transition|fall_transition)\s*\(', line)
                         if m:
                             arc["tables"][m.group(1)] = {}; table = (m.group(1), arc["tables"][m.group(1)]); table_depth = depth
                 elif table is not None and depth == table_depth + 1:
@@ -125,9 +127,11 @@ def read_liberty(path: str, cells: Optional[Sequence[str]] = None) -> Dict[str, 
                         r, f = t["cell_rise"], t["cell_fall"]
                         slews = [v * 1000.0 for v in r["index_1"]]; loads = [v * 1000.0 for v in r["index_2"]]
                         nl = len(loads)
-                        rise = [[v * 1000.0 for v in r["values"][i * nl:(i + 1) * nl]] for i in range(len(slews))]
-                        fall = [[v * 1000.0 for v in f["values"][i * nl:(i + 1) * nl]] for i in range(len(slews))]
-                        pin.arcs.append(Arc(arc["related_pin"], arc["sense"], slews, loads, rise, fall))
+                        grid = lambda tab: [[v * 1000.0 for v in tab["values"][i * nl:(i + 1) * nl]] for i in range(len(slews))]
+                        rise, fall = grid(r), grid(f)
+                        rtr = grid(t["rise_transition"]) if "rise_transition" in t and "values" in t["rise_transition"] else None
+                        ftr = grid(t["fall_transition"]) if "fall_transition" in t and "values" in t["fall_transition"] else None
+                        pin.arcs.append(Arc(arc["related_pin"], arc["sense"], slews, loads, rise, fall, rtr, ftr))
                     arc = None; arc_depth = -1
                 if pin is not None and depth <= pin_depth:
                     cell.pins[pin.name] = pin; pin = None; pin_depth = -1
@@ -162,6 +166,65 @@ def edge_fit(arc: Arc, edge: str, slew_ps: Optional[float] = None, min_load_fF: 
 
 
 @dataclass
+class SlewFit:
+    """Slew behaviour of one edge of one arc, R fixed from the load slope
+    (delays are 50 % delays; R*C is the Elmore moment, ln2*R*C its 50 % point):
+
+        delay(s, C)  = t0 + ln2*R*C + kappa * (R*C) * s / (R*C + mu * s)
+        trans(s, C)  = sqrt((tau0 + lam*R*C)^2 + (nu * s)^2)
+
+    kappa is the slew sensitivity when the stage is slower than its input
+    (R*C >> s), mu sets how it fades when the stage is faster; nu is the
+    slew-limited part of the output transition, lam ~ 1 its RC part."""
+    t0_ps: float
+    kappa: float
+    mu: float
+    lam: float
+    tau0_ps: float
+    nu: float
+    rms_ps: float           # delay fit residual over the fitted region
+
+
+def slew_fit(arc: Arc, edge: str, r_ohm: float, slew_max_ps: float = 700.0) -> SlewFit:
+    ys = arc.rise if edge == "rise" else arc.fall
+    tr = arc.rise_tr if edge == "rise" else arc.fall_tr
+    si = [i for i, sw in enumerate(arc.slews) if sw <= slew_max_ps] or [0]
+    pts = [(arc.slews[i], arc.loads[j] * r_ohm / 1000.0, ys[i][j]) for i in si for j in range(len(arc.loads))]   # (s, RC, delay)
+    best = None
+    for k in range(60):                                  # mu on a log grid 0.003 .. 3
+        mu = 0.003 * (1000.0 ** (k / 59.0))
+        # linear LS for t0, kappa: delay - RC = t0 + kappa * g,  g = RC*s/(RC + mu*s)
+        gs = [(rc * s_) / (rc + mu * s_) for s_, rc, _ in pts]
+        zs = [d - LN2 * rc for s_, rc, d in pts]
+        n = len(pts); mg = sum(gs) / n; mz = sum(zs) / n
+        sgg = sum((g - mg) ** 2 for g in gs)
+        kappa = sum((g - mg) * (z - mz) for g, z in zip(gs, zs)) / sgg if sgg else 0.0
+        t0 = mz - kappa * mg
+        rms = (sum((z - t0 - kappa * g) ** 2 for g, z in zip(gs, zs)) / n) ** 0.5
+        if best is None or rms < best[0]:
+            best = (rms, mu, kappa, t0)
+    rms, mu, kappa, t0 = best
+    lam = tau0 = nu = 0.0
+    if tr is not None:
+        row = tr[0]
+        n = len(row); mx = sum(arc.loads) / n; my = sum(row) / n
+        sxx = sum((x - mx) ** 2 for x in arc.loads)
+        sl = sum((x - mx) * (y - my) for x, y in zip(arc.loads, row)) / sxx
+        lam = sl * 1000.0 / r_ohm if r_ohm else 0.0
+        tau0 = my - sl * mx
+        # nu: trans^2 = base^2 + (nu s)^2 over slews <= 300 ps (the regime a sized path sees)
+        num = den = 0.0
+        for i, s_ in enumerate(arc.slews):
+            if s_ > 300.0:
+                continue
+            for j in range(len(arc.loads)):
+                base = tau0 + lam * r_ohm * arc.loads[j] / 1000.0
+                num += max(tr[i][j] ** 2 - base ** 2, 0.0) * s_ ** 2; den += s_ ** 4
+        nu = (num / den) ** 0.5 if den else 0.0
+    return SlewFit(t0, kappa, mu, lam, tau0, nu, rms)
+
+
+@dataclass
 class DriveModel:
     """Elmore-equivalent driver resistance per edge from the device widths:
 
@@ -183,6 +246,33 @@ class DriveModel:
     stack_n: float = 2.0
     t0_rise_ps: float = 0.0
     t0_fall_ps: float = 0.0
+    # slew (see SlewFit): delay adds kappa*RC*s/(RC + mu*s); output transition is
+    # sqrt((tau0 + lam*RC)^2 + (nu*s)^2)
+    kappa_rise: float = 0.0
+    kappa_fall: float = 0.0
+    mu_rise: float = 1.0
+    mu_fall: float = 1.0
+    lam_rise: float = 1.0
+    lam_fall: float = 1.0
+    tau0_rise_ps: float = 0.0
+    tau0_fall_ps: float = 0.0
+    nu_rise: float = 0.0
+    nu_fall: float = 0.0
+
+    def stage(self, edge: str, w_um: float, c_total_fF: float, elmore_ps: float, slew_in_ps: float,
+              stack: int = 1) -> Tuple[float, float]:
+        """(50 % delay, output transition) in ps for one edge of a stage: R from
+        the width, the Elmore moment to the receiver as given (its 50 % point is
+        ln2 times it), the stage's own time constant R*C_total for the slew terms."""
+        r = self.r_rise(w_um, stack) if edge == "rise" else self.r_fall(w_um, stack)
+        rc = r * c_total_fF / 1000.0
+        if edge == "rise":
+            t0, kappa, mu, lam, tau0, nu = self.t0_rise_ps, self.kappa_rise, self.mu_rise, self.lam_rise, self.tau0_rise_ps, self.nu_rise
+        else:
+            t0, kappa, mu, lam, tau0, nu = self.t0_fall_ps, self.kappa_fall, self.mu_fall, self.lam_fall, self.tau0_fall_ps, self.nu_fall
+        delay = t0 + LN2 * elmore_ps + (kappa * rc * slew_in_ps / (rc + mu * slew_in_ps) if rc + mu * slew_in_ps > 0 else 0.0)
+        trans = ((tau0 + lam * rc) ** 2 + (nu * slew_in_ps) ** 2) ** 0.5
+        return delay, trans
 
     def r_rise(self, w_p_um: float, stack: int = 1) -> float:
         return self.k_p * max(w_p_um, 1e-9) ** (-self.beta_p) * (1.0 + (stack - 1) * (self.stack_p - 1.0))

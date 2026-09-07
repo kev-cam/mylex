@@ -482,6 +482,16 @@ def test_drive_model_liberty():
     ff = drive.edge_fit(arc, "fall", 50.0)
     assert abs(ff.r_ohm / dm.r_fall(0.65, stack=2) - 1) < 0.12, (ff.r_ohm, dm.r_fall(0.65, stack=2))
     assert ff.r_ohm / dm.r_fall(0.65) < 1.8                      # a stack of two is not twice
+    # the slew model reproduces inv_1's table: 50% delay at (slew, load) points within 10%,
+    # output transition within 15%
+    a1 = lib[P + "inv_1"].output().arcs[0]
+    for si, li in ((1, 3), (3, 3), (3, 5), (4, 2)):
+        s_in, c = a1.slews[si], a1.loads[li]
+        for edge, w, tab, trt in (("rise", 1.0, a1.rise, a1.rise_tr), ("fall", 0.65, a1.fall, a1.fall_tr)):
+            r = dm.r_rise(w) if edge == "rise" else dm.r_fall(w)
+            d, tr = dm.stage(edge, w, c, r * c / 1000.0, s_in)
+            assert abs(d / tab[si][li] - 1) < 0.10, (edge, s_in, c, d, tab[si][li])
+            assert abs(tr / trt[si][li] - 1) < 0.15, (edge, s_in, c, tr, trt[si][li])
     print("  inv_1 R_rise %.0f / R_fall %.0f ohm; nand2 A fall %.0f (stack %.2f)" % (
         drive.edge_fit(lib[P + "inv_1"].output().arcs[0], "rise", 50.0).r_ohm,
         drive.edge_fit(lib[P + "inv_1"].output().arcs[0], "fall", 50.0).r_ohm, ff.r_ohm, ff.r_ohm / dm.r_fall(0.65)))

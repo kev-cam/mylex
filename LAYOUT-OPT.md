@@ -539,6 +539,45 @@ buf_4 rebuffers 21.2 → 19.4, 47.6 → 41.6 and 64.7 → 55.9 ps — the earlie
 single-edge numbers in this section were computed with the 3 kΩ assumption and
 stand as history.
 
+**Input slew (2026-09-08).** A load-slope model prices a long wire only by
+its Elmore moment; the wire also hands the receiver a slow edge, and the
+receiver's own delay grows with it. The Liberty tables are two-dimensional,
+so both effects are in the data. Per cell and edge, with R fixed from the
+load slope, the 7 × 7 table (slews to 700 ps) fits
+
+  delay(s, C) = t₀ + ln 2 · RC + κ · RC · s / (RC + μ · s),
+  transition(s, C) = √((τ₀ + λ · RC)² + (ν · s)²)
+
+within 5–20 ps rms for every single-stage cell. The delay's slew
+sensitivity is not a constant: it saturates at κ ≈ 0.41 (rise) / 0.38
+(fall) when the stage is slower than its input (RC ≫ s) and fades when the
+stage is faster (RC ≪ s), which the rational form captures with a small μ
+(0.011 / 0.071). The output transition is 0.99 · RC + 15.5 ps rising and
+0.93 · RC + 7.2 ps falling, plus a slew-limited part ν · s with ν ≈ 0.22 when
+the input is slower than the stage. The constants join `tech.SKY130.drive`;
+`DriveModel.stage(edge, W, C_total, Elmore, slew_in)` returns the 50 % delay
+and the output transition (the Elmore moment from `rc` enters as ln 2 · RC).
+A unit test reproduces inv_1's table points within 10 % on delay and 15 % on
+transition. The first attempt subtracted the Elmore moment itself from the
+50 % delays and fitted nothing — the ln 2 between the first moment and the
+50 % point is a convention the tool now states in one place.
+
+The path probes now judge a path as two stages: the driver (input transition
+50 ps, its Elmore to the receiver, its own RC for the slew terms) and the
+receiver's delay on the opposite edge, driven by the transition the driver
+hands it and loaded by a nominal 5 fF. That is where a long wire costs what
+it really costs: not only R · C to the receiver but a slow edge into it. On
+the one-way probe B's driver hands its receiver a 123 ps rising transition
+against A's 50 ps; baseline A 97.9/85.6, B 163.2/130.2 ps rise/fall through
+both stages, combined imbalance 110 → 27 ps after one PMOS and two NMOS
+fingers on B's driver. The two-way probe: baseline A 73.6/66.9 (transitions
+29/17 ps), B 163.2/130.2 (123/64 ps), combined 152.9 → 33.6 ps with the same
+finger choices as before (A's PMOS 4 → 1, NMOS 4 → 3; B's PMOS 1 → 2, NMOS
+1 → 4), transistor count unchanged. The remaining imbalance is B's rising
+edge, 122 against 101 ps: B's driver wants a third PMOS finger and the guards
+refuse it beside four NMOS fingers in that gap — the layout, not the model,
+is now the limit, which is the right place for the limit to be.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -578,7 +617,8 @@ extractor, worth fixing upstream in `layout/gds_gen.py`):
 
 T0's driver is the two-edge Liberty-fitted model of §2 (`tech.SKY130.drive`):
 R_rise from the stage's PMOS width, R_fall from its NMOS width, series stacks
-by their fitted factor; a path is judged on both edges.
+by their fitted factor, input slew through κ and the output transition through
+λ, ν; a path is judged on both edges, driver plus receiver.
 
 | Tier | Evaluator | Use |
 |---|---|---|
@@ -738,7 +778,7 @@ Planned:
   KLayout-confirmed on gcd). Two-edge driver model fitted from the Liberty
   (§2, §4); the balance probes cost both edges. Remaining: moving a P&R wire
   when no path exists, diffusion merge across abutting cells (needs
-  compaction to pay), contact growth, slew (the model is load-slope only).
+  compaction to pay), contact growth. Slew is in the model (§2).
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
   T2 (layopt MC over a stated variation model) and T3 (stat-sim's
   `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1

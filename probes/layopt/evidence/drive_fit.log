@@ -30,10 +30,45 @@
    nor2_2     B     2.00     2  10692   10692    52.1 |  1.30     1   2402    3122    27.0
    nor2_4     A    no output-stage devices found
    nor2_4     B     4.00     2   6014   12028    56.2 |  2.60     1   1256    3265    26.6
+== slew fits (single-stage cells; rms over the 7x7 table with slews <= 700 ps):
+   cell       pin  edge     t0  kappa     mu   lam   tau0     nu   rms
+   inv_1      A    rise   15.3  0.425  0.022  0.99   11.3  0.298   9.4
+   inv_1      A    fall   11.2  0.402  0.056  0.91    6.2  0.222   6.0
+   inv_2      A    rise   16.6  0.430  0.017  1.00    8.2  0.197  12.0
+   inv_2      A    fall    9.1  0.402  0.071  0.91    3.9  0.220   4.5
+   inv_4      A    rise   19.7  0.417  0.010  1.00    9.7  0.198  15.4
+   inv_4      A    fall    9.3  0.391  0.080  0.93    4.7  0.206   5.5
+   inv_6      A    rise   20.7  0.414  0.006  1.00   10.8  0.190  17.4
+   inv_6      A    fall    9.6  0.394  0.089  0.94    4.6  0.210   5.8
+   inv_8      A    rise   21.9  0.405  0.005  0.99   11.6  0.199  18.5
+   inv_8      A    fall   10.0  0.391  0.089  0.93    4.4  0.198   6.2
+   inv_12     A    rise   24.4  0.399  0.003  0.99   12.5  0.188  20.0
+   inv_12     A    fall   11.0  0.386  0.089  0.94    5.4  0.201   6.8
+   inv_16     A    rise   27.6  0.392  0.003  1.03   13.4  0.191  20.9
+   inv_16     A    fall   13.3  0.384  0.101  1.02    6.1  0.202   6.9
+   clkinv_1   A    rise   14.2  0.439  0.028  1.00    7.8  0.213   9.2
+   clkinv_1   A    fall   19.3  0.387  0.035  0.92    9.5  0.257   8.0
+   clkinv_2   A    rise   16.5  0.431  0.020  1.00    8.6  0.257  11.9
+   clkinv_2   A    fall   18.7  0.384  0.044  0.93    8.4  0.222   7.8
+   clkinv_4   A    rise   18.9  0.427  0.012  1.00    8.9  0.251  15.8
+   clkinv_4   A    fall   19.0  0.375  0.050  0.93    8.3  0.383   7.7
+   nand2_1    A    rise   17.0  0.423  0.014  0.98   13.3  0.210  10.4
+   nand2_1    A    fall   16.3  0.356  0.056  0.92   10.7  0.218   5.8
+   nand2_2    A    rise   20.9  0.429  0.010  0.99   13.9  0.240  12.8
+   nand2_2    A    fall   17.9  0.359  0.071  0.94   11.7  0.292   5.5
+   nand2_4    A    rise   23.3  0.418  0.005  0.98   15.1  0.253  15.7
+   nand2_4    A    fall   19.2  0.357  0.080  0.95   12.0  0.211   6.0
+   nor2_1     B    rise   32.5  0.387  0.015  0.96   30.5  0.220   6.8
+   nor2_1     B    fall   12.5  0.395  0.063  0.90    7.0  0.235   5.9
+   nor2_2     B    rise   33.5  0.383  0.009  0.95   34.0  0.208   8.7
+   nor2_2     B    fall   12.1  0.399  0.080  0.90    6.2  0.228   5.6
+   nor2_4     B    rise   38.2  0.382  0.005  0.94   37.7  0.273  10.6
+   nor2_4     B    fall   12.9  0.399  0.089  0.92    6.4  0.225   5.8
+   pooled: rise kappa 0.413 mu 0.011 lam 0.99 tau0 15.5 nu 0.224 | fall kappa 0.385 mu 0.071 lam 0.93 tau0 7.2 nu 0.233
 == fit: R_rise = 8733 * Wp^-0.839, R_fall = 3209 * Wn^-0.933  [ohm, um]; at W=1: ratio 2.72
    residuals (per cell, fitted/measured R): p inv_1 1.07, inv_2 1.09, inv_4 1.04, inv_6 1.02, inv_8 1.06, inv_12 1.04, inv_16 1.00, buf_1 0.93, buf_2 1.02, buf_4 1.01, buf_8 0.99, buf_12 1.00, buf_16 0.88, clkinv_1 1.03, clkinv_2 1.02, clkinv_4 1.04, clkbuf_1 0.93, clkbuf_4 0.94, nand2_1 0.97, nand2_2 0.98, nand2_4 0.97
                                           n inv_1 0.99, inv_2 1.08, inv_4 1.06, inv_6 1.07, inv_8 1.08, inv_12 1.04, inv_16 0.95, buf_1 0.97, buf_2 1.05, buf_4 1.04, buf_8 1.03, buf_12 1.01, buf_16 0.78, clkinv_1 0.87, clkinv_2 0.95, clkinv_4 1.00, clkbuf_1 0.97, clkbuf_4 0.99, nor2_1 1.02, nor2_2 1.05, nor2_4 1.05
    series stacks of 2 vs the same-size inverter: PMOS (nor2) nor2_1 2.15, nor2_2 2.39, nor2_4 2.29 -> 2.28; NMOS (nand2) nand2_1 1.52, nand2_2 1.71, nand2_4 1.70 -> 1.64
    intrinsic t0 (inv_1, zero load): rise 36.0 ps, fall 27.8 ps
-   tech.SKY130.drive: k_p 8733 beta_p 0.839 k_n 3209 beta_n 0.933 stack_p 2.28 stack_n 1.64 -> OK
+   tech.SKY130.drive: k_p 8733 beta_p 0.839 k_n 3209 beta_n 0.933 stack_p 2.28 stack_n 1.64 kappa 0.411/0.380 nu 0.215/0.224 -> OK
 RESULT k_p=8733 beta_p=0.839 k_n=3209 beta_n=0.933 stack_p=2.28 stack_n=1.64 t0_rise=36.0 t0_fall=27.8

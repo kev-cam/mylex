@@ -1,11 +1,11 @@
 == 1. two paths: A = u1(inv_1) -> u4 over 2 fF; B = u6(inv_1) -> u9 over a 120 um met2 detour, 10.2 fF
-   baseline delays (worst edge): A 39.7 ps (rise 39.7 / fall 21.8), B 113.8 ps (rise 113.8 / fall 62.9); driver R_rise 8733 / R_fall 4796 ohm; imbalance 74.2 ps
+   baseline 50% delays driver+receiver (worst edge): A 97.9 ps (rise 97.9 / fall 85.6, transitions 50/27 ps), B 163.2 ps (rise 163.2 / fall 130.2, transitions 123/64 ps); imbalance rise+fall 110.0 ps
 == 2. greedy search over finger counts (u6 P/N, u1 P/N in 1..4), each state rebuilt from the base layout
   start  cost 1.05  {'u6_p': 1, 'u6_n': 1, 'u1_p': 1, 'u1_n': 1}
-  round 1  cost 0.62076  {'u6_p': 2, 'u6_n': 1, 'u1_p': 1, 'u1_n': 1}  {'A_rise': 39.654, 'A_fall': 21.834, 'B_rise': 63.959, 'B_fall': 62.851, 'spread_ps': 65.322}
-  round 2  cost 0.38393  {'u6_p': 2, 'u6_n': 2, 'u1_p': 1, 'u1_n': 1}  {'A_rise': 39.654, 'A_fall': 21.834, 'B_rise': 63.959, 'B_fall': 33.263, 'spread_ps': 35.734}
-  round 3  cost 0.33775  {'u6_p': 2, 'u6_n': 3, 'u1_p': 1, 'u1_n': 1}  {'A_rise': 39.654, 'A_fall': 21.834, 'B_rise': 65.846, 'B_fall': 23.68, 'spread_ps': 28.038}
-== 3. result: {'u6_p': 2, 'u6_n': 3, 'u1_p': 1, 'u1_n': 1} -> A rise/fall 39.7/21.8 ps, B 65.8/23.7 ps, imbalance rise+fall 28.0 ps (was 115.2); legal=True topology_ok=True violations=0; 18 states evaluated
+  round 1  cost 0.67691  {'u6_p': 2, 'u6_n': 1, 'u1_p': 1, 'u1_n': 1}  {'A_rise': 97.879, 'A_fall': 85.56, 'B_rise': 120.704, 'B_fall': 130.192, 'spread_ps': 67.458}
+  round 2  cost 0.41137  {'u6_p': 2, 'u6_n': 2, 'u1_p': 1, 'u1_n': 1}  {'A_rise': 97.879, 'A_fall': 85.56, 'B_rise': 120.704, 'B_fall': 98.982, 'spread_ps': 36.247}
+  round 3  cost 0.35062  {'u6_p': 2, 'u6_n': 3, 'u1_p': 1, 'u1_n': 1}  {'A_rise': 97.879, 'A_fall': 85.56, 'B_rise': 122.298, 'B_fall': 88.473, 'spread_ps': 27.332}
+== 3. result: {'u6_p': 2, 'u6_n': 3, 'u1_p': 1, 'u1_n': 1} -> A rise/fall 97.9/85.6 ps, B 122.3/88.5 ps, imbalance rise+fall 27.3 ps (was 110.0); legal=True topology_ok=True violations=0; 18 states evaluated
    u1 devices: ['p W=1.00 fingers=1', 'n W=0.65 fingers=1']
    u6 devices: ['p W=2.00 fingers=2', 'n W=1.95 fingers=3']
    wrote evidence/l4_path_balanced.gds

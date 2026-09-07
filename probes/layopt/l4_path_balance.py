@@ -80,11 +80,20 @@ def shape_at(ex, layer, x_um, y_um):
     raise KeyError((layer, x_um, y_um))
 
 
+S_IN = 50.0               # ps: the input transition arriving at each path's driver
+C_RCV = 5.0               # fF: what each receiver drives in turn (sets its own RC for the slew terms)
+
+
 def path_delays(ex, lef, comps):
-    """Elmore delay of path A and B (ps) on both edges: the driver's PMOS width
-    sets R_rise, its NMOS width R_fall (tech.SKY130.drive, fitted from the
-    Liberty).  Returns per path (worst edge, W_p, R_rise, C_fF, rise, fall,
-    W_n, R_fall)."""
+    """50 % delay of path A and B (ps) on both edges through TWO stages: the
+    driver (R_rise from its PMOS width, R_fall from its NMOS; the Elmore
+    moment to the receiver from the extracted RC; input transition S_IN) and
+    the receiver's own delay on the opposite edge, driven by the transition
+    the driver hands it and loaded by C_RCV.  Slew is what makes a long wire
+    cost more than its Elmore: the receiver sees a slow edge and adds
+    kappa * slew to its own delay.  Returns per path
+    (worst edge, W_p, R_rise, C_fF, rise, fall, W_n, R_fall, slew_rise, slew_fall)
+    where 'rise'/'fall' name the driver's output edge."""
     by = {c.inst: c for c in comps}
     dm = T.drive
     out = {}
@@ -92,12 +101,20 @@ def path_delays(ex, lef, comps):
         net = [n for n in ex.nets.values() if n.name == name][0]
         wp = sum(d.w for d in ex.devices if d.prov.split("/")[1] == drv_inst and d.kind == "p")
         wn = sum(d.w for d in ex.devices if d.prov.split("/")[1] == drv_inst and d.kind == "n")
-        r_rise, r_fall = dm.r_rise(wp), dm.r_fall(wn)
+        rp = sum(d.w for d in ex.devices if d.prov.split("/")[1] == rcv_inst and d.kind == "p")
+        rn = sum(d.w for d in ex.devices if d.prov.split("/")[1] == rcv_inst and d.kind == "n")
         xd, yd, _ = pin_center(lef, by[drv_inst], "Y"); xr, yr, _ = pin_center(lef, by[rcv_inst], "A")
         dd = shape_at(ex, "li", xd, yd); rr = shape_at(ex, "li", xr, yr)
-        rise = rc.elmore_delays(ex, net.id, dd, [rr], r_rise, {rr: C_IN})[rr]
-        fall = rc.elmore_delays(ex, net.id, dd, [rr], r_fall, {rr: C_IN})[rr]
-        out[name] = (max(rise, fall), wp, r_rise, rc.net_rc(ex, net.id).c_fF, rise, fall, wn, r_fall)
+        c_net = rc.net_rc(ex, net.id).c_fF + C_IN
+        res = {}
+        for edge, w, w_rcv, other in (("rise", wp, rn, "fall"), ("fall", wn, rp, "rise")):
+            r = dm.r_rise(w) if edge == "rise" else dm.r_fall(w)
+            elm = rc.elmore_delays(ex, net.id, dd, [rr], r, {rr: C_IN})[rr]
+            d_drv, tr = dm.stage(edge, w, c_net, elm, S_IN)
+            r2 = dm.r_rise(w_rcv) if other == "rise" else dm.r_fall(w_rcv)
+            d_rcv, _ = dm.stage(other, w_rcv, C_RCV, r2 * C_RCV / 1000.0, tr)
+            res[edge] = (d_drv + d_rcv, tr)
+        out[name] = (max(res["rise"][0], res["fall"][0]), wp, dm.r_rise(wp), c_net - C_IN, res["rise"][0], res["fall"][0], wn, dm.r_fall(wn), res["rise"][1], res["fall"][1])
     return out
 
 
@@ -113,8 +130,8 @@ def main():
     ex = extract.extract(fl, T)
     d0 = path_delays(ex, lef, comps)
     print("== 1. two paths: A = u1(inv_1) -> u4 over %.0f fF; B = u6(inv_1) -> u9 over a %.0f um met2 detour, %.1f fF" % (d0["a"][3], 2 * DETOUR_B, d0["b"][3]))
-    print("   baseline delays (worst edge): A %.1f ps (rise %.1f / fall %.1f), B %.1f ps (rise %.1f / fall %.1f); driver R_rise %.0f / R_fall %.0f ohm; imbalance %.1f ps" % (
-        d0["a"][0], d0["a"][4], d0["a"][5], d0["b"][0], d0["b"][4], d0["b"][5], d0["a"][2], d0["a"][7], abs(d0["a"][0] - d0["b"][0])))
+    print("   baseline 50%% delays driver+receiver (worst edge): A %.1f ps (rise %.1f / fall %.1f, transitions %.0f/%.0f ps), B %.1f ps (rise %.1f / fall %.1f, transitions %.0f/%.0f ps); imbalance rise+fall %.1f ps" % (
+        d0["a"][0], d0["a"][4], d0["a"][5], d0["a"][8], d0["a"][9], d0["b"][0], d0["b"][4], d0["b"][5], d0["b"][8], d0["b"][9], abs(d0["a"][4] - d0["b"][4]) + abs(d0["a"][5] - d0["b"][5])))
 
     def fingers(inst, kind):
         def apply(f_, e_, n):
