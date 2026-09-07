@@ -1,7 +1,3 @@
-gcd_149_fingered.gds: layopt 2472 devices
-  ref_devices        2472
-  our_devices        2472
-  wl_match           True
-  degree_hist_match  True
-  isomorphic         True
-RESULT MATCH
+gcd_149_fingered.gds             layopt 2472 / KLayout 2472 devices, W/L True, isomorphic True -> MATCH
+gcd_rebuffer12_fingered.gds      layopt 2472 / KLayout 2472 devices, W/L True, isomorphic True -> MATCH
+gcd_rebuffer3_fingered.gds       layopt 2472 / KLayout 2472 devices, W/L True, isomorphic True -> MATCH

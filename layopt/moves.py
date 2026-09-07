@@ -327,33 +327,17 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", 
         wide = max(old_union, key=lambda rr: rr[2] - rr[0])
         if wide[2] - wide[0] < cs:
             raise MoveError("add_finger: inner strap too narrow for a contact")
-        y0 = max(wide[1], g[1]); y1 = min(wide[3], g[3])
+        # the jumper may sit anywhere along the strap (the mirrored strap has the same extent)
+        y0, y1 = wide[1], wide[3]
         if y1 - y0 < cs:
             raise MoveError("add_finger: no room for the signal jumper on the strap")
         xa = (wide[0] + wide[2]) // 2
         xb = mx(xa)
-        bar_x = (min(xa, xb) - half - enc, max(xa, xb) + half + enc)
-        # the met1 bar must clear existing met1 of other nets (P&R routes cross cells on
-        # met1): scan the strap overlap for a height that satisfies met1 spacing
-        sp_m1 = nm(tech.min_space.get(tech.routing[1], 0.14))
-        m1_others = [r.rect for k, r in enumerate(fl.rects) if r.layer == m1 and src2net.get(k) != inner_net
-                     and r.x1 > bar_x[0] - sp_m1 and r.x0 < bar_x[1] + sp_m1 and r.y1 > y0 - sp_m1 - cs and r.y0 < y1 + sp_m1 + cs]
-        step = nm(tech.grid_um)
-        yj = None
-        lo, hi_y = y0 + half, y1 - half
-        for k in range(0, (hi_y - lo) // step + 1):
-            cand_y = ((lo + hi_y) // 2 + ((k + 1) // 2) * step * (1 if k % 2 else -1))
-            if cand_y < lo or cand_y > hi_y:
-                continue
-            bar = (bar_x[0], cand_y - half - enc, bar_x[1], cand_y + half + enc)
-            grown = (bar[0] - sp_m1, bar[1] - sp_m1, bar[2] + sp_m1, bar[3] + sp_m1)
-            if not any(geom.overlaps(grown, o) for o in m1_others):
-                yj = cand_y; break
-        if yj is None:
-            raise MoveError("add_finger: no met1 height for the signal jumper clear of other nets' met1")
-        for cx in (xa, xb):
-            touched.append(add_rect_dbu(fl, L[cut], (cx - half, yj - half, cx + half, yj + half), dev.prov))
-        touched.append(add_rect_dbu(fl, m1, (bar_x[0], yj - half - enc, bar_x[1], yj + half + enc), dev.prov))
+        plan = _plan_sd_jumper(fl, ex, dev, inner_net, xa, xb, y0, y1, src2net, nm, L, tech)
+        if plan is None:
+            raise MoveError("add_finger: no legal S/D jumper (met1 bar, or met1 pads + via1 + met2 bar); heights rejected by: %s" % dict(LAST_JUMPER_TALLY))
+        for layer, rect in plan:
+            touched.append(add_rect_dbu(fl, layer, rect, dev.prov))
     # 4. implant and well cover the new diffusion
     D2 = fl.rects[di].rect
     imp = L[tech.psdm if dev.kind == "p" else tech.nsdm] if (tech.psdm and tech.nsdm) else None
@@ -390,6 +374,7 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", 
 
 
 LAST_PLAN_TALLY: Dict[str, int] = {}
+LAST_JUMPER_TALLY: Dict[str, int] = {}
 
 
 def _plan_column_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, touched):
@@ -515,6 +500,103 @@ def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, ne
                         if not all(clear(mcon_l, m, sp_cut, exclude_own=False) for m in m_new):
                             tally["mcon vs cuts"] = tally.get("mcon vs cuts", 0) + 1; continue
                         return [(poly_l, head), (licon_l, licon), (li_l, pad), (mcon_l, m_new[0]), (mcon_l, m_new[1]), (m1, bar)]
+    return None
+
+
+def _plan_sd_jumper(fl, ex, dev, inner_net, xa, xb, y0, y1, src2net, nm, L, tech):
+    """Tie the new outer S/D strap (centre xb) to the inner strap (centre xa) of
+    the same signal net.  First choice: mcon at both straps and a met1 bar at a
+    height in [y0, y1] clear of other nets' met1.  Second: met1 pads with via1
+    and a met2 bar, when every met1 height is taken by P&R routing.  Returns
+    [(layer, rect)] or None."""
+    LAST_JUMPER_TALLY.clear(); tally = LAST_JUMPER_TALLY
+    cut = tech.vias[0][1]; mcon_l = L[cut]; m1 = L[tech.routing[1]]
+    ms = nm(tech.min_width.get(cut, 0.17)); half = ms // 2
+    enc_m1 = nm(tech.enclosure.get((tech.routing[1], cut), 0.03))
+    sp_m1 = nm(tech.min_space.get(tech.routing[1], 0.14)); sp_cut = nm(tech.min_space.get(cut, 0.19))
+    step = nm(tech.grid_um)
+    win = (min(xa, xb) - nm(3.0), y0 - nm(3.0), max(xa, xb) + nm(3.0), y1 + nm(3.0))
+    if y1 - y0 < ms:
+        tally["strap window shorter than a cut"] = 1
+        return None
+    idx = {}
+    for k, r in enumerate(fl.rects):
+        if geom.overlaps(r.rect, win):
+            idx.setdefault(r.layer, geom.BinIndex(500)).add(k, r.rect)
+    def clear(layer, rect, space, same_net_ok=True):
+        bi = idx.get(layer)
+        if not bi:
+            return True
+        grown = (rect[0] - space, rect[1] - space, rect[2] + space, rect[3] + space)
+        for k in bi.query_overlap(grown):
+            if same_net_ok and src2net.get(k) == inner_net:
+                continue
+            return False
+        return True
+    def heights():
+        lo, hi_y = y0 + half, y1 - half
+        for k in range(0, (hi_y - lo) // step + 1):
+            y = ((lo + hi_y) // 2 + ((k + 1) // 2) * step * (1 if k % 2 else -1))
+            if lo <= y <= hi_y:
+                yield y
+    # existing same-net mcons on either strap column can be reused instead of adding one
+    existing = [(k, r.rect) for k, r in enumerate(fl.rects) if r.layer == mcon_l and src2net.get(k) == inner_net
+                and any(abs((r.rect[0] + r.rect[2]) // 2 - x) <= half for x in (xa, xb)) and y0 <= (r.rect[1] + r.rect[3]) // 2 <= y1]
+    def mcons_at(yj):
+        out = []
+        for x in (xa, xb):
+            reuse = [er for k, er in existing if abs((er[0] + er[2]) // 2 - x) <= half and abs((er[1] + er[3]) // 2 - yj) <= half]
+            if reuse:
+                continue                                   # already contacted here
+            m = (x - half, yj - half, x + half, yj + half)
+            if not clear(mcon_l, m, sp_cut, same_net_ok=False):
+                tally["mcon vs other cuts"] = tally.get("mcon vs other cuts", 0) + 1
+                return None
+            out.append(m)
+        return out
+    def heights_with_existing():
+        for _, er in existing:
+            yield (er[1] + er[3]) // 2
+        yield from heights()
+    # option 1: met1 bar
+    for yj in heights_with_existing():
+        bar = (min(xa, xb) - half - enc_m1, yj - half - enc_m1, max(xa, xb) + half + enc_m1, yj + half + enc_m1)
+        mc = mcons_at(yj)
+        if mc is None:
+            continue
+        if not clear(m1, bar, sp_m1):
+            tally["met1 bar vs other met1"] = tally.get("met1 bar vs other met1", 0) + 1
+            continue
+        return [(mcon_l, m) for m in mc] + [(m1, bar)]
+    # option 2: met1 pads + via1 + met2 bar
+    if len(tech.vias) < 2:
+        return None
+    v1 = tech.vias[1][1]; via_l = L[v1]; m2 = L[tech.routing[2]]
+    vs = nm(tech.min_width.get(v1, 0.15)); vh = vs // 2
+    e1 = nm(tech.enclosure.get((tech.routing[1], v1), 0.055)); e2 = nm(tech.enclosure.get((tech.routing[2], v1), 0.055))
+    sp_via = nm(tech.min_space.get(v1, 0.17)); sp_m2 = nm(tech.min_space.get(tech.routing[2], 0.14))
+    w2 = max(nm(tech.min_width.get(tech.routing[2], 0.14)), vs + 2 * e2)
+    for yj in heights_with_existing():
+        plan = []
+        ok = True
+        mc = mcons_at(yj)
+        if mc is None:
+            continue
+        plan += [(mcon_l, m) for m in mc]
+        for x in (xa, xb):
+            pad = (x - max(half + enc_m1, vh + e1), yj - max(half + enc_m1, vh), x + max(half + enc_m1, vh + e1), yj + max(half + enc_m1, vh))
+            via = (x - vh, yj - vh, x + vh, yj + vh)
+            if not clear(m1, pad, sp_m1):
+                tally["met1 pad vs other met1"] = tally.get("met1 pad vs other met1", 0) + 1; ok = False; break
+            if not clear(via_l, via, sp_via, same_net_ok=False):
+                tally["via1 vs other vias"] = tally.get("via1 vs other vias", 0) + 1; ok = False; break
+            plan += [(m1, pad), (via_l, via)]
+        if not ok:
+            continue
+        bar = (min(xa, xb) - vh - e2, yj - w2 // 2, max(xa, xb) + vh + e2, yj + w2 // 2)
+        if clear(m2, bar, sp_m2):
+            return plan + [(m2, bar)]
+        tally["met2 bar vs other met2"] = tally.get("met2 bar vs other met2", 0) + 1
     return None
 
 

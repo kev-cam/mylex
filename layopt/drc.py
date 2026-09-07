@@ -56,6 +56,7 @@ def check(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = Non
             tmp.setdefault(sh.src, set()).add(ex.net_of_shape[sid])
     net_of_src = {k: frozenset(v) for k, v in tmp.items()}
     ids = list(range(len(fl.rects))) if changed is None else list(changed)
+    cut_layers = {cut for _, cut, _ in tech.vias} | {tech.diff_contact}      # spacing applies regardless of net
     by_layer: Dict[str, geom.BinIndex] = {}
     for i, r in enumerate(fl.rects):
         ln = inv.get(r.layer)
@@ -93,8 +94,11 @@ def check(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = Non
                     continue
                 o = fl.rects[j]
                 ni, nj = net_of_src.get(i, frozenset()), net_of_src.get(j, frozenset())
-                if ni == nj:
+                is_cut = ln in cut_layers
+                if ni == nj and not is_cut:
                     continue                       # same conductor (or no nets, e.g. wells): merge/notch, allowed
+                if is_cut and r.rect == o.rect:
+                    continue                       # an identical duplicate cut is the same cut
                 if geom.touches(r.rect, o.rect):
                     out.append(Violation("min_space", ln, i, j, 0.0, ms)); continue
                 gap = _gap(r.rect, o.rect)
