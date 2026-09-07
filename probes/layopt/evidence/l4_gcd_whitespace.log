@@ -1,11 +1,25 @@
-== gcd.def: 784 instances, 57263 rects, 2472 devices; baseline rule flags 936 (38s)
+== gcd.def: 784 instances, 57263 rects, 2472 devices; baseline rule flags 935 (30s)
    33 logic cells have a fill_4/fill_8 flush on their right; trying 6
-   _149_ (nand2_1, fill_4 to its right): N finger refused -- add_finger: no field for the poly bridge on either side
-   _161_ (nand2_1, fill_8 to its right): P finger refused -- add_finger: no field for the poly bridge on either side
+   _149_ (nand2_1, fill_4 to its right): P finger LEGAL (15 rects)
+   _149_ (nand2_1, fill_4 to its right): N finger refused -- add_finger: inner S/D has no contacts to mirror
+      result (P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
+      output net _045_: PMOS W 2.00 -> 3.00 um, R_drv 1500 -> 1000 ohm; Elmore to 4 receivers max 21.0 -> 15.4 ps, mean 20.7 -> 15.1 ps
+   _161_ (nand2_1, fill_8 to its right): P finger LEGAL (18 rects)
+   _161_ (nand2_1, fill_8 to its right): N finger refused -- add_finger: inner S/D has no contacts to mirror
+      result (P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
+      output net _057_: PMOS W 2.00 -> 3.00 um, R_drv 1500 -> 1000 ohm; Elmore to 4 receivers max 11.5 -> 8.5 ps, mean 11.4 -> 8.5 ps
    _110_ (clkinv_1, fill_4 to its right): P finger refused -- add_finger: no met1 height for the signal jumper clear of other nets' met1
+   _110_ (clkinv_1, fill_4 to its right): N finger refused -- add_finger: no met1 height for the signal jumper clear of other nets' met1
+   rebuffer12 (buf_4, fill_4 to its right): P finger LEGAL (12 rects)
    rebuffer12 (buf_4, fill_4 to its right): N finger refused -- add_finger: no met1 height for the signal jumper clear of other nets' met1
-   rebuffer3 (buf_4, fill_8 to its right): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1; 21 rects; topology preserved; 0 new violations  LEGAL
+      result (P): p W=5.00 f=5; p W=1.00 f=1; n W=2.60 f=4; n W=0.65 f=1
+      output net net12: PMOS W 5.00 -> 6.00 um, R_drv 600 -> 500 ohm; Elmore to 4 receivers max 6.0 -> 5.5 ps, mean 5.8 -> 5.3 ps
+   rebuffer3 (buf_4, fill_8 to its right): P finger LEGAL (12 rects)
+   rebuffer3 (buf_4, fill_8 to its right): N finger LEGAL (9 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
       output net net3: PMOS W 5.00 -> 6.00 um, R_drv 600 -> 500 ohm; Elmore to 4 receivers max 13.2 -> 12.0 ps, mean 12.9 -> 11.7 ps
-   rebuffer13 (buf_4, fill_8 to its right): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1; 21 rects; topology preserved; 0 new violations  LEGAL
+   rebuffer13 (buf_4, fill_8 to its right): P finger LEGAL (12 rects)
+   rebuffer13 (buf_4, fill_8 to its right): N finger LEGAL (9 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
       output net net13: PMOS W 5.00 -> 6.00 um, R_drv 600 -> 500 ohm; Elmore to 8 receivers max 17.6 -> 15.8 ps, mean 17.3 -> 15.5 ps
-   legal moves: 2 of 2 attempted
+   legal moves: 5 of 5 attempted

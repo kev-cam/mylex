@@ -1,8 +1,7 @@
-layopt on the fingered GDS: 2472 devices
+gcd_149_fingered.gds: layopt 2472 devices
   ref_devices        2472
   our_devices        2472
   wl_match           True
   degree_hist_match  True
   isomorphic         True
-  rebuffer3 PMOS second stage: []
 RESULT MATCH

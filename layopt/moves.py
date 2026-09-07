@@ -162,7 +162,7 @@ class MoveError(Exception):
     pass
 
 
-def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") -> List[int]:
+def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", bridge: str = "auto") -> List[int]:
     """Add one parallel finger to `dev` on the `side` of its flow axis, by
     mirroring the existing gate + inner S/D column about the outer S/D region:
 
@@ -170,7 +170,10 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") 
 
     The new outer S/D copies the inner S/D's contacts and strap (mirrored), so
     it connects the way the original does (a strap to the rail for a supply
-    source); a poly bridge in the field beyond the diffusion ties G' to G.
+    source); G' is tied to G by a poly bridge in the field beyond the
+    diffusion, or -- when no bridge position meets spacing (`bridge="auto"`
+    falls back, `"contact"` forces it) -- by a poly head with a licon, an li
+    pad and a met1 jumper to the gate net's existing li pin.
     Diffusion, implant and well are extended.  New rects take the device's
     provenance -- the cell now extends into whatever was next to it (a
     filler, whitespace, or a neighbour: the rule check decides).  Only the
@@ -179,6 +182,7 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") 
     around the device does not fit the pattern."""
     if dev.flow_axis != "x":
         raise MoveError("add_finger: only vertical gates (flow along x) are implemented")
+    bridge_mode = bridge
     tech = ex.tech
     L = tech.layers
     inv = {v: k for k, v in L.items()}
@@ -189,12 +193,17 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") 
     # it and the previous finger (or the diffusion edge) is the "inner" S/D
     grects = sorted((ex.shapes[s].rect for s in dev.gate_ids), key=lambda r: r[0])
     g = grects[-1] if hi else grects[0]
-    prev = grects[-2] if (hi and len(grects) > 1) else (grects[1] if (not hi and len(grects) > 1) else None)
     # the diffusion rect holding this gate
     diff_ids = [i for i, r in enumerate(fl.rects) if r.layer == L[tech.diff] and geom.overlaps(r.rect, g)]
     if len(diff_ids) != 1:
         raise MoveError("add_finger: gate not on exactly one diffusion rect (%d)" % len(diff_ids))
     di = diff_ids[0]; D = fl.rects[di].rect
+    # the inner S/D region is bounded by the NEXT gate on the strip inward, whichever
+    # transistor owns it (a nand2's two PMOS share one strip)
+    strip_gates = sorted({ex.shapes[gs].rect for d_ in ex.devices for gs in d_.gate_ids
+                          if geom.overlaps(ex.shapes[gs].rect, D)}, key=lambda r: r[0])
+    gi = strip_gates.index(g)
+    prev = (strip_gates[gi - 1] if gi > 0 else None) if hi else (strip_gates[gi + 1] if gi + 1 < len(strip_gates) else None)
     outer = (g[2], D[2]) if hi else (D[0], g[0])          # x-range of the outer S/D region
     # the gate must be the outermost one on this side of the WHOLE diffusion strip
     # (a nand2's two PMOS share one strip): otherwise the mirror lands on a neighbour
@@ -276,19 +285,24 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") 
         grown_d = (br[0] - sp_diff, br[1] - sp_diff, br[2] + sp_diff, br[3] + sp_diff)
         blocked = False
         for k, r in enumerate(fl.rects):
-            if r.layer == licon_l and geom.overlaps(r.rect, br):
-                blocked = True; break
+            if r.layer == licon_l and geom.overlaps(r.rect, br) and src2net.get(k) != dev.g:
+                blocked = True; break                                  # a poly bridge may cross its own net's contacts
             if r.layer == L[tech.diff] and geom.overlaps(r.rect, grown_d) and r.rect != D and not geom.overlaps(r.rect, D):
                 blocked = True; break                                  # another diffusion within spacing
             if r.layer == L[tech.poly] and geom.overlaps(r.rect, grown_p) and src2net.get(k) != dev.g:
                 blocked = True; break                                  # poly of another net within spacing
         if not blocked:
             bridge = br; break
-    if bridge is None:
+    if bridge_mode == "contact":
+        bridge = None
+    if bridge is None and bridge_mode == "poly":
         raise MoveError("add_finger: no field for the poly bridge on either side")
-    fy0 = min(g[1] - ext, bridge[1]); fy1 = max(g[3] + ext, bridge[3])
-    touched.append(add_rect_dbu(fl, L[tech.poly], (gx0, fy0, gx1, fy1), dev.prov))
-    touched.append(add_rect_dbu(fl, L[tech.poly], bridge, dev.prov))
+    if bridge is not None:
+        fy0 = min(g[1] - ext, bridge[1]); fy1 = max(g[3] + ext, bridge[3])
+        touched.append(add_rect_dbu(fl, L[tech.poly], (gx0, fy0, gx1, fy1), dev.prov))
+        touched.append(add_rect_dbu(fl, L[tech.poly], bridge, dev.prov))
+    else:
+        touched.append(add_rect_dbu(fl, L[tech.poly], (gx0, g[1] - ext, gx1, g[3] + ext), dev.prov))
     # 3. mirrored contacts and strap(s)
     for k in inner_licons:
         touched.append(add_rect_dbu(fl, licon_l, mrect(fl.rects[k].rect), dev.prov))
@@ -350,7 +364,158 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") 
         if dev.kind == "p" and r.layer == L[tech.nwell] and geom.overlaps(r.rect, D):
             ew = nm(tech.nwell_enc)
             fl.rects[i].rect = (min(r.x0, D2[0] - ew), r.y0, max(r.x1, D2[2] + ew), r.y1); touched.append(i)
+    if bridge is None:
+        # 5a. column bridge: same-net poly already aligned with the new finger beyond the
+        # overhang (the other transistor's added finger, or the cell's own gate poly):
+        # extend the finger poly to meet it, provided nothing but field lies between
+        col = _plan_column_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, touched)
+        if col is not None:
+            touched.append(add_rect_dbu(fl, L[tech.poly], col, dev.prov))
+            return sorted(set(touched))
+        # 5b. contact bridge: planned now, with the new S/D geometry in place
+        # new S/D geometry (contacts, straps, jumper) is foreign to the gate net; the
+        # new poly finger is the gate net itself and must not block its own head
+        new_ids = {i for i in touched if i not in src2net and fl.rects[i].layer != L[tech.poly]}
+        src2net_now = dict(src2net)
+        for i in touched:
+            if i not in src2net and fl.rects[i].layer == L[tech.poly]:
+                src2net_now[i] = dev.g
+        plan = _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net_now, nm, L, tech, new_ids)
+        if plan is None:
+            raise MoveError("add_finger: no field for a poly bridge and no place for a contact bridge (poly head + met1 jumper to the gate pin); candidates rejected by: %s"
+                            % dict(LAST_PLAN_TALLY))
+        for layer, rect in plan:
+            touched.append(add_rect_dbu(fl, layer, rect, dev.prov))
     return sorted(set(touched))
+
+
+LAST_PLAN_TALLY: Dict[str, int] = {}
+
+
+def _plan_column_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, touched):
+    """Vertical poly from the new finger's end to same-net poly aligned in its
+    column (within 1.6 um), on either side; None if anything but field lies
+    between (diffusion, contacts, other nets' poly within spacing)."""
+    poly_l, diff_l, licon_l = L[tech.poly], L[tech.diff], L[tech.diff_contact]
+    sp_poly = nm(tech.min_space.get(tech.poly, 0.21)); sp_diff = nm(0.075)
+    new_poly = {i for i in touched if fl.rects[i].layer == poly_l and i not in src2net}
+    def is_gate_net_poly(k):
+        return (src2net.get(k) == dev.g) or (k in new_poly)
+    best = None
+    for k, r in enumerate(fl.rects):
+        if r.layer != poly_l or not is_gate_net_poly(k) or r.x1 <= gx0 or r.x0 >= gx1:
+            continue
+        if r.y0 >= g[3] + ext and r.y0 - (g[3] + ext) <= nm(1.6):          # above
+            strip = (gx0, g[3] + ext, gx1, r.y0)
+        elif r.y1 <= g[1] - ext and (g[1] - ext) - r.y1 <= nm(1.6):        # below
+            strip = (gx0, r.y1, gx1, g[1] - ext)
+        else:
+            continue
+        if strip[3] - strip[1] <= 0:
+            continue
+        ok = True
+        for kk, o in enumerate(fl.rects):
+            if o.layer == diff_l and geom.overlaps((strip[0] - sp_diff, strip[1], strip[2] + sp_diff, strip[3]), o.rect):
+                ok = False; break
+            if o.layer == licon_l and geom.overlaps(strip, o.rect) and src2net.get(kk) != dev.g:
+                ok = False; break
+            if o.layer == poly_l and not is_gate_net_poly(kk) and geom.overlaps((strip[0] - sp_poly, strip[1] - sp_poly, strip[2] + sp_poly, strip[3] + sp_poly), o.rect):
+                ok = False; break
+        if ok and (best is None or (strip[3] - strip[1]) < (best[3] - best[1])):
+            best = strip
+    return best
+
+
+def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, new_ids=()):
+    """Geometry (list of (layer, rect)) tying the new poly finger to the gate net
+    through a contact: a poly tab from the finger's end into the field to a
+    licon, an li pad on it, and a met1 bar (mcon at both ends) to the gate net's
+    nearest li shape.  Searches tab length and height within the field gap;
+    every candidate must clear other nets' diffusion, poly, cuts, li and met1
+    (the just-added S/D geometry counts as this device's own net only where it
+    is: `new_ids` are treated as foreign to the gate net).  Returns None when
+    nothing fits."""
+    LAST_PLAN_TALLY.clear()
+    tally = LAST_PLAN_TALLY
+    licon_l, li_l, m1 = L[tech.diff_contact], L[tech.routing[0]], L[tech.routing[1]]
+    cut = tech.vias[0][1]; mcon_l = L[cut]; diff_l = L[tech.diff]; poly_l = L[tech.poly]
+    cs = nm(tech.min_width.get(tech.diff_contact, 0.17)); ms = nm(tech.min_width.get(cut, 0.17))
+    enc_poly = nm(0.05); enc_li = nm(tech.enclosure.get((tech.routing[0], tech.diff_contact), 0.08))
+    enc_m1 = nm(tech.enclosure.get((tech.routing[1], cut), 0.03))
+    sp_poly = nm(tech.min_space.get(tech.poly, 0.21)); sp_diff = nm(0.075); sp_li = nm(tech.min_space.get(tech.routing[0], 0.17))
+    sp_m1 = nm(tech.min_space.get(tech.routing[1], 0.14)); sp_cut = nm(tech.min_space.get(tech.diff_contact, 0.17))
+    step = nm(tech.grid_um) * 2
+    tab_h = cs + 2 * enc_poly
+    # neighbourhood index per layer (window: 4 um around the gate)
+    win = (g[0] - nm(4.0), g[1] - nm(4.0), g[2] + nm(4.0), g[3] + nm(4.0))
+    idx = {}
+    for k, r in enumerate(fl.rects):
+        if r.layer in (diff_l, poly_l, licon_l, mcon_l, li_l, m1) and geom.overlaps(r.rect, win):
+            idx.setdefault(r.layer, geom.BinIndex(500)).add(k, r.rect)
+    def own(k):                       # belongs to the gate net (and is not new S/D geometry)
+        return src2net.get(k) == dev.g and k not in new_ids
+    def clear(layer, rect, space, exclude_own=True):
+        bi = idx.get(layer)
+        if not bi:
+            return True
+        grown = (rect[0] - space, rect[1] - space, rect[2] + space, rect[3] + space)
+        for k in bi.query_overlap(grown):
+            if exclude_own and own(k):
+                continue
+            return False
+        return True
+    gate_li = [(k, r.rect) for k, r in enumerate(fl.rects) if r.layer == li_l and own(k) and (r.x1 - r.x0) >= ms and geom.overlaps(r.rect, win)]
+    if not gate_li:
+        tally["no gate li pin in window"] = 1
+        return None
+    # vertical search range on each side of the gate: from just past the overhang out to 1.2 um
+    for lo_side in (True, False):
+        ys = []
+        for j in range(0, nm(1.2) // step + 1):
+            if lo_side:
+                y1 = g[1] - ext - j * step; ys.append((y1 - tab_h, y1))
+            else:
+                y0 = g[3] + ext + j * step; ys.append((y0, y0 + tab_h))
+        for hy0, hy1 in ys:
+            for tab in range(0, nm(0.8) // step + 1):
+                lx0 = gx1 + tab * step if tab else gx0                     # licon x0: on the finger, or on a tab to its right
+                if tab and lx0 < gx1:
+                    continue
+                licon = (lx0, (hy0 + hy1) // 2 - cs // 2, lx0 + cs, (hy0 + hy1) // 2 + cs // 2)
+                head = (gx0, hy0, licon[2] + enc_poly, hy1)
+                if not clear(diff_l, head, sp_diff, exclude_own=False):
+                    tally["head vs diffusion"] = tally.get("head vs diffusion", 0) + 1; continue
+                if not clear(poly_l, head, sp_poly):
+                    tally["head vs other poly"] = tally.get("head vs other poly", 0) + 1; continue
+                if not (clear(licon_l, licon, sp_cut, exclude_own=False) and clear(mcon_l, licon, sp_cut, exclude_own=False)):
+                    tally["licon vs cuts"] = tally.get("licon vs cuts", 0) + 1; continue
+                # li enclosure of the licon: 0.08 on two opposite sides -- tall pad or wide pad
+                pads = [(licon[0], licon[1] - enc_li, licon[2], licon[3] + enc_li),
+                        (licon[0] - enc_li, licon[1], licon[2] + enc_li, licon[3])]
+                pads = [pd for pd in pads if clear(li_l, pd, sp_li)]
+                if not pads:
+                    tally["li pad vs other li"] = tally.get("li pad vs other li", 0) + 1; continue
+                pad = pads[0]
+                fx = (licon[0] + licon[2]) // 2
+                for k, tr in sorted(gate_li, key=lambda kr: abs((kr[1][0] + kr[1][2]) // 2 - fx)):
+                    y0 = max(pad[1] + ms // 2, tr[1] + ms // 2); y1 = min(pad[3] - ms // 2, tr[3] - ms // 2)
+                    if y1 < y0:
+                        tally["pad and gate pin do not share a height"] = tally.get("pad and gate pin do not share a height", 0) + 1; continue
+                    tx = (tr[0] + tr[2]) // 2
+                    bar_x = (min(fx, tx) - ms // 2 - enc_m1, max(fx, tx) + ms // 2 + enc_m1)
+                    for jj in range(0, (y1 - y0) // step + 1):
+                        yj = ((y0 + y1) // 2 + ((jj + 1) // 2) * step * (1 if jj % 2 else -1))
+                        if yj < y0 or yj > y1:
+                            continue
+                        # met1 encloses the mcons by enc on two opposite sides: along the bar (x) is free
+                        bar = (bar_x[0], yj - ms // 2, bar_x[1], yj + ms // 2)
+                        m_new = [(fx - ms // 2, yj - ms // 2, fx + ms // 2, yj + ms // 2), (tx - ms // 2, yj - ms // 2, tx + ms // 2, yj + ms // 2)]
+                        if not clear(m1, bar, sp_m1):
+                            tally["met1 bar vs other met1"] = tally.get("met1 bar vs other met1", 0) + 1; continue
+                        if not all(clear(mcon_l, m, sp_cut, exclude_own=False) for m in m_new):
+                            tally["mcon vs cuts"] = tally.get("mcon vs cuts", 0) + 1; continue
+                        return [(poly_l, head), (licon_l, licon), (li_l, pad), (mcon_l, m_new[0]), (mcon_l, m_new[1]), (m1, bar)]
+    return None
 
 
 def add_rect_dbu(fl: FlatLayout, layer: Tuple[int, int], rect: Rect, prov: str) -> int:

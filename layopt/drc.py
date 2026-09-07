@@ -109,10 +109,14 @@ def check(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = Non
                 c = fl.rects[j].rect
                 cover = [fl.rects[k].rect for k in by_layer[ln].query_overlap((c[0] - e, c[1] - e, c[2] + e, c[3] + e))]
                 # sky130-style enclosure: the cut must be covered, and enclosed by `enc`
-                # on two OPPOSITE sides (either both x or both y); the other sides >= 0.
+                # on at least two sides (the stock cells use adjacent sides: e.g. a
+                # licon 0.085 left / 0.09 below, 0.075 right / 0.04 above).
                 covered = not geom.subtract(c, cover)
-                enc_x = not geom.subtract((c[0] - e, c[1], c[2] + e, c[3]), cover)
-                enc_y = not geom.subtract((c[0], c[1] - e, c[2], c[3] + e), cover)
-                if not (covered and (enc_x or enc_y)):
+                if e > 0:
+                    sides = [not geom.subtract(r_, cover) for r_ in ((c[0] - e, c[1], c[0], c[3]), (c[2], c[1], c[2] + e, c[3]),
+                                                                     (c[0], c[1] - e, c[2], c[1]), (c[0], c[3], c[2], c[3] + e))]
+                else:
+                    sides = [True, True]                    # zero enclosure: coverage is the whole rule
+                if not (covered and sum(sides) >= 2):
                     out.append(Violation("enclosure", "%s/%s" % (metal, cut), i, j, 0.0, enc))
     return out

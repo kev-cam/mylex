@@ -101,36 +101,43 @@ def main():
         wp0, r0, d0 = net_delay(ex, net, inst) if net is not None else (0, 0, {})
         fl2 = copy.deepcopy(fl)
         touched = []
-        ok = True
+        done = []
         for kind in ("p", "n"):
             ex2 = extract.extract(fl2, T) if touched else ex
             dev = [x for x in ex2.devices if x.prov.split("/")[1] == inst and x.kind == kind]
             if not dev:
                 continue
             dev.sort(key=lambda x: -max(ex2.shapes[g].rect[2] for g in x.gate_ids))       # outermost gate on the right
+            trial = copy.deepcopy(fl2)
             try:
-                touched += moves.add_finger(fl2, ex2, dev[0], side="high")
+                t_new = moves.add_finger(trial, ex2, dev[0], side="high")
             except moves.MoveError as e:
-                print("   %s (%s, %s to its right): %s finger refused -- %s" % (inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), kind.upper(), e))
-                ok = False; break
-        if not ok:
+                print("   %s (%s, %s to its right): %s finger refused -- %s" % (inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), kind.upper(), str(e)[:160]))
+                continue
+            ex_t = extract.extract(trial, T)
+            viol_t = drc.new_violations(trial, ex_t, t_new, base)
+            topo_t = ex_t.signature() == sig
+            if topo_t and not viol_t:
+                fl2 = trial; touched += t_new; done.append(kind.upper())
+                print("   %s (%s, %s to its right): %s finger LEGAL (%d rects)" % (inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), kind.upper(), len(t_new)))
+            else:
+                inv = {v: k for k, v in T.layers.items()}
+                print("   %s (%s, %s to its right): %s finger REJECTED by the guard: topology %s, %d new violations" % (
+                    inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), kind.upper(), "preserved" if topo_t else "CHANGED", len(viol_t)))
+                for v in viol_t[:3]:
+                    ra = trial.rects[v.a]; rb = trial.rects[v.b] if v.b >= 0 else None
+                    print("      %s  [%s %s%s]" % (v, inv.get(ra.layer, ra.layer), ra.prov.split("/", 1)[1], "" if rb is None else " vs %s %s" % (inv.get(rb.layer, rb.layer), rb.prov.split("/", 1)[1])))
+        if not done:
             continue
         ex3 = extract.extract(fl2, T)
-        viol = drc.new_violations(fl2, ex3, touched, base)
-        topo = ex3.signature() == sig
+        legal = True
+        wp1, r1, d1 = (0, 0, {})
         try:
-            wp1, r1, d1 = net_delay(ex3, net, inst) if (net is not None and topo) else (0, 0, {})
+            wp1, r1, d1 = net_delay(ex3, net, inst) if net is not None else (0, 0, {})
         except StopIteration:
-            wp1, r1, d1 = 0, 0, {}
+            pass
         devs = ["%s W=%.2f f=%d" % (x.kind, x.w, x.fingers) for x in ex3.devices if x.prov.split("/")[1] == inst]
-        legal = topo and not viol
-        inv = {v: k for k, v in T.layers.items()}
-        print("   %s (%s, %s to its right): %s; %d rects; topology %s; %d new violations%s" % (
-            inst, a.macro.replace("sky130_fd_sc_hd__", ""), b.macro.replace("sky130_fd_sc_hd__", ""), "; ".join(devs), len(touched),
-            "preserved" if topo else "CHANGED", len(viol), "  LEGAL" if legal else ""))
-        for v in viol[:3]:
-            ra = fl2.rects[v.a]; rb = fl2.rects[v.b] if v.b >= 0 else None
-            print("      %s  [%s %s%s]" % (v, inv.get(ra.layer, ra.layer), ra.prov.split("/", 1)[1], "" if rb is None else " vs %s %s" % (inv.get(rb.layer, rb.layer), rb.prov.split("/", 1)[1])))
+        print("      result (%s): %s" % ("+".join(done), "; ".join(devs)))
         if net is not None and d0 and d1:
             print("      output net %s: PMOS W %.2f -> %.2f um, R_drv %.0f -> %.0f ohm; Elmore to %d receivers max %.1f -> %.1f ps, mean %.1f -> %.1f ps" % (
                 ex.nets[net].name, wp0, wp1, r0, r1, len(d0), max(d0.values()), max(d1.values()),
