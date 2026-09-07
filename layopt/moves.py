@@ -7,7 +7,7 @@ touched FlatRect indices, so the caller can re-extract, confirm the netlist
 signature is unchanged, and rule-check only what moved.  Coordinates are dbu.
 """
 import os
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 from . import geom
 from .extract import Device, Extraction
@@ -173,6 +173,176 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", 
             break
         touched += new
     return sorted(set(touched))
+
+
+def remove_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high") -> List[int]:
+    """The inverse of `add_finger`: take away `dev`'s outermost finger on the
+    `side` of its flow axis.
+
+        [S][G][D][G'][S']  ->  [S][G][D]        (side="high", flow along x)
+
+    The gate poly of that finger is cut out of its stripe and any poly that
+    then leads nowhere (a bridge that only served it, a stub to a bar) is
+    pruned; the outer S/D region's contacts go and the diffusion is cut back
+    to the finger's inner edge, so the region between the remaining fingers
+    keeps its width; implant and well that were fitted to the diffusion are
+    trimmed with it; li/metal that only served the removed contacts (a strap,
+    a jumper) is removed once re-extraction shows it floating.  The device
+    must keep at least one finger and the finger must be the outermost on its
+    strip.  Works on stock cells as well as on fingers `add_finger` made.
+    Returns the changed rect ids (after deletion; ids shift); raises MoveError."""
+    if dev.flow_axis != "x":
+        raise MoveError("remove_finger: only vertical gates (flow along x) are implemented")
+    if len(dev.gate_ids) < 2:
+        raise MoveError("remove_finger: %s has a single finger; removing it removes the device" % dev.name)
+    tech = ex.tech
+    L = tech.layers
+    d = fl.dbu_um
+    nm = lambda um: int(round(um / d))
+    hi = side == "high"
+    grects = sorted((ex.shapes[s].rect for s in dev.gate_ids), key=lambda r: r[0])
+    g = grects[-1] if hi else grects[0]
+    diff_ids = [i for i, r in enumerate(fl.rects) if r.layer == L[tech.diff] and geom.overlaps(r.rect, g)]
+    if len(diff_ids) != 1:
+        raise MoveError("remove_finger: gate not on exactly one diffusion rect (%d)" % len(diff_ids))
+    di = diff_ids[0]; D = fl.rects[di].rect
+    strip_gates = sorted({ex.shapes[gs].rect for d_ in ex.devices for gs in d_.gate_ids
+                          if geom.overlaps(ex.shapes[gs].rect, D)}, key=lambda r: r[0])
+    gi = strip_gates.index(g)
+    if (hi and gi != len(strip_gates) - 1) or (not hi and gi != 0):
+        raise MoveError("remove_finger: the finger is not the outermost gate on its strip")
+    outer = (g[2], D[2]) if hi else (D[0], g[0])
+    ext = nm(tech.poly_ext_diff)
+    licon_l = L[tech.diff_contact]
+    poly_l = L[tech.poly]
+    dead: Set[int] = set()
+    changed: Set[int] = set()
+    # 1. the outer S/D contacts
+    for i, r in enumerate(fl.rects):
+        if r.layer == licon_l and r.x0 >= outer[0] - 1 and r.x1 <= outer[1] + 1 and r.y1 > D[1] and r.y0 < D[3]:
+            dead.add(i)
+    # 2. the diffusion, cut back to the inner region's contacts plus enclosure
+    #    (the way the stock cells end a strip), or to the finger's inner edge
+    #    when that region has no contacts
+    prev = strip_gates[gi - 1] if hi else strip_gates[gi + 1] if gi + 1 < len(strip_gates) else None
+    inner = ((prev[2] if prev else D[0]), g[0]) if hi else (g[2], (prev[0] if prev else D[2]))
+    enc_d = nm(tech.enclosure.get((tech.diff, tech.diff_contact), 0.04))
+    inner_licons = [r.rect for r in fl.rects if r.layer == licon_l and r.x0 >= inner[0] - 1 and r.x1 <= inner[1] + 1 and r.y1 > D[1] and r.y0 < D[3]]
+    if hi:
+        cut = min(g[0], max(c[2] for c in inner_licons) + enc_d) if inner_licons else g[0]
+        D2 = (D[0], D[1], cut, D[3])
+    else:
+        cut = max(g[2], min(c[0] for c in inner_licons) - enc_d) if inner_licons else g[2]
+        D2 = (cut, D[1], D[2], D[3])
+    fl.rects[di].rect = D2; changed.add(di)
+    # 3. the gate poly: cut the finger's span (diffusion plus overhang) out of every
+    #    poly rect covering the gate, keep what lies beyond it
+    span = (D[1] - ext, D[3] + ext)
+    new_pieces: List[int] = []
+    for i, r in enumerate(fl.rects):
+        if r.layer != poly_l or not geom.overlaps(r.rect, g):
+            continue
+        if r.x0 < g[0] - 1 or r.x1 > g[2] + 1:
+            # a poly rect wider than the gate (a bar over it): only cut the gate's width out
+            pieces = geom.subtract(r.rect, [(g[0], span[0], g[2], span[1])])
+        else:
+            pieces = geom.subtract(r.rect, [(r.x0, span[0], r.x1, span[1])])
+        dead.add(i)
+        for pc in pieces:
+            new_pieces.append(add_rect_dbu(fl, poly_l, pc, r.prov))
+    # 3b. prune poly that leads nowhere: no gate (no diffusion under it), no contact,
+    #     and at most one other poly rect touching it -- a stub, or a bridge that only
+    #     served the removed finger.  Repeat until stable.
+    diff_l = L[tech.diff]
+    while True:
+        alive = [i for i, r in enumerate(fl.rects) if r.layer == poly_l and i not in dead]
+        idx = geom.BinIndex()
+        for i in alive:
+            idx.add(i, fl.rects[i].rect)
+        licons = [r.rect for r in fl.rects if r.layer == licon_l]
+        li_idx = geom.BinIndex()
+        for k, r in enumerate(fl.rects):
+            if r.layer == licon_l and k not in dead:
+                li_idx.add(k, r.rect)
+        di_idx = geom.BinIndex()
+        for k, r in enumerate(fl.rects):
+            if r.layer == diff_l:
+                di_idx.add(k, r.rect)
+        removed_any = False
+        near = (min(g[0], D[0]) - nm(2.0), D[1] - nm(3.0), max(g[2], D[2]) + nm(2.0), D[3] + nm(3.0))
+        for i in alive:
+            r = fl.rects[i].rect
+            if not geom.overlaps(r, near):
+                continue
+            if di_idx.query_overlap(r) or li_idx.query_overlap(r):
+                continue
+            nbrs = [k for k in idx.query_touch(r) if k != i]
+            if len(nbrs) <= 1:
+                dead.add(i); idx = None; removed_any = True
+                break
+        if not removed_any:
+            break
+    # 4. implant and well fitted to the old diffusion shrink with it
+    imp = L[tech.psdm if dev.kind == "p" else tech.nsdm] if (tech.psdm and tech.nsdm) else None
+    e = nm(tech.implant_enc); ew = nm(tech.nwell_enc); tol = nm(0.02)
+    for i, r in enumerate(fl.rects):
+        for lay, enc in ((imp, e), (L[tech.nwell] if dev.kind == "p" else None, ew)):
+            if lay is None or r.layer != lay or not geom.overlaps(r.rect, D):
+                continue
+            if hi and abs(r.x1 - (D[2] + enc)) <= tol:
+                fl.rects[i].rect = (r.x0, r.y0, D2[2] + enc, r.y1); changed.add(i)
+            elif not hi and abs(r.x0 - (D[0] - enc)) <= tol:
+                fl.rects[i].rect = (D2[0] - enc, r.y0, r.x1, r.y1); changed.add(i)
+    # 5. li/metal that only served the removed contacts -- the mirrored strap, the
+    #    jumper's mcons and bar -- now dangles.  Prune dead ends: a conductor in the
+    #    vacated region with at most one neighbour (same-layer contact, or the cut /
+    #    metal it stacks with) that has no remaining contact under it and no label,
+    #    repeatedly; a deleted rect's neighbours become candidates wherever they are,
+    #    so the chain back to the net's surviving geometry is followed to its end.
+    metal_ids = {L[n] for n in tech.routing}
+    cut_up = {L[c]: (L[lo], L[up]) for lo, c, up in tech.vias}
+    region = (outer[0] - nm(0.3), D[1] - nm(3.0), outer[1] + nm(0.3), D[3] + nm(3.0))
+    idx_by_layer: Dict[Tuple[int, int], geom.BinIndex] = {}
+    for i, r in enumerate(fl.rects):
+        if i not in dead and (r.layer in metal_ids or r.layer in cut_up or r.layer == licon_l):
+            idx_by_layer.setdefault(r.layer, geom.BinIndex()).add(i, r.rect)
+    labels = [(tx.layer, tx.xy[0], tx.xy[1]) for tx in getattr(fl, "texts", [])]
+    def alive(k):
+        return k not in dead
+    def neighbours(i):
+        r = fl.rects[i]
+        out: List[int] = []
+        if r.layer in cut_up:
+            for lay in cut_up[r.layer]:
+                out += [k for k in idx_by_layer.get(lay, geom.BinIndex()).query_overlap(r.rect) if alive(k)]
+        else:
+            out += [k for k in idx_by_layer.get(r.layer, geom.BinIndex()).query_touch(r.rect) if alive(k) and k != i]
+            for c, (lo, up) in cut_up.items():
+                if r.layer in (lo, up):
+                    out += [k for k in idx_by_layer.get(c, geom.BinIndex()).query_overlap(r.rect) if alive(k)]
+        return out
+    def anchored(i):
+        r = fl.rects[i]
+        if r.layer == L[tech.routing[0]] and any(alive(k) for k in idx_by_layer.get(licon_l, geom.BinIndex()).query_overlap(r.rect)):
+            return True
+        return any(lay == r.layer and r.x0 <= x <= r.x1 and r.y0 <= y <= r.y1 for lay, x, y in labels)
+    cands = [i for i, r in enumerate(fl.rects) if alive(i) and (r.layer in metal_ids or r.layer in cut_up) and geom.overlaps(r.rect, region)]
+    seen = set(cands)
+    while cands:
+        i = cands.pop()
+        if not alive(i) or anchored(i):
+            continue
+        nb = neighbours(i)
+        if len(nb) <= 1:
+            dead.add(i)
+            for k in nb:
+                if k not in seen or True:
+                    cands.append(k); seen.add(k)
+    keep = [i for i in range(len(fl.rects)) if i not in dead]
+    remap = {old: new for new, old in enumerate(keep)}
+    fl.rects = [fl.rects[i] for i in keep]
+    changed = {remap[i] for i in changed if i in remap} | {remap[i] for i in new_pieces if i in remap}
+    return sorted(changed)
 
 
 def fill_notches(fl: FlatLayout, ex: Extraction, new_ids: Sequence[int]) -> List[int]:
@@ -547,12 +717,17 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
     D2 = fl.rects[di].rect
     imp = L[tech.psdm if dev.kind == "p" else tech.nsdm] if (tech.psdm and tech.nsdm) else None
     e = nm(tech.implant_enc)
+    # only the cell's own implant/well rects, and only on the side that grew: a
+    # neighbour's well already covers what it covers (and remove_finger can trim
+    # back what was fitted to this diffusion, not what belonged to someone else)
     for i, r in enumerate(fl.rects):
-        if imp is not None and r.layer == imp and geom.overlaps(r.rect, D):
-            fl.rects[i].rect = (min(r.x0, D2[0] - e), r.y0, max(r.x1, D2[2] + e), r.y1); touched.append(i)
-        if dev.kind == "p" and r.layer == L[tech.nwell] and geom.overlaps(r.rect, D):
+        if r.prov != dev.prov or not geom.overlaps(r.rect, D):
+            continue
+        if imp is not None and r.layer == imp:
+            fl.rects[i].rect = (r.x0, r.y0, max(r.x1, D2[2] + e), r.y1) if hi else (min(r.x0, D2[0] - e), r.y0, r.x1, r.y1); touched.append(i)
+        if dev.kind == "p" and r.layer == L[tech.nwell]:
             ew = nm(tech.nwell_enc)
-            fl.rects[i].rect = (min(r.x0, D2[0] - ew), r.y0, max(r.x1, D2[2] + ew), r.y1); touched.append(i)
+            fl.rects[i].rect = (r.x0, r.y0, max(r.x1, D2[2] + ew), r.y1) if hi else (min(r.x0, D2[0] - ew), r.y0, r.x1, r.y1); touched.append(i)
     # 4b. the other gates of a mirrored series stack: each ties to its own original.
     # A poly bridge cannot cross the gates in between, so use the column bridge
     # (aligned same-net poly) or the contact bridge (poly tab + met1 jumper to the pin)

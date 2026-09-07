@@ -428,6 +428,56 @@ the rule adds 77 flags to the baseline (935 → 1012: notches already in the
 stock cells and P&R wiring, which the delta ignores by construction) and all
 twelve fingers in the six candidate cells stay legal, the fills included.
 
+**`remove_finger` (2026-09-08).** The inverse move, so sizing can go both
+ways: the path balancer had only been able to speed up the slow driver, and
+in a completion tree or a QDI slice slowing the fast one is often the cheaper
+change (less area, less load on the previous stage). It takes a device's
+outermost finger on one side: the finger's span (diffusion plus overhang) is
+cut out of every poly rectangle covering the gate, and poly that then leads
+nowhere — no gate under it, no contact, at most one other poly touching it —
+is pruned repeatedly, which takes a bridge that only served that finger and
+any stub to a bar while leaving a comb's bar over the remaining fingers; the
+outer S/D region's contacts go and the diffusion is cut back to the inner
+region's contacts plus enclosure, the way the stock cells end a strip (or to
+the gate's inner edge when that region has none); implant and well rectangles
+fitted to the old diffusion edge are trimmed with it. Then the li and metal
+that only served the removed contacts — the mirrored strap, the jumper's
+mcons and bar — are pruned as dead ends: a conductor in the vacated region
+with at most one neighbour (same-layer contact, or the cut and metal it stacks
+with), no remaining contact under it and no label, is deleted and its
+neighbours re-examined, so the chain is followed back to where the net's
+surviving geometry begins. The device must keep a finger and the finger must
+be the strip's outermost. Deleting rectangles shifts ids; the move returns the
+changed ids after deletion.
+
+Verified: `add_finger` then `remove_finger` on the bare nand2 row gives back
+the original netlist, sizes and rectangle count exactly (the drain region is
+cut to its contacts plus 0.04 µm rather than the stock 0.055, the only
+difference in coordinates); a stock buf_4 alone on a row loses one PMOS and
+one NMOS finger of its output stage (4 → 3, W 4.0 → 3.0 and 2.6 → 1.95)
+with the same netlist, no new violations and KLayout isomorphic; on gcd,
+rebuffer3 loses a finger per stage the same way and its driven net's Elmore
+delay rises 13.2 → 15.6 ps (`probes/layopt/l4_remove_finger.py`,
+`evidence/l4_remove_finger.log`, `remove_finger_buf4*`,
+`gcd_rebuffer3_removed*`). Writing the inverse found a bug in the forward
+move: `add_finger` had been extending every implant and well rectangle that
+overlapped the diffusion, including the neighbouring fillers' wells on the
+side away from the growth; it now extends only the cell's own, on the growing
+side. Thirteen tests.
+
+With both moves the discrete search sizes in both directions
+(`probes/layopt/l4_path_balance_twoway.py`): path A driven by an inv_4 over a
+short wire (3.8 ps), path B by an inv_1 over 120 µm of met2 (39.6 ps). Finger
+counts per polarity are the variables, a state below the stock count removes
+fingers and above it adds them, and the cost charges added fingers and credits
+removed ones. The greedy search first adds three PMOS fingers to B's driver
+(the only way to get B under 11 ps), then takes two PMOS fingers off A's, and
+lands at A 7.5 / B 10.7 ps — imbalance 35.8 → 3.2 ps — with fewer transistors
+than it started with (10 fingers → 8), every state rebuilt from the base and
+passed by both guards. One honest caveat: the driver model is PMOS-only, so the
+search also strips A's NMOS to one finger purely for the area credit; a
+two-edge model would stop it, and that is the model's job, not the move's.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -501,6 +551,12 @@ every refusal names the obstacle, the planners with a tally of rejected
 candidates and the router's statistics; `LAYOPT_PLAN_DEBUG=1` prints the
 surviving head candidates, `LAYOPT_ROUTE_PROBE=layer:x:y,...` the raster
 state at given points and each repair attempt).
+
+**Remove finger across the cell edge** (`remove_finger`, the inverse:
+outermost finger's poly cut out and dead-end poly pruned, outer contacts
+removed, diffusion cut back to the inner contacts plus enclosure, implant and
+well trimmed, dangling li/metal pruned to the net's surviving geometry;
+refuses a single-finger device or a finger that is not the strip's outermost).
 
 Planned, in the order the async objectives need them:
 
@@ -613,9 +669,10 @@ Planned:
   Connections route around P&R wiring on li/met1/met2 (`route.py`): all six
   gcd candidate cells now take fingers, twelve in total, KLayout-confirmed.
   Same-net notch rule in the delta-DRC with a notch-fill pass after each
-  move. Remaining: moving a P&R wire when no path exists, diffusion merge
-  across abutting cells (needs compaction to pay), contact growth,
-  `remove_finger`.
+  move. `remove_finger` as the inverse (stock cells and added fingers alike,
+  KLayout-confirmed on gcd). Remaining: moving a P&R wire when no path
+  exists, diffusion merge across abutting cells (needs compaction to pay),
+  contact growth.
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
   T2 (layopt MC over a stated variation model) and T3 (stat-sim's
   `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1

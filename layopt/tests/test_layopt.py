@@ -393,6 +393,73 @@ def test_same_net_notch():
     assert [x for x in rules.check(fl, ex) if x.rule == "min_space"]
 
 
+def _bare_row(cells):
+    """A one-row DEF of the given (macro, x_um) placements between fillers; returns the FlatLayout."""
+    from .. import lefdef
+    lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
+    if not os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__fill_8.gds")):
+        return None
+    comps = " ".join("- u%d sky130_fd_sc_hd__%s + PLACED ( %d 0 ) N ;" % (i, m, int(x * 1000)) for i, (m, x) in enumerate(cells))
+    deftext = """VERSION 5.8 ; DESIGN t ; UNITS DISTANCE MICRONS 1000 ; DIEAREA ( 0 0 ) ( 12000 2720 ) ;
+COMPONENTS %d ; %s END COMPONENTS
+SPECIALNETS 2 ; - VPWR + USE POWER ; - VGND + USE GROUND ; END SPECIALNETS
+END DESIGN""" % (len(cells), comps)
+    with tempfile.TemporaryDirectory() as td:
+        open(os.path.join(td, "t.def"), "w").write(deftext)
+        lefs = [os.path.join(lib, "sky130_fd_sc_hd.tlef")] + [os.path.join(lib, "sky130_fd_sc_hd__%s.lef" % m) for m in sorted({m for m, _ in cells})]
+        return lefdef.def2flat(os.path.join(td, "t.def"), lefs, lib, T)
+
+
+def test_remove_finger_roundtrip():
+    """add_finger then remove_finger on the bare nand2 row gives back the
+    original netlist and device sizes, with no new violations."""
+    from .. import moves as mv, drc as rules
+    fl = _bare_row([("fill_4", 0.0), ("nand2_1", 1.84), ("fill_8", 3.22)])
+    if fl is None:
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    ex0 = extract.extract(fl, T)
+    sig = ex0.signature(); base = {rules.key(v) for v in rules.check(fl, ex0)}
+    sizes0 = sorted((x.kind, round(x.w, 3), x.fingers) for x in ex0.devices)
+    devs = sorted([d for d in ex0.devices if d.kind == "p"], key=lambda x: -max(ex0.shapes[g].rect[2] for g in x.gate_ids))
+    mv.add_finger(fl, ex0, devs[0], side="high")
+    ex1 = extract.extract(fl, T)
+    dev = next(x for x in ex1.devices if x.kind == "p" and x.fingers == 2)
+    touched = mv.remove_finger(fl, ex1, dev, side="high")
+    ex2 = extract.extract(fl, T)
+    assert ex2.signature() == sig
+    assert sorted((x.kind, round(x.w, 3), x.fingers) for x in ex2.devices) == sizes0, sorted((x.kind, round(x.w, 3), x.fingers) for x in ex2.devices)
+    nv = rules.new_violations(fl, ex2, touched, base)
+    assert not nv, nv[:3]
+    # nothing of the added finger is left: rect count back to the original
+    print("  roundtrip: %d rects (original %d)" % (len(fl.rects), len(extract.extract(_bare_row([("fill_4", 0.0), ("nand2_1", 1.84), ("fill_8", 3.22)]), T).shapes) and len(_bare_row([("fill_4", 0.0), ("nand2_1", 1.84), ("fill_8", 3.22)]).rects)))
+
+
+def test_remove_finger_stock_buf4():
+    """A stock buf_4 loses one PMOS and one NMOS finger of its output stage:
+    same netlist, W down by one finger each, no new violations."""
+    from .. import moves as mv, drc as rules
+    fl = _bare_row([("fill_4", 0.0), ("buf_4", 1.84), ("fill_8", 4.60)])
+    if fl is None:
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    ex0 = extract.extract(fl, T)
+    sig = ex0.signature(); base = {rules.key(v) for v in rules.check(fl, ex0)}
+    before = {(x.kind, x.fingers): round(x.w, 3) for x in ex0.devices}
+    for kind in ("p", "n"):
+        ex = extract.extract(fl, T)
+        dev = max((x for x in ex.devices if x.kind == kind), key=lambda x: x.fingers)
+        f0 = dev.fingers
+        touched = mv.remove_finger(fl, ex, dev, side="high")
+        ex2 = extract.extract(fl, T)
+        assert ex2.signature() == sig, kind
+        d2 = max((x for x in ex2.devices if x.kind == kind), key=lambda x: x.fingers)
+        assert d2.fingers == f0 - 1, (kind, f0, d2.fingers)
+        nv = rules.new_violations(fl, ex2, touched, base)
+        assert not nv, (kind, nv[:3])
+        base = {rules.key(v) for v in rules.check(fl, ex2)}
+    ex2 = extract.extract(fl, T)
+    print("  buf_4: %s -> %s" % (sorted(before.items()), sorted({(x.kind, x.fingers): round(x.w, 3) for x in ex2.devices}.items())))
+
+
 
 if __name__ == "__main__":
     fails = 0

@@ -1,0 +1,16 @@
+== 1. A = u1(inv_4: P 4 / N 4 fingers) -> u4 short; B = u6(inv_1) -> u9 over 120 um of met2
+   baseline: A 3.8 ps, B 39.6 ps; imbalance 35.8 ps
+== 2. greedy search: u1 P/N in 1..5 (stock 4), u6 P/N in 1..4 (stock 1); states rebuilt from the base
+  start  cost 1.05  {'u1_p': 4, 'u1_n': 4, 'u6_p': 1, 'u6_n': 1}
+  round 1  cost 0.50431  {'u1_p': 4, 'u1_n': 4, 'u6_p': 2, 'u6_n': 1}  {'A_ps': 3.819, 'B_ps': 20.151, 'spread_ps': 16.332, 'fingers': 11}
+  round 2  cost 0.34785  {'u1_p': 4, 'u1_n': 4, 'u6_p': 3, 'u6_n': 1}  {'A_ps': 3.819, 'B_ps': 14.09, 'spread_ps': 10.271, 'fingers': 12}
+  round 3  cost 0.27055  {'u1_p': 4, 'u1_n': 4, 'u6_p': 4, 'u6_n': 1}  {'A_ps': 3.819, 'B_ps': 10.749, 'spread_ps': 6.93, 'fingers': 13}
+  round 4  cost 0.21752  {'u1_p': 3, 'u1_n': 4, 'u6_p': 4, 'u6_n': 1}  {'A_ps': 5.051, 'B_ps': 10.749, 'spread_ps': 5.697, 'fingers': 12}
+  round 5  cost 0.13144  {'u1_p': 2, 'u1_n': 4, 'u6_p': 4, 'u6_n': 1}  {'A_ps': 7.516, 'B_ps': 10.749, 'spread_ps': 3.233, 'fingers': 11}
+  round 6  cost 0.11144  {'u1_p': 2, 'u1_n': 3, 'u6_p': 4, 'u6_n': 1}  {'A_ps': 7.516, 'B_ps': 10.749, 'spread_ps': 3.233, 'fingers': 10}
+  round 7  cost 0.091444  {'u1_p': 2, 'u1_n': 2, 'u6_p': 4, 'u6_n': 1}  {'A_ps': 7.516, 'B_ps': 10.749, 'spread_ps': 3.233, 'fingers': 9}
+  round 8  cost 0.071444  {'u1_p': 2, 'u1_n': 1, 'u6_p': 4, 'u6_n': 1}  {'A_ps': 7.516, 'B_ps': 10.749, 'spread_ps': 3.233, 'fingers': 8}
+== 3. result: {'u1_p': 2, 'u1_n': 1, 'u6_p': 4, 'u6_n': 1} -> A 7.5 ps, B 10.7 ps, imbalance 3.2 ps (was 35.8); fingers 10 -> 8; legal=True topology_ok=True violations=0; 46 states
+   u1 devices: ['p W=2.00 fingers=2', 'n W=0.65 fingers=1']
+   u6 devices: ['p W=4.00 fingers=4', 'n W=0.65 fingers=1']
+   wrote evidence/l4_path_balanced_twoway.gds
