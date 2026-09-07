@@ -155,6 +155,20 @@ own DEF reader + full-stack LayoutToNetlist on the same inputs, then compares:
 W/L equal, degree histogram equal, isomorphic. Needs `~/tools/orfs-sky130hd`
 (ORFS sky130hd platform files) and the `klayout` wheel.
 
+## L4 on the real layout (`l4_gcd_whitespace.py`, `evidence/l4_gcd_whitespace.log`)
+
+Fingers into the fillers OpenROAD placed in gcd. 33 candidates; six tried:
+
+| cell | neighbour | result |
+|---|---|---|
+| _149_, _161_ nand2_1 | fill_4, fill_8 | refused: no field for a poly bridge |
+| _110_ clkinv_1, rebuffer12 buf_4 | fill_4 | refused: no met1 height clear of other nets for the jumper |
+| rebuffer3 buf_4 | fill_8 | LEGAL: 5 → 6 fingers/stage, net3 13.2 → 12.0 ps |
+| rebuffer13 buf_4 | fill_8 | LEGAL: 5 → 6 fingers/stage, net13 17.6 → 15.8 ps |
+
+`evidence/gcd_rebuffer3_fingered.gds` extracts isomorphic in KLayout
+(`evidence/l4_gcd_fingered_vs_klayout.log`).
+
 ## Findings about the kestrel layout (report upstream)
 
 1. Inter-stage MET3 routes share track y≈8.43 µm and overlap: all four stages'

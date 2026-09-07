@@ -277,6 +277,24 @@ half-width extension. The reference itself needed care: kestrel's KLayout
 recipe stops at met3 and fragments a power grid routed on met4/met5, so the
 probe carries a full-stack extraction.
 
+**L4 on the real layout (2026-09-07, `probes/layopt/l4_gcd_whitespace.py`,
+`evidence/l4_gcd_whitespace.log`):** of gcd's 784 instances, 33 logic cells
+have a fill_4 or fill_8 flush on their right — OpenROAD's own whitespace. Six
+tried. Two `buf_4` rebuffers grow legally, 5 → 6 fingers per stage, topology
+preserved, no new violations, and their driven nets speed up (Elmore 13.2 →
+12.0 ps over 4 receivers, 17.6 → 15.8 ps over 8, with R_drv ∝ 1/W); KLayout
+extracts the result isomorphic to layopt's (`evidence/l4_gcd_fingered_vs_klayout.log`).
+Four are refused for stated reasons, each a fact about the layout: the two
+nand2_1 have no field for a poly bridge (input contacts in the mid gap, the
+flipped row's poly at minimum spacing across the rail); clkinv_1 and the third
+buf_4 have P&R met1 routes crossing the cell where the jumper would go. One
+of those routes shorted a jumper into net `_076_` with zero spacing flags
+before the jumper learned to look — the topology guard caught it, which is
+what it is for. The move also learned that the finger belongs on the
+transistor whose gate is outermost on the growth side of the shared strip (a
+nand2 has two on one strip) and that the bridge must meet spacing, not just
+avoid overlap.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -337,7 +355,10 @@ about the centre-line, translate, add rectangle, **add finger across the cell
 edge** (`add_finger`: mirrored gate + S/D column, poly bridge, implant/well
 extension; supply-connected sources connect through the rail that continues
 into the neighbour, signal-net S/D through an mcon + met1 jumper; works on
-devices that already have fingers).
+devices that already have fingers; refuses when the transistor is not the
+outermost on its strip, when no bridge position meets poly/diffusion spacing,
+or when no jumper height clears other nets' met1 — every refusal names the
+obstacle).
 
 Planned, in the order the async objectives need them:
 
@@ -434,12 +455,14 @@ Planned:
   Elmore balance on a real RC tree, sized under the guard, with the verdict
   when sizing cannot close the gap (§2). Waiting on nulex for the path sets;
   completion-tree drive balance and a QDI-bound `VX_alu_int` slice follow.
-- **L4 — dissolve for real — DONE for the finger move (2026-09-06).**
+- **L4 — dissolve for real — DONE for the finger move (2026-09-06/07).**
   `add_finger` grows a transistor into the neighbouring filler (supply or
-  signal S/D), verified by re-extraction, the guards and KLayout, and the
-  discrete search uses it to balance two paths 25.9 → 0.4 ps (§2). Remaining:
-  diffusion merge across abutting cells (needs compaction to pay), contact
-  growth, `remove_finger`.
+  signal S/D), verified by re-extraction, the guards and KLayout; the discrete
+  search uses it to balance two paths 25.9 → 0.4 ps; on OpenROAD's gcd it
+  grows two rebuffers into real filler whitespace and refuses four cells with
+  the obstacle named (§2). Remaining: a contact-based gate bridge for cells
+  whose field is full (nand2), jumper routing on met2, diffusion merge across
+  abutting cells (needs compaction to pay), contact growth, `remove_finger`.
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
   T2 (layopt MC over a stated variation model) and T3 (stat-sim's
   `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1
