@@ -497,6 +497,42 @@ def test_drive_model_liberty():
         drive.edge_fit(lib[P + "inv_1"].output().arcs[0], "fall", 50.0).r_ohm, ff.r_ohm, ff.r_ohm / dm.r_fall(0.65)))
 
 
+def test_move_pr_wire():
+    """A P&R-style wall of another net fills the field gap on met1 and met2,
+    with li walls beside the cell and sealed rows above and below, so the far
+    gate of the mirrored NMOS stack has no path at all.  The router then moves
+    the wall: cuts it around the connection and reconnects the pieces.  The
+    stack goes in, the wall's net stays one net, nothing new is violated."""
+    from .. import moves as mv, drc as rules
+    fl = _bare_row([("fill_4", 0.0), ("nand2_1", 1.84), ("fill_8", 3.22)])
+    if fl is None:
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    L = T.layers
+    for lay, (y0, y1) in (("met1", (1020, 1470)), ("met2", (1020, 1470)),
+                          ("li", (-2500, -430)), ("met1", (-2500, -420)), ("met2", (-2500, -420)),
+                          ("li", (2780, 5000)), ("met1", (2800, 5000)), ("met2", (2800, 5000))):
+        mv.add_rect_dbu(fl, L[lay], (500, y0, 6000, y1), "t/net:blk")
+    mv.add_rect_dbu(fl, L["via1"], (610, 1070, 760, 1220), "t/net:blk")
+    for x0, x1 in ((1000, 1760), (4250, 4420)):
+        mv.add_rect_dbu(fl, L["li"], (x0, -400, x1, 2780), "t/net:blk")
+    ex = extract.extract(fl, T); sig = ex.signature(); base = {rules.key(v) for v in rules.check(fl, ex)}
+    blk_nets = lambda e: {e.net_of_shape[i] for i, sh in enumerate(e.shapes) if sh.src >= 0 and fl.rects[sh.src].prov == "t/net:blk"}
+    n_blk = len(blk_nets(ex))
+    for kind in ("p", "n"):
+        ex = extract.extract(fl, T)
+        devs = sorted([d for d in ex.devices if d.kind == kind], key=lambda x: -max(ex.shapes[g].rect[2] for g in x.gate_ids))
+        touched = mv.add_finger(fl, ex, devs[0], side="high")
+        ex2 = extract.extract(fl, T)
+        assert ex2.signature() == sig, kind
+        assert len(blk_nets(ex2)) == n_blk, (kind, n_blk, len(blk_nets(ex2)))
+        nv = rules.new_violations(fl, ex2, touched, base)
+        assert not nv, (kind, nv[:3])
+        base = {rules.key(v) for v in rules.check(fl, ex2)}
+    rr = mv.LAST_PLAN_TALLY.get("reroute")
+    assert isinstance(rr, dict) and rr.get("moved"), mv.LAST_PLAN_TALLY
+    print("  moved %d P&R wire(s) to make room: %s" % (len(rr["moved"]), rr["moved"]))
+
+
 
 if __name__ == "__main__":
     fails = 0

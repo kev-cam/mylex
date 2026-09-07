@@ -8,7 +8,7 @@ for the PNGs). Design record: `../../LAYOUT-OPT.md`.
 ## Commands
 
     cd /usr/local/src/mylex
-    python3 -m layopt.tests.test_layopt                       # 14 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model)
+    python3 -m layopt.tests.test_layopt                       # 15 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model, moving a P&R wire)
     python3 -m layopt compare  $K/layout/kestrel_pll.gds $K/layout/kestrel_pll_flat_extracted.cir
     python3 -m layopt extract  $K/layout/kestrel_pll.gds -o evidence/kestrel_pll_layopt.cir
     python3 -m layopt rc       $K/layout/kestrel_pll.gds -o evidence/kestrel_pll.spef
@@ -202,6 +202,13 @@ those points and every repair attempt; `LAYOPT_ROUTE_NO_REPAIR=1` returns the
 unrepaired path (the delta-DRC's same-net notch rule and the move's
 notch-fill pass then deal with it -- `_161_` still passes that way).
 `LAYOPT_FILL_DEBUG=1` traces the notch fills.
+
+When even the router finds no path, `route.reroute_around` moves the P&R wire
+in the way: a second search may cross other nets' DEF wires at a penalty, the
+wires it crosses are cut around the path (slivers dropped), our geometry goes
+in, and each cut wire's pieces are reconnected by the router with the far
+piece as the only landing; any failure rolls everything back. Exercised by
+`test_move_pr_wire` (a sealed bare nand2 row).
 
 ## remove_finger (`l4_remove_finger.py`, `evidence/l4_remove_finger.log`)
 

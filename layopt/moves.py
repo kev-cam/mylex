@@ -653,6 +653,8 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
                 if r2.y1 <= lic_hi:
                     raise MoveError("add_finger: foreign %s at %s conflicts with the mirrored strap over our contacts" % (inv_layers(tech).get(r2.layer, r2.layer), [round(v / 1000.0, 3) for v in r2.rect]))
                 trim_hi = min(trim_hi or 10**9, r2.y0 - sp_li)
+    if (dev.kind == "p" and trim_lo is not None and trim_lo > lic_lo) or (dev.kind == "n" and trim_hi is not None and trim_hi < lic_hi):
+        raise MoveError("add_finger: foreign li/cuts within spacing of the mirrored strap over our contacts (trimming cannot clear them)")
     def clip_strap(r: Rect) -> Rect:
         if dev.kind == "p" and trim_lo is not None:
             return (r[0], max(r[1], min(trim_lo, lic_lo)), r[2], r[3])
@@ -709,8 +711,14 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
             res = route.maze_route(fl, tech, inner_net, src2net, sources, rwin, own_ids=[j for _, j in new_straps])
             LAST_JUMPER_TALLY["maze route"] = dict(route.LAST_ROUTE_STATS)
             if res is None:
-                raise MoveError("add_finger: no legal S/D jumper (met1 bar, met1 pads + via1 + met2 bar, or routed path); rejected by: %s" % dict(LAST_JUMPER_TALLY))
-            plan = res[1]
+                moved = route.reroute_around(fl, tech, inner_net, src2net, sources, rwin, [], own_ids=[j for _, j in new_straps], prov=dev.prov)
+                LAST_JUMPER_TALLY["reroute"] = route.LAST_ROUTE_STATS.get("reroute")
+                if moved is None:
+                    raise MoveError("add_finger: no legal S/D jumper (met1 bar, met1 pads + via1 + met2 bar, routed path, or moving a P&R wire); rejected by: %s" % dict(LAST_JUMPER_TALLY))
+                touched.extend(moved)
+                plan = []
+            else:
+                plan = res[1]
         for layer, rect in plan:
             touched.append(add_rect_dbu(fl, layer, rect, dev.prov))
     # 4. implant and well cover the new diffusion
@@ -749,6 +757,7 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
                             % (owner.name, ex.nets[owner.g].name, dict(LAST_PLAN_TALLY)))
         for layer, rect in plan:
             touched.append(add_rect_dbu(fl, layer, rect, dev.prov))
+        touched.extend(LAST_PLAN_TOUCHED); LAST_PLAN_TOUCHED.clear()
     if bridge is None:
         # 5a. column bridge: same-net poly already aligned with the new finger beyond the
         # overhang (the other transistor's added finger, or the cell's own gate poly):
@@ -771,10 +780,12 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
                             % dict(LAST_PLAN_TALLY))
         for layer, rect in plan:
             touched.append(add_rect_dbu(fl, layer, rect, dev.prov))
+        touched.extend(LAST_PLAN_TOUCHED); LAST_PLAN_TOUCHED.clear()
     return sorted(set(touched))
 
 
 LAST_PLAN_TALLY: Dict[str, int] = {}
+LAST_PLAN_TOUCHED: List[int] = []      # rect ids a planner changed/added itself (moved P&R wires)
 LAST_JUMPER_TALLY: Dict[str, int] = {}
 
 
@@ -948,6 +959,16 @@ def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, ne
             si, wires = res
             head_rects, licon, pad = fallback[si]
             return head_rects + [(licon_l, licon), (li_l, pad)] + wires
+        # no path at all: move the P&R wire that is in the way (the plan is then
+        # applied inside; the ids come back through LAST_PLAN_TOUCHED)
+        def heads(si):
+            head_rects, licon, pad = fallback[si]
+            return head_rects + [(licon_l, licon), (li_l, pad)]
+        moved = route.reroute_around(fl, tech, dev.g, src2net, sources, rwin, heads, new_ids=new_ids, prov=dev.prov)
+        tally["reroute"] = route.LAST_ROUTE_STATS.get("reroute")
+        if moved is not None:
+            LAST_PLAN_TOUCHED.extend(moved)
+            return []
     return None
 
 

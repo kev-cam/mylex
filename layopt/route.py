@@ -31,7 +31,8 @@ LAST_ROUTE_STATS: Dict[str, object] = {}
 def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tuple[int, int, int]],
                window: Rect, new_ids: Sequence[int] = (), n_layers: int = 3, grid_um: float = 0.01,
                via_cost: int = 25, targets_extra: Sequence[Tuple[int, Rect]] = (),
-               own_ids: Sequence[int] = (),
+               own_ids: Sequence[int] = (), soft_ids: Sequence[int] = (), soft_cost: int = 400,
+               target_ids: Optional[Sequence[int]] = None,
                max_pops: int = 2_000_000) -> Optional[Tuple[int, List[Tuple[Tuple[int, int], Rect]]]]:
     """Route from any of `sources` -- (layer index, x, y) points, layer 0 =
     tech.routing[0] -- to any shape of `net` on the first `n_layers` routing
@@ -40,7 +41,10 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
     or None.  Rects added by the current move are not extracted yet, so
     src2net does not know them: `own_ids` are the ones that belong to `net`
     (a new strap the route starts from), `new_ids` the ones that do not even
-    if src2net says otherwise."""
+    if src2net says otherwise.  `soft_ids` (other nets' P&R wires) may be
+    crossed at `soft_cost` per cell; the ones a returned path conflicts with
+    are reported in LAST_ROUTE_STATS["blockers"] -- the caller may move them
+    (`reroute_around`).  `target_ids`, when given, are the only landings."""
     LAST_ROUTE_STATS.clear()
     L = tech.layers
     dbu = fl.dbu_um
@@ -63,7 +67,8 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
         LAST_ROUTE_STATS["error"] = "window too large (%d cells)" % (nx * ny * len(layers))
         return None
 
-    own_set = set(own_ids); new_set = set(new_ids)
+    own_set = set(own_ids); new_set = set(new_ids); soft_set = set(soft_ids)
+    tgt_set = set(target_ids) if target_ids is not None else None
     def own(k: int) -> bool:
         return (src2net.get(k) == net or k in own_set) and k not in new_set
 
@@ -95,6 +100,7 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
             by_layer.setdefault(r.layer, []).append((k, r.rect))
     n_obst = 0
     own_rects: List[List[Rect]] = [[] for _ in layers]
+    soft = [np.zeros((nx, ny), dtype=bool) for _ in layers]
     for i, lid in enumerate(lay_ids):
         half = width[i] // 2
         for k, r in by_layer.get(lid, []):
@@ -102,12 +108,15 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
                 # a landing: the wire centre inside the shape (overlap of at least half
                 # a width, not a corner touch).  The move's own new rects (own_ids)
                 # are free space but not landings: the route starts from them.
-                if k not in own_set:
+                if (tgt_set is None and k not in own_set) or (tgt_set is not None and k in tgt_set):
                     mark(target[i], r, 0)
                 own_rects[i].append(r)
                 continue
             n_obst += 1
-            mark(blocked[i], r, space[i] + half)
+            if k in soft_set:
+                mark(soft[i], r, space[i] + half)          # passable at a price: a wire that could be moved
+            else:
+                mark(blocked[i], r, space[i] + half)
         # other nets' cuts touching this layer short a wire drawn over them
         for vi in (i - 1, i):
             if 0 <= vi < len(cuts):
@@ -116,13 +125,14 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
                         mark(blocked[i], r, half)
     # a via needs its cut clear of every cut on that layer (cut spacing is
     # net-blind) and its two landing pads clear of other nets on both layers
+    soft_via = [np.zeros((nx, ny), dtype=bool) for _ in cuts]
     for vi, cid in enumerate(cut_ids):
         bad = np.zeros((nx, ny), dtype=bool)
         for i in (vi, vi + 1):
             pad_half = cw[vi] // 2 + enc[vi][i - vi]          # this layer's landing pad
             for k, r in by_layer.get(lay_ids[i], []):
                 if not own(k):
-                    mark(bad, r, space[i] + pad_half)
+                    mark(soft_via[vi] if k in soft_set else bad, r, space[i] + pad_half)
             for vj in (i - 1, i):
                 if 0 <= vj < len(cuts):
                     for k, r in by_layer.get(cut_ids[vj], []):
@@ -135,6 +145,10 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
     for li, r in targets_extra:
         if 0 <= li < len(layers):
             mark(target[li], r, 0)
+    for i in range(len(layers)):
+        soft[i] &= ~blocked[i]
+    for vi in range(len(cuts)):
+        soft_via[vi] &= via_ok[vi]
     # wire footprints must stay inside the window
     for i in range(len(layers)):
         m = width[i] // 2 // g + 1
@@ -164,7 +178,8 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
     # (a straight run's rect is the union of its cells).  So: search, check the
     # resulting rects against own shapes, block the offending cells, repeat.
     for attempt in range(6):
-        res = _search(layers, cuts, nx, ny, x0, y0, g, blocked, via_ok, target, sources, via_cost, max_pops)
+        res = _search(layers, cuts, nx, ny, x0, y0, g, blocked, via_ok, target, sources, via_cost, max_pops,
+                      soft if soft_set else None, soft_via if soft_set else None, soft_cost)
         if res is None:
             return None
         src_idx, path = res
@@ -181,6 +196,18 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
             # same-net notch rule can be shown to catch what the repair fixes)
             LAST_ROUTE_STATS["repairs"] = attempt
             LAST_ROUTE_STATS["unrepaired_faults"] = len(faults)
+            if soft_set:
+                # which soft wires does this path conflict with?
+                blockers = []
+                for k in soft_set:
+                    r = fl.rects[k]
+                    if r.layer not in lay_ids:
+                        continue
+                    li = lay_ids.index(r.layer); sp = space[li]
+                    grown = (r.rect[0] - sp, r.rect[1] - sp, r.rect[2] + sp, r.rect[3] + sp)
+                    if any(lid == r.layer and geom.overlaps(pr, grown) for lid, pr in rects):
+                        blockers.append(k)
+                LAST_ROUTE_STATS["blockers"] = blockers
             return src_idx, rects
         # Block the spacing band around each offending own shape, except the
         # corridors from which a straight run enters the shape (its centre line
@@ -227,7 +254,8 @@ def _own_spacing_faults(tagged, own_rects, lay_ids, space):
     return faults
 
 
-def _search(layers, cuts, nx, ny, x0, y0, g, blocked, via_ok, target, sources, via_cost, max_pops):
+def _search(layers, cuts, nx, ny, x0, y0, g, blocked, via_ok, target, sources, via_cost, max_pops,
+            soft=None, soft_via=None, soft_cost=400):
     # Dijkstra over (layer, i, j)
     INF = 1 << 60
     dist = [np.full((nx, ny), INF, dtype=np.int64) for _ in layers]
@@ -261,14 +289,14 @@ def _search(layers, cuts, nx, ny, x0, y0, g, blocked, via_ok, target, sources, v
         for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             ni, nj = i + di, j + dj
             if 0 <= ni < nx and 0 <= nj < ny and not blocked[li][ni, nj]:
-                nd = d + 1
+                nd = d + 1 + (soft_cost if soft is not None and soft[li][ni, nj] else 0)
                 if nd < dist[li][ni, nj]:
                     dist[li][ni, nj] = nd
                     prev[(li, ni, nj)] = (li, i, j)
                     heapq.heappush(heap, (nd, li, ni, nj))
         for nl, vi in ((li + 1, li), (li - 1, li - 1)):
-            if 0 <= nl < len(layers) and 0 <= vi < len(cuts) and via_ok[vi][i, j] and not blocked[nl][i, j]:
-                nd = d + via_cost
+            if 0 <= nl < len(layers) and 0 <= vi < len(cuts) and (via_ok[vi][i, j] or (soft_via is not None and soft_via[vi][i, j])) and not blocked[nl][i, j]:
+                nd = d + via_cost + (soft_cost if soft_via is not None and (soft_via[vi][i, j] or soft[nl][i, j]) else 0)
                 if nd < dist[nl][i, j]:
                     dist[nl][i, j] = nd
                     prev[(nl, i, j)] = (li, i, j)
@@ -322,3 +350,119 @@ def _path_rects(path, x0, y0, g, lay_ids, cut_ids, width, cw, enc) -> List[Tuple
         run.append(b)
     flush(run)
     return out
+
+
+def reroute_around(fl, tech, net: int, src2net: Dict[int, int], sources, window: Rect, head_plan,
+                   sources_heads=None, new_ids: Sequence[int] = (), own_ids: Sequence[int] = (), prov: str = "",
+                   soft_prov_tag: str = "/net:") -> Optional[List[int]]:
+    """When no path exists, move the P&R wire that is in the way.
+
+    1. Route again with the other nets' P&R wires (rects whose provenance
+       carries `soft_prov_tag`, i.e. DEF routing, never cell geometry) passable
+       at a penalty; the path found names the wires it conflicts with.
+    2. Cut each such wire around the path: the segment keeps the part on one
+       side, the part on the other side becomes a new rect (ids stay valid),
+       the middle is gone.
+    3. Add our geometry (`head_plan` rects for the chosen source, then the
+       path) -- it is now an obstacle for everyone.
+    4. Reconnect each cut wire's two stubs with the router (the stub is the
+       only landing), so the other net detours around our wire, typically a
+       hop on the layer above.
+    If any reconnection fails everything is rolled back and None is returned.
+    Otherwise the ids of every rect added or changed are returned; the guards
+    then judge the whole as they judge any move -- the other net's topology
+    must survive too."""
+    L = tech.layers
+    dbu = fl.dbu_um
+    nm = lambda v: int(round(v / dbu))
+    lay_ids = {L[n] for n in tech.routing[:3]}
+    soft_ids = [k for k, r in enumerate(fl.rects) if r.layer in lay_ids and soft_prov_tag in r.prov
+                and src2net.get(k) != net and geom.overlaps(r.rect, window)]
+    if not soft_ids:
+        LAST_ROUTE_STATS["reroute"] = "no P&R wire to move in the window"
+        return None
+    res = maze_route(fl, tech, net, src2net, sources, window, new_ids=new_ids, own_ids=own_ids, soft_ids=soft_ids)
+    if res is None:
+        LAST_ROUTE_STATS["reroute"] = "no path even through P&R wires"
+        return None
+    si, path_rects = res
+    blockers = list(LAST_ROUTE_STATS.get("blockers", []))
+    stats = {"blockers": len(blockers), "moved": []}
+    n0 = len(fl.rects)
+    saved = {}                                   # id -> original rect, for rollback
+    stubs = []                                   # (kept id, new stub id, layer, gap rect)
+    def rollback():
+        for k, r in saved.items():
+            fl.rects[k].rect = r
+        del fl.rects[n0:]
+    for b in blockers:
+        rb = fl.rects[b]
+        li = tech.routing.index({v: k for k, v in L.items()}[rb.layer])
+        sp = nm(tech.min_space.get(tech.routing[li], 0.14))
+        # the part of the wire our path needs: our rects on its layer grown by spacing
+        conflict = [(pr[0] - sp, pr[1] - sp, pr[2] + sp, pr[3] + sp) for lid, pr in path_rects if lid == rb.layer]
+        pieces = geom.subtract(rb.rect, conflict)
+        # slivers below min width are not wire: drop them (the gap grows)
+        mw = nm(tech.min_width.get(tech.routing[li], 0.14))
+        pieces = [pc for pc in pieces if min(pc[2] - pc[0], pc[3] - pc[1]) >= mw]
+        if not pieces:
+            LAST_ROUTE_STATS["reroute"] = "blocker %d would vanish entirely" % b
+            rollback(); return None
+        horizontal = (rb.rect[2] - rb.rect[0]) >= (rb.rect[3] - rb.rect[1])
+        pieces.sort(key=lambda r: r[0] if horizontal else r[1])
+        saved[b] = rb.rect
+        # the first piece stays in the wire's own rect (ids stay valid), the others are new;
+        # consecutive pieces are reconnected pairwise
+        fl.rects[b].rect = pieces[0]
+        ids = [b] + [add_rect(fl, rb.layer, pc, rb.prov) for pc in pieces[1:]]
+        if os.environ.get("LAYOPT_ROUTE_PROBE"):
+            print("      reroute: cut %s %s into %s; our rects on that layer %s" % (
+                rb.prov.split("/")[-1], [round(v * dbu, 3) for v in saved[b]], [[round(v * dbu, 3) for v in pc] for pc in pieces],
+                [[round(v * dbu, 3) for v in pr] for lid, pr in path_rects if lid == rb.layer]))
+        for a_id, b_id in zip(ids, ids[1:]):
+            stubs.append((a_id, b_id, rb.layer, None))
+        stats["moved"].append((b, fl.rects[b].prov.split("/")[-1], len(pieces)))
+    # our geometry
+    ours: List[int] = []
+    heads = head_plan(si) if callable(head_plan) else head_plan
+    for lid, r in list(heads) + list(path_rects):
+        ours.append(add_rect(fl, lid, r, prov))
+    # reconnect each cut wire
+    for b, j, lid, gap in stubs:
+        nb = src2net.get(b)
+        if nb is None:                            # a later piece of an already-cut wire: same net as its origin
+            nb = next(src2net.get(k) for k in saved if fl.rects[k].prov == fl.rects[b].prov and src2net.get(k) is not None)
+        kept = fl.rects[b].rect; stub = fl.rects[j].rect
+        # sources: points inside the kept piece near the gap; target: the stub only
+        w = min(kept[2] - kept[0], kept[3] - kept[1])
+        cx, cy = (kept[0] + kept[2]) // 2, (kept[1] + kept[3]) // 2
+        pts = []
+        if kept[2] - kept[0] >= kept[3] - kept[1]:          # horizontal wire
+            xs = [kept[2] - w // 2 - t for t in range(0, min(nm(0.6), kept[2] - kept[0] - w), nm(0.05))] if stub[0] >= kept[2] else \
+                 [kept[0] + w // 2 + t for t in range(0, min(nm(0.6), kept[2] - kept[0] - w), nm(0.05))]
+            pts = [(tech.routing.index({v: k for k, v in L.items()}[lid]), x, cy) for x in xs]
+        else:
+            ys = [kept[3] - w // 2 - t for t in range(0, min(nm(0.6), kept[3] - kept[1] - w), nm(0.05))] if stub[1] >= kept[3] else \
+                 [kept[1] + w // 2 + t for t in range(0, min(nm(0.6), kept[3] - kept[1] - w), nm(0.05))]
+            pts = [(tech.routing.index({v: k for k, v in L.items()}[lid]), cx, y) for y in ys]
+        if not pts:
+            pts = [(tech.routing.index({v: k for k, v in L.items()}[lid]), cx, cy)]
+        win = (min(kept[0], stub[0]) - nm(2.0), min(kept[1], stub[1]) - nm(2.0), max(kept[2], stub[2]) + nm(2.0), max(kept[3], stub[3]) + nm(2.0))
+        own_here = [i for i in range(len(fl.rects)) if i in saved or (i >= n0 and fl.rects[i].prov == fl.rects[b].prov and fl.rects[i].layer == lid)]
+        res2 = maze_route(fl, tech, nb, src2net, pts, win, own_ids=own_here, target_ids=[j])
+        if os.environ.get("LAYOPT_ROUTE_PROBE"):
+            print("      reroute: reconnect %s -> %s from %d sources (first %s): %s" % (
+                [round(v * dbu, 3) for v in kept], [round(v * dbu, 3) for v in stub], len(pts), [round(v * dbu, 3) if isinstance(v, int) and v > 100 else v for v in pts[0]], dict(LAST_ROUTE_STATS)))
+        if res2 is None:
+            LAST_ROUTE_STATS["reroute"] = "could not reconnect %s after the cut: %s" % (fl.rects[b].prov.split("/")[-1], LAST_ROUTE_STATS.get("error"))
+            rollback(); return None
+        for lid2, r2 in res2[1]:
+            ours.append(add_rect(fl, lid2, r2, fl.rects[b].prov))
+    LAST_ROUTE_STATS["reroute"] = stats
+    return sorted(set(ours) | set(saved) | {j for _, j, _, _ in stubs})
+
+
+def add_rect(fl, layer, rect: Rect, prov: str) -> int:
+    from .gds import FlatRect
+    fl.rects.append(FlatRect(layer, tuple(rect), prov))
+    return len(fl.rects) - 1

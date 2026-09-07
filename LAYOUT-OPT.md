@@ -578,6 +578,30 @@ edge, 122 against 101 ps: B's driver wants a third PMOS finger and the guards
 refuse it beside four NMOS fingers in that gap — the layout, not the model,
 is now the limit, which is the right place for the limit to be.
 
+**Moving a P&R wire when no route exists (2026-09-08, `route.reroute_around`).**
+The router treats other nets' geometry as walls. Cell geometry is a wall; a
+place-and-route wire is a choice someone made with the same information we
+have less of, and in a dissolved layout it is as movable as anything else.
+When the hard search fails, the search runs again with the other nets' P&R
+wires (rects whose provenance names a DEF net, never cell geometry) passable
+at a penalty of 400 per cell; the path it finds names the wires it conflicts
+with. Each is cut around the path — its rect keeps the first piece, the other
+pieces become new rects so ids stay valid, slivers below min width are
+dropped — our geometry goes in, and each pair of consecutive pieces is
+reconnected with the router, the far piece the only legal landing and our new
+wire now an obstacle like any other. If one reconnection fails the whole thing
+is rolled back and the refusal says which net could not be reconnected. The
+guards then judge the result as they judge any move; since the moved net
+connects devices its topology is under the signature too. Two details found
+by the synthetic case: a cut can leave a sliver above a pad that nothing can
+reach (dropped), and a path may cross a wire twice (pieces are reconnected
+pairwise, not as one pair). The unit test (`test_move_pr_wire`) seals a bare
+nand2 row with walls of another net on met1 and met2 across the field gap,
+li walls beside the cell and rows sealed above and below; the mirrored NMOS
+stack's far gate has no path, the wall is cut around the connection's pad and
+reconnected with a met1 detour above it, the stack goes in, the wall's net
+stays one net, no new violation.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -651,7 +675,9 @@ clear of foreign li on the side away from its rail; works on devices that
 already have fingers; refuses when the transistor is not the outermost on its
 strip, when the stack reaches the diffusion edge without a contacted node,
 or when neither a straight bar nor the maze router (`route.py`: li/met1/met2
-with mcon/via1, landing on any shape of the net) can make the connection —
+with mcon/via1, landing on any shape of the net), nor moving the P&R wire in
+the way (`route.reroute_around`: cut it around the path and reconnect its
+pieces) can make the connection —
 every refusal names the obstacle, the planners with a tally of rejected
 candidates and the router's statistics; `LAYOPT_PLAN_DEBUG=1` prints the
 surviving head candidates, `LAYOPT_ROUTE_PROBE=layer:x:y,...` the raster
@@ -776,9 +802,10 @@ Planned:
   Same-net notch rule in the delta-DRC with a notch-fill pass after each
   move. `remove_finger` as the inverse (stock cells and added fingers alike,
   KLayout-confirmed on gcd). Two-edge driver model fitted from the Liberty
-  (§2, §4); the balance probes cost both edges. Remaining: moving a P&R wire
-  when no path exists, diffusion merge across abutting cells (needs
-  compaction to pay), contact growth. Slew is in the model (§2).
+  (§2, §4) with slew; the balance probes cost both edges. P&R wires in the
+  way of a connection are moved (cut and reconnected, §2). Remaining:
+  diffusion merge across abutting cells (needs compaction to pay), contact
+  growth.
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
   T2 (layopt MC over a stated variation model) and T3 (stat-sim's
   `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1

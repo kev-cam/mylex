@@ -10,7 +10,7 @@ topology + delta-DRC guard, and report the Elmore delay of the cell's output
 net before/after with R_drv scaled by 1/W (receivers' Cin from their gate
 area at 8.5 fF/um^2).
 
-Usage: l4_gcd_whitespace.py [--def path] [--max N]
+Usage: l4_gcd_whitespace.py [--def path] [--max N] [--only inst1,inst2]
 """
 import copy
 import glob
@@ -108,6 +108,9 @@ def main():
     print("== %s: %d instances, %d rects, %d devices; baseline rule flags %d (%.0fs)" % (
         os.path.basename(DEF), len(d.components), len(fl.rects), len(ex.devices), len(base), time.time() - t0))
     cands = candidates(lef, d, sizes)
+    only = set(sys.argv[sys.argv.index("--only") + 1].split(",")) if "--only" in sys.argv else None
+    if only:
+        cands = [(a, b) for a, b in cands if a.inst in only]
     print("   %d logic cells have a fill_4/fill_8 flush on their right; trying %d" % (len(cands), min(MAXC, len(cands))))
     results = []
     for a, b in cands[:MAXC]:
