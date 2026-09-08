@@ -393,22 +393,58 @@ def test_same_net_notch():
     assert [x for x in rules.check(fl, ex) if x.rule == "min_space"]
 
 
-def _bare_row(cells):
-    """A one-row DEF of the given (macro, x_um) placements between fillers; returns the FlatLayout."""
+def _bare_row(cells, rows=None):
+    """A one-row DEF of the given (macro, x_um) placements between fillers; returns the FlatLayout.
+    `rows`: further rows above the first, each a list of the same (macro, x_um[, orient])
+    triples; rows alternate N / FS the way a sky130 core does, sharing rails."""
     from .. import lefdef
     lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
     if not os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__fill_8.gds")):
         return None
-    cells = [c if len(c) == 3 else (c[0], c[1], "N") for c in cells]          # (macro, x_um[, orient])
-    comps = " ".join("- u%d sky130_fd_sc_hd__%s + PLACED ( %d 0 ) %s ;" % (i, m, int(x * 1000), o) for i, (m, x, o) in enumerate(cells))
-    deftext = """VERSION 5.8 ; DESIGN t ; UNITS DISTANCE MICRONS 1000 ; DIEAREA ( 0 0 ) ( 12000 2720 ) ;
+    for m in {c[0] for r in [cells] + list(rows or []) for c in r}:
+        if not os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__%s.gds" % m)):
+            return None
+    placed = []
+    for ri, row in enumerate([cells] + list(rows or [])):
+        for c in row:
+            m, x = c[0], c[1]
+            o = c[2] if len(c) == 3 else ("N" if ri % 2 == 0 else "FS")
+            placed.append((m, x, ri * 2.72, o))
+    cells = placed
+    comps = " ".join("- u%d sky130_fd_sc_hd__%s + PLACED ( %d %d ) %s ;" % (i, m, int(round(x * 1000)), int(round(y * 1000)), o) for i, (m, x, y, o) in enumerate(cells))
+    deftext = """VERSION 5.8 ; DESIGN t ; UNITS DISTANCE MICRONS 1000 ; DIEAREA ( 0 0 ) ( 12000 %d ) ;
 COMPONENTS %d ; %s END COMPONENTS
 SPECIALNETS 2 ; - VPWR %s + USE POWER ; - VGND %s + USE GROUND ; END SPECIALNETS
-END DESIGN""" % (len(cells), comps, " ".join("( u%d VPWR )" % i for i in range(len(cells))), " ".join("( u%d VGND )" % i for i in range(len(cells))))
+END DESIGN""" % (2720 * (1 + len(rows or [])), len(cells), comps, " ".join("( u%d VPWR )" % i for i in range(len(cells))), " ".join("( u%d VGND )" % i for i in range(len(cells))))
     with tempfile.TemporaryDirectory() as td:
         open(os.path.join(td, "t.def"), "w").write(deftext)
         lefs = [os.path.join(lib, "sky130_fd_sc_hd.tlef")] + [os.path.join(lib, "sky130_fd_sc_hd__%s.lef" % m) for m in sorted({c[0] for c in cells})]
         return lefdef.def2flat(os.path.join(td, "t.def"), lefs, lib, T)
+
+
+def test_nor4_stack_spread():
+    """A nor4_1 between two rows of nand2_1: the PMOS four-stack mirrored at
+    its stock pitch has room in the mid-row gap for only every other far-gate
+    contact head, and the rail side is closed by the next row's diffusion; the
+    retry spreads the mirrored fingers by one poly pitch, and the finger is
+    legal and keeps the netlist."""
+    from .. import moves as mv, drc as rules
+    nand_row = [("nand2_1", 1.38 * i) for i in range(8)]
+    fl = _bare_row(nand_row, rows=[[("fill_4", 0.0), ("nor4_1", 1.84), ("fill_8", 4.14), ("fill_8", 7.82)], nand_row])
+    if fl is None:
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    ex0 = extract.extract(fl, T)
+    sig = ex0.signature(); base = {rules.key(v) for v in rules.check(fl, ex0)}
+    dev = sorted([d for d in ex0.devices if d.kind == "p" and "nor4" in d.prov], key=lambda x: -max(ex0.shapes[g].rect[2] for g in x.gate_ids))[0]
+    touched = mv.add_finger(fl, ex0, dev, side="high")
+    assert mv.LAST_SPREAD[0] > 0, "expected the stock pitch to fail and the spread retry to be used"
+    ex1 = extract.extract(fl, T)
+    assert ex1.signature() == sig, "nor4 PMOS stack finger changed the netlist"
+    nv = rules.new_violations(fl, ex1, touched, base)
+    assert not nv, "nor4 PMOS stack finger: new violations %s" % nv[:3]
+    p_after = [d for d in ex1.devices if d.kind == "p" and "nor4" in d.prov]
+    assert len(p_after) == 8, p_after
+    print("  nor4 PMOS stack mirrored with spread %.2f um: %d new rects, legal, netlist kept" % (mv.LAST_SPREAD[0], len(touched)))
 
 
 def test_remove_finger_roundtrip():

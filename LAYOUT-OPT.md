@@ -985,6 +985,31 @@ rectangle whose net is not known is refused — a fill merges a net with
 itself, and "unknown" is not "itself". NMOS-then-PMOS on `_112_` now keeps
 the netlist.
 
+**The nor4 stack heads (2026-09-08).** The remaining per-finger refusal on
+gcd was `_257_`, a nor4_1 whose four-PMOS series stack is mirrored whole, so
+three far gates each need a contact head, and at the stock 0.42 µm poly
+pitch a 0.27 µm head with 0.21 µm poly spacing to its neighbours fits in the
+mid-row gap only for every other finger. The obvious answer, heads
+alternating between the gap side and the rail side, is closed by the row
+geometry: under VDD the band between the P strip's poly overhang and the
+next row's diffusion is 0.265 µm and the head needs 0.27 (licon 0.17 plus
+0.05 poly enclosure on each side). Two heads at different heights on the gap
+side need 0.75 µm of a 0.60 µm gap. So the head planner's side choice cannot
+help a four-stack; what does is pitch. `add_finger` now retries a stack
+whose bridges fail with the mirrored fingers *spread* by one poly pitch
+(mirror map: each stack gate between a point and the axis pushes the point's
+image a further 0.42 µm out), so the outer region is wider and every far gate
+has room for its head. Measured on a nor4_1 between two rows of nand2_1
+(`test_nor4_stack_spread`, `evidence/nor4_row_spread.gds`): the stock pitch
+fails, the spread retry is legal, keeps the netlist (KLayout: 76/76 devices,
+79/79 nets, isomorphic), 42 new rectangles; the P strip grows from 2.03 to
+5.48 µm, 1.26 of that the spread. That price is why it is a retry, not the
+default, and why gcd's `_257_` still refuses: it has a fill_4 (1.84 µm)
+beside it and a nand3 beyond, and the spread stack reaches the nand3's
+diffusion. The refusal names both attempts. A single-row bare test is too
+kind here — with no row above, a head goes on the rail side happily — so the
+test helper now builds several rows, alternating N/FS with shared rails.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -1051,7 +1076,8 @@ edge** (`add_finger`: mirrored gate + S/D column, implant/well extension;
 gate tied by a poly bridge (rail side first), a column bridge to aligned
 same-net poly, or a contact bridge (poly tab, licon, li pad, met1 bar to the
 pin); a series stack is mirrored whole, gates and uncontacted middle node,
-each new gate bridged; supply sources connect through the rail that continues
+each new gate bridged, and when the far gates' heads find no room at the
+stock pitch the stack is retried spread by one poly pitch (`LAST_SPREAD`); supply sources connect through the rail that continues
 into the neighbour, signal-net S/D through an mcon + met1 jumper placed
 inside the device's own strip when it can be; the mirrored strap is trimmed
 clear of foreign li on the side away from its rail; works on devices that

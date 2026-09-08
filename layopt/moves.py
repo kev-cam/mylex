@@ -166,7 +166,24 @@ class MoveError(Exception):
 def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", bridge: str = "auto") -> List[int]:
     """See `_add_finger`; afterwards same-net notches the new geometry makes
     against its own net are filled (`fill_notches`)."""
-    touched = _add_finger(fl, ex, dev, side, bridge)
+    import copy as _copy
+    snapshot = _copy.deepcopy(fl.rects); boxes0 = dict(getattr(fl, "boxes", {}))
+    try:
+        touched = _add_finger(fl, ex, dev, side, bridge)
+    except MoveError as e:
+        if "series stack: no bridge" not in str(e):
+            raise
+        # a mirrored stack whose far gates found no room for their heads: spread the
+        # mirrored fingers by one poly pitch and try again (a wider outer region is the price)
+        fl.rects = snapshot; fl.boxes = boxes0
+        try:
+            touched = _add_finger(fl, ex, dev, side, bridge, spread_um=ex.tech.min_space.get(ex.tech.poly, 0.21) * 2)
+            LAST_SPREAD[0] = ex.tech.min_space.get(ex.tech.poly, 0.21) * 2
+        except MoveError as e2:
+            fl.rects = _copy.deepcopy(snapshot); fl.boxes = boxes0
+            raise MoveError("%s; with the mirrored stack spread by one pitch: %s" % (str(e).split("; candidates")[0], str(e2)[:200]))
+    else:
+        LAST_SPREAD[0] = 0.0
     if os.environ.get("LAYOPT_NO_FILL"):
         return sorted(set(touched))
     for _ in range(8):                       # a fill can itself sit within spacing of another fill
@@ -1050,7 +1067,7 @@ def fill_notches(fl: FlatLayout, ex: Extraction, new_ids: Sequence[int]) -> List
     return added
 
 
-def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", bridge: str = "auto") -> List[int]:
+def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", bridge: str = "auto", spread_um: float = 0.0) -> List[int]:
     """Add one parallel finger to `dev` on the `side` of its flow axis, by
     mirroring the existing gate + inner S/D column about the outer S/D region:
 
@@ -1160,8 +1177,17 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
                     if 0 <= gap < sp:
                         worst = max(worst, sp - gap)
         return worst
+    # A mirrored series stack may be spread: every stack gate between a point and the
+    # axis pushes the point's image one `spread` further out, so the mirrored fingers
+    # sit at a wider pitch (room for a contact head per finger in the mid-row gap,
+    # which the stock 0.42 um pitch has only for every other one).
+    spread = nm(spread_um)
+    def spread_of(x):
+        if not spread:
+            return 0
+        return spread * sum(1 for gk in stack if ((x < gk[0]) if hi else (x > gk[2])))
     def mx_base(x):
-        return int(round(2 * xc - x))
+        return int(round(2 * xc - x)) + (spread_of(x) if hi else -spread_of(x))
     probe_li = [(min(mx_base(fl.rects[k].x0), mx_base(fl.rects[k].x1)), fl.rects[k].y0, max(mx_base(fl.rects[k].x0), mx_base(fl.rects[k].x1)), fl.rects[k].y1)
                 for k in inner_straps]
     shift = deficit([(tech.routing[0], probe_li)])
@@ -1186,7 +1212,7 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
             if r.x1 >= D[0] - nm(2.0) and r.x0 <= D[2] + nm(3.0) and r.y1 >= D[1] - nm(3.0) and r.y0 <= D[3] + nm(3.0):
                 near.add(k, r.rect)
     def legal_shift(sh):
-        m = (lambda x: int(round(2 * xc - x)) + sh) if hi else (lambda x: int(round(2 * xc - x)) - sh)
+        m = (lambda x: mx_base(x) + sh) if hi else (lambda x: mx_base(x) - sh)
         mr = lambda r: (min(m(r[0]), m(r[2])), r[1], max(m(r[0]), m(r[2])), r[3])
         straps = [mr(fl.rects[k].rect) for k in inner_straps]
         licons = [mr(r) for r in inner_licon_rects]
@@ -1218,7 +1244,7 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
         for sh in range(shift, nm(0.6) + 1, grid_):
             if legal_shift(sh):
                 shift = sh; break
-    mx = (lambda x: int(round(2 * xc - x)) + shift) if hi else (lambda x: int(round(2 * xc - x)) - shift)
+    mx = (lambda x: mx_base(x) + shift) if hi else (lambda x: mx_base(x) - shift)
     def mrect(r: Rect) -> Rect:
         return (min(mx(r[0]), mx(r[2])), r[1], max(mx(r[0]), mx(r[2])), r[3])
     # 1. diffusion: extend to the mirror of the inner edge -- unless other diffusion
@@ -1461,6 +1487,7 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
 
 LAST_PLAN_TALLY: Dict[str, int] = {}
 LAST_PLAN_TOUCHED: List[int] = []      # rect ids a planner changed/added itself (moved P&R wires)
+LAST_SPREAD: List[float] = [0.0]        # um the last add_finger spread a mirrored stack by
 LAST_JUMPER_TALLY: Dict[str, int] = {}
 
 

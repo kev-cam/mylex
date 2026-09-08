@@ -205,8 +205,12 @@ notch-fill pass then deal with it -- `_161_` still passes that way).
 
 All 33 candidates (`--max 33`, `evidence/l4_gcd_all33.log`): 32 take at least
 one finger; baseline 598 flags (was 1012 before the merged-shape rule). Per
-finger, what still refuses: the nor4 PMOS stack with no room for a contact head
-(`_257_`; heads for a four-stack do not fit at 0.42 µm pitch); 33 of 33 cells with the shift search — the seven strap
+finger, what still refuses: the nor4 PMOS stack (`_257_`): heads for a four-stack
+do not fit at 0.42 µm pitch and the rail side is closed by the next row's
+diffusion (0.265 µm band, head 0.27), so `add_finger` retries the stack spread by
+one pitch -- legal on a nor4_1 with a fill_8 beside it (`test_nor4_stack_spread`,
+`evidence/nor4_row_spread.gds`, P strip 2.03 → 5.48 µm) but `_257_` has only a
+fill_4 before a nand3 and the spread stack reaches its diffusion; 33 of 33 cells with the shift search — the seven strap
 conflicts were the cell's own rail tabs and internal columns and are handled by
 a legal-shift search of the mirrored column (`evidence/l4_gcd_strap7.log`: all
 seven cells take at least one finger).
