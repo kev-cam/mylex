@@ -968,6 +968,23 @@ decision it leaves is where the policy belongs: in the placer's legalizer, as
 a flip preference when two sources could meet, since it costs nothing there
 and cannot be recovered afterwards without re-routing.
 
+**The `_112_` topology change (2026-09-08).** The one guard catch left over
+from the 33-cell run: on lpflow_isobufsrc `_112_` a PMOS finger after an
+NMOS finger merged the cell's internal node with its input. The move itself
+was clean — with the fill pass switched off (`LAYOPT_NO_FILL=1`) the
+signature held — so the fault was a fill. The notch-fill pass labels the
+move's new rectangles with a net by contact with extracted geometry, and
+propagated those labels through cuts, but only through the vias of the tech
+record; the licon that ties a contact head's li pad to its poly was not among
+them, so the mirrored far-gate finger reached only through head, licon, pad,
+mcon and met1 stayed unlabelled. A fill between two pieces of the internal
+node then landed on that finger, and the check that a fill must touch no
+*other* net let an *unknown* one through. Two fixes: labels now propagate
+through the diffusion/poly contact as well, and a fill that touches a new
+rectangle whose net is not known is refused — a fill merges a net with
+itself, and "unknown" is not "itself". NMOS-then-PMOS on `_112_` now keeps
+the netlist.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 

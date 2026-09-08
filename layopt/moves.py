@@ -167,6 +167,8 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", 
     """See `_add_finger`; afterwards same-net notches the new geometry makes
     against its own net are filled (`fill_notches`)."""
     touched = _add_finger(fl, ex, dev, side, bridge)
+    if os.environ.get("LAYOPT_NO_FILL"):
+        return sorted(set(touched))
     for _ in range(8):                       # a fill can itself sit within spacing of another fill
         new = fill_notches(fl, ex, touched)  # all new geometry: labels propagate through it
         if not new:
@@ -935,6 +937,7 @@ def fill_notches(fl: FlatLayout, ex: Extraction, new_ids: Sequence[int]) -> List
     pending = list(new_set)
     changed = True
     cut_pairs = {L[c]: (L[lo], L[up]) for lo, c, up in tech.vias}
+    cut_pairs[L[tech.diff_contact]] = (L[tech.poly], L[tech.routing[0]])      # a licon also joins poly and li
     def known(k):
         return src2net.get(k) if k not in new_set and k not in label else label.get(k)
     while changed and pending:
@@ -1025,8 +1028,19 @@ def fill_notches(fl: FlatLayout, ex: Extraction, new_ids: Sequence[int]) -> List
             # ... and poly must not cross diffusion
             if ok and ln == tech.poly and diff_l in by_layer and by_layer[diff_l].query_overlap(hole):
                 ok = False
+            # ... and it must touch nothing of another net: a fill merges a net with itself,
+            # a fill that lands on a second net is a short (the notch may sit between two
+            # pieces of one net with a third net's finger ending right under it)
+            if ok:
+                for q in by_layer[r.layer].query_touch(hole):
+                    if q == i or q == k:
+                        continue
+                    nq = src2net.get(q) if q not in new_set else label.get(q)
+                    if nq != n:                       # another net, or a new rect whose net is unknown
+                        ok = False; break
             if dbg:
-                print("      fill-debug:    grown %s ok=%s joins=%s" % ([round(v / 1000.0, 3) for v in hole], ok, joins(hole, r.rect) and joins(hole, o)))
+                touching = [(q, "new" if q in new_set else "old", src2net.get(q) if q not in new_set else label.get(q)) for q in by_layer[r.layer].query_touch(hole)]
+                print("      fill-debug:    grown %s ok=%s joins=%s touches %s" % ([round(v / 1000.0, 3) for v in hole], ok, joins(hole, r.rect) and joins(hole, o), touching[:8]))
             if not ok:
                 continue
             j = add_rect_dbu(fl, r.layer, hole, fl.rects[i].prov)
