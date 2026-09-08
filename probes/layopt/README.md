@@ -8,7 +8,7 @@ for the PNGs). Design record: `../../LAYOUT-OPT.md`.
 ## Commands
 
     cd /usr/local/src/mylex
-    python3 -m layopt.tests.test_layopt                       # 15 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model, moving a P&R wire)
+    python3 -m layopt.tests.test_layopt                       # 16 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model, moving a P&R wire, diffusion spacing)
     python3 -m layopt compare  $K/layout/kestrel_pll.gds $K/layout/kestrel_pll_flat_extracted.cir
     python3 -m layopt extract  $K/layout/kestrel_pll.gds -o evidence/kestrel_pll_layopt.cir
     python3 -m layopt rc       $K/layout/kestrel_pll.gds -o evidence/kestrel_pll.spef
@@ -203,13 +203,13 @@ unrepaired path (the delta-DRC's same-net notch rule and the move's
 notch-fill pass then deal with it -- `_161_` still passes that way).
 `LAYOPT_FILL_DEBUG=1` traces the notch fills.
 
-All 33 candidates (`--max 33`): 23 take at least one finger. Refusals: seven
-strap conflicts with the neighbouring cell's li/licon (cell geometry), one
-diffusion corner touch caught by the guard (`_135_`), the nor4 PMOS stack with
-no room for a contact head (`_257_`). Newly legal after the router accepts
-fillable same-net notches: rebuffer15 (both fingers, net15 25.8 → 23.0 ps)
-and `_258_` (whole nand3 NMOS stack, `_102_` 112 → 60 ps,
-`evidence/gcd_258_stack_routed*`).
+All 33 candidates (`--max 33`, `evidence/l4_gcd_all33.log`): 32 take at least
+one finger; baseline 598 flags (was 1012 before the merged-shape rule). Per
+finger, what still refuses: the nor4 PMOS stack with no room for a contact head
+(`_257_`) and seven mirrored straps meeting the neighbouring cell's li or licon.
+Legal after the router accepts fillable same-net notches: rebuffer15 (both
+fingers, net15 25.8 → 23.0 ps) and `_258_` (whole nand3 NMOS stack, `_102_`
+112 → 60 ps, `evidence/gcd_258_stack_routed*`); after the DRC fix: `_135_`, `_121_`.
 
 When even the router finds no path, `route.reroute_around` moves the P&R wire
 in the way: a second search may cross other nets' DEF wires at a penalty, the

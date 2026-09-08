@@ -533,6 +533,25 @@ def test_move_pr_wire():
     print("  moved %d P&R wire(s) to make room: %s" % (len(rr["moved"]), rr["moved"]))
 
 
+def test_add_finger_refuses_into_neighbour_diffusion():
+    """A nand2_1 with an inv_1 abutting on its right: the PMOS finger's
+    diffusion extension would land within spacing of the inverter's
+    diffusion.  The move refuses and names the rect; the same nand2 with a
+    filler there takes the finger."""
+    from .. import moves as mv
+    fl = _bare_row([("fill_4", 0.0), ("nand2_1", 1.84), ("inv_1", 3.22), ("fill_8", 4.60)])
+    if fl is None:
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    ex = extract.extract(fl, T)
+    dev = sorted([d for d in ex.devices if d.kind == "p" and "nand2" in d.prov], key=lambda x: -max(ex.shapes[g].rect[2] for g in x.gate_ids))[0]
+    try:
+        mv.add_finger(fl, ex, dev, side="high")
+        raise AssertionError("the finger into the inverter's diffusion should have been refused")
+    except mv.MoveError as e:
+        assert "diffusion spacing" in str(e), str(e)
+        print("  refused: %s" % str(e)[:110])
+
+
 
 if __name__ == "__main__":
     fails = 0

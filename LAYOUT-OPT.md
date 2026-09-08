@@ -628,6 +628,29 @@ alone. That is the correct restraint; it is also where the next lever is (a
 neighbour's li strap is as movable as a P&R wire once the neighbour is
 dissolved too).
 
+**Diffusion spacing in `add_finger`, and a DRC false positive (2026-09-08).**
+The `_135_` refusal above was the guard's, and it was wrong. The nand2b's P
+diffusion is drawn as two rectangles sharing an edge — one polygon carrying
+several nets — and the delta-DRC's spacing rule compared their net *sets*,
+found them unequal, and flagged the shared edge as a zero-spacing violation
+between different nets. That flag had always been there; the geometry-keyed
+baseline (the fix for `remove_finger`) turned it into a new one the moment the
+move stretched one of the two rectangles. Rectangles that overlap or share an
+edge are one merged shape whatever nets they carry, and the rule now says so
+(cuts excepted). With that `_135_` and `_121_` take their PMOS fingers. The
+move itself, meanwhile, learned the rule it had been leaving to the guard:
+before extending the diffusion it checks the new strip against every other
+diffusion and tap rectangle within spacing, excusing only slabs of its own
+strip in its own cell, and refuses with the rectangle named. A nand2_1 with an
+inv_1 abutting on its right is the test: the extension would land in the
+inverter's diffusion and the move says so (`test_add_finger_refuses_into_neighbour_diffusion`).
+On gcd the merged-shape rule takes the baseline from 1012 flags to 598 — 414
+of them had been the same false positive — and the 33-cell run goes to 32 of
+33 cells with at least one legal finger (`evidence/l4_gcd_all33.log`). What
+refuses now, per finger: the nor4's four-PMOS stack (no room for a contact
+head) and, seven times, the neighbouring cell's li or licon inside the
+mirrored strap's span — the next lever.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -766,7 +789,9 @@ Planned:
   complementary, neither is sufficient alone. Same-net spacing: two parts of
   one net that do not touch, closer than spacing, with the gap between them
   uncovered, are a notch (§2); moves fill the notches they make
-  (`moves.fill_notches`) before the check.
+  (`moves.fill_notches`) before the check. Rectangles that overlap or share
+  an edge are one merged shape whatever nets they carry (a diffusion drawn as
+  two slabs) and are never a spacing pair; cuts excepted.
 - Bounds on every variable (min width from the tech table).
 
 ## 8. Interfaces to the federation

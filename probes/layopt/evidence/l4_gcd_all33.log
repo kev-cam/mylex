@@ -1,0 +1,136 @@
+== gcd.def: 784 instances, 57263 rects, 2472 devices; baseline rule flags 598 (44s)
+   33 logic cells have a fill_4/fill_8 flush on their right; trying 33
+   _149_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (14 rects)
+   _149_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (21 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      output net _045_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 97.8 -> 54.4 ps, mean 97.5 -> 54.1 ps
+   _161_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _161_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (22 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      output net _057_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 56.4 -> 32.1 ps, mean 56.3 -> 32.0 ps
+   _110_ (clkinv_1, fill_4 to its right) [PN]: P finger LEGAL (11 rects)
+   _110_ (clkinv_1, fill_4 to its right) [PN]: N finger LEGAL (7 rects)
+      result (P+N): p W=2.52 f=3; n W=0.84 f=2
+      output net _006_: PMOS W 1.68 -> 2.52 um, R_rise/R_fall 5651/7209 -> 4022/3776 ohm; worst-edge Elmore to 4 receivers max 48.3 -> 29.8 ps, mean 48.1 -> 29.6 ps
+   rebuffer12 (buf_4, fill_4 to its right) [PN]: P finger LEGAL (11 rects)
+   rebuffer12 (buf_4, fill_4 to its right) [PN]: N finger LEGAL (8 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      output net net12: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 4 receivers max 21.2 -> 19.4 ps, mean 21.1 -> 19.3 ps
+   rebuffer3 (buf_4, fill_8 to its right) [PN]: P finger LEGAL (11 rects)
+   rebuffer3 (buf_4, fill_8 to its right) [PN]: N finger LEGAL (7 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      output net net3: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 4 receivers max 47.6 -> 41.6 ps, mean 47.3 -> 41.3 ps
+   rebuffer13 (buf_4, fill_8 to its right) [PN]: P finger LEGAL (11 rects)
+   rebuffer13 (buf_4, fill_8 to its right) [PN]: N finger LEGAL (8 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      output net net13: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 8 receivers max 64.7 -> 55.9 ps, mean 64.3 -> 55.6 ps
+   rebuffer30 (buf_4, fill_8 to its right) [PN]: P finger LEGAL (11 rects)
+   rebuffer30 (buf_4, fill_8 to its right) [PN]: N finger LEGAL (8 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      output net net30: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 4 receivers max 19.9 -> 18.3 ps, mean 19.8 -> 18.1 ps
+   rebuffer15 (buf_4, fill_4 to its right) [PN]: P finger LEGAL (10 rects)
+   rebuffer15 (buf_4, fill_4 to its right) [PN]: N finger LEGAL (9 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      output net net15: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 4 receivers max 25.8 -> 23.0 ps, mean 25.8 -> 23.0 ps
+   rebuffer52 (buf_4, fill_4 to its right) [PN]: P finger LEGAL (11 rects)
+   rebuffer52 (buf_4, fill_4 to its right) [PN]: N finger LEGAL (9 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+   rebuffer14 (buf_4, fill_8 to its right) [PN]: P finger LEGAL (11 rects)
+   rebuffer14 (buf_4, fill_8 to its right) [PN]: N finger LEGAL (8 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      output net net14: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 2 receivers max 12.5 -> 12.0 ps, mean 12.5 -> 12.0 ps
+   rebuffer53 (buf_4, fill_4 to its right) [PN]: P finger LEGAL (11 rects)
+   rebuffer53 (buf_4, fill_4 to its right) [PN]: N finger LEGAL (8 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      output net net53: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 2 receivers max 14.5 -> 13.7 ps, mean 14.5 -> 13.7 ps
+   rebuffer32 (buf_4, fill_8 to its right) [PN]: P finger LEGAL (11 rects)
+   rebuffer32 (buf_4, fill_8 to its right) [PN]: N finger LEGAL (8 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      output net net32: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 4 receivers max 20.4 -> 18.7 ps, mean 20.4 -> 18.7 ps
+   rebuffer11 (buf_4, fill_8 to its right) [PN]: P finger LEGAL (11 rects)
+   rebuffer11 (buf_4, fill_8 to its right) [PN]: N finger LEGAL (7 rects)
+      result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      output net net11: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 4 receivers max 28.8 -> 25.7 ps, mean 28.8 -> 25.7 ps
+   clone6 (buf_6, fill_8 to its right) [PN]: P finger LEGAL (10 rects)
+   clone6 (buf_6, fill_8 to its right) [PN]: N finger LEGAL (8 rects)
+      result (P+N): p W=2.00 f=2; p W=7.00 f=7; n W=1.30 f=2; n W=4.55 f=7
+   _135_ (nand2b_1, fill_8 to its right) [PN]: P finger LEGAL (11 rects)
+   _135_ (nand2b_1, fill_8 to its right) [PN]: N finger LEGAL (31 rects)
+      result (P+N): p W=0.42 f=1; p W=1.00 f=1; p W=2.00 f=2; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.42 f=1
+   _121_ (lpflow_isobufsrc_1, fill_4 to its right) [PN]: P finger LEGAL (17 rects)
+   _121_ (lpflow_isobufsrc_1, fill_4 to its right) [PN]: N finger refused -- add_finger: foreign li at [67.515, 35.275, 67.9, 35.915] conflicts with the mirrored strap over our contacts
+   _121_ (lpflow_isobufsrc_1, fill_4 to its right) [NP]: N finger refused -- add_finger: foreign li at [67.515, 35.275, 67.9, 35.915] conflicts with the mirrored strap over our contacts
+   _121_ (lpflow_isobufsrc_1, fill_4 to its right) [NP]: P finger LEGAL (17 rects)
+      result (P): n W=0.42 f=1; n W=0.65 f=1; n W=0.65 f=1; p W=0.42 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1
+   _285_ (edfxtp_1, fill_8 to its right) [PN]: P finger LEGAL (9 rects)
+   _285_ (edfxtp_1, fill_8 to its right) [PN]: N finger LEGAL (9 rects)
+      result (P+N): p W=0.64 f=1; p W=0.64 f=1; n W=0.42 f=1; n W=0.42 f=1; p W=0.64 f=1; p W=0.64 f=1; n W=0.42 f=1; n W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1; n W=0.36 f=1; n W=0.36 f=1; n W=0.42 f=1; n W=0.42 f=1; p W=2.00 f=2; p W=0.64 f=1; n W=0.42 f=1; n W=1.30 f=2; n W=0.36 f=1; n W=0.36 f=1; n W=0.42 f=1; n W=0.42 f=1; n W=0.42 f=1; n W=0.42 f=1; n W=0.64 f=1; p W=0.75 f=1; p W=0.64 f=1; p W=0.64 f=1; p W=0.64 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1
+   _257_ (nor4_1, fill_4 to its right) [PN]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M1143 (dpath.a_lt_b$in1\[4\]); candidates rejected by: {'head vs other poly': 9801, 'head vs diffusion': 9801}
+   _257_ (nor4_1, fill_4 to its right) [PN]: N finger LEGAL (9 rects)
+   _257_ (nor4_1, fill_4 to its right) [NP]: N finger LEGAL (9 rects)
+   _257_ (nor4_1, fill_4 to its right) [NP]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M1143 (dpath.a_lt_b$in1\[4\]); candidates rejected by: {'head vs other poly': 9801, 'head vs diffusion': 9801}
+      result (N): n W=0.65 f=1; n W=0.65 f=1; n W=1.30 f=2; n W=0.65 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1
+   _258_ (nand3_1, fill_8 to its right) [PN]: P finger LEGAL (8 rects)
+   _258_ (nand3_1, fill_8 to its right) [PN]: N finger LEGAL (37 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      output net _102_: PMOS W 3.00 -> 4.00 um, R_rise/R_fall 3474/7866 -> 2729/4120 ohm; worst-edge Elmore to 2 receivers max 112.4 -> 59.8 ps, mean 112.4 -> 59.8 ps
+   _269_ (edfxtp_1, fill_8 to its right) [PN]: P finger LEGAL (9 rects)
+   _269_ (edfxtp_1, fill_8 to its right) [PN]: N finger LEGAL (9 rects)
+      result (P+N): p W=0.64 f=1; p W=0.64 f=1; n W=0.42 f=1; n W=0.42 f=1; p W=0.64 f=1; p W=0.64 f=1; n W=0.42 f=1; n W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1; n W=0.36 f=1; n W=0.36 f=1; n W=0.42 f=1; n W=0.42 f=1; p W=2.00 f=2; p W=0.64 f=1; n W=0.42 f=1; n W=1.30 f=2; n W=0.36 f=1; n W=0.36 f=1; n W=0.42 f=1; n W=0.42 f=1; n W=0.42 f=1; n W=0.42 f=1; n W=0.64 f=1; p W=0.75 f=1; p W=0.64 f=1; p W=0.64 f=1; p W=0.64 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1
+   _276_ (edfxtp_1, fill_8 to its right) [PN]: P finger LEGAL (9 rects)
+   _276_ (edfxtp_1, fill_8 to its right) [PN]: N finger LEGAL (9 rects)
+      result (P+N): p W=0.64 f=1; p W=0.64 f=1; n W=0.42 f=1; n W=0.42 f=1; p W=0.64 f=1; p W=0.64 f=1; n W=0.42 f=1; n W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1; n W=0.36 f=1; n W=0.36 f=1; n W=0.42 f=1; n W=0.42 f=1; p W=2.00 f=2; p W=0.64 f=1; n W=0.42 f=1; n W=1.30 f=2; n W=0.36 f=1; n W=0.36 f=1; n W=0.42 f=1; n W=0.42 f=1; n W=0.42 f=1; n W=0.42 f=1; n W=0.64 f=1; p W=0.75 f=1; p W=0.64 f=1; p W=0.64 f=1; p W=0.64 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1
+   clkbuf_2_2__f_clk (clkbuf_16, fill_8 to its right) [PN]: P finger LEGAL (11 rects)
+   clkbuf_2_2__f_clk (clkbuf_16, fill_8 to its right) [PN]: N finger LEGAL (7 rects)
+      result (P+N): p W=17.00 f=17; p W=4.00 f=4; n W=7.14 f=17; n W=1.68 f=4
+      output net clknet_2_2__leaf_clk: PMOS W 16.00 -> 17.00 um, R_rise/R_fall 853/543 -> 811/513 ohm; worst-edge Elmore to 24 receivers max 57.9 -> 57.1 ps, mean 57.4 -> 56.6 ps
+   _112_ (lpflow_isobufsrc_1, fill_8 to its right) [PN]: P finger LEGAL (18 rects)
+   _112_ (lpflow_isobufsrc_1, fill_8 to its right) [PN]: N finger refused -- add_finger: foreign li at [52.795, 62.475, 53.18, 63.115] conflicts with the mirrored strap over our contacts
+   _112_ (lpflow_isobufsrc_1, fill_8 to its right) [NP]: N finger refused -- add_finger: foreign li at [52.795, 62.475, 53.18, 63.115] conflicts with the mirrored strap over our contacts
+   _112_ (lpflow_isobufsrc_1, fill_8 to its right) [NP]: P finger LEGAL (18 rects)
+      result (P): n W=0.42 f=1; n W=0.65 f=1; n W=0.65 f=1; p W=0.42 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1
+   _241_ (a221o_1, fill_8 to its right) [PN]: P finger LEGAL (8 rects)
+   _241_ (a221o_1, fill_8 to its right) [PN]: N finger LEGAL (8 rects)
+      result (P+N): n W=0.65 f=1; n W=0.65 f=1; n W=1.30 f=2; p W=1.00 f=1; p W=1.00 f=1; p W=2.00 f=2; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+   _234_ (and2_0, fill_8 to its right) [PN]: P finger LEGAL (9 rects)
+   _234_ (and2_0, fill_8 to its right) [PN]: N finger refused -- add_finger: foreign li/cuts within spacing of the mirrored strap over our contacts (trimming cannot clear them)
+   _234_ (and2_0, fill_8 to its right) [NP]: N finger refused -- add_finger: foreign li/cuts within spacing of the mirrored strap over our contacts (trimming cannot clear them)
+   _234_ (and2_0, fill_8 to its right) [NP]: P finger LEGAL (9 rects)
+      result (P): n W=0.42 f=1; n W=0.42 f=1; n W=0.42 f=1; p W=1.28 f=2; p W=0.42 f=1; p W=0.42 f=1
+      output net _090_: PMOS W 0.64 -> 1.28 um, R_rise/R_fall 12699/7209 -> 7099/7209 ohm; worst-edge Elmore to 2 receivers max 66.6 -> 38.3 ps, mean 66.6 -> 38.3 ps
+   _202_ (mux2_1, fill_8 to its right) [PN]: P finger refused -- add_finger: foreign li/cuts within spacing of the mirrored strap over our contacts (trimming cannot clear them)
+   _202_ (mux2_1, fill_8 to its right) [PN]: N finger LEGAL (7 rects)
+   _202_ (mux2_1, fill_8 to its right) [NP]: N finger LEGAL (7 rects)
+   _202_ (mux2_1, fill_8 to its right) [NP]: P finger refused -- add_finger: foreign li/cuts within spacing of the mirrored strap over our contacts (trimming cannot clear them)
+      result (N): n W=0.42 f=1; n W=0.84 f=2; n W=0.42 f=1; n W=0.42 f=1; n W=0.42 f=1; n W=0.65 f=1; p W=1.00 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1; p W=0.42 f=1
+      output net dpath.b_mux$out\[7\]: PMOS W 1.00 -> 1.00 um, R_rise/R_fall 8733/4796 -> 8733/4796 ohm; worst-edge Elmore to 2 receivers max 29.1 -> 29.1 ps, mean 29.1 -> 29.1 ps
+   _229_ (a221o_1, fill_8 to its right) [PN]: P finger LEGAL (8 rects)
+   _229_ (a221o_1, fill_8 to its right) [PN]: N finger LEGAL (7 rects)
+      result (P+N): n W=0.65 f=1; n W=0.65 f=1; n W=1.30 f=2; p W=1.00 f=1; p W=1.00 f=1; p W=2.00 f=2; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+   _129_ (lpflow_isobufsrc_1, fill_8 to its right) [PN]: P finger LEGAL (20 rects)
+   _129_ (lpflow_isobufsrc_1, fill_8 to its right) [PN]: N finger refused -- add_finger: foreign li at [51.415, 13.515, 51.8, 14.155] conflicts with the mirrored strap over our contacts
+   _129_ (lpflow_isobufsrc_1, fill_8 to its right) [NP]: N finger refused -- add_finger: foreign li at [51.415, 13.515, 51.8, 14.155] conflicts with the mirrored strap over our contacts
+   _129_ (lpflow_isobufsrc_1, fill_8 to its right) [NP]: P finger LEGAL (20 rects)
+      result (P): n W=0.42 f=1; n W=0.65 f=1; n W=0.65 f=1; p W=0.42 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1
+   _154_ (lpflow_inputiso1p_1, fill_8 to its right) [PN]: P finger refused -- add_finger: foreign licon at [58.765, 15.515, 58.935, 15.685] conflicts with the mirrored strap over our contacts
+   _154_ (lpflow_inputiso1p_1, fill_8 to its right) [PN]: N finger refused -- add_finger: foreign li/cuts within spacing of the mirrored strap over our contacts (trimming cannot clear them)
+   _154_ (lpflow_inputiso1p_1, fill_8 to its right) [NP]: N finger refused -- add_finger: foreign li/cuts within spacing of the mirrored strap over our contacts (trimming cannot clear them)
+   _154_ (lpflow_inputiso1p_1, fill_8 to its right) [NP]: P finger refused -- add_finger: foreign licon at [58.765, 15.515, 58.935, 15.685] conflicts with the mirrored strap over our contacts
+   clkbuf_2_1__f_clk (clkbuf_16, fill_8 to its right) [PN]: P finger LEGAL (11 rects)
+   clkbuf_2_1__f_clk (clkbuf_16, fill_8 to its right) [PN]: N finger LEGAL (7 rects)
+      result (P+N): p W=17.00 f=17; p W=4.00 f=4; n W=7.14 f=17; n W=1.68 f=4
+      output net clknet_2_1__leaf_clk: PMOS W 16.00 -> 17.00 um, R_rise/R_fall 853/543 -> 811/513 ohm; worst-edge Elmore to 18 receivers max 53.1 -> 52.5 ps, mean 51.9 -> 51.3 ps
+   _138_ (lpflow_isobufsrc_1, fill_8 to its right) [PN]: P finger LEGAL (19 rects)
+   _138_ (lpflow_isobufsrc_1, fill_8 to its right) [PN]: N finger refused -- add_finger: foreign li at [22.895, 24.395, 23.28, 25.035] conflicts with the mirrored strap over our contacts
+   _138_ (lpflow_isobufsrc_1, fill_8 to its right) [NP]: N finger refused -- add_finger: foreign li at [22.895, 24.395, 23.28, 25.035] conflicts with the mirrored strap over our contacts
+   _138_ (lpflow_isobufsrc_1, fill_8 to its right) [NP]: P finger LEGAL (19 rects)
+      result (P): n W=0.42 f=1; n W=0.65 f=1; n W=0.65 f=1; p W=0.42 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1
+   _186_ (xnor2_2, fill_4 to its right) [PN]: P finger LEGAL (11 rects)
+   _186_ (xnor2_2, fill_4 to its right) [PN]: N finger refused -- add_finger: foreign licon at [40.005, 25.125, 40.175, 25.295] conflicts with the mirrored strap over our contacts
+   _186_ (xnor2_2, fill_4 to its right) [NP]: N finger refused -- add_finger: foreign licon at [40.005, 25.125, 40.175, 25.295] conflicts with the mirrored strap over our contacts
+   _186_ (xnor2_2, fill_4 to its right) [NP]: P finger LEGAL (11 rects)
+      result (P): p W=2.00 f=2; p W=2.00 f=2; n W=1.30 f=2; n W=1.30 f=2; p W=2.00 f=2; p W=2.00 f=2; n W=1.30 f=2; n W=1.30 f=2; n W=1.30 f=2; p W=3.00 f=3
+   clkload1 (bufinv_16, fill_8 to its right) [PN]: P finger LEGAL (12 rects)
+   clkload1 (bufinv_16, fill_8 to its right) [PN]: N finger LEGAL (11 rects)
+      result (P+N): p W=3.00 f=3; p W=6.00 f=6; p W=17.00 f=17; n W=1.95 f=3; n W=3.90 f=6; n W=11.05 f=17
+   legal moves: 32 of 32 attempted

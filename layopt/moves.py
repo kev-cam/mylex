@@ -571,9 +571,22 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
     mx = (lambda x: int(round(2 * xc - x)) + shift) if hi else (lambda x: int(round(2 * xc - x)) - shift)
     def mrect(r: Rect) -> Rect:
         return (min(mx(r[0]), mx(r[2])), r[1], max(mx(r[0]), mx(r[2])), r[3])
-    # 1. diffusion: extend to the mirror of the inner edge
+    # 1. diffusion: extend to the mirror of the inner edge -- unless other diffusion
+    #    or a tap lies within spacing of the new strip (a neighbour that abuts, a tap
+    #    in the filler): shifting cannot cure that, so refuse and name it
     x_new = mx(inner[0] if hi else inner[1])
-    fl.rects[di].rect = (D[0], D[1], x_new, D[3]) if hi else (x_new, D[1], D[2], D[3])
+    D_new = (D[0], D[1], x_new, D[3]) if hi else (x_new, D[1], D[2], D[3])
+    sp_d = nm(tech.min_space.get(tech.diff, 0.27))
+    grown_part = (D[2] - 1, D[1] - sp_d, x_new + sp_d, D[3] + sp_d) if hi else (x_new - sp_d, D[1] - sp_d, D[0] + 1, D[3] + sp_d)
+    for k, r in enumerate(fl.rects):
+        if k == di or r.layer not in (L[tech.diff], L.get("tap")) or not geom.overlaps(r.rect, grown_part):
+            continue
+        if geom.overlaps(r.rect, D_new) or _shares_edge(r.rect, D_new):
+            if r.layer == L[tech.diff] and r.prov == fl.rects[di].prov and (r.rect[1] >= D[1] and r.rect[3] <= D[3] or r.rect[1] <= D[1] and r.rect[3] >= D[3]):
+                continue                           # a slab of our own strip (the stock cells draw one strip as several rects)
+        raise MoveError("add_finger: %s at %s (%s) lies within diffusion spacing of the extended strip"
+                        % (inv.get(r.layer, r.layer), [round(v * d, 3) for v in r.rect], r.prov.split("/", 1)[1][:40]))
+    fl.rects[di].rect = D_new
     touched.append(di)
     # 2. new gate finger(s): every gate of the stack mirrored; spans overhang to overhang
     ext = nm(tech.poly_ext_diff)

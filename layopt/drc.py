@@ -160,6 +160,9 @@ def _check(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = No
                     continue
                 if is_cut and r.rect == o.rect:
                     continue                       # an identical duplicate cut is the same cut
+                if not is_cut and (geom.overlaps(r.rect, o.rect) or _shares_edge(r.rect, o.rect)):
+                    continue                       # one merged shape (a diffusion drawn as two slabs carries
+                                                   # several nets; the extractor merged them, so does DRC)
                 if geom.touches(r.rect, o.rect):
                     out.append(Violation("min_space", ln, i, j, 0.0, ms)); continue
                 gap = _gap(r.rect, o.rect)
