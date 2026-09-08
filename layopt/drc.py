@@ -120,11 +120,18 @@ def _check(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = No
                 cands = [(r.x0, r.y0, r.x0 + m, r.y1), (r.x1 - m, r.y0, r.x1, r.y1)]
             else:
                 cands = [(r.x0, r.y0, r.x1, r.y0 + m), (r.x0, r.y1 - m, r.x1, r.y1)]
-            covered = False
-            for c in cands:
-                cover = [fl.rects[k].rect for k in by_layer[ln].query_overlap(c)]
-                if not geom.subtract(c, cover):
-                    covered = True; break
+            # legal when, along the rect's whole length, the merged geometry is at least min
+            # width on one side or the other (neighbours may cover different parts on
+            # different sides: an L-shaped stock slab)
+            c0, c1 = cands
+            cover = [fl.rects[k].rect for k in by_layer[ln].query_overlap((min(c0[0], c1[0]), min(c0[1], c1[1]), max(c0[2], c1[2]), max(c0[3], c1[3])))]
+            left_gaps = geom.subtract(c0, cover)
+            covered = True
+            for gp in left_gaps:
+                # the part of the other-side candidate spanning this gap's extent along the length
+                other = (c1[0], gp[1], c1[2], gp[3]) if r.w < r.h else (gp[0], c1[1], gp[2], c1[3])
+                if geom.subtract(other, cover):
+                    covered = False; break
             if not covered:
                 out.append(Violation("min_width", ln, i, -1, min(r.w, r.h) * d, mw))
         ms = tech.min_space.get(ln)
@@ -191,42 +198,54 @@ def _check(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = No
 
 
 def _check_vt(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = None) -> List[Violation]:
-    """Vt implants: a gate of the flavour's polarity that an implant rect
-    touches must be enclosed by it by gate_enc on every side (a partly covered
-    gate is a different device on each side of the edge); a gate it does not
-    touch must keep gate_enc clear of it.  Checked for implant rects among
-    `changed` (or all), against every gate in the extraction."""
+    """Vt implants, judged on the merged implant of each flavour: a gate of the
+    flavour's polarity that the implant covers must be covered with gate_enc
+    to spare on every side (a partly covered gate is a different device on
+    each side of the edge); a gate it does not cover must keep gate_enc clear
+    of it.  Gates near implant rects among `changed` (or all) are checked."""
     tech = ex.tech
     if not tech.vt:
         return []
     inv = {v: k for k, v in tech.layers.items()}
     d = fl.dbu_um
     out: List[Violation] = []
-    gates = [(i, sh) for i, sh in enumerate(ex.shapes) if sh.layer == "gate"]
     gate_kind = {}
     for dv in ex.devices:
         for gs in dv.gate_ids:
             gate_kind[gs] = dv.kind
     gidx = geom.BinIndex()
-    for i, sh in gates:
-        gidx.add(i, sh.rect)
+    for i, sh in enumerate(ex.shapes):
+        if sh.layer == "gate":
+            gidx.add(i, sh.rect)
     ids = range(len(fl.rects)) if changed is None else changed
-    for i in ids:
-        r = fl.rects[i]
-        ln = inv.get(r.layer)
-        fl_ = next((f for f in tech.vt.values() if f.layer == ln), None)
-        if fl_ is None or r.w <= 0 or r.h <= 0:
+    for fl_ in tech.vt.values():
+        lay = tech.layers[fl_.layer]
+        implant = [(k, r.rect) for k, r in enumerate(fl.rects) if r.layer == lay and r.w > 0 and r.h > 0]
+        if not implant:
             continue
+        iidx = geom.BinIndex()
+        for k, r in implant:
+            iidx.add(k, r)
         e = int(round(fl_.gate_enc / d))
-        probe = (r.x0 - e, r.y0 - e, r.x1 + e, r.y1 + e)
-        for gi in gidx.query_overlap(probe):
-            if gate_kind.get(gi) != fl_.kind:
+        seen = set()
+        for i in ids:
+            r = fl.rects[i]
+            if r.layer != lay or r.w <= 0 or r.h <= 0:
                 continue
-            g = ex.shapes[gi].rect
-            if geom.overlaps(g, r.rect):
-                inside = g[0] - r.x0 >= e and g[1] - r.y0 >= e and r.x1 - g[2] >= e and r.y1 - g[3] >= e
-                if not inside:
-                    out.append(Violation("enclosure", "%s/gate" % ln, i, -1, min(g[0] - r.x0, g[1] - r.y0, r.x1 - g[2], r.y1 - g[3]) * d, fl_.gate_enc))
-            else:
-                out.append(Violation("min_space", "%s/gate" % ln, i, -1, _gap(g, r.rect) * d, fl_.gate_enc))
+            for gi in gidx.query_overlap((r.x0 - e, r.y0 - e, r.x1 + e, r.y1 + e)):
+                if gi in seen or gate_kind.get(gi) != fl_.kind:
+                    continue
+                seen.add(gi)
+                g = ex.shapes[gi].rect
+                near = [fl.rects[k].rect for k in iidx.query_overlap((g[0] - e, g[1] - e, g[2] + e, g[3] + e))]
+                covered = not geom.subtract(g, near)
+                if covered:
+                    if geom.subtract((g[0] - e, g[1] - e, g[2] + e, g[3] + e), near):
+                        out.append(Violation("enclosure", "%s/gate" % fl_.layer, i, -1, 0.0, fl_.gate_enc))
+                elif any(geom.overlaps(g, o) for o in near):
+                    out.append(Violation("enclosure", "%s/gate" % fl_.layer, i, -1, 0.0, fl_.gate_enc))
+                else:
+                    gap = min(_gap(g, o) for o in near)
+                    if gap < e:
+                        out.append(Violation("min_space", "%s/gate" % fl_.layer, i, -1, gap * d, fl_.gate_enc))
     return out

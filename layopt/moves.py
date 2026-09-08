@@ -582,6 +582,240 @@ def set_gate_length(fl: FlatLayout, ex: Extraction, dev: Device, l_um: float) ->
 LAST_L_COMPANIONS: List[str] = []   # devices on the same poly stripe whose length changed along
 
 
+def _cell_box(fl: FlatLayout, ex: Extraction, inst: str):
+    """Placement box of an instance from its rails (the widest supply-net li
+    rects span exactly the placement width) and its rects' y extent."""
+    L = ex.tech.layers
+    s2n = {sh.src: ex.net_of_shape[k] for k, sh in enumerate(ex.shapes) if sh.src >= 0}
+    supply = {i for i, n in ex.nets.items() if n.name in ex.tech.supply_names}
+    ids = [i for i, r in enumerate(fl.rects) if r.prov == inst]
+    if not ids:
+        raise MoveError("no rects carry provenance %s" % inst)
+    lis = [fl.rects[i] for i in ids if fl.rects[i].layer == L[ex.tech.routing[0]]]
+    rails = lis                                     # the rails are the widest li a cell has
+    if rails:
+        w = max(r.x1 - r.x0 for r in rails)
+        wide = [r for r in rails if r.x1 - r.x0 >= 0.8 * w]
+        x0 = min(r.x0 for r in wide); x1 = max(r.x1 for r in wide)
+    else:
+        x0 = min(fl.rects[i].x0 for i in ids); x1 = max(fl.rects[i].x1 for i in ids)
+    y0 = min(fl.rects[i].y0 for i in ids); y1 = max(fl.rects[i].y1 for i in ids)
+    return ids, (x0, y0, x1, y1)
+
+
+def _outer_regions(fl: FlatLayout, ex: Extraction, inst: str, box, side: str):
+    """For each polarity, the outer S/D region of `inst` on `side` ("right" or
+    "left"): (kind, diffusion rect, gate rect, region net id, region x-range)
+    or None when that strip has no gate."""
+    L = ex.tech.layers
+    out = {}
+    for kind in ("p", "n"):
+        gates = [(ex.shapes[q].rect, dv) for dv in ex.devices if dv.prov == inst and dv.kind == kind for q in dv.gate_ids]
+        if not gates:
+            out[kind] = None; continue
+        g, dv = max(gates, key=lambda t: t[0][2]) if side == "right" else min(gates, key=lambda t: t[0][0])
+        diff = next(r.rect for r in fl.rects if r.layer == L[ex.tech.diff] and r.prov == inst and geom.overlaps(r.rect, g))
+        xr = (g[2], diff[2]) if side == "right" else (diff[0], g[0])
+        probe = (xr[0] + 1, (g[1] + g[3]) // 2)
+        net = None
+        for k, sh in enumerate(ex.shapes):
+            if sh.layer.startswith("sd_") and sh.rect[0] <= probe[0] <= sh.rect[2] and sh.rect[1] <= probe[1] <= sh.rect[3]:
+                net = ex.net_of_shape[k]; break
+        out[kind] = (kind, diff, g, net, xr)
+    return out
+
+
+def _merge_plan(fl: FlatLayout, ex: Extraction, inst_a: str, inst_b: str):
+    """What a dissolve of the boundary A|B can do: (delta, limiter, nets, ra, rb,
+    ids_a, ids_b, box_a, box_b, fixed, s2n).  Raises MoveError when the cells do
+    not abut or their outer regions are not the same net on every strip."""
+    tech = ex.tech
+    L = tech.layers
+    ids_a, box_a = _cell_box(fl, ex, inst_a); ids_b, box_b = _cell_box(fl, ex, inst_b)
+    if abs(box_a[2] - box_b[0]) > 1:
+        raise MoveError("merge_boundary: %s and %s do not abut" % (inst_a.split("/")[1], inst_b.split("/")[1]))
+    ra = _outer_regions(fl, ex, inst_a, box_a, "right"); rb = _outer_regions(fl, ex, inst_b, box_b, "left")
+    # per strip: same net facing -> the regions may become one (slide over the gap and
+    # B's region); different nets -> the diffusions keep their spacing (a plain compaction)
+    sp_diff = int(round(tech.min_space.get(tech.diff, 0.27) / fl.dbu_um))
+    deltas = []; nets = []
+    for kind in ("p", "n"):
+        if ra[kind] is None or rb[kind] is None:
+            continue
+        gap = rb[kind][1][0] - ra[kind][1][2]
+        if ra[kind][3] is not None and ra[kind][3] == rb[kind][3]:
+            deltas.append(gap + (rb[kind][4][1] - rb[kind][4][0])); nets.append(ex.nets[ra[kind][3]].name)
+        else:
+            deltas.append(gap - sp_diff); nets.append("spacing")
+    if not deltas:
+        raise MoveError("merge_boundary: no strip on either side (a filler or tap cell)")
+    s2n = {sh.src: ex.net_of_shape[k] for k, sh in enumerate(ex.shapes) if sh.src >= 0}
+    supply = {i for i, n in ex.nets.items() if n.name in tech.supply_names}
+    cut_or_tap = {L[c] for _, c, _ in tech.vias} | {L[tech.diff_contact]} | ({L["tap"]} if "tap" in L else set())
+    strips_b = [(fl.rects[i].y0, fl.rects[i].y1) for i in ids_b if fl.rects[i].layer == L[tech.diff]]
+    def on_rail(r):
+        return not any(r.y1 > y0 and r.y0 < y1 for y0, y1 in strips_b)
+    fixed = {i for i in ids_b if fl.rects[i].layer in cut_or_tap and (s2n.get(i) in supply or fl.rects[i].layer == L.get("tap")) and on_rail(fl.rects[i])}
+    delta, limiter = _slide_limit(fl, ex, ids_a, [i for i in ids_b if i not in fixed], box_a, box_b, s2n, min(deltas))
+    return delta, limiter, nets, ra, rb, ids_a, ids_b, box_a, box_b, fixed, s2n
+
+
+def boundary_candidates(fl: FlatLayout, ex: Extraction):
+    """Abutting cell pairs (A left of B, same row) whose outer S/D regions face
+    each other on the same net for every strip both have: the boundaries a
+    dissolve can close.  Returns [(inst_a, inst_b, delta_dbu, nets)] with the
+    compaction each would give."""
+    insts = sorted({r.prov for r in fl.rects if "/net:" not in r.prov and "/pin:" not in r.prov and r.prov.count("/") >= 2})
+    boxes = {}
+    for inst in insts:
+        try:
+            boxes[inst] = _cell_box(fl, ex, inst)[1]
+        except MoveError:
+            continue
+    by_row: Dict[Tuple[int, int], List[str]] = {}
+    for inst, b in boxes.items():
+        by_row.setdefault((b[1], b[3]), []).append(inst)
+    out = []
+    for row, members in by_row.items():
+        members.sort(key=lambda i: boxes[i][0])
+        for a, b in zip(members, members[1:]):
+            if abs(boxes[a][2] - boxes[b][0]) > 1:
+                continue
+            try:
+                delta, limiter, nets = _merge_plan(fl, ex, a, b)[:3]
+            except (MoveError, StopIteration):
+                continue
+            if delta > 0:
+                out.append((a, b, delta, nets))
+    return out
+
+
+def merge_boundary(fl: FlatLayout, ex: Extraction, inst_a: str, inst_b: str) -> List[int]:
+    """Dissolve the boundary between two abutting cells: B slides left as far
+    as every rule allows.  On a strip whose outer S/D regions face each other
+    on the same net the two regions become one shared region with A's
+    contacts (the slide may cover the gap and B's region); on a strip whose
+    regions are different nets the diffusions keep their spacing (a plain
+    compaction); the least of these, then every other layer's spacing, bounds
+    the slide. B's contacts and
+    straps that would then sit within contact spacing of A's go (they are
+    the same net; the fill pass merges what is left); the filler beyond B
+    grows by the same amount, so the saving appears as room beside the pair.
+    The cells' rail contacts and taps stay on the shared rail (the
+    neighbouring row duplicates them), as does supply-net DEF wiring; other
+    DEF wiring over B follows it.  Returns the changed rect ids; the amount
+    is in LAST_MERGE_DELTA."""
+    tech = ex.tech
+    L = tech.layers
+    d = fl.dbu_um
+    nm = lambda um: int(round(um / d))
+    delta, limiter, nets, ra, rb, ids_a, ids_b, box_a, box_b, fixed, s2n = _merge_plan(fl, ex, inst_a, inst_b)
+    if delta <= 0:
+        raise MoveError("merge_boundary: nothing to gain -- %s" % limiter)
+    LAST_MERGE_LIMIT[0] = limiter
+    cy0, cy1 = min(box_a[1], box_b[1]), max(box_a[3], box_b[3])
+    touched: List[int] = []
+    # the filler beyond B grows toward B
+    starts: Dict[str, int] = {}; members: Dict[str, List[int]] = {}
+    for i, r in enumerate(fl.rects):
+        if r.prov in (inst_a, inst_b) or "/net:" in r.prov or "/pin:" in r.prov or r.y1 <= cy0 or r.y0 >= cy1:
+            continue
+        members.setdefault(r.prov, []).append(i); starts[r.prov] = min(starts.get(r.prov, 10**12), r.x0)
+    right = {p: x for p, x in starts.items() if box_b[2] - nm(0.3) <= x <= box_b[2] + nm(0.3)}
+    if not right:
+        raise MoveError("merge_boundary: nothing abuts %s on the right to take the freed space" % inst_b.split("/")[1])
+    fprov = min(right, key=right.get)
+    if not ("fill" in fprov.split("/")[-1].lower() or "decap" in fprov.split("/")[-1].lower()):
+        raise MoveError("merge_boundary: %s abuts %s on the right, not a filler" % (fprov.split("/")[-1][:30], inst_b.split("/")[1]))
+    soft_layers = {L[n] for n in (tech.nwell, tech.nsdm, tech.psdm) if n} | {L[f.layer] for f in tech.vt.values()}
+    fx0 = min([fl.rects[i].x0 for i in members[fprov] if fl.rects[i].layer not in soft_layers] or [right[fprov]])
+    # 1. B slides left (rail cuts stay)
+    for i in ids_b:
+        if i in fixed:
+            continue
+        r = fl.rects[i]
+        fl.rects[i].rect = (r.x0 - delta, r.y0, r.x1 - delta, r.y1); touched.append(i)
+    for i, r in enumerate(fl.rects):
+        if ("/net:" in r.prov or "/pin:" in r.prov) and r.y1 > cy0 and r.y0 < cy1 and r.prov.rsplit(":", 1)[-1] not in tech.supply_names:
+            if r.x0 >= box_b[0] - 1 and r.x1 <= box_b[2] + 1:
+                fl.rects[i].rect = (r.x0 - delta, r.y0, r.x1 - delta, r.y1); touched.append(i)
+    for tx in getattr(fl, "texts", []):
+        if box_b[0] <= tx.xy[0] <= box_b[2] and cy0 <= tx.xy[1] <= cy1:
+            tx.xy = (tx.xy[0] - delta, tx.xy[1])
+    # 2. the filler grows toward B
+    for i in members[fprov]:
+        r = fl.rects[i]
+        if r.x0 <= fx0 + 1 or r.layer in soft_layers:
+            fl.rects[i].rect = (r.x0 - delta, r.y0, r.x1, r.y1); touched.append(i)
+    # 3. A's rails, wells and implants reach B's (the two abut already; the diffusion
+    #    strips are joined by extending A's to B's shifted start), and B's contacts /
+    #    straps that landed within contact spacing of A's in the shared region go
+    sp_cut = nm(tech.min_space.get(tech.diff_contact, 0.17))
+    for kind in ("p", "n"):
+        if ra[kind] is None or rb[kind] is None or ra[kind][3] is None or ra[kind][3] != rb[kind][3]:
+            continue                                   # not a shared region: the strips merely keep spacing
+        da = ra[kind][1]; db_id = next(i for i in ids_b if fl.rects[i].layer == L[tech.diff] and fl.rects[i].rect[1] == rb[kind][1][1] and fl.rects[i].rect[3] == rb[kind][1][3])
+        db = fl.rects[db_id].rect
+        ia = next(i for i in ids_a if fl.rects[i].layer == L[tech.diff] and fl.rects[i].rect == da)
+        if db[0] > da[2]:
+            fl.rects[ia].rect = (da[0], da[1], db[0], da[3]); touched.append(ia)
+        shared = (ra[kind][2][2], da[1], rb[kind][2][0] - delta, da[3])
+        a_cuts = [fl.rects[i].rect for i in ids_a if fl.rects[i].layer == L[tech.diff_contact] and geom.overlaps(fl.rects[i].rect, shared)]
+        for i in ids_b:
+            r = fl.rects[i]
+            if r.layer == L[tech.diff_contact] and geom.overlaps(r.rect, shared):
+                if any(r.rect == c for c in a_cuts):
+                    continue
+                if any(geom.overlaps((r.x0 - sp_cut, r.y0 - sp_cut, r.x1 + sp_cut, r.y1 + sp_cut), c) for c in a_cuts):
+                    fl.rects[i].rect = (r.x0, r.y0, r.x0, r.y0); touched.append(i)
+    LAST_MERGE_DELTA[0] = delta
+    touched = sorted(set(touched))
+    for _ in range(4):                                     # same-net straps that met: merge them
+        new = fill_notches(fl, ex, touched)
+        if not new:
+            break
+        touched += new
+    return sorted(set(touched))
+
+
+LAST_MERGE_DELTA: List[int] = [0]
+LAST_MERGE_LIMIT: List[str] = [""]      # what bounded the last merge_boundary slide
+
+
+def _slide_limit(fl: FlatLayout, ex: Extraction, ids_a, ids_b, box_a, box_b, s2n, delta: int):
+    """Largest slide of B toward A, at most `delta`, that keeps every spacing
+    rule between A's and B's shapes on the conducting layers.  Returns
+    (delta, description of the limiting pair)."""
+    tech = ex.tech
+    L = tech.layers
+    inv = {v: k for k, v in L.items()}
+    nm = lambda um: int(round(um / fl.dbu_um))
+    cuts = {L[c] for _, c, _ in tech.vias} | {L[tech.diff_contact]}
+    layers = {L[tech.poly]} | {L[n] for n in tech.routing[:3]} | cuts
+    reach = nm(1.5) + delta
+    a_near = [i for i in ids_a if fl.rects[i].layer in layers and fl.rects[i].x1 > box_a[2] - reach and fl.rects[i].x1 > fl.rects[i].x0]
+    b_near = [i for i in ids_b if fl.rects[i].layer in layers and fl.rects[i].x0 < box_b[0] + reach and fl.rects[i].x1 > fl.rects[i].x0]
+    best, who = delta, "the diffusion regions"
+    for i in a_near:
+        ra = fl.rects[i]
+        for j in b_near:
+            rb = fl.rects[j]
+            if rb.layer != ra.layer or rb.y1 <= ra.y0 or rb.y0 >= ra.y1:
+                continue
+            ln = inv.get(ra.layer)
+            is_cut = ra.layer in cuts
+            if not is_cut and s2n.get(i) is not None and s2n.get(i) == s2n.get(j):
+                continue                                   # same net: they may merge
+            sp = nm(tech.min_space.get(ln, 0.17))
+            allowed = rb.x0 - ra.x1 - sp                   # slide that leaves exactly the spacing
+            if is_cut and (rb.x0 - ra.x1 - delta) == 0 and ra.y0 == rb.y0 and ra.y1 == rb.y1 and (ra.x1 - ra.x0) == (rb.x1 - rb.x0):
+                continue                                   # they would coincide exactly: one cut
+            if allowed < best:
+                best, who = allowed, "%s %s (%s) vs %s (%s), spacing %.2f" % (ln, [round(v * fl.dbu_um, 3) for v in ra.rect], ra.prov.split("/")[1],
+                                                                           [round(v * fl.dbu_um, 3) for v in rb.rect], rb.prov.split("/")[1], tech.min_space.get(ln, 0.17))
+    return best, who
+
+
 def fill_notches(fl: FlatLayout, ex: Extraction, new_ids: Sequence[int]) -> List[int]:
     """Two shapes of one net on a spacing layer that neither overlap nor share
     an edge, closer than spacing, form a notch (the delta-DRC flags it).  When

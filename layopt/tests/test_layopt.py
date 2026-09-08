@@ -399,14 +399,15 @@ def _bare_row(cells):
     lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
     if not os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__fill_8.gds")):
         return None
-    comps = " ".join("- u%d sky130_fd_sc_hd__%s + PLACED ( %d 0 ) N ;" % (i, m, int(x * 1000)) for i, (m, x) in enumerate(cells))
+    cells = [c if len(c) == 3 else (c[0], c[1], "N") for c in cells]          # (macro, x_um[, orient])
+    comps = " ".join("- u%d sky130_fd_sc_hd__%s + PLACED ( %d 0 ) %s ;" % (i, m, int(x * 1000), o) for i, (m, x, o) in enumerate(cells))
     deftext = """VERSION 5.8 ; DESIGN t ; UNITS DISTANCE MICRONS 1000 ; DIEAREA ( 0 0 ) ( 12000 2720 ) ;
 COMPONENTS %d ; %s END COMPONENTS
-SPECIALNETS 2 ; - VPWR + USE POWER ; - VGND + USE GROUND ; END SPECIALNETS
-END DESIGN""" % (len(cells), comps)
+SPECIALNETS 2 ; - VPWR %s + USE POWER ; - VGND %s + USE GROUND ; END SPECIALNETS
+END DESIGN""" % (len(cells), comps, " ".join("( u%d VPWR )" % i for i in range(len(cells))), " ".join("( u%d VGND )" % i for i in range(len(cells))))
     with tempfile.TemporaryDirectory() as td:
         open(os.path.join(td, "t.def"), "w").write(deftext)
-        lefs = [os.path.join(lib, "sky130_fd_sc_hd.tlef")] + [os.path.join(lib, "sky130_fd_sc_hd__%s.lef" % m) for m in sorted({m for m, _ in cells})]
+        lefs = [os.path.join(lib, "sky130_fd_sc_hd.tlef")] + [os.path.join(lib, "sky130_fd_sc_hd__%s.lef" % m) for m in sorted({c[0] for c in cells})]
         return lefdef.def2flat(os.path.join(td, "t.def"), lefs, lib, T)
 
 
@@ -655,6 +656,34 @@ def test_set_gate_length():
         raise AssertionError("L = 0.6 is outside the characterised range")
     except mv.MoveError as e:
         print("  refused: %s" % str(e)[:100])
+
+
+def test_merge_boundary():
+    """An inv_1 placed FN (VDD/VSS regions on its right) abutting an inv_1
+    placed N (VDD/VSS on its left): the boundary dissolves, the right cell
+    slides left by the gap plus one region, the filler beyond it grows by the
+    same, the netlist is unchanged and nothing new is violated."""
+    from .. import moves as mv, drc as rules
+    fl = _bare_row([("fill_4", 0.0), ("inv_1", 1.84, "FN"), ("inv_1", 3.22), ("fill_8", 4.60)])
+    if fl is None:
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    ex = extract.extract(fl, T)
+    sig = ex.signature(); base = {rules.key(v) for v in rules.check(fl, ex)}
+    cands = mv.boundary_candidates(fl, ex)
+    assert cands and any("u1" in a and "u2" in b for a, b, _, _ in cands), cands
+    a, b, delta, nets = next(c for c in cands if "u1" in c[0])
+    assert set(nets) == {"VPWR", "VGND"} or set(nets) == {"VDD", "VSS"}, nets
+    n0 = len(fl.rects)
+    touched = mv.merge_boundary(fl, ex, a, b)
+    ex2 = extract.extract(fl, T)
+    assert ex2.signature() == sig
+    nv = rules.new_violations(fl, ex2, touched, base)
+    assert not nv, nv[:3]
+    assert len(ex2.devices) == len(ex.devices)
+    print("  inv_1(FN)|inv_1: boundary dissolved, cell B slid %.3f um (%s shared; limited by %s), %d rects changed" % (
+        mv.LAST_MERGE_DELTA[0] / 1000.0, "+".join(nets), mv.LAST_MERGE_LIMIT[0].split(" (")[0], len(touched)))
+    assert mv.LAST_MERGE_DELTA[0] == delta >= 400, (delta, mv.LAST_MERGE_DELTA[0])
+
 
 
 if __name__ == "__main__":

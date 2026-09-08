@@ -864,6 +864,70 @@ duplicated by the neighbouring row's cells across the shared rail, so they
 must stay where they are while the rail stretches over them — the first
 version moved them and split them from their twins.
 
+**The boundary dissolve (2026-09-08, `merge_boundary`,
+`boundary_candidates`).** The move this tool was named for, and the one
+where area comes back. Two abutting cells each end their strips with an
+outer S/D region and a margin to the cell edge; when the two outer regions
+facing each other across the boundary are the same net on every strip both
+have — VDD against VDD above, VSS against VSS below, which a flipped
+placement gives whenever two sources meet — the two regions can be one
+region, and the right cell can slide left over the margin, the gap and one
+region's length. The freed room goes to the filler beyond the pair (its
+rails and wells growing toward the cell), so it appears as usable space
+beside the cell rather than as a shorter row: what a row-level compaction
+would collect, and what `add_finger` can use at once.
+
+The move: A's diffusion is extended to meet B's slid start (one strip per
+polarity), B's contacts and straps that land within contact spacing of A's
+in the shared region go (they are the same net; identical cuts count once),
+B's rail contacts and taps stay on the shared rail as in the gate-length
+move, supply-net DEF wiring stays, other DEF wiring over B follows it, and
+the fill pass merges the two cells' same-net straps that now meet. How far B
+may slide is the question that matters, and the first answer was wrong in an
+instructive way: computed from the diffusion alone it was 0.94 µm for an
+inv_1 pair, and it dragged B's poly pin tab into A's gate stripe — the two
+inverters' inputs shorted, which the topology guard reported. The slide is
+now bounded by every layer's spacing between the two cells' shapes that share
+a y-range and are not the same net (poly, li, met1; cuts of any net, a pair
+that would coincide exactly excepted), and the move names the pair that
+bounded it. For inv_1 (FN) against inv_1 that is 0.43 µm, limited by the two
+cells' poly pin tabs at poly spacing — 31 % of an inv_1's width, with the
+netlist unchanged and no new violation (`test_merge_boundary`). The rail
+contacts had to be excluded from that bound as well as from the slide: they
+stay, so they cannot limit. And the implant rule learned to read the merged
+implant rather than a single rectangle, since after a dissolve the right
+cell's gate is covered by both cells' hvtp together.
+
+gcd then said something about placement rather than about the move: of its
+508 abutments only 19 are logic against logic — a filler sits on one side of
+every other — and in none of those 19 had the placer put sources face to face
+on both strips. So the move was generalised to what it always was underneath,
+a compaction: on a strip whose regions face each other on one net they
+merge; on a strip whose regions are different nets the diffusions keep their
+0.27 µm; the least of those and every other layer's spacing bounds the slide.
+The shared-region case is the one that pays most, and it is the placer's to
+create — a flip that puts two sources together is free — which is a note for
+the day layopt talks to a placer rather than a limit of the move.
+
+The numbers on gcd, then, are small and true (`evidence/l4_dissolve.log`):
+eleven logic-against-logic abutments can compact at all, by 0.005 to
+0.075 µm each, 0.43 µm over the design, 0.1 % of its 518 µm of cell width;
+nine of them are spacing-only, two merge one strip and keep spacing on the
+other. Applied to `_240_|_241_`: 0.075 µm, 175 rects, netlist unchanged,
+no new violation, KLayout isomorphic. Four of the larger ones refuse because
+another logic cell, not a filler, abuts the sliding cell on its right, so the
+freed space has nowhere local to go — that is a row-level shift, which this
+move deliberately does not do. Two mechanics were fixed by the survey: the
+min-width check widened a thin rectangle toward one side over its whole
+length and so flagged L-shaped stock slabs whose neighbours cover different
+parts on different sides (it now checks along the length; those flags had
+been in the baseline, and a slide made them look new), and slides under
+0.05 µm are not worth a move. The honest summary of the dissolve on a
+placed-and-routed sky130 design: the cells' own margins are already at the
+rules, fillers separate nearly every pair, and the placer never put sources
+face to face — the ~0.4 µm a shared-source boundary gives is real, and it is
+the placer's to arrange.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -944,6 +1008,12 @@ every refusal names the obstacle, the planners with a tally of rejected
 candidates and the router's statistics; `LAYOPT_PLAN_DEBUG=1` prints the
 surviving head candidates, `LAYOPT_ROUTE_PROBE=layer:x:y,...` the raster
 state at given points and each repair attempt).
+
+**Boundary dissolve** (`merge_boundary`: two abutting cells whose outer S/D
+regions face each other on the same net share one region; B slides left as
+far as every layer's spacing between the two cells allows, the filler beyond
+grows by the same; `boundary_candidates` lists the boundaries and their
+achievable slide).
 
 **Gate length by stretching the cell at the gate** (`set_gate_length`: a cut
 just inside each finger's outer edge, everything beyond shifts, everything
@@ -1079,8 +1149,10 @@ Planned:
   way of a connection are moved (cut and reconnected, §2). Vt flavour by
   implant (`set_vt`; Xyce-measured multipliers); gate length by stretching
   the cell at the gate (`set_gate_length`); switched capacitance as the power
-  measure (`power.py`). Remaining: diffusion merge across abutting cells
-  (needs compaction to pay), contact growth.
+  measure (`power.py`); the boundary dissolve (`merge_boundary`: shared S/D
+  regions where the nets match, spacing-bounded compaction otherwise; 0.43 µm
+  per shared-source boundary, but gcd's placement offers none). Remaining:
+  contact growth; a placer-side flip policy that creates shared boundaries.
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
   T2 (layopt MC over a stated variation model) and T3 (stat-sim's
   `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1

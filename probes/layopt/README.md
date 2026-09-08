@@ -8,7 +8,7 @@ for the PNGs). Design record: `../../LAYOUT-OPT.md`.
 ## Commands
 
     cd /usr/local/src/mylex
-    python3 -m layopt.tests.test_layopt                       # 19 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model, moving a P&R wire, diffusion spacing, set_vt, switched capacitance, gate length)
+    python3 -m layopt.tests.test_layopt                       # 20 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model, moving a P&R wire, diffusion spacing, set_vt, switched capacitance, gate length, boundary dissolve)
     python3 -m layopt compare  $K/layout/kestrel_pll.gds $K/layout/kestrel_pll_flat_extracted.cir
     python3 -m layopt extract  $K/layout/kestrel_pll.gds -o evidence/kestrel_pll_layopt.cir
     python3 -m layopt rc       $K/layout/kestrel_pll.gds -o evidence/kestrel_pll.spef
@@ -297,6 +297,21 @@ the abutting filler gives the space. Drive model: R × (L/0.15)^γ, γ_p 1.256 /
 γ_n 0.615 from the Xyce table. gcd rebuffer12's output stage 0.15 → 0.18 on
 both polarities (79 rects), no new violation, KLayout isomorphic with the new L,
 R_rise 2729 → 3432 Ω, net12 21.2 → 26.3 ps, +5.9 fJ per transition.
+
+## The boundary dissolve (`l4_dissolve.py`, `evidence/l4_dissolve.log`)
+
+`boundary_candidates` lists abutting logic pairs and the slide each allows;
+`merge_boundary` slides the right cell left as far as every rule allows: a strip
+whose outer regions face each other on one net becomes a shared region (the left
+cell's diffusion extended, the right's near-duplicate contacts dropped), a strip
+whose regions are different nets keeps diffusion spacing, and poly, li, met1 and
+cut spacing between the two cells bound the rest; rail contacts stay on the
+shared rail; the filler beyond grows by the same amount. Bare
+row inv_1 (FN) | inv_1: 0.43 µm (31 % of an inv_1), limited by the poly pin tabs
+(`test_merge_boundary`). gcd: 11 logic|logic abutments can compact, 0.005–0.075 µm
+each, 0.43 µm in all (0.1 % of 518 µm of cell width); `_240_|_241_` applied:
+0.075 µm, no new violation, KLayout isomorphic; four refuse for want of a filler
+beyond the sliding cell. The placer never put two sources face to face.
 
 ## Findings about the kestrel layout (report upstream)
 

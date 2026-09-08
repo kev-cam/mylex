@@ -1,0 +1,9 @@
+== gcd: 222 logic cells, 518.3 um of cell width; 11 abutting logic pairs can compact (a strip merges where its regions are one net, keeps spacing otherwise)
+   a dissolve of every one gives back 0.43 um = 0.1% of the cell width (mean 0.039 um per boundary); note only 11 of 11 abutments are logic|logic -- the rest have a filler on one side
+   by nets: [('spacing', 9), ('VDD+spacing', 1), ('VSS+spacing', 1)]
+   _251_|_252_: refused -- merge_boundary: nothing abuts _252_ on the right to take the freed space
+   _240_|_241_ (spacing): B slid 0.075 um, 175 rects; topology same, new violations 0 []
+   _228_|_229_: refused -- merge_boundary: nothing abuts _229_ on the right to take the freed space
+   _238_|_239_: refused -- merge_boundary: nothing abuts _239_ on the right to take the freed space
+   _115_|rebuffer52: refused -- merge_boundary: nothing abuts rebuffer52 on the right to take the freed space
+   after 1 dissolves: KLayout devices 2472/2472, W/L match True, nets 1353/1353, isomorphic True; switched energy 17645.8 -> 17645.9 fJ
