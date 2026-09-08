@@ -1,0 +1,24 @@
+== Xyce inv_1 x20 (P 20.0 / N 13.0, L 0.15 um), input ramp 50 ps, loads [40.0, 100.0, 200.0, 400.0, 800.0] fF; R reported per 1 um-equivalent (x20)
+   (lvt gates are drawn at L = 0.35 um: sky130 poly.1b requires it; @0.35 marks a standard device at that length)
+   nfet             pfet             |  R_rise    t0r |  R_fall    t0f
+   nfet_01v8        pfet_01v8        |    7098   19.8 |    4299   15.6
+   nfet_01v8_lvt    pfet_01v8        |    7144   22.0 |    5796   19.1
+   nfet_01v8        pfet_01v8_lvt    |    7736   20.2 |    4324   17.9
+   nfet_01v8        pfet_01v8_hvt    |   11036   27.2 |    4294   15.8
+   nfet_01v8@0.18   pfet_01v8        |    7103   20.2 |    4929   17.3
+   nfet_01v8        pfet_01v8@0.18   |    9058   24.2 |    4297   15.9
+   nfet_01v8@0.25   pfet_01v8        |    7118   21.0 |    5875   19.2
+   nfet_01v8        pfet_01v8@0.25   |   13600   31.6 |    4296   16.6
+   nfet_01v8@0.35   pfet_01v8        |    7134   22.2 |    7205   22.2
+   nfet_01v8        pfet_01v8@0.35   |   20397   42.7 |    4292   17.5
+== multipliers on the standard flavour's R (the Vt move's effect):
+   NMOS lvt             : R_fall x 1.348
+   PMOS lvt             : R_rise x 1.090
+   PMOS hvt             : R_rise x 1.555
+   NMOS std@0.18        : R_fall x 1.147
+   PMOS std@0.18        : R_rise x 1.276
+   NMOS std@0.25        : R_fall x 1.367
+   PMOS std@0.25        : R_rise x 1.916
+   NMOS std@0.35        : R_fall x 1.676
+   PMOS std@0.35        : R_rise x 2.873
+   Liberty (std) for comparison: R_rise 8165, R_fall 4823 ohm (inv_1, 50 ps slew); Xyce std here: 7098 / 4299

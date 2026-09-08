@@ -658,6 +658,13 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
                 continue                           # a slab of our own strip (the stock cells draw one strip as several rects)
         raise MoveError("add_finger: %s at %s (%s) lies within diffusion spacing of the extended strip"
                         % (inv.get(r.layer, r.layer), [round(v * d, 3) for v in r.rect], r.prov.split("/", 1)[1][:40]))
+    # poly of another net crossing the new diffusion would be a transistor that was not there
+    ext_region = (D[2], D[1], x_new, D[3]) if hi else (x_new, D[1], D[0], D[3])
+    s2n_here = {sh.src: ex.net_of_shape[k] for k, sh in enumerate(ex.shapes) if sh.src >= 0}
+    for k, r in enumerate(fl.rects):
+        if r.layer == L[tech.poly] and geom.overlaps(r.rect, ext_region) and s2n_here.get(k) != dev.g:
+            raise MoveError("add_finger: poly at %s (%s) crosses the extended diffusion (it would gate a new transistor)"
+                            % ([round(v * d, 3) for v in r.rect], r.prov.split("/", 1)[1][:40]))
     fl.rects[di].rect = D_new
     touched.append(di)
     # 2. new gate finger(s): every gate of the stack mirrored; spans overhang to overhang

@@ -699,7 +699,55 @@ between abutting cells), which is not done. Power is not measured; the
 extraction has every net's C, so switched capacitance before and after is the
 next measurement. A zero-area, zero-wire sizing move the process does allow:
 Vt flavour by implant (sky130's lvtn / hvtp layers), which the next entry
-takes up.
+takes up. With the shift search in place the 33-cell run reaches 33 of 33
+cells with at least one legal finger (`evidence/l4_gcd_all33.log`); what
+refuses is per finger — the nor4 stack's heads, three lpflow NMOS fingers
+whose strap meets the cell's rail tab, and one guard catch of a topology
+change that the move should have seen: poly of another net crossing the
+extended diffusion makes a transistor, and the move now refuses that itself.
+
+**Device speed by doping and by gate length (2026-09-08, `probes/layopt/vt_fit.py`,
+`evidence/vt_fit.log`).** The architect's suggestion: change the device, not
+just its width. sky130 has three Vt flavours per polarity selected purely by
+implant — lvtn (125/44) on an NMOS makes a `nfet_01v8_lvt`, hvtp (78/44) on a
+PMOS a `pfet_01v8_hvt` — so a Vt change is a rectangle on one layer: no area,
+no wire, and (for hvt) less leakage. The PDK's tt models for the five devices
+were fetched from skywater-pdk-libs-sky130_fd_pr and converted the way kestrel
+converts its own (subcircuit wrapper off; every corner or mismatch symbol the
+model references and does not define set to zero, multipliers to one — the
+same recipe as kestrel's testbench, and the recipe that matters: the tt
+corner file's own offsets make Xyce's operating point fail, and defining the
+file's `_spectre` symbols a second time does the same). An inv_1 (P 1.0,
+N 0.65, L 0.15) driven by a 50 ps ramp into 2–40 fF, its 50 % delay against
+load, slope over ln 2 — the same quantity the Liberty gave for the standard
+flavour. One obstacle was the simulator, not the model: Xyce's oldest BSIM4
+fails the transient's operating point for the standard nfet below about 2 µm
+width (kestrel's devices are 20–40 µm and never met it), so the inverter is
+characterised at twenty times inv_1's size with loads scaled the same and
+R·W reported at inv_1's size; the standard flavour lands at 7098 / 4299 Ω
+against the Liberty's 8165 / 4823 — 11–13 % lower, the same order.
+
+| device | R relative to standard at L = 0.15 |
+|---|---|
+| PMOS hvt, L 0.15 | R_rise × 1.56 |
+| PMOS lvt (L 0.35, the shortest the rules allow) | R_rise × 1.09 |
+| NMOS lvt (L 0.35) | R_fall × 1.35 |
+| standard, L 0.18 | P × 1.28, N × 1.15 |
+| standard, L 0.25 | P × 1.92, N × 1.37 |
+| standard, L 0.35 | P × 2.87, N × 1.68 |
+
+Two conclusions, neither the one expected. Low Vt is not a speed-up here:
+sky130's DRC (poly.1b) requires a low-Vt gate to be at least 0.35 µm long,
+and at that length the lvt PMOS is 9 % *slower* than a standard 0.15 µm gate
+and the lvt NMOS 35 % slower — the longer channel eats the threshold gain.
+High Vt on the PMOS is the real lever: 1.56× on the rising edge for a single
+implant rectangle, plus lower leakage, and there is no high-Vt NMOS in this
+process. Gate length is a second lever in the same direction and works on
+both polarities — 0.15 → 0.18 costs 28 % on P and 15 % on N — though it
+moves poly edges and so contacts, which fingers in whitespace can afford and
+stock geometry may not. For a balancer that has fast paths to slow down at
+zero area and power, these are the two moves; the next entry builds the
+first.
 
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):

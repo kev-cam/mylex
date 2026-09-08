@@ -206,7 +206,7 @@ notch-fill pass then deal with it -- `_161_` still passes that way).
 All 33 candidates (`--max 33`, `evidence/l4_gcd_all33.log`): 32 take at least
 one finger; baseline 598 flags (was 1012 before the merged-shape rule). Per
 finger, what still refuses: the nor4 PMOS stack with no room for a contact head
-(`_257_`; heads for a four-stack do not fit at 0.42 µm pitch) — the seven strap
+(`_257_`; heads for a four-stack do not fit at 0.42 µm pitch); 33 of 33 cells with the shift search — the seven strap
 conflicts were the cell's own rail tabs and internal columns and are handled by
 a legal-shift search of the mirrored column (`evidence/l4_gcd_strap7.log`: all
 seven cells take at least one finger).
@@ -255,6 +255,16 @@ except buf_16. Slew: delay = t₀ + ln2·RC + κ·RC·s/(RC + μ·s), transition
 The constants are `tech.SKY130.drive`; the probe prints OK / UPDATE against
 them. The path-balance probes judge driver + receiver on both edges with
 slew; the gcd probes report worst-edge Elmore moments.
+
+## Device speed by Vt flavour and gate length (`vt_fit.py`, `evidence/vt_fit.log`)
+
+Xyce, PDK tt models (`~/tools/sky130_fd_pr`, converted kestrel-style),
+inv_1 ×20 (Xyce's BSIM4 fails the standard nfet's transient operating point
+below ~2 µm width), 50 ps ramp, delay-vs-load slope ÷ ln 2 as R at inv_1 size.
+Standard: R_rise 7098 / R_fall 4299 Ω (Liberty 8165 / 4823). PMOS hvt ×1.56
+on R_rise at L 0.15; lvt needs L ≥ 0.35 (poly.1b) and is then ×1.09 (P) /
+×1.35 (N) — no speed-up; gate length 0.18 / 0.25 / 0.35: P ×1.28 / 1.92 / 2.87,
+N ×1.15 / 1.37 / 1.68.
 
 ## Findings about the kestrel layout (report upstream)
 
