@@ -313,6 +313,17 @@ each, 0.43 µm in all (0.1 % of 518 µm of cell width); `_240_|_241_` applied:
 0.075 µm, no new violation, KLayout isomorphic; four refuse for want of a filler
 beyond the sliding cell. The placer never put two sources face to face.
 
+## The placer-side flip policy (`l4_flip_policy.py`, `evidence/l4_flip_policy.log`)
+
+Per macro, the outer S/D nets on each side from a single-cell extraction; per
+row, a dynamic programme over N/mirror per cell maximising strips matched across
+boundaries. gcd as placed: 195 logic|logic neighbours (fillers set aside), 9 match
+both strips; with the policy (100 of 222 cells mirrored) 20 match both, 50 one.
+Exact slides on two-cell layouts: 70 shared boundaries give back 4.24 µm, 0.4 %
+of 975 µm of logic cell width, mostly li-bounded. Applied to the best row (14
+cells, packed and flipped, `merge_boundary(shift_row=True)`): 5 boundaries,
+0.82 µm of 46.0 µm (1.8 %), no new violation, KLayout isomorphic.
+
 ## Findings about the kestrel layout (report upstream)
 
 1. Inter-stage MET3 routes share track y≈8.43 µm and overlap: all four stages'

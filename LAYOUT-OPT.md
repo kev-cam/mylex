@@ -928,6 +928,46 @@ rules, fillers separate nearly every pair, and the placer never put sources
 face to face — the ~0.4 µm a shared-source boundary gives is real, and it is
 the placer's to arrange.
 
+**The placer-side flip policy (2026-09-08, `probes/layopt/l4_flip_policy.py`).**
+So arrange it, at least on paper. Every macro's outer S/D region nets on its
+left and right come from layopt's extraction of the cell alone; mirroring a
+cell swaps them. Per row, with fillers and taps set aside as a packed row
+would, a dynamic programme over the two orientations of each cell (N or its
+mirror, FS or its mirror in a flipped row) maximises the number of strips
+matched across boundaries — a strip matches when both regions are the same
+supply; two cells' signal regions are never one net before routing. gcd as
+placed has 195 logic-against-logic neighbours (with the fillers between them
+ignored): 139 match nothing, 47 one strip, 9 both. With the policy, mirroring
+100 of the 222 cells: 125, 50 and 20. The slide each chosen boundary allows
+was then measured exactly on a two-cell layout of that pair (66 pair types),
+and the honest ceiling on this library is small: 70 shared boundaries give
+back 4.24 µm, 0.4 % of gcd's 975 µm of logic cell width; 49 of the 66 pair
+types are bounded by li — sky130_fd_sc_hd puts input pins and internal li
+within a spacing of the cell edge — 13 by the diffusion regions, a few by
+poly and contacts. The best pairs are buffers meeting buffers (buf_4 | buf_6
+0.58 µm, buf_4 | buf_4 mirrored 0.46 µm); a nand2 against a nand2 gives
+nothing. The policy was then applied for real to the row with the most
+matches: its cells packed without fillers, flipped as chosen, every shared
+boundary dissolved with the rest of the row sliding (`merge_boundary(...,
+shift_row=True)`), and the result checked by the guards and KLayout.
+Applying it found three pieces of bookkeeping that a whole-cell translation
+needs: a flag inside a stock cell that was in the baseline must stay
+recognised when the cell moves (intra-cell violations now key on relative
+geometry); a rail contact stays only when another row duplicates it, and one
+that would collide after a slide is dropped rather than allowed to bound the
+slide (the rail is contacted every pitch by every cell); and a packed row's
+end filler grows so the rail stays continuous. With those, the best row —
+14 cells, 10 strips matched across its 13 boundaries — dissolves all five
+boundaries the policy opened: 0.195 + 0.140 + 0.150 + 0.140 + 0.195 =
+0.82 µm given back of 46.0 µm of cells, 1.8 %, netlist unchanged, no new
+violation, KLayout isomorphic (`evidence/l4_flip_policy.log`,
+`gcd_row_flipped_dissolved.gds`). That is the true size of the dissolve on
+this library: one to two per cent of a row when the placer cooperates, a few
+tenths of a per cent when it does not — real, verified, and small. The design
+decision it leaves is where the policy belongs: in the placer's legalizer, as
+a flip preference when two sources could meet, since it costs nothing there
+and cannot be recovered afterwards without re-routing.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -1151,8 +1191,10 @@ Planned:
   the cell at the gate (`set_gate_length`); switched capacitance as the power
   measure (`power.py`); the boundary dissolve (`merge_boundary`: shared S/D
   regions where the nets match, spacing-bounded compaction otherwise; 0.43 µm
-  per shared-source boundary, but gcd's placement offers none). Remaining:
-  contact growth; a placer-side flip policy that creates shared boundaries.
+  per shared-source boundary, but gcd's placement offers none); the placer-side
+  flip policy surveyed and applied (`l4_flip_policy.py`: 0.4 % of gcd's cell
+  width at best, 1.8 % of its most cooperative row). Remaining: contact
+  growth; handing the flip preference to a placer.
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
   T2 (layopt MC over a stated variation model) and T3 (stat-sim's
   `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1

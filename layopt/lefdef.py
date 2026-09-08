@@ -421,6 +421,8 @@ def def2flat(def_path: str, lef_paths: List[str], gds_dir: str, tech: Tech,
         llx, lly = min(p[0] for p in corners), min(p[1] for p in corners)
         off = (int(round(c.x * scale)) - llx, int(round(c.y * scale)) - lly)
         prov = "%s/%s/%s" % (d.design, c.inst, c.macro)
+        fl.boxes[prov] = (min(p[0] for p in corners) + off[0], min(p[1] for p in corners) + off[1],
+                          max(p[0] for p in corners) + off[0], max(p[1] for p in corners) + off[1])
         for r in sub.rects:
             fl.rects.append(FlatRect(r.layer, gds._xrect(r.rect, ref, off), prov))
         for tx in sub.texts:                                      # keep cell pin labels? no: they would name

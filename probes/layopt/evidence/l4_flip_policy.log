@@ -1,0 +1,19 @@
+== gcd.def: 27 rows, 222 logic cells, 54 macros
+   as placed (fillers set aside, 195 logic|logic neighbours): strips matched {0: 139, 1: 47, 2: 9}
+   with the flip policy (100 of 222 cells mirrored): strips matched {0: 125, 1: 50, 2: 20}
+   packed, flipped, dissolved: 70 shared boundaries give back 4.24 um = 0.4% of 975.2 um of logic cell width (66 two-cell layouts measured)
+   what bounds the slides: [('li', 49), ('the diffusion regions', 13), ('poly', 4), ('licon', 4)]
+      buf_4(N) | buf_6(N): 0.580 um (VPWR+VGND)
+      buf_4(N) | buf_4(FN): 0.460 um (VPWR+VGND)
+      buf_8(FS) | nor2_1(S): 0.400 um (spacing)
+      buf_4(N) | nand2_1(N): 0.340 um (VPWR+VGND)
+      buf_6(N) | nor2_1(FN): 0.200 um (VPWR+VGND)
+      lpflow_isobufsrc_1(N) | buf_6(N): 0.195 um (spacing+VGND)
+== the policy applied to row y=62560 (14 cells, 10 strips matched across 13 boundaries), packed and flipped:
+   inv_8|buf_6 (VPWR+VGND): slid 0.195 um -> topology same, 0 new violations
+   edfxtp_1|buf_4 (spacing+spacing): slid 0.140 um -> topology same, 0 new violations
+   buf_4|xnor2_1 (VPWR+spacing): slid 0.150 um -> topology same, 0 new violations
+   xnor2_1|buf_4 (spacing): slid 0.140 um -> topology same, 0 new violations
+   nand2b_1|buf_4 (VPWR+spacing): slid 0.195 um -> topology same, 0 new violations
+   row: 5 boundaries dissolved, 0.82 um given back of 46.00 um of cells (1.8%); KLayout devices 94/94, W/L True, isomorphic True
+c True

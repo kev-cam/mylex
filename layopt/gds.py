@@ -266,6 +266,7 @@ class FlatLayout:
     rects: List[FlatRect] = field(default_factory=list)
     texts: List[FlatText] = field(default_factory=list)
     top: str = ""
+    boxes: Dict[str, Rect] = field(default_factory=dict)      # instance provenance -> placement box (dbu), from a DEF
 
     def by_layer(self, layer: Tuple[int, int]) -> List[FlatRect]:
         return [r for r in self.rects if r.layer == layer]

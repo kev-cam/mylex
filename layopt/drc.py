@@ -23,6 +23,8 @@ class Violation:
     limit_um: float
     ra: Optional[Rect] = None          # geometry of a and b: the baseline key survives id shifts
     rb: Optional[Rect] = None
+    pa: str = ""                       # provenance of a and b: a flag inside one instance keys on
+    pb: str = ""                       # relative geometry, so a moved cell keeps its baseline flags
 
     def __str__(self):
         return "%s %s: rect %d%s %.3f < %.3f um" % (self.rule, self.layer, self.a,
@@ -69,6 +71,12 @@ def key(v: "Violation") -> Tuple:
     """Identity of a violation for the delta: rule, layer and the geometry of
     the rects involved (not their ids -- a move that deletes rects shifts ids,
     and a baseline keyed by id would then call every old flag new)."""
+    if v.ra is not None and (v.rb is None or v.pa == v.pb) and v.pa and "/net:" not in v.pa:
+        # inside one cell: relative geometry (translation-invariant), so a slid or stretched
+        # cell carries its pre-existing flags with it instead of reporting them as new
+        w, h = v.ra[2] - v.ra[0], v.ra[3] - v.ra[1]
+        rel = (v.rb[0] - v.ra[0], v.rb[1] - v.ra[1], v.rb[2] - v.ra[0], v.rb[3] - v.ra[1]) if v.rb is not None else None
+        return (v.rule, v.layer, v.pa, w, h, rel)
     return (v.rule, v.layer, frozenset(x for x in (v.ra, v.rb) if x is not None))
 
 
@@ -82,6 +90,8 @@ def check(fl: FlatLayout, ex: Extraction, changed: Optional[Sequence[int]] = Non
     for v in out:
         v.ra = fl.rects[v.a].rect if v.a >= 0 else None
         v.rb = fl.rects[v.b].rect if v.b >= 0 else None
+        v.pa = fl.rects[v.a].prov if v.a >= 0 else ""
+        v.pb = fl.rects[v.b].prov if v.b >= 0 else ""
     return out
 
 
