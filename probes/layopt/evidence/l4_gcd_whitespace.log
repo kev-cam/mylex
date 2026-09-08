@@ -1,27 +1,33 @@
-== gcd.def: 784 instances, 57263 rects, 2472 devices; baseline rule flags 1008 (34s)
+== gcd.def: 784 instances, 57263 rects, 2472 devices; baseline rule flags 598 (38s)
    33 logic cells have a fill_4/fill_8 flush on their right; trying 6
    _149_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (14 rects)
    _149_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (21 rects)
       result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 115.2 -> 129.5 fJ/transition (+14.3, +12%)
       output net _045_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 97.8 -> 54.4 ps, mean 97.5 -> 54.1 ps
    _161_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
-   _161_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (22 rects)
+   _161_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (20 rects)
       result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 107.8 -> 123.7 fJ/transition (+15.8, +15%)
       output net _057_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 56.4 -> 32.1 ps, mean 56.3 -> 32.0 ps
    _110_ (clkinv_1, fill_4 to its right) [PN]: P finger LEGAL (11 rects)
    _110_ (clkinv_1, fill_4 to its right) [PN]: N finger LEGAL (7 rects)
       result (P+N): p W=2.52 f=3; n W=0.84 f=2
+      switched energy of the cell's nets: 373.5 -> 383.2 fJ/transition (+9.7, +3%)
       output net _006_: PMOS W 1.68 -> 2.52 um, R_rise/R_fall 5651/7209 -> 4022/3776 ohm; worst-edge Elmore to 4 receivers max 48.3 -> 29.8 ps, mean 48.1 -> 29.6 ps
    rebuffer12 (buf_4, fill_4 to its right) [PN]: P finger LEGAL (11 rects)
    rebuffer12 (buf_4, fill_4 to its right) [PN]: N finger LEGAL (8 rects)
       result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      switched energy of the cell's nets: 105.8 -> 118.4 fJ/transition (+12.6, +12%)
       output net net12: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 4 receivers max 21.2 -> 19.4 ps, mean 21.1 -> 19.3 ps
    rebuffer3 (buf_4, fill_8 to its right) [PN]: P finger LEGAL (11 rects)
    rebuffer3 (buf_4, fill_8 to its right) [PN]: N finger LEGAL (7 rects)
       result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      switched energy of the cell's nets: 111.4 -> 124.0 fJ/transition (+12.7, +11%)
       output net net3: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 4 receivers max 47.6 -> 41.6 ps, mean 47.3 -> 41.3 ps
    rebuffer13 (buf_4, fill_8 to its right) [PN]: P finger LEGAL (11 rects)
    rebuffer13 (buf_4, fill_8 to its right) [PN]: N finger LEGAL (8 rects)
       result (P+N): p W=5.00 f=5; p W=1.00 f=1; n W=3.25 f=5; n W=0.65 f=1
+      switched energy of the cell's nets: 160.1 -> 172.7 fJ/transition (+12.6, +8%)
       output net net13: PMOS W 4.00 -> 5.00 um, R_rise/R_fall 2729/1316 -> 2263/1069 ohm; worst-edge Elmore to 8 receivers max 64.7 -> 55.9 ps, mean 64.3 -> 55.6 ps
    legal moves: 6 of 6 attempted

@@ -12,7 +12,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(HERE, "..", "..")))
 sys.path.insert(0, HERE)
-from layopt import compare, drc as rules, extract, gds as gdsmod, lefdef, moves as mv, tech as techmod  # noqa: E402
+from layopt import compare, drc as rules, extract, gds as gdsmod, lefdef, moves as mv, power, tech as techmod  # noqa: E402
 from l2_real_def import klayout_extract  # noqa: E402
 from l4_gcd_whitespace import net_delay, output_net  # noqa: E402
 
@@ -39,6 +39,7 @@ def main():
     print("   set_vt std: %d rects changed, swept along %s; signature equal %s; new violations %d %s" % (len(t), mv.LAST_VT_SWEPT, ex2.signature() == sig, len(nv), nv[:3]))
     print("   %s devices now: %s" % (inst, ["%s %s W=%.2f f=%d" % (x.kind, T.flavour_of_model(x.model), x.w, x.fingers) for x in ex2.devices if x.prov.split("/")[1] == inst]))
     wp1, r1, d1 = net_delay(ex2, net, inst)
+    print("   switched energy of the design: %.1f -> %.1f fJ/transition (a Vt change adds no capacitance)" % (power.energy_fJ(ex), power.energy_fJ(ex2)))
     print("   output net %s: R_rise/R_fall %.0f/%.0f -> %.0f/%.0f ohm; worst-edge Elmore to %d receivers max %.1f -> %.1f ps" % (
         ex.nets[net].name, r0[0], r0[1], r1[0], r1[1], len(d0), max(d0.values()), max(d1.values())))
     out = os.path.join(EVID, "gcd_%s_stdvt.gds" % inst); gdsmod.write_flat(fl, out)

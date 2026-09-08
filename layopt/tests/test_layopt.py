@@ -593,6 +593,36 @@ def test_set_vt():
     assert not nv, nv[:3]
 
 
+def test_power_switched_capacitance():
+    """inv_1's input net carries the Liberty's pin capacitance within 10 %;
+    a finger added to its PMOS raises the input net's gate C by 8.63 * W*L and
+    the output net's diffusion C; set_vt on the PMOS changes no capacitance."""
+    from .. import moves as mv, power
+    fl = _bare_row([("fill_4", 0.0), ("inv_1", 1.84), ("fill_8", 3.22)])
+    if fl is None:
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    ex = extract.extract(fl, T)
+    pm = [d for d in ex.devices if d.kind == "p"][0]
+    c_in = power.net_cap(ex, pm.g)
+    assert abs(c_in["gate"] / 2.302 - 1) < 0.10, c_in                # Liberty: inv_1 A = 2.302 fF
+    c_out0 = power.net_cap(ex, pm.d if ex.nets[pm.d].name not in T.supply_names else pm.s)
+    e0 = power.energy_fJ(ex)
+    assert e0 > 0 and c_out0["diff"] > 0
+    mv.add_finger(fl, ex, pm, side="high")
+    ex2 = extract.extract(fl, T)
+    pm2 = [d for d in ex2.devices if d.kind == "p"][0]
+    c_in2 = power.net_cap(ex2, pm2.g)
+    assert abs((c_in2["gate"] - c_in["gate"]) - T.cgate_fF_um2 * pm.w * pm.l) < 1e-6
+    out2 = pm2.d if ex2.nets[pm2.d].name not in T.supply_names else pm2.s
+    assert power.net_cap(ex2, out2)["diff"] > c_out0["diff"]
+    e1 = power.energy_fJ(ex2)
+    print("  inv_1: input %s | finger added: design energy %.1f -> %.1f fJ/transition" % (power.report(ex, pm.g), e0, e1))
+    mv.set_vt(fl, ex2, pm2, "std")
+    ex3 = extract.extract(fl, T)
+    assert abs(power.energy_fJ(ex3) - e1) < 1e-6
+
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):

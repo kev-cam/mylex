@@ -2,5 +2,6 @@
    rebuffer3 output PMOS: sky130_fd_pr__pfet_01v8_hvt W=4.00 fingers=4
    set_vt std: 1 rects changed, swept along ['M2430']; signature equal True; new violations 0 []
    rebuffer3 devices now: ['p std W=4.00 f=4', 'p std W=1.00 f=1', 'n std W=2.60 f=4', 'n std W=0.65 f=1']
+   switched energy of the design: 17645.8 -> 17645.8 fJ/transition (a Vt change adds no capacitance)
    output net net3: R_rise/R_fall 2729/1316 -> 1755/1316 ohm; worst-edge Elmore to 4 receivers max 47.6 -> 31.8 ps
    KLayout: devices 2472/2472, W/L match True, nets 1353/1353, isomorphic True

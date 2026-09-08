@@ -8,7 +8,7 @@ for the PNGs). Design record: `../../LAYOUT-OPT.md`.
 ## Commands
 
     cd /usr/local/src/mylex
-    python3 -m layopt.tests.test_layopt                       # 17 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model, moving a P&R wire, diffusion spacing, set_vt)
+    python3 -m layopt.tests.test_layopt                       # 18 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model, moving a P&R wire, diffusion spacing, set_vt, switched capacitance)
     python3 -m layopt compare  $K/layout/kestrel_pll.gds $K/layout/kestrel_pll_flat_extracted.cir
     python3 -m layopt extract  $K/layout/kestrel_pll.gds -o evidence/kestrel_pll_layopt.cir
     python3 -m layopt rc       $K/layout/kestrel_pll.gds -o evidence/kestrel_pll.spef
@@ -242,7 +242,9 @@ A 101.2/69.9, B 122.3/82.4 ps, combined imbalance 152.9 → 33.6 ps, 10 → 10
 fingers, 53 states, all guards passed (`evidence/l4_path_balanced_twoway.gds`).
 With the slow driver's PMOS Vt as a free fifth variable (`set_vt`): the search
 takes it at round 3 and ends at A 101.2/69.9, B 101.5/82.4 ps — combined
-152.9 → 12.8 ps, rising edges within 0.3 ps, 10 → 10 fingers, 68 states.
+152.9 → 12.8 ps, rising edges within 0.3 ps, 10 → 10 fingers, 68 states; with
+the design's switched energy as the cost term instead of a finger count, the same
+result at 136.4 → 134.3 fJ per transition (−1.6 %).
 The one-way probe (`l4_path_balance.py`) with the same model: 110 → 27 ps.
 
 ## Two-edge driver model from the Liberty (`drive_fit.py`, `evidence/drive_fit.log`)
@@ -276,6 +278,16 @@ implant); `set_vt(dev, "std")` cuts the implant window over a device's gates
 (sweeping gates it would half-cover), a free 1/1.56 on its rising R. gcd
 rebuffer3's output PMOS, guards, KLayout isomorphism; the two-way balance probe
 carries the slow driver's Vt as a variable.
+
+## Switched capacitance (`layopt/power.py`)
+
+Energy per transition of a net = (wire C from the extraction + 8.63 fF/µm² of
+receiver gate area, fitted from the Liberty pin caps within 3.7 % + zero-bias
+junction C of the devices on it from the PDK models) × Vdd². The gcd whitespace
+probe prints it per cell before/after (a finger: 10–16 fJ per transition on the
+cell's nets, +3–15 %); the two-way balance costs it instead of a finger count;
+`l4_set_vt.py` and `l4_remove_finger.py` print the design total (gcd signal nets
+17.6 pJ per transition; one rebuffer finger 9 fJ; a Vt change 0).
 
 ## Findings about the kestrel layout (report upstream)
 

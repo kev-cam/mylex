@@ -55,6 +55,11 @@ class Tech:
     # two-edge driver model (drive.py): R_rise = k_p * Wp^-beta_p, R_fall = k_n * Wn^-beta_n,
     # series stacks x(1 + (n-1)(stack-1)); fitted from the Liberty by probes/layopt/drive_fit.py
     drive: Optional["DriveModel"] = None
+    # switched capacitance (power.py): gate capacitance per gate area (fitted from the Liberty
+    # pin capacitances against layopt's extraction) and zero-bias junction parameters per
+    # polarity from the PDK models (fF/um^2, fF/um, fF/um)
+    cgate_fF_um2: float = 8.63
+    junction: Dict[str, Dict[str, float]] = field(default_factory=dict)
     vt: Dict[str, "VtFlavour"] = field(default_factory=dict)      # flavour name -> VtFlavour
     default_vt: Dict[str, str] = field(default_factory=dict)      # polarity -> the flavour the cell library (and the
                                                                   # Liberty fit) uses; multipliers are relative to it
@@ -119,6 +124,11 @@ SKY130 = Tech(
     # its NMOS are standard.  So the Liberty-fitted k_p is the hvt value, and "std" on a PMOS is
     # a 1/1.555 speed-up of the rising edge for the price of one implant edit.
     default_vt={"p": "hvt", "n": "std"},
+    # gate 8.63 fF/um^2 (Liberty pin caps vs extracted W*L, 16 pins, rms 3.7 %); junction from the
+    # tt models' bins for L = 0.15: nfet_01v8 cjs/cjsws/cjswgs, pfet_01v8_hvt (the library's PMOS)
+    cgate_fF_um2=8.63,
+    junction={"n": {"cj": 1.340, "cjsw": 0.0367, "cjswg": 0.238},
+              "p": {"cj": 0.743, "cjsw": 0.0951, "cjswg": 0.254}},
     enclosure={("diff", "licon"): 0.040, ("li", "licon"): 0.080, ("li", "mcon"): 0.000,
                ("met1", "mcon"): 0.030, ("met1", "via1"): 0.055, ("met2", "via1"): 0.055,
                ("met2", "via2"): 0.040, ("met3", "via2"): 0.065},

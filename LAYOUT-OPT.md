@@ -791,6 +791,41 @@ without it. That is the answer to the area-and-power question in miniature:
 the balance a sizing-only flow buys with fingers, this one gets with an
 implant edit and the same silicon.
 
+**Switched capacitance — the power measure (2026-09-08, `layopt/power.py`).**
+The question deserved numbers. Dynamic energy per transition of a net is
+C · Vdd², and C is what the layout says: the wire (the RC extraction's union
+capacitance), the gates the net drives, and the drain/source diffusion of the
+devices on it. The gate term was fitted from the Liberty's pin capacitances
+against layopt's own extraction of the same cells' gate area: 8.63 fF/µm²
+fits 16 input pins of 12 cells within 3.7 % rms (a per-width overlap term
+adds nothing at one gate length), and inv_1's input comes out 2.14 fF against
+the Liberty's 2.30. The junction terms are the PDK models' zero-bias values
+for the library's devices (nfet_01v8 and the hd library's pfet_01v8_hvt):
+area, sidewall, and the gate-edge sidewall over W. Activity is not known here
+— an asynchronous handshake toggles particular nets once per cycle — so the
+measure is energy per transition per net, and a move's power price is the
+change over the nets it touched, or over the design. Relative and honest, and
+enough to price a finger against an implant: a finger adds gate C on its
+input net and diffusion C on its output net, `remove_finger` takes both away,
+and `set_vt` adds nothing (`test_power_switched_capacitance`). The gcd
+whitespace probe now prints, per cell, the switched energy of the nets the
+cell touches before and after; the two-way balance probe's cost carries the
+design's switched energy instead of a finger count, so what it minimises is
+delay spread against real capacitance. With that cost the two-way probe ends
+where it did — combined imbalance 152.9 → 12.8 ps, the same five choices —
+and the design's switched energy goes 136.4 → 134.3 fJ per transition, 1.6 %
+*below* the start: the fast inverter's three removed PMOS fingers give back
+more capacitance than the slow driver's five added fingers take, and the Vt
+edit costs nothing. So the direct answer to the question is: this balance
+saves a little power, adds no area, and a sizing-only flow would have paid
+for the same skew with both. On gcd, where the whitespace probe only adds,
+the price of a finger is now a number: 10–16 fJ per transition on the cell's
+nets, 3–15 % of what they carried — `_149_`'s nand2 pays 14.3 fJ (+12 %) for
+97.8 → 54.4 ps on its output, rebuffer13 12.6 fJ (+8 %) for 64.7 → 55.9 ps;
+the whole design's signal nets carry 17.6 pJ per transition, and one finger
+off rebuffer3 gives back 9 fJ of it (`evidence/l4_gcd_whitespace.log`,
+`l4_remove_finger.log`, `l4_set_vt.log`).
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 

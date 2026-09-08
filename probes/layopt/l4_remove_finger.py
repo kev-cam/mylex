@@ -17,7 +17,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(HERE, "..", "..")))
 sys.path.insert(0, HERE)
-from layopt import compare, drc as rules, extract, gds as gdsmod, lefdef, moves as mv, tech as techmod  # noqa: E402
+from layopt import compare, drc as rules, extract, gds as gdsmod, lefdef, moves as mv, power, tech as techmod  # noqa: E402
 from layopt.tests.test_layopt import _bare_row  # noqa: E402
 from l2_real_def import klayout_extract  # noqa: E402
 from l4_gcd_whitespace import net_delay, output_net  # noqa: E402
@@ -70,6 +70,7 @@ def main():
     remove_both(fl, lambda x: x.prov.split("/")[1] == inst)
     ex2 = extract.extract(fl, T)
     wp1, r1, d1 = net_delay(ex2, net, inst)
+    print("   switched energy of the design: %.1f -> %.1f fJ/transition" % (power.energy_fJ(ex), power.energy_fJ(ex2)))
     print("   output net %s: PMOS W %.2f -> %.2f um, R_rise/R_fall %.0f/%.0f -> %.0f/%.0f ohm; worst-edge Elmore to %d receivers max %.1f -> %.1f ps" % (
         ex.nets[net].name, wp0, wp1, r0[0], r0[1], r1[0], r1[1], len(d0), max(d0.values()), max(d1.values())))
     ok2 = klayout(fl, ex2, "gcd_rebuffer3_removed")

@@ -20,7 +20,7 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(HERE, "..", "..")))
-from layopt import drc, extract, gds, lefdef, moves, rc, tech          # noqa: E402
+from layopt import drc, extract, gds, lefdef, moves, power, rc, tech   # noqa: E402
 
 ORFS = os.path.expanduser("~/tools/orfs-sky130hd")
 DEF = sys.argv[sys.argv.index("--def") + 1] if "--def" in sys.argv else os.path.join(HERE, "gcd", "gcd.def")
@@ -140,6 +140,12 @@ def main():
             pass
         devs = ["%s W=%.2f f=%d" % (x.kind, x.w, x.fingers) for x in ex3.devices if x.prov.split("/")[1] == inst]
         print("      result (%s): %s" % ("+".join(done), "; ".join(devs)))
+        # the power price: switched capacitance of the nets the cell touches, before and after
+        touched_nets0 = {n for x in ex.devices if x.prov.split("/")[1] == inst for n in (x.g, x.s, x.d) if ex.nets[n].name not in T.supply_names}
+        names = {ex.nets[n].name for n in touched_nets0}
+        touched_nets1 = {i for i, n in ex3.nets.items() if n.name in names}
+        e0 = power.energy_fJ(ex, touched_nets0); e1 = power.energy_fJ(ex3, touched_nets1)
+        print("      switched energy of the cell's nets: %.1f -> %.1f fJ/transition (+%.1f, %+.0f%%)" % (e0, e1, e1 - e0, 100 * (e1 - e0) / e0 if e0 else 0))
         if net is not None and d0 and d1:
             print("      output net %s: PMOS W %.2f -> %.2f um, R_rise/R_fall %.0f/%.0f -> %.0f/%.0f ohm; worst-edge Elmore to %d receivers max %.1f -> %.1f ps, mean %.1f -> %.1f ps" % (
                 ex.nets[net].name, wp0, wp1, r0[0], r0[1], r1[0], r1[1], len(d0), max(d0.values()), max(d1.values()),
