@@ -154,12 +154,16 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
     wells: List[Rect] = []
     nsdm: List[Rect] = []
     psdm: List[Rect] = []
+    vt_rects: Dict[str, List[Rect]] = {name: [] for name in tech.vt}      # flavour -> implant rects
+    vt_layer = {f.layer: name for name, f in tech.vt.items()}
     for idx, fr in enumerate(fl.rects):
         lname = inv.get(fr.layer)
         if lname is None:
             continue
         if lname == tech.diff:
             diffs.append((fr.rect, fr.prov, idx))
+        elif lname in vt_layer:
+            vt_rects[vt_layer[lname]].append(fr.rect)
         elif lname == tech.nwell:
             wells.append(fr.rect)
         elif tech.nsdm and lname == tech.nsdm:
@@ -335,8 +339,15 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
         dn, da, dp = term(tb)
         if sn is None or dn is None:
             continue                                   # gate over diffusion edge: not a transistor
+        # Vt flavour: an implant rect covering the gate (a gate only partly covered is
+        # a rule violation the DRC reports; here it counts as covered when its centre is)
+        model = tech.pfet_model if kind == "p" else tech.nfet_model
+        gcx, gcy = (g[0] + g[2]) // 2, (g[1] + g[3]) // 2
+        for fname, rects_ in vt_rects.items():
+            if tech.vt[fname].kind == kind and any(r_[0] <= gcx <= r_[2] and r_[1] <= gcy <= r_[3] for r_ in rects_):
+                model = tech.vt[fname].model
         dev = Device(name="M%d" % (len(devices) + 1), kind=kind,
-                     model=tech.pfet_model if kind == "p" else tech.nfet_model,
+                     model=model,
                      g=net_of_shape[gsid], s=sn, d=dn, w=w_dbu * dbu, l=l_dbu * dbu,
                      as_=sa, ad=da, ps=sp, pd=dp, prov=shapes[gsid].prov, gate_rect=g,
                      flow_axis=ax, gate_ids=[gsid])
@@ -359,7 +370,7 @@ def combine_parallel(devices: List[Device]) -> List[Device]:
     groups: Dict[Tuple, Device] = {}
     order: List[Tuple] = []
     for dv in devices:
-        key = (dv.kind, round(dv.l, 6), dv.g, frozenset((dv.s, dv.d)))
+        key = (dv.kind, dv.model, round(dv.l, 6), dv.g, frozenset((dv.s, dv.d)))
         if key in groups:
             m = groups[key]
             if (dv.s, dv.d) != (m.s, m.d):             # align S/D orientation

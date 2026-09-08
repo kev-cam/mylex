@@ -53,27 +53,37 @@ def main():
                 t += (moves.add_finger if n > base_f else moves.remove_finger)(f_, e_, dev, side="high")
             return t
         return apply
+    def vt(inst):
+        """0 = the library's hvt PMOS, 1 = standard Vt (the implant cut away): a free speed-up of the rising edge."""
+        def apply(f_, e_, n):
+            if n == 0:
+                return []
+            e_ = extract.extract(f_, T)
+            dev = max((d for d in e_.devices if d.prov.split("/")[1] == inst and d.kind == "p"), key=lambda d: d.fingers)
+            return moves.set_vt(f_, e_, dev, "std")
+        return apply
     variables = [optimize.IntVariable("u1_p", 1, f0[("u1", "p")] + 1, f0[("u1", "p")], fingers("u1", "p")),
                  optimize.IntVariable("u1_n", 1, f0[("u1", "n")] + 1, f0[("u1", "n")], fingers("u1", "n")),
                  optimize.IntVariable("u6_p", 1, 4, 1, fingers("u6", "p")),
-                 optimize.IntVariable("u6_n", 1, 4, 1, fingers("u6", "n"))]
+                 optimize.IntVariable("u6_n", 1, 4, 1, fingers("u6", "n")),
+                 optimize.IntVariable("u6_vt", 0, 1, 0, vt("u6"))]
     spread0 = abs(d0["a"][4] - d0["b"][4]) + abs(d0["a"][5] - d0["b"][5]); mean0 = (d0["a"][0] + d0["b"][0]) / 2
     base_total = sum(f0.values())
     def cost(f_, e_, x):
         d = pb.path_delays(e_, lef, comps)
         # both edges: an NMOS removed from the fast driver now slows its falling edge
         sp = abs(d["a"][4] - d["b"][4]) + abs(d["a"][5] - d["b"][5]); mean = (d["a"][0] + d["b"][0]) / 2
-        extra = sum(x.values()) - base_total                    # fingers added (+) or removed (-)
-        return sp / spread0 + 0.05 * mean / mean0 + 0.02 * extra, {"A_rise": d["a"][4], "A_fall": d["a"][5], "B_rise": d["b"][4], "B_fall": d["b"][5], "spread_ps": sp, "fingers": sum(x.values())}
-    print("== 2. greedy search: u1 P/N in 1..%d (stock %d), u6 P/N in 1..4 (stock 1); states rebuilt from the base" % (f0[("u1", "p")] + 1, f0[("u1", "p")]))
+        extra = sum(v for k, v in x.items() if not k.endswith("_vt")) - base_total   # fingers added (+) or removed (-); a Vt change is free
+        return sp / spread0 + 0.05 * mean / mean0 + 0.02 * extra, {"A_rise": d["a"][4], "A_fall": d["a"][5], "B_rise": d["b"][4], "B_fall": d["b"][5], "spread_ps": sp, "fingers": sum(v for k, v in x.items() if not k.endswith("_vt"))}
+    print("== 2. greedy search: u1 P/N in 1..%d (stock %d), u6 P/N in 1..4 (stock 1), u6 PMOS Vt hvt/std; states rebuilt from the base" % (f0[("u1", "p")] + 1, f0[("u1", "p")]))
     prob = optimize.DiscreteProblem(fl, T, variables, cost)
     best = optimize.greedy_search(prob, verbose=True)
     d1 = pb.path_delays(best.ex, lef, comps)
     print("== 3. result: %s -> A rise/fall %.1f/%.1f ps, B %.1f/%.1f ps, imbalance rise+fall %.1f ps (was %.1f); fingers %d -> %d; legal=%s topology_ok=%s violations=%d; %d states" % (
         dict(zip([v.name for v in variables], best.x)), d1["a"][4], d1["a"][5], d1["b"][4], d1["b"][5], abs(d1["a"][4] - d1["b"][4]) + abs(d1["a"][5] - d1["b"][5]), spread0,
-        base_total, sum(best.x), best.legal, best.signature_ok, best.violations, len(prob.cache)))
+        base_total, sum(x for v, x in zip(variables, best.x) if not v.name.endswith("_vt")), best.legal, best.signature_ok, best.violations, len(prob.cache)))
     for inst in ("u1", "u6"):
-        print("   %s devices: %s" % (inst, ["%s W=%.2f fingers=%d" % (d.kind, d.w, d.fingers) for d in best.ex.devices if d.prov.split("/")[1] == inst]))
+        print("   %s devices: %s" % (inst, ["%s W=%.2f fingers=%d %s" % (d.kind, d.w, d.fingers, T.flavour_of_model(d.model)) for d in best.ex.devices if d.prov.split("/")[1] == inst]))
     gds.write_flat(best.fl, os.path.join(EVID, "l4_path_balanced_twoway.gds"))
     print("   wrote evidence/l4_path_balanced_twoway.gds")
 

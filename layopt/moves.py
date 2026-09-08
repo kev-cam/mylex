@@ -345,6 +345,118 @@ def remove_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high
     return sorted(changed)
 
 
+def set_vt(fl: FlatLayout, ex: Extraction, dev: Device, flavour: str) -> List[int]:
+    """Change a device's Vt flavour by implant: `flavour` is a name in
+    tech.vt ("hvt" for a sky130 PMOS) or "std".  A rectangle on the implant
+    layer covers all the device's gates with the flavour's gate enclosure; any
+    other gate of that polarity closer than the enclosure to the rectangle's
+    edge is taken in too (a partly covered gate is illegal, and the stock
+    cells' 0.42 um gate pitch leaves 0.27 um between gates, less than twice
+    0.18), so the move tells you which devices changed with it.  "std" removes
+    the implant rects that cover the device's gates.  Zero area, zero wire; the
+    extractor reports the new model, the drive model applies the measured
+    multiplier, the topology signature is unmoved (a flavour is a size).
+    Returns the changed rect ids."""
+    tech = ex.tech
+    L = tech.layers
+    d = fl.dbu_um
+    nm = lambda um: int(round(um / d))
+    grects = [ex.shapes[q].rect for q in dev.gate_ids]
+    touched: List[int] = []
+    if flavour == "std":
+        # remove the implant over this device's gates: cut a window (gates + enclosure) out
+        # of every implant rect of this polarity's flavours.  A neighbouring gate that the
+        # remaining implant would then enclose by less than gate_enc is taken into the
+        # window too (0.42 um gate pitch: 0.27 between gates, less than 2 x 0.18), and so
+        # is any leftover piece narrower than the implant's min width.
+        cut_any = False
+        for name, f in tech.vt.items():
+            if f.kind != dev.kind:
+                continue
+            lay = L[f.layer]
+            e = nm(f.gate_enc); mw = nm(tech.min_width.get(f.layer, 0.38))
+            covering = [i for i, r in enumerate(fl.rects) if r.layer == lay and r.x1 > r.x0 and any(geom.overlaps(r.rect, g) for g in grects)]
+            if not covering:
+                continue
+            win = [min(g[0] for g in grects) - e, min(g[1] for g in grects) - e, max(g[2] for g in grects) + e, max(g[3] for g in grects) + e]
+            others = [(dv, ex.shapes[q].rect) for dv in ex.devices if dv.kind == dev.kind and dv is not dev for q in dv.gate_ids]
+            swept: List[Device] = []
+            grew = True
+            while grew:
+                grew = False
+                for dv, g in others:
+                    if dv in swept:
+                        continue
+                    # a gate the window edge would come closer than e to (it stays covered, so
+                    # its enclosure by what remains would be too small)
+                    if geom.overlaps(g, (win[0] - e, win[1] - e, win[2] + e, win[3] + e)):
+                        win = [min(win[0], g[0] - e), min(win[1], g[1] - e), max(win[2], g[2] + e), max(win[3], g[3] + e)]
+                        swept.append(dv); grew = True
+            for i in covering:
+                r = fl.rects[i]
+                pieces = geom.subtract(r.rect, [tuple(win)])
+                # a leftover sliver below min width: widen the window over it (it has no gate
+                # of ours, or the sweep would have taken it)
+                for pc in list(pieces):
+                    if min(pc[2] - pc[0], pc[3] - pc[1]) < mw:
+                        pieces.remove(pc)
+                fl.rects[i].rect = pieces[0] if pieces else (r.x0, r.y0, r.x0, r.y0)
+                touched.append(i)
+                for pc in pieces[1:]:
+                    touched.append(add_rect_dbu(fl, lay, pc, r.prov))
+            cut_any = True
+            LAST_VT_SWEPT[:] = [dv.name for dv in swept]
+        if not cut_any:
+            raise MoveError("set_vt: %s has no implant to remove" % dev.name)
+        return touched
+    if flavour not in tech.vt:
+        raise MoveError("set_vt: unknown flavour %r (have %s)" % (flavour, sorted(tech.vt)))
+    f = tech.vt[flavour]
+    if f.kind != dev.kind:
+        raise MoveError("set_vt: %s applies to %s devices, %s is %s" % (flavour, f.kind, dev.name, dev.kind))
+    if dev.l < f.min_l - 1e-9:
+        raise MoveError("set_vt: %s needs a gate at least %.2f um long; %s has L=%.2f (sky130 poly.1b)" % (flavour, f.min_l, dev.name, dev.l))
+    e = nm(f.gate_enc)
+    lay = L[f.layer]
+    box = [min(g[0] for g in grects) - e, min(g[1] for g in grects) - e, max(g[2] for g in grects) + e, max(g[3] for g in grects) + e]
+    # take in other gates of this polarity that the box would come too close to
+    # (and repeat: taking one in may bring the box near the next)
+    others = [(dv, ex.shapes[q].rect) for dv in ex.devices if dv.kind == dev.kind and dv is not dev for q in dv.gate_ids]
+    swept: List[Device] = []
+    grew = True
+    while grew:
+        grew = False
+        for dv, g in others:
+            if dv in swept:
+                continue
+            near = (box[0] - e, box[1] - e, box[2] + e, box[3] + e)
+            if geom.overlaps(g, near) and not (g[0] - box[0] >= e and g[1] - box[1] >= e and box[2] - g[2] >= e and box[3] - g[3] >= e):
+                box = [min(box[0], g[0] - e), min(box[1], g[1] - e), max(box[2], g[2] + e), max(box[3], g[3] + e)]
+                if dv not in swept:
+                    swept.append(dv)
+                grew = True
+    mw = nm(tech.min_width.get(f.layer, 0.38))
+    if box[2] - box[0] < mw:
+        pad = (mw - (box[2] - box[0]) + 1) // 2; box[0] -= pad; box[2] += pad
+    if box[3] - box[1] < mw:
+        pad = (mw - (box[3] - box[1]) + 1) // 2; box[1] -= pad; box[3] += pad
+    # existing implant rects of this flavour: merge with any the box overlaps or comes within spacing of
+    sp = nm(tech.min_space.get(f.layer, 0.38))
+    for i, r in enumerate(fl.rects):
+        if r.layer == lay and r.x1 > r.x0 and geom.overlaps(r.rect, (box[0] - sp, box[1] - sp, box[2] + sp, box[3] + sp)):
+            box = [min(box[0], r.x0), min(box[1], r.y0), max(box[2], r.x1), max(box[3], r.y1)]
+            fl.rects[i].rect = (r.x0, r.y0, r.x0, r.y0); touched.append(i)
+    # (no well check: sky130's "hvtp inside nwell" rule is commented out of the PDK's own
+    # deck, and the hd cells' hvtp rects extend 0.055 um below their nwell)
+    j = add_rect_dbu(fl, lay, tuple(box), dev.prov)
+    touched.append(j)
+    LAST_VT_SWEPT[:] = [dv.name for dv in swept]
+    return touched
+
+
+LAST_VT_SWEPT: List[str] = []       # other devices the last set_vt had to take into the implant
+
+
 def fill_notches(fl: FlatLayout, ex: Extraction, new_ids: Sequence[int]) -> List[int]:
     """Two shapes of one net on a spacing layer that neither overlap nor share
     an edge, closer than spacing, form a notch (the delta-DRC flags it).  When

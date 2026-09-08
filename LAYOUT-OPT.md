@@ -749,6 +749,48 @@ stock geometry may not. For a balancer that has fast paths to slow down at
 zero area and power, these are the two moves; the next entry builds the
 first.
 
+**`set_vt` (2026-09-08).** Building it turned the finding around once more.
+The extractor now reads the implant layers (an hvtp rect over a P gate makes
+the device `pfet_01v8_hvt`, lvtn over an N gate `nfet_01v8_lvt`), and the
+first thing it reported was that every PMOS in sky130_fd_sc_hd is already
+high-Vt — the cell netlists say `pfet_01v8_hvt`, and every cell, fillers
+included, carries an hvtp rectangle over its P strip. So the Liberty-fitted
+k_p *is* the hvt value, and the useful direction of the move is the reverse
+of the one planned: cutting the implant away over a PMOS makes it a standard
+device and speeds its rising edge by 1/1.56, for the price of an edit on one
+layer — no area, no wire, a little more leakage. The tech record now carries
+the flavours (layer, gate enclosure 0.18, model, minimum gate length, measured
+multiplier) and the library's default per polarity; the drive model's
+multipliers are relative to that default (P: std 0.643, hvt 1.0; N: lvt
+1.348 at its 0.35 µm gate). The move: "std" cuts a window — the device's
+gates plus enclosure — out of every implant rect over them; a neighbouring
+gate the remaining implant would then enclose by less than 0.18 is taken into
+the window (0.42 µm pitch, 0.27 between gates, less than twice 0.18: in a
+two-stage buffer the first stage's PMOS goes along with the output stage's,
+and the move says so); leftover slivers below the implant's 0.38 µm width go
+too. "hvt" draws the rect back with the same sweep and merges with implant
+within spacing. The DRC learned the implant rules: width and spacing 0.38,
+and a gate the implant touches must be enclosed by 0.18 on every side while
+a gate it does not touch must be 0.18 clear — a partly covered gate is two
+devices, and a hand-drawn edge through a gate is flagged
+(`test_set_vt`). A flavour is a size to the topology guard: the signature
+does not carry the model. Removed rectangles are kept degenerate so ids
+stay valid, and the DRC skips them. One rule the deck itself does not
+enforce was dropped from the move: "hvtp inside nwell" is commented out in
+sky130's own deck, and the hd cells' implant runs 0.055 µm past their well.
+
+What it buys. On gcd, rebuffer3's output PMOS to standard Vt: one rect
+changed (the first-stage PMOS swept along), no new violation, KLayout
+isomorphic, R_rise 2729 → 1755 Ω, the driven net's worst-edge Elmore
+47.6 → 31.8 ps — at zero area (`evidence/l4_set_vt.log`). In the two-way
+balance probe the slow driver's Vt is a fifth variable, and it is free in
+the cost; the search takes it at round 3 and ends at A 101.2/69.9 ps against
+B 101.5/82.4 — combined imbalance 152.9 → 12.8 ps, the rising edges within
+0.3 ps, with the transistor count unchanged (10 → 10). Compare 33.6 ps
+without it. That is the answer to the area-and-power question in miniature:
+the balance a sizing-only flow buys with fingers, this one gets with an
+implant edit and the same silicon.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -829,6 +871,10 @@ every refusal names the obstacle, the planners with a tally of rejected
 candidates and the router's statistics; `LAYOPT_PLAN_DEBUG=1` prints the
 surviving head candidates, `LAYOPT_ROUTE_PROBE=layer:x:y,...` the raster
 state at given points and each repair attempt).
+
+**Vt flavour by implant** (`set_vt`: "std" cuts the implant window over the
+device's gates, sweeping in gates it would half-cover; a flavour name draws it
+back; sky130_fd_sc_hd PMOS are hvt by default, so "std" is the speed-up).
 
 **Remove finger across the cell edge** (`remove_finger`, the inverse:
 outermost finger's poly cut out and dead-end poly pruned, outer contacts
@@ -952,9 +998,10 @@ Planned:
   move. `remove_finger` as the inverse (stock cells and added fingers alike,
   KLayout-confirmed on gcd). Two-edge driver model fitted from the Liberty
   (§2, §4) with slew; the balance probes cost both edges. P&R wires in the
-  way of a connection are moved (cut and reconnected, §2). Remaining:
-  diffusion merge across abutting cells (needs compaction to pay), contact
-  growth.
+  way of a connection are moved (cut and reconnected, §2). Vt flavour by
+  implant (`set_vt`; Xyce-measured multipliers). Remaining: gate length as
+  a move, diffusion merge across abutting cells (needs compaction to pay),
+  contact growth, a switched-capacitance (power) measure.
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
   T2 (layopt MC over a stated variation model) and T3 (stat-sim's
   `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1

@@ -552,6 +552,46 @@ def test_add_finger_refuses_into_neighbour_diffusion():
         print("  refused: %s" % str(e)[:110])
 
 
+def test_set_vt():
+    """sky130_fd_sc_hd's PMOS are high-Vt: a buf_4's output PMOS extracts as
+    pfet_01v8_hvt.  set_vt(.., "std") cuts the hvtp implant away over its gates
+    (taking in the neighbouring gates the cut would half-cover): model
+    pfet_01v8, signature unmoved, no new violation, rising R down by the
+    measured factor.  A hand-drawn implant edge through a gate is flagged.
+    set_vt(.., "hvt") puts the implant back."""
+    from .. import moves as mv, drc as rules
+    fl = _bare_row([("fill_4", 0.0), ("buf_4", 1.84), ("fill_8", 4.60)])
+    if fl is None:
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    ex = extract.extract(fl, T)
+    sig = ex.signature(); base = {rules.key(v) for v in rules.check(fl, ex)}
+    dev = max((x for x in ex.devices if x.kind == "p"), key=lambda x: x.fingers)
+    assert dev.model == T.vt["hvt"].model, dev.model
+    r0 = T.drive.r_rise(dev.w, flavour=T.flavour_of_model(dev.model))
+    touched = mv.set_vt(fl, ex, dev, "std")
+    ex2 = extract.extract(fl, T)
+    assert ex2.signature() == sig
+    std = [x for x in ex2.devices if x.kind == "p" and x.model == T.pfet_model]
+    assert std and max(std, key=lambda x: x.fingers).fingers == dev.fingers, [(x.model, x.fingers) for x in ex2.devices if x.kind == "p"]
+    nv = rules.new_violations(fl, ex2, touched, base)
+    assert not nv, nv[:3]
+    r1 = T.drive.r_rise(dev.w, flavour="std")
+    assert abs(r1 / r0 - 1.0 / T.vt["hvt"].r_mult) < 1e-9
+    print("  buf_4 output PMOS hvt -> std (swept along: %s): R_rise x %.3f, %d rects" % (mv.LAST_VT_SWEPT or "none", r1 / r0, len(touched)))
+    # a hand-drawn implant edge through a gate is a violation
+    g = ex2.shapes[dev.gate_ids[0]].rect
+    bad = mv.add_rect_dbu(fl, T.layers["hvtp"], (g[0] - 400, g[1] - 400, (g[0] + g[2]) // 2, g[3] + 400), "t/bad")
+    ex3 = extract.extract(fl, T)
+    assert any(v.rule == "enclosure" and v.layer == "hvtp/gate" for v in rules.check(fl, ex3, [bad])), "partial coverage not flagged"
+    fl.rects[bad].rect = (g[0], g[1], g[0], g[1])
+    # back to the library flavour
+    dev2 = max((x for x in ex2.devices if x.kind == "p" and x.model == T.pfet_model), key=lambda x: x.fingers)
+    touched = mv.set_vt(fl, ex2, dev2, "hvt")
+    ex4 = extract.extract(fl, T)
+    assert ex4.signature() == sig and not [x for x in ex4.devices if x.kind == "p" and x.model == T.pfet_model]
+    nv = rules.new_violations(fl, ex4, touched, base)
+    assert not nv, nv[:3]
+
 
 if __name__ == "__main__":
     fails = 0

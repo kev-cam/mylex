@@ -103,18 +103,26 @@ def path_delays(ex, lef, comps):
         wn = sum(d.w for d in ex.devices if d.prov.split("/")[1] == drv_inst and d.kind == "n")
         rp = sum(d.w for d in ex.devices if d.prov.split("/")[1] == rcv_inst and d.kind == "p")
         rn = sum(d.w for d in ex.devices if d.prov.split("/")[1] == rcv_inst and d.kind == "n")
+        # Vt flavour of each stage's devices (the library's PMOS are hvt; a move may have changed it)
+        flav = {}
+        for inst in (drv_inst, rcv_inst):
+            for kind in ("p", "n"):
+                ms = [d.model for d in ex.devices if d.prov.split("/")[1] == inst and d.kind == kind]
+                flav[(inst, kind)] = T.flavour_of_model(ms[0]) if ms else None
         xd, yd, _ = pin_center(lef, by[drv_inst], "Y"); xr, yr, _ = pin_center(lef, by[rcv_inst], "A")
         dd = shape_at(ex, "li", xd, yd); rr = shape_at(ex, "li", xr, yr)
         c_net = rc.net_rc(ex, net.id).c_fF + C_IN
         res = {}
         for edge, w, w_rcv, other in (("rise", wp, rn, "fall"), ("fall", wn, rp, "rise")):
-            r = dm.r_rise(w) if edge == "rise" else dm.r_fall(w)
+            fd = flav[(drv_inst, "p" if edge == "rise" else "n")]; fr_ = flav[(rcv_inst, "p" if other == "rise" else "n")]
+            r = dm.r_rise(w, flavour=fd) if edge == "rise" else dm.r_fall(w, flavour=fd)
             elm = rc.elmore_delays(ex, net.id, dd, [rr], r, {rr: C_IN})[rr]
-            d_drv, tr = dm.stage(edge, w, c_net, elm, S_IN)
-            r2 = dm.r_rise(w_rcv) if other == "rise" else dm.r_fall(w_rcv)
-            d_rcv, _ = dm.stage(other, w_rcv, C_RCV, r2 * C_RCV / 1000.0, tr)
+            d_drv, tr = dm.stage(edge, w, c_net, elm, S_IN, flavour=fd)
+            r2 = dm.r_rise(w_rcv, flavour=fr_) if other == "rise" else dm.r_fall(w_rcv, flavour=fr_)
+            d_rcv, _ = dm.stage(other, w_rcv, C_RCV, r2 * C_RCV / 1000.0, tr, flavour=fr_)
             res[edge] = (d_drv + d_rcv, tr)
-        out[name] = (max(res["rise"][0], res["fall"][0]), wp, dm.r_rise(wp), c_net - C_IN, res["rise"][0], res["fall"][0], wn, dm.r_fall(wn), res["rise"][1], res["fall"][1])
+        out[name] = (max(res["rise"][0], res["fall"][0]), wp, dm.r_rise(wp, flavour=flav[(drv_inst, "p")]), c_net - C_IN, res["rise"][0], res["fall"][0], wn,
+                     dm.r_fall(wn, flavour=flav[(drv_inst, "n")]), res["rise"][1], res["fall"][1])
     return out
 
 

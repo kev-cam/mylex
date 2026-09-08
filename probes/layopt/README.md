@@ -8,7 +8,7 @@ for the PNGs). Design record: `../../LAYOUT-OPT.md`.
 ## Commands
 
     cd /usr/local/src/mylex
-    python3 -m layopt.tests.test_layopt                       # 16 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model, moving a P&R wire, diffusion spacing)
+    python3 -m layopt.tests.test_layopt                       # 17 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model, moving a P&R wire, diffusion spacing, set_vt)
     python3 -m layopt compare  $K/layout/kestrel_pll.gds $K/layout/kestrel_pll_flat_extracted.cir
     python3 -m layopt extract  $K/layout/kestrel_pll.gds -o evidence/kestrel_pll_layopt.cir
     python3 -m layopt rc       $K/layout/kestrel_pll.gds -o evidence/kestrel_pll.spef
@@ -240,6 +240,9 @@ or remove them: u1 PMOS 4 → 1 and NMOS 4 → 3 (the fourth NMOS finger stays
 because removing it opens the falling edge), u6 PMOS 1 → 2 and NMOS 1 → 4;
 A 101.2/69.9, B 122.3/82.4 ps, combined imbalance 152.9 → 33.6 ps, 10 → 10
 fingers, 53 states, all guards passed (`evidence/l4_path_balanced_twoway.gds`).
+With the slow driver's PMOS Vt as a free fifth variable (`set_vt`): the search
+takes it at round 3 and ends at A 101.2/69.9, B 101.5/82.4 ps — combined
+152.9 → 12.8 ps, rising edges within 0.3 ps, 10 → 10 fingers, 68 states.
 The one-way probe (`l4_path_balance.py`) with the same model: 110 → 27 ps.
 
 ## Two-edge driver model from the Liberty (`drive_fit.py`, `evidence/drive_fit.log`)
@@ -265,6 +268,14 @@ Standard: R_rise 7098 / R_fall 4299 Ω (Liberty 8165 / 4823). PMOS hvt ×1.56
 on R_rise at L 0.15; lvt needs L ≥ 0.35 (poly.1b) and is then ×1.09 (P) /
 ×1.35 (N) — no speed-up; gate length 0.18 / 0.25 / 0.35: P ×1.28 / 1.92 / 2.87,
 N ×1.15 / 1.37 / 1.68.
+
+## Vt flavour as a move (`l4_set_vt.py`, `evidence/l4_set_vt.log`)
+
+sky130_fd_sc_hd's PMOS are `pfet_01v8_hvt` (the extractor now reads the hvtp
+implant); `set_vt(dev, "std")` cuts the implant window over a device's gates
+(sweeping gates it would half-cover), a free 1/1.56 on its rising R. gcd
+rebuffer3's output PMOS, guards, KLayout isomorphism; the two-way balance probe
+carries the slow driver's Vt as a variable.
 
 ## Findings about the kestrel layout (report upstream)
 

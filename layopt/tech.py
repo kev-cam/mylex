@@ -15,6 +15,16 @@ Layer = Tuple[int, int]
 
 
 @dataclass
+class VtFlavour:
+    layer: str                  # implant layer name in Tech.layers
+    kind: str                   # polarity it applies to
+    gate_enc: float             # um: implant enclosure of the gate, and spacing to gates it does not cover
+    model: str                  # device model name
+    min_l: float                # um: minimum gate length the rules allow for this flavour
+    r_mult: float               # measured R multiplier on that polarity's edge (Xyce, vt_fit.py)
+
+
+@dataclass
 class Tech:
     name: str
     layers: Dict[str, Layer]                      # logical name -> (layer, datatype)
@@ -45,6 +55,15 @@ class Tech:
     # two-edge driver model (drive.py): R_rise = k_p * Wp^-beta_p, R_fall = k_n * Wn^-beta_n,
     # series stacks x(1 + (n-1)(stack-1)); fitted from the Liberty by probes/layopt/drive_fit.py
     drive: Optional["DriveModel"] = None
+    vt: Dict[str, "VtFlavour"] = field(default_factory=dict)      # flavour name -> VtFlavour
+    default_vt: Dict[str, str] = field(default_factory=dict)      # polarity -> the flavour the cell library (and the
+                                                                  # Liberty fit) uses; multipliers are relative to it
+
+    def flavour_of_model(self, model: str) -> str:
+        for name, f in self.vt.items():
+            if f.model == model:
+                return name
+        return "std"
 
     def L(self, name: str) -> Layer:
         return self.layers[name]
@@ -73,7 +92,8 @@ SKY130 = Tech(
             "nsdm": (93, 44), "psdm": (94, 20), "licon": (66, 44), "li": (67, 20),
             "mcon": (67, 44), "met1": (68, 20), "via1": (68, 44), "met2": (69, 20),
             "via2": (69, 44), "met3": (70, 20), "via3": (70, 44), "met4": (71, 20),
-            "via4": (71, 44), "met5": (72, 20), "text": (83, 44)},
+            "via4": (71, 44), "met5": (72, 20), "text": (83, 44),
+            "hvtp": (78, 44), "lvtn": (125, 44)},
     routing=["li", "met1", "met2", "met3", "met4", "met5"],
     vias=[("li", "mcon", "met1"), ("met1", "via1", "met2"), ("met2", "via2", "met3"),
           ("met3", "via3", "met4"), ("met4", "via4", "met5")],
@@ -84,10 +104,21 @@ SKY130 = Tech(
     carea={"poly": 0.106, "li": 0.040, "met1": 0.038, "met2": 0.028, "met3": 0.020, "met4": 0.016, "met5": 0.012},
     cfringe={"poly": 0.055, "li": 0.040, "met1": 0.040, "met2": 0.036, "met3": 0.030, "met4": 0.030, "met5": 0.030},
     min_width={"poly": 0.150, "diff": 0.150, "li": 0.170, "met1": 0.140, "met2": 0.140, "met3": 0.300,
-               "met4": 0.300, "met5": 1.600, "licon": 0.170, "mcon": 0.170, "via1": 0.150, "via2": 0.200},
+               "met4": 0.300, "met5": 1.600, "licon": 0.170, "mcon": 0.170, "via1": 0.150, "via2": 0.200,
+               "hvtp": 0.380, "lvtn": 0.380},
     min_space={"poly": 0.210, "diff": 0.270, "li": 0.170, "met1": 0.140, "met2": 0.140, "met3": 0.300,
                "met4": 0.300, "met5": 1.600, "licon": 0.170, "mcon": 0.190, "via1": 0.170, "via2": 0.200,
-               "nwell": 1.270},
+               "nwell": 1.270, "hvtp": 0.380, "lvtn": 0.380},
+    # Vt flavour by implant: layer, the gate enclosure it must keep (and the spacing it must
+    # keep from gates it does not cover -- a partially covered gate is illegal), the model,
+    # the minimum gate length the rules allow, and the Xyce-measured R multiplier
+    # (probes/layopt/vt_fit.py, evidence/vt_fit.log)
+    vt={"hvt": VtFlavour("hvtp", "p", 0.18, "sky130_fd_pr__pfet_01v8_hvt", 0.15, 1.555),
+        "lvt": VtFlavour("lvtn", "n", 0.18, "sky130_fd_pr__nfet_01v8_lvt", 0.35, 1.348)},
+    # sky130_fd_sc_hd's PMOS are pfet_01v8_hvt (every cell carries an hvtp rect over its P strip);
+    # its NMOS are standard.  So the Liberty-fitted k_p is the hvt value, and "std" on a PMOS is
+    # a 1/1.555 speed-up of the rising edge for the price of one implant edit.
+    default_vt={"p": "hvt", "n": "std"},
     enclosure={("diff", "licon"): 0.040, ("li", "licon"): 0.080, ("li", "mcon"): 0.000,
                ("met1", "mcon"): 0.030, ("met1", "via1"): 0.055, ("met2", "via1"): 0.055,
                ("met2", "via2"): 0.040, ("met3", "via2"): 0.065},
@@ -131,3 +162,17 @@ def get(name: str) -> Tech:
         return TECHS[name]
     except KeyError:
         raise SystemExit("unknown tech %r (have %s)" % (name, ", ".join(TECHS)))
+
+for _t in (SKY130,):
+    if _t.drive is not None:
+        # multipliers relative to the library's default flavour of each polarity
+        rel = {"std": 1.0}
+        rel.update({name: f.r_mult for name, f in _t.vt.items()})
+        _t.drive.vt_mult = {}
+        for name in rel:
+            kind = _t.vt[name].kind if name in _t.vt else None
+            for pol in ("p", "n"):
+                if kind is not None and kind != pol:
+                    continue
+                base = rel.get(_t.default_vt.get(pol, "std"), 1.0)
+                _t.drive.vt_mult[(pol, name)] = rel[name] / base
