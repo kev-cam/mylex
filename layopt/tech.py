@@ -52,6 +52,9 @@ class Tech:
     poly_ext_diff: float = 0.13        # poly overhang beyond diffusion along W
     implant_enc: float = 0.125         # nsdm/psdm enclosure of diffusion
     nwell_enc: float = 0.18            # nwell enclosure of p diffusion
+    poly_licon_space: float = 0.05     # diffusion contact spacing to a gate inside standard cells (sky130 licon.11a; 0.055 elsewhere)
+    sd_min_len: float = 0.25           # minimum source/drain length beside a gate (sky130 poly.7)
+    l_range: Tuple[float, float] = (0.15, 0.50)   # gate lengths the drive model was characterised over
     # two-edge driver model (drive.py): R_rise = k_p * Wp^-beta_p, R_fall = k_n * Wn^-beta_n,
     # series stacks x(1 + (n-1)(stack-1)); fitted from the Liberty by probes/layopt/drive_fit.py
     drive: Optional["DriveModel"] = None
@@ -89,6 +92,8 @@ SKY130 = Tech(
     name="sky130",
     # sky130_fd_sc_hd tt 25C 1.8V, slope of delay vs load at 50 ps input slew (evidence/drive_fit.log)
     drive=DriveModel(k_p=8733.0, k_n=3209.0, beta_p=0.839, beta_n=0.933, stack_p=2.28, stack_n=1.64,
+                     # gate length: R x (L/0.15)^gamma, fitted on the Xyce table (vt_fit.py) 0.18/0.25/0.35
+                     gamma_p=1.256, gamma_n=0.615, l_ref_um=0.15,
                      # inv_1 intercepts at zero input slew, and the slew terms pooled over the single-stage cells
                      t0_rise_ps=15.3, t0_fall_ps=11.2,
                      kappa_rise=0.411, kappa_fall=0.380, mu_rise=0.014, mu_fall=0.064,

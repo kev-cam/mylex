@@ -457,6 +457,131 @@ def set_vt(fl: FlatLayout, ex: Extraction, dev: Device, flavour: str) -> List[in
 LAST_VT_SWEPT: List[str] = []       # other devices the last set_vt had to take into the implant
 
 
+def set_gate_length(fl: FlatLayout, ex: Extraction, dev: Device, l_um: float) -> List[int]:
+    """Change a device's gate length by stretching its cell at the gate.
+
+    A standard cell has no slack beside a gate: its contacts sit at the
+    minimum spacing from it and at the minimum enclosure from the diffusion
+    end, so a longer gate cannot be cut into the stripe in place.  What can
+    move is everything beyond the gate: the cell is cut just inside the
+    outer edge of the device's outermost finger, every rect of the cell
+    right of the cut shifts outward by the length change and every rect that
+    crosses the cut (the poly stripe, the diffusion, well and implant, a li
+    strap over the gate) is stretched by it; the filler abutting the cell on
+    that side gives the space (its rects shrink from the near edge).  A poly
+    stripe usually gates both a P and an N device, so both lengthen -- the
+    move records the companions in LAST_L_COMPANIONS.  DEF wiring inside the
+    stretched span is shifted or stretched with the cell; anything that
+    could not follow (a vertical wire continuing into other rows) is for the
+    guards to judge.  Negative changes shorten the same way.  Refuses when the
+    length leaves the characterised range or the flavour's minimum, when the
+    device is not the outermost on its side with a filler beyond, or when the
+    filler is too narrow.  Returns the changed rect ids."""
+    if dev.flow_axis != "x":
+        raise MoveError("set_gate_length: only vertical gates (flow along x) are implemented")
+    tech = ex.tech
+    L = tech.layers
+    d = fl.dbu_um
+    nm = lambda um: int(round(um / d))
+    lo, hi = tech.l_range
+    if not (lo - 1e-9 <= l_um <= hi + 1e-9):
+        raise MoveError("set_gate_length: L=%.3f outside the characterised range %s" % (l_um, tech.l_range))
+    flav = tech.flavour_of_model(dev.model)
+    if flav in tech.vt and l_um < tech.vt[flav].min_l - 1e-9:
+        raise MoveError("set_gate_length: %s gates must be at least %.2f um long" % (flav, tech.vt[flav].min_l))
+    delta = nm(l_um) - nm(dev.l)
+    if delta == 0:
+        return []
+    inst = dev.prov
+    cell_rects = [i for i, r in enumerate(fl.rects) if r.prov == inst]
+    if not cell_rects:
+        raise MoveError("set_gate_length: no rects carry the device's provenance %s" % inst)
+    cx0 = min(fl.rects[i].x0 for i in cell_rects); cx1 = max(fl.rects[i].x1 for i in cell_rects)
+    cy0 = min(fl.rects[i].y0 for i in cell_rects); cy1 = max(fl.rects[i].y1 for i in cell_rects)
+    # every finger of the device is cut just inside its outer edge, outermost first, so
+    # each cut shifts what lies beyond it (including the fingers already lengthened)
+    fingers = sorted((ex.shapes[q].rect for q in dev.gate_ids), key=lambda r: -r[2])
+    g = fingers[0]
+    # the cell beyond ours on that side: the instance whose rects start nearest past the
+    # gate within our row (a cell's well pokes past its placement box, so the boundary
+    # is found from the neighbour, not from our own extent)
+    starts: Dict[str, int] = {}
+    members: Dict[str, List[int]] = {}
+    for i, r in enumerate(fl.rects):
+        if r.prov == inst or "/net:" in r.prov or "/pin:" in r.prov or r.y1 <= cy0 or r.y0 >= cy1:
+            continue
+        members.setdefault(r.prov, []).append(i)
+        starts[r.prov] = min(starts.get(r.prov, 10**12), r.x0)
+    right = {p: x for p, x in starts.items() if g[2] < x <= cx1 + nm(0.3)}
+    if not right:
+        raise MoveError("set_gate_length: nothing abuts %s on the right" % inst.split("/", 1)[1][:40])
+    fprov = min(right, key=right.get)
+    if not ("fill" in fprov.split("/")[-1].lower() or "decap" in fprov.split("/")[-1].lower()):
+        raise MoveError("set_gate_length: %s abuts on the right, not a filler" % fprov.split("/")[-1][:40])
+    fids = members[fprov]
+    # the filler's placement boundary is where its rails start; wells and implants poke past it
+    soft_layers = {L[n] for n in (tech.nwell, tech.nsdm, tech.psdm) if n} | {L[f.layer] for f in tech.vt.values()}
+    fx0 = min([fl.rects[i].x0 for i in fids if fl.rects[i].layer not in soft_layers] or [right[fprov]])
+    fx1 = max(fl.rects[i].x1 for i in fids)
+    total = delta * len(fingers)
+    if fx1 - fx0 - total < nm(0.2):
+        raise MoveError("set_gate_length: the filler %s is too narrow to give %.3f um" % (fprov.split("/")[-1][:30], total * d))
+    touched: List[int] = []
+    cell_x1 = cx1
+    # rail contacts and well taps sit on the continuous supply rail, duplicated by the
+    # neighbouring row's cells: they stay where they are (the rail itself stretches)
+    s2n = {sh.src: ex.net_of_shape[k] for k, sh in enumerate(ex.shapes) if sh.src >= 0}
+    supply_ids = {i for i, n in ex.nets.items() if n.name in tech.supply_names}
+    cut_or_tap = {L[c] for _, c, _ in tech.vias} | {L[tech.diff_contact]} | ({L["tap"]} if "tap" in L else set())
+    # a supply-net cut or tap outside every diffusion strip of the cell is on the rail
+    # (a source contact inside a strip is not, and moves with its region)
+    strips = [(fl.rects[i].y0, fl.rects[i].y1) for i in cell_rects if fl.rects[i].layer == L[tech.diff]]
+    def on_rail(r):
+        return not any(r.y1 > y0 and r.y0 < y1 for y0, y1 in strips)
+    fixed = {i for i in cell_rects if fl.rects[i].layer in cut_or_tap and (s2n.get(i) in supply_ids or fl.rects[i].layer == L.get("tap"))
+             and on_rail(fl.rects[i])}
+    for gk in fingers:
+        x_cut = gk[2] - 1
+        # 1. the cell: shift what lies beyond the cut, stretch what crosses it
+        for i in cell_rects:
+            r = fl.rects[i]
+            if i in fixed:
+                continue
+            if r.x0 >= x_cut:
+                fl.rects[i].rect = (r.x0 + delta, r.y0, r.x1 + delta, r.y1); touched.append(i)
+            elif r.x1 > x_cut:
+                fl.rects[i].rect = (r.x0, r.y0, r.x1 + delta, r.y1); touched.append(i)
+        # 2. DEF wiring over the cell follows it: shifted beyond the cut, stretched across it
+        #    (over the filler it stays -- its cuts sit on the filler's own rail cuts)
+        for i, r in enumerate(fl.rects):
+            if "/net:" not in r.prov and "/pin:" not in r.prov:
+                continue
+            if r.y1 <= cy0 or r.y0 >= cy1:
+                continue
+            if r.prov.rsplit(":", 1)[-1] in tech.supply_names:
+                continue                       # rail wiring is continuous and its cuts duplicate the cells' own: it stays
+            if r.x0 >= x_cut and r.x1 <= cell_x1 + 1:
+                fl.rects[i].rect = (r.x0 + delta, r.y0, r.x1 + delta, r.y1); touched.append(i)
+            elif r.x0 < x_cut < r.x1:
+                fl.rects[i].rect = (r.x0, r.y0, r.x1 + delta, r.y1); touched.append(i)
+        for tx in getattr(fl, "texts", []):
+            if tx.xy[0] >= x_cut and cy0 <= tx.xy[1] <= cy1 and cx0 <= tx.xy[0] <= cell_x1:
+                tx.xy = (tx.xy[0] + delta, tx.xy[1])
+        cell_x1 += delta
+    # 3. the filler gives the space from its near edge: rects that start at (or before,
+    #    a well's enclosure) its boundary lose the total there
+    for i in fids:
+        r = fl.rects[i]
+        if (r.x0 <= fx0 + 1 or r.layer in soft_layers) and r.x1 - (r.x0 + total) > 0:
+            fl.rects[i].rect = (r.x0 + total, r.y0, r.x1, r.y1); touched.append(i)
+    LAST_L_COMPANIONS[:] = sorted({dv.name for dv in ex.devices if dv is not dev
+                                   for gk in fingers if any(geom.overlaps(ex.shapes[q].rect, (gk[0], cy0, gk[2], cy1)) for q in dv.gate_ids)})
+    return sorted(set(touched))
+
+
+LAST_L_COMPANIONS: List[str] = []   # devices on the same poly stripe whose length changed along
+
+
 def fill_notches(fl: FlatLayout, ex: Extraction, new_ids: Sequence[int]) -> List[int]:
     """Two shapes of one net on a spacing layer that neither overlap nor share
     an edge, closer than spacing, form a notch (the delta-DRC flags it).  When

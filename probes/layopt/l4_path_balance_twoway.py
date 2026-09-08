@@ -62,11 +62,23 @@ def main():
             dev = max((d for d in e_.devices if d.prov.split("/")[1] == inst and d.kind == "p"), key=lambda d: d.fingers)
             return moves.set_vt(f_, e_, dev, "std")
         return apply
+    LENGTHS = [0.15, 0.18, 0.25]
+    def glen(inst, kind):
+        """gate length index into LENGTHS for the biggest device of that polarity: a slow-down at zero area."""
+        def apply(f_, e_, n):
+            if n == 0:
+                return []
+            e_ = extract.extract(f_, T)
+            dev = max((d for d in e_.devices if d.prov.split("/")[1] == inst and d.kind == kind), key=lambda d: d.fingers)
+            return moves.set_gate_length(f_, e_, dev, LENGTHS[n])
+        return apply
     variables = [optimize.IntVariable("u1_p", 1, f0[("u1", "p")] + 1, f0[("u1", "p")], fingers("u1", "p")),
                  optimize.IntVariable("u1_n", 1, f0[("u1", "n")] + 1, f0[("u1", "n")], fingers("u1", "n")),
                  optimize.IntVariable("u6_p", 1, 4, 1, fingers("u6", "p")),
                  optimize.IntVariable("u6_n", 1, 4, 1, fingers("u6", "n")),
-                 optimize.IntVariable("u6_vt", 0, 1, 0, vt("u6"))]
+                 optimize.IntVariable("u6_vt", 0, 1, 0, vt("u6")),
+                 optimize.IntVariable("u1_lp", 0, 2, 0, glen("u1", "p")),
+                 optimize.IntVariable("u1_ln", 0, 2, 0, glen("u1", "n"))]
     spread0 = abs(d0["a"][4] - d0["b"][4]) + abs(d0["a"][5] - d0["b"][5]); mean0 = (d0["a"][0] + d0["b"][0]) / 2
     base_total = sum(f0.values())
     e_base = power.energy_fJ(ex)
@@ -85,10 +97,10 @@ def main():
     d1 = pb.path_delays(best.ex, lef, comps)
     print("== 3. result: %s -> A rise/fall %.1f/%.1f ps, B %.1f/%.1f ps, imbalance rise+fall %.1f ps (was %.1f); fingers %d -> %d; switched energy %.1f -> %.1f fJ (%+.1f%%); legal=%s topology_ok=%s violations=%d; %d states" % (
         dict(zip([v.name for v in variables], best.x)), d1["a"][4], d1["a"][5], d1["b"][4], d1["b"][5], abs(d1["a"][4] - d1["b"][4]) + abs(d1["a"][5] - d1["b"][5]), spread0,
-        base_total, sum(x for v, x in zip(variables, best.x) if not v.name.endswith("_vt")), e_base, power.energy_fJ(best.ex), 100 * (power.energy_fJ(best.ex) - e_base) / e_base,
+        base_total, sum(x for v, x in zip(variables, best.x) if not (v.name.endswith("_vt") or v.name[-3:-1] == "_l")), e_base, power.energy_fJ(best.ex), 100 * (power.energy_fJ(best.ex) - e_base) / e_base,
         best.legal, best.signature_ok, best.violations, len(prob.cache)))
     for inst in ("u1", "u6"):
-        print("   %s devices: %s" % (inst, ["%s W=%.2f fingers=%d %s" % (d.kind, d.w, d.fingers, T.flavour_of_model(d.model)) for d in best.ex.devices if d.prov.split("/")[1] == inst]))
+        print("   %s devices: %s" % (inst, ["%s W=%.2f L=%.2f fingers=%d %s" % (d.kind, d.w, d.l, d.fingers, T.flavour_of_model(d.model)) for d in best.ex.devices if d.prov.split("/")[1] == inst]))
     gds.write_flat(best.fl, os.path.join(EVID, "l4_path_balanced_twoway.gds"))
     print("   wrote evidence/l4_path_balanced_twoway.gds")
 

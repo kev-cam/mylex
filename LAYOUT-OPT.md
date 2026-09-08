@@ -826,6 +826,44 @@ the whole design's signal nets carry 17.6 pJ per transition, and one finger
 off rebuffer3 gives back 9 fJ of it (`evidence/l4_gcd_whitespace.log`,
 `l4_remove_finger.log`, `l4_set_vt.log`).
 
+**Gate length as a move (2026-09-08, `set_gate_length`).** The Xyce table
+made gate length the second slow-down lever, and the drive model now carries
+it: R × (L/0.15)^γ with γ_p = 1.256 and γ_n = 0.615, fitted on the
+0.18/0.25/0.35 rows within 2 %. The move itself could not be what was first
+written — widen the poly finger about its centre. A standard cell has no
+slack beside a gate: inv_1's contacts sit exactly 0.05 µm from it (licon.11a)
+and exactly 0.04 µm inside the diffusion end (licon.5), both sides, both
+polarities. A longer gate cannot be cut into that stripe in place; what can
+move is everything beyond it. So the move stretches the cell at the gate:
+just inside the outer edge of each of the device's fingers, outermost first,
+every rect of the cell beyond the cut shifts outward by the length change and
+every rect crossing the cut — the poly stripe, the diffusion, well and
+implant, a li strap over the gate — is stretched by it; the filler abutting
+the cell gives the space, its rails and wells shrinking from the near edge
+(its boundary is where its rails start; a well pokes past it). DEF wiring over
+the cell follows it, shifted or stretched; over the filler it stays, since
+its cuts sit on the filler's own rail cuts. A poly stripe usually gates both
+a P and an N device, so both lengthen, and the move names the companion.
+Shortening is the same with the sign reversed and restores the geometry
+exactly (`test_set_gate_length`: inv_1 0.15 → 0.18 → 0.15, R_rise × 1.257,
+the layout identical afterwards). Two lessons from the real layout: one cut
+lengthens only the fingers on that stripe, so a four-finger device came back
+half lengthened and split into two device groups (legal, KLayout-isomorphic,
+not what was asked), hence the cut per finger; and the first version shifted
+the DEF mcons over the filler onto the filler's own, hence the bound. In the
+two-way balance probe the fast driver's P and N lengths are variables
+(0.15/0.18/0.25); with fingers and the Vt edit already available the search
+never took them — the same 12.8 ps at the same energy — which is the model's
+honest answer there, not a failure of the move. On gcd, rebuffer12's output
+stage goes 0.15 → 0.18 on both polarities in one move (79 rects shift or
+stretch), no new violation, KLayout isomorphic and reporting the new lengths,
+R_rise 2729 → 3432 Ω, the driven net 21.2 → 26.3 ps, the design's switched
+energy up 5.9 fJ for the gate area (`evidence/l4_set_gate_length.log`). One
+more rail lesson on the way: the cell's own rail contacts and well taps are
+duplicated by the neighbouring row's cells across the shared rail, so they
+must stay where they are while the rail stretches over them — the first
+version moved them and split them from their twins.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -906,6 +944,11 @@ every refusal names the obstacle, the planners with a tally of rejected
 candidates and the router's statistics; `LAYOPT_PLAN_DEBUG=1` prints the
 surviving head candidates, `LAYOPT_ROUTE_PROBE=layer:x:y,...` the raster
 state at given points and each repair attempt).
+
+**Gate length by stretching the cell at the gate** (`set_gate_length`: a cut
+just inside each finger's outer edge, everything beyond shifts, everything
+crossing stretches, the abutting filler gives the space; both devices on the
+stripe lengthen; shortening restores exactly).
 
 **Vt flavour by implant** (`set_vt`: "std" cuts the implant window over the
 device's gates, sweeping in gates it would half-cover; a flavour name draws it
@@ -1034,9 +1077,10 @@ Planned:
   KLayout-confirmed on gcd). Two-edge driver model fitted from the Liberty
   (§2, §4) with slew; the balance probes cost both edges. P&R wires in the
   way of a connection are moved (cut and reconnected, §2). Vt flavour by
-  implant (`set_vt`; Xyce-measured multipliers). Remaining: gate length as
-  a move, diffusion merge across abutting cells (needs compaction to pay),
-  contact growth, a switched-capacitance (power) measure.
+  implant (`set_vt`; Xyce-measured multipliers); gate length by stretching
+  the cell at the gate (`set_gate_length`); switched capacitance as the power
+  measure (`power.py`). Remaining: diffusion merge across abutting cells
+  (needs compaction to pay), contact growth.
 - **L5 — variation-aware acceptance — DONE for the fork (2026-09-06).**
   T2 (layopt MC over a stated variation model) and T3 (stat-sim's
   `statsim_pl_rc` runtime under nvc, MC via generics) agree: the sized li1

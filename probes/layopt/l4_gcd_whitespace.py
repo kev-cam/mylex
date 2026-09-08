@@ -77,7 +77,8 @@ def net_delay(ex, net_id, inst):
     wp, sp = eff("p"); wn, sn = eff("n")
     dm = T.drive
     flav = lambda kind: next((T.flavour_of_model(dv.model) for dv in stage if dv.kind == kind), None)
-    r_rise, r_fall = dm.r_rise(wp, sp, flav("p")), dm.r_fall(wn, sn, flav("n"))
+    glen = lambda kind: max([dv.l for dv in stage if dv.kind == kind] or [None])
+    r_rise, r_fall = dm.r_rise(wp, sp, flav("p"), glen("p")), dm.r_fall(wn, sn, flav("n"), glen("n"))
     r_drv = (r_rise, r_fall)
     drv = next(s for s in net.shapes if ex.shapes[s].layer.startswith("sd_") and ex.shapes[s].prov.split("/")[1] == inst)
     recv = {}

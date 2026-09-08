@@ -622,6 +622,40 @@ def test_power_switched_capacitance():
     assert abs(power.energy_fJ(ex3) - e1) < 1e-6
 
 
+def test_set_gate_length():
+    """inv_1's gate from L 0.15 to 0.18 by stretching the cell at the gate
+    (the filler beside it gives the space): both devices on the stripe report
+    0.18 with their widths unchanged, the signature is unmoved (L is a size),
+    no new violation, the drive model's rising R grows by (0.18/0.15)^gamma_p,
+    and 0.15 again restores the geometry exactly."""
+    from .. import moves as mv, drc as rules
+    fl = _bare_row([("fill_4", 0.0), ("inv_1", 1.84), ("fill_8", 3.22)])
+    if fl is None:
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    orig = [(r.layer, r.rect, r.prov) for r in fl.rects]
+    ex = extract.extract(fl, T)
+    sig = ex.signature(); base = {rules.key(v) for v in rules.check(fl, ex)}
+    pm = [x for x in ex.devices if x.kind == "p"][0]
+    touched = mv.set_gate_length(fl, ex, pm, 0.18)
+    ex2 = extract.extract(fl, T)
+    for x in ex2.devices:
+        assert abs(x.l - 0.18) < 1e-6, (x.kind, x.l)
+    assert abs([x for x in ex2.devices if x.kind == "p"][0].w - pm.w) < 1e-6
+    assert ex2.signature() == sig
+    nv = rules.new_violations(fl, ex2, touched, base)
+    assert not nv, nv[:3]
+    r0 = T.drive.r_rise(pm.w, flavour="hvt", l_um=0.15); r1 = T.drive.r_rise(pm.w, flavour="hvt", l_um=0.18)
+    assert abs(r1 / r0 - (0.18 / 0.15) ** T.drive.gamma_p) < 1e-9
+    print("  inv_1 L 0.15 -> 0.18 by stretching at the gate (companions %s): R_rise x %.3f, %d rects moved" % (mv.LAST_L_COMPANIONS, r1 / r0, len(touched)))
+    pm2 = [x for x in ex2.devices if x.kind == "p"][0]
+    mv.set_gate_length(fl, ex2, pm2, 0.15)
+    assert [(r.layer, r.rect, r.prov) for r in fl.rects] == orig, "shortening back did not restore the layout"
+    try:
+        mv.set_gate_length(fl, extract.extract(fl, T), pm2, 0.6)
+        raise AssertionError("L = 0.6 is outside the characterised range")
+    except mv.MoveError as e:
+        print("  refused: %s" % str(e)[:100])
+
 
 if __name__ == "__main__":
     fails = 0

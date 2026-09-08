@@ -167,12 +167,13 @@ def graph_signature(ex, with_w: bool = False, stacks: bool = True) -> str:
         if not with_w:                              # parallel fingers collapse (sizes excluded)
             uniq = {}
             for t in devs:
-                uniq.setdefault((t[1], round(t[2], 6), t[4], frozenset((t[5], t[6]))), t)
+                uniq.setdefault((t[1], t[4], frozenset((t[5], t[6]))), t)
             devs = list(uniq.values())
     else:
         devs = [(dv.name, dv.kind, dv.l, dv.w, dv.g, dv.s, dv.d) for dv in ex.devices]
     for name, kind, l, w, g, s, d in devs:
-        nodes["D" + name] = "%s:%g:%s" % (kind, round(l, 4), "%g" % round(w, 3) if with_w else "-")
+        # with_w=False is the move guard: W and L are sizes, only the kind is topology
+        nodes["D" + name] = "%s:%s:%s" % (kind, "%g" % round(l, 4) if with_w else "-", "%g" % round(w, 3) if with_w else "-")
         for t, n in (("G", g), ("S", s), ("D", d)):
             nodes.setdefault("N%d" % n, "net")
             edges.append(("D" + name, "N%d" % n, "SD" if t in "SD" else "G"))

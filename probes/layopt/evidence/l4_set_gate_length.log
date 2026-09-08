@@ -1,0 +1,7 @@
+   rebuffer12 P L 0.15 -> 0.18 (4 fingers): 79 rects
+   rebuffer12 N L 0.18 -> 0.18 (4 fingers): 0 rects
+   signature equal True; new violations 0 []
+   rebuffer12 devices now: ['p L=0.18 W=4.00 f=4', 'p L=0.15 W=1.00 f=1', 'n L=0.18 W=2.60 f=4', 'n L=0.15 W=0.65 f=1']
+   output net net12: R_rise/R_fall 2729/1316 -> 3432/1472 ohm; worst-edge Elmore to 4 receivers max 21.2 -> 26.3 ps
+   switched energy of the design: 17645.8 -> 17651.7 fJ/transition (gate area grows with L)
+   KLayout: devices 2472/2472, W/L match True, nets 1353/1353, isomorphic True

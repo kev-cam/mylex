@@ -2,17 +2,17 @@
    baseline 50% delays driver+receiver: A rise/fall 73.6/66.9 ps (transitions 29/17), B 163.2/130.2 ps (transitions 123/64); imbalance rise+fall 152.9 ps
    switched energy of the design: 136.4 fJ/transition
 == 2. greedy search: u1 P/N in 1..5 (stock 4), u6 P/N in 1..4 (stock 1), u6 PMOS Vt hvt/std; states rebuilt from the base
-  start  cost 1.05  {'u1_p': 4, 'u1_n': 4, 'u6_p': 1, 'u6_n': 1, 'u6_vt': 0}
-  round 1  cost 0.78487  {'u1_p': 4, 'u1_n': 4, 'u6_p': 2, 'u6_n': 1, 'u6_vt': 0}  {'A_rise': 73.639, 'A_fall': 66.903, 'B_rise': 120.704, 'B_fall': 130.192, 'spread_ps': 110.355, 'E_fJ': 141.917}
-  round 2  cost 0.59261  {'u1_p': 4, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 0}  {'A_rise': 73.639, 'A_fall': 66.903, 'B_rise': 120.704, 'B_fall': 98.982, 'spread_ps': 79.144, 'E_fJ': 145.702}
-  round 3  cost 0.45586  {'u1_p': 4, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 1}  {'A_rise': 73.639, 'A_fall': 66.903, 'B_rise': 100.449, 'B_fall': 98.982, 'spread_ps': 58.888, 'E_fJ': 145.702}
-  round 4  cost 0.41375  {'u1_p': 3, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 1}  {'A_rise': 77.251, 'A_fall': 66.903, 'B_rise': 100.449, 'B_fall': 98.982, 'spread_ps': 55.277, 'E_fJ': 140.449}
-  round 5  cost 0.34772  {'u1_p': 2, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 1}  {'A_rise': 83.847, 'A_fall': 66.903, 'B_rise': 100.449, 'B_fall': 98.982, 'spread_ps': 48.68, 'E_fJ': 133.823}
-  round 6  cost 0.22842  {'u1_p': 1, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 1}  {'A_rise': 101.194, 'A_fall': 66.903, 'B_rise': 100.449, 'B_fall': 98.982, 'spread_ps': 32.824, 'E_fJ': 128.57}
-  round 7  cost 0.17785  {'u1_p': 1, 'u1_n': 4, 'u6_p': 2, 'u6_n': 3, 'u6_vt': 1}  {'A_rise': 101.194, 'A_fall': 66.903, 'B_rise': 101.508, 'B_fall': 88.473, 'spread_ps': 21.884, 'E_fJ': 134.232}
-  round 8  cost 0.14487  {'u1_p': 1, 'u1_n': 3, 'u6_p': 2, 'u6_n': 3, 'u6_vt': 1}  {'A_rise': 101.194, 'A_fall': 69.913, 'B_rise': 101.508, 'B_fall': 88.473, 'spread_ps': 18.874, 'E_fJ': 130.605}
-  round 9  cost 0.11846  {'u1_p': 1, 'u1_n': 3, 'u6_p': 2, 'u6_n': 4, 'u6_vt': 1}  {'A_rise': 101.194, 'A_fall': 69.913, 'B_rise': 101.508, 'B_fall': 82.366, 'spread_ps': 12.767, 'E_fJ': 134.298}
-== 3. result: {'u1_p': 1, 'u1_n': 3, 'u6_p': 2, 'u6_n': 4, 'u6_vt': 1} -> A rise/fall 101.2/69.9 ps, B 101.5/82.4 ps, imbalance rise+fall 12.8 ps (was 152.9); fingers 10 -> 10; switched energy 136.4 -> 134.3 fJ (-1.6%); legal=True topology_ok=True violations=0; 68 states
-   u1 devices: ['p W=1.00 fingers=1 hvt', 'n W=1.95 fingers=3 std']
-   u6 devices: ['p W=2.00 fingers=2 std', 'n W=2.60 fingers=4 std']
+  start  cost 1.05  {'u1_p': 4, 'u1_n': 4, 'u6_p': 1, 'u6_n': 1, 'u6_vt': 0, 'u1_lp': 0, 'u1_ln': 0}
+  round 1  cost 0.78487  {'u1_p': 4, 'u1_n': 4, 'u6_p': 2, 'u6_n': 1, 'u6_vt': 0, 'u1_lp': 0, 'u1_ln': 0}  {'A_rise': 73.639, 'A_fall': 66.903, 'B_rise': 120.704, 'B_fall': 130.192, 'spread_ps': 110.355, 'E_fJ': 141.917}
+  round 2  cost 0.59261  {'u1_p': 4, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 0, 'u1_lp': 0, 'u1_ln': 0}  {'A_rise': 73.639, 'A_fall': 66.903, 'B_rise': 120.704, 'B_fall': 98.982, 'spread_ps': 79.144, 'E_fJ': 145.702}
+  round 3  cost 0.45586  {'u1_p': 4, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'A_rise': 73.639, 'A_fall': 66.903, 'B_rise': 100.449, 'B_fall': 98.982, 'spread_ps': 58.888, 'E_fJ': 145.702}
+  round 4  cost 0.41375  {'u1_p': 3, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'A_rise': 77.251, 'A_fall': 66.903, 'B_rise': 100.449, 'B_fall': 98.982, 'spread_ps': 55.277, 'E_fJ': 140.449}
+  round 5  cost 0.34772  {'u1_p': 2, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'A_rise': 83.847, 'A_fall': 66.903, 'B_rise': 100.449, 'B_fall': 98.982, 'spread_ps': 48.68, 'E_fJ': 133.823}
+  round 6  cost 0.22842  {'u1_p': 1, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'A_rise': 101.194, 'A_fall': 66.903, 'B_rise': 100.449, 'B_fall': 98.982, 'spread_ps': 32.824, 'E_fJ': 128.57}
+  round 7  cost 0.17785  {'u1_p': 1, 'u1_n': 4, 'u6_p': 2, 'u6_n': 3, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'A_rise': 101.194, 'A_fall': 66.903, 'B_rise': 101.508, 'B_fall': 88.473, 'spread_ps': 21.884, 'E_fJ': 134.232}
+  round 8  cost 0.14487  {'u1_p': 1, 'u1_n': 3, 'u6_p': 2, 'u6_n': 3, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'A_rise': 101.194, 'A_fall': 69.913, 'B_rise': 101.508, 'B_fall': 88.473, 'spread_ps': 18.874, 'E_fJ': 130.605}
+  round 9  cost 0.11846  {'u1_p': 1, 'u1_n': 3, 'u6_p': 2, 'u6_n': 4, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'A_rise': 101.194, 'A_fall': 69.913, 'B_rise': 101.508, 'B_fall': 82.366, 'spread_ps': 12.767, 'E_fJ': 134.298}
+== 3. result: {'u1_p': 1, 'u1_n': 3, 'u6_p': 2, 'u6_n': 4, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0} -> A rise/fall 101.2/69.9 ps, B 101.5/82.4 ps, imbalance rise+fall 12.8 ps (was 152.9); fingers 10 -> 10; switched energy 136.4 -> 134.3 fJ (-1.6%); legal=True topology_ok=True violations=0; 88 states
+   u1 devices: ['p W=1.00 L=0.15 fingers=1 hvt', 'n W=1.95 L=0.15 fingers=3 std']
+   u6 devices: ['p W=2.00 L=0.15 fingers=2 std', 'n W=2.60 L=0.15 fingers=4 std']
    wrote evidence/l4_path_balanced_twoway.gds

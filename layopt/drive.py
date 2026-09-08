@@ -260,11 +260,11 @@ class DriveModel:
     nu_fall: float = 0.0
 
     def stage(self, edge: str, w_um: float, c_total_fF: float, elmore_ps: float, slew_in_ps: float,
-              stack: int = 1, flavour: Optional[str] = None) -> Tuple[float, float]:
+              stack: int = 1, flavour: Optional[str] = None, l_um: Optional[float] = None) -> Tuple[float, float]:
         """(50 % delay, output transition) in ps for one edge of a stage: R from
         the width, the Elmore moment to the receiver as given (its 50 % point is
         ln2 times it), the stage's own time constant R*C_total for the slew terms."""
-        r = self.r_rise(w_um, stack, flavour) if edge == "rise" else self.r_fall(w_um, stack, flavour)
+        r = self.r_rise(w_um, stack, flavour, l_um) if edge == "rise" else self.r_fall(w_um, stack, flavour, l_um)
         rc = r * c_total_fF / 1000.0
         if edge == "rise":
             t0, kappa, mu, lam, tau0, nu = self.t0_rise_ps, self.kappa_rise, self.mu_rise, self.lam_rise, self.tau0_rise_ps, self.nu_rise
@@ -279,13 +279,21 @@ class DriveModel:
     # keyed by (polarity, flavour), relative to the library's default flavour of that
     # polarity (the one the k's were fitted on); set from Tech.vt / Tech.default_vt
     vt_mult: Dict[Tuple[str, str], float] = field(default_factory=dict)
+    # gate length: R x (L / l_ref)^gamma (Xyce, vt_fit.py: P 1.28/1.92/2.87, N 1.15/1.37/1.68 at 0.18/0.25/0.35)
+    gamma_p: float = 0.0
+    gamma_n: float = 0.0
+    l_ref_um: float = 0.15
 
-    def r_rise(self, w_p_um: float, stack: int = 1, flavour: Optional[str] = None) -> float:
+    def r_rise(self, w_p_um: float, stack: int = 1, flavour: Optional[str] = None, l_um: Optional[float] = None) -> float:
         m = self.vt_mult.get(("p", flavour), 1.0) if flavour else 1.0
+        if l_um:
+            m *= (l_um / self.l_ref_um) ** self.gamma_p
         return self.k_p * max(w_p_um, 1e-9) ** (-self.beta_p) * (1.0 + (stack - 1) * (self.stack_p - 1.0)) * m
 
-    def r_fall(self, w_n_um: float, stack: int = 1, flavour: Optional[str] = None) -> float:
+    def r_fall(self, w_n_um: float, stack: int = 1, flavour: Optional[str] = None, l_um: Optional[float] = None) -> float:
         m = self.vt_mult.get(("n", flavour), 1.0) if flavour else 1.0
+        if l_um:
+            m *= (l_um / self.l_ref_um) ** self.gamma_n
         return self.k_n * max(w_n_um, 1e-9) ** (-self.beta_n) * (1.0 + (stack - 1) * (self.stack_n - 1.0)) * m
 
 

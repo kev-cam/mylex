@@ -8,7 +8,7 @@ for the PNGs). Design record: `../../LAYOUT-OPT.md`.
 ## Commands
 
     cd /usr/local/src/mylex
-    python3 -m layopt.tests.test_layopt                       # 18 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model, moving a P&R wire, diffusion spacing, set_vt, switched capacitance)
+    python3 -m layopt.tests.test_layopt                       # 19 PASS (inverter, kestrel golden, LEF/DEF, fingers, series stack, route-around, same-net notch, remove_finger, drive model, moving a P&R wire, diffusion spacing, set_vt, switched capacitance, gate length)
     python3 -m layopt compare  $K/layout/kestrel_pll.gds $K/layout/kestrel_pll_flat_extracted.cir
     python3 -m layopt extract  $K/layout/kestrel_pll.gds -o evidence/kestrel_pll_layopt.cir
     python3 -m layopt rc       $K/layout/kestrel_pll.gds -o evidence/kestrel_pll.spef
@@ -288,6 +288,15 @@ probe prints it per cell before/after (a finger: 10–16 fJ per transition on th
 cell's nets, +3–15 %); the two-way balance costs it instead of a finger count;
 `l4_set_vt.py` and `l4_remove_finger.py` print the design total (gcd signal nets
 17.6 pJ per transition; one rebuffer finger 9 fJ; a Vt change 0).
+
+## Gate length as a move (`l4_set_gate_length.py`, `evidence/l4_set_gate_length.log`)
+
+`set_gate_length` stretches the cell at each finger of the device (contacts in a
+stock cell have no slack: 0.05 µm to the gate, 0.04 µm to the diffusion end);
+the abutting filler gives the space. Drive model: R × (L/0.15)^γ, γ_p 1.256 /
+γ_n 0.615 from the Xyce table. gcd rebuffer12's output stage 0.15 → 0.18 on
+both polarities (79 rects), no new violation, KLayout isomorphic with the new L,
+R_rise 2729 → 3432 Ω, net12 21.2 → 26.3 ps, +5.9 fJ per transition.
 
 ## Findings about the kestrel layout (report upstream)
 
