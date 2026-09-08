@@ -177,6 +177,7 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
     # without touching it is a violation the raster cannot express per cell
     # (a straight run's rect is the union of its cells).  So: search, check the
     # resulting rects against own shapes, block the offending cells, repeat.
+    prev_rects = None
     for attempt in range(6):
         res = _search(layers, cuts, nx, ny, x0, y0, g, blocked, via_ok, target, sources, via_cost, max_pops,
                       soft if soft_set else None, soft_via if soft_set else None, soft_cost)
@@ -186,9 +187,14 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
         tagged = _path_rects(path, x0, y0, g, lay_ids, cut_ids, width, cw, enc)
         rects = [(lid, r) for lid, r, _ in tagged]
         faults = _own_spacing_faults(tagged, own_rects, lay_ids, space)
+        # a repair that left the path unchanged blocked nothing the path used (the
+        # run stops short inside the corridor): next time the corridor goes too
+        stuck = rects == prev_rects
+        prev_rects = rects
         if probe:
-            print("      route-attempt %d: cost %s, %d cells, %d rects, %d own-spacing faults" % (
-                attempt, LAST_ROUTE_STATS.get("cost"), len(path), len(rects), len(faults)))
+            print("      route-attempt %d: cost %s, %d cells, %d rects, %d own-spacing faults%s" % (
+                attempt, LAST_ROUTE_STATS.get("cost"), len(path), len(rects), len(faults),
+                "".join(" | fault %s %s fillable=%s" % (layers[li], [round(v * dbu, 3) for v in o], _fillable(fl, li, o, rects, own_rects, by_layer, lay_ids, width, space, own)) for li, o, _ in faults)))
             for lid, r in rects:
                 print("         %s %s" % (layers[lay_ids.index(lid)] if lid in lay_ids else cuts[cut_ids.index(lid)], [round(v * dbu, 3) for v in r]))
         # a notch against the net's own shape that the move's fill pass can fill
@@ -237,6 +243,8 @@ def maze_route(fl, tech, net: int, src2net: Dict[int, int], sources: Sequence[Tu
             cy = cells((x0, o[1] + half, x1, o[3] - half), 0)
             if cy:
                 corridor[:, cy[1]:cy[3] + 1] = True
+            if stuck:
+                corridor[:] = False
             blocked[li] |= band & ~inside & ~corridor
     LAST_ROUTE_STATS["error"] = "own-net spacing could not be repaired"
     return None
@@ -262,11 +270,11 @@ def _fillable(fl, li, o, rects, own_rects, by_layer, lay_ids, width, space, own)
         probe = (hole[0] - sp, hole[1] - sp, hole[2] + sp, hole[3] + sp)
         for k, fr in by_layer.get(lid, []):
             if not own(k) and geom.overlaps(fr, probe):
+                if os.environ.get("LAYOPT_ROUTE_PROBE"):
+                    print("      fill of %s blocked by foreign %s (%s)" % ([round(v / 1000.0, 3) for v in hole], [round(v / 1000.0, 3) for v in fr], fl.rects[k].prov.split("/", 1)[1][:40]))
                 return False
-        # the fill must not sit within spacing of our own other routed rects either, unless it touches them
-        for lid3, r3 in rects:
-            if lid3 == lid and r3 is not r and geom.overlaps(r3, probe) and not geom.touches(r3, hole):
-                return False
+        # (a fill near another rect of this route is a same-net notch the move's
+        # iterating fill pass fills next; only other nets decide fillability)
     return True
 
 

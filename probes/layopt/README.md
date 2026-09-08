@@ -206,7 +206,10 @@ notch-fill pass then deal with it -- `_161_` still passes that way).
 All 33 candidates (`--max 33`, `evidence/l4_gcd_all33.log`): 32 take at least
 one finger; baseline 598 flags (was 1012 before the merged-shape rule). Per
 finger, what still refuses: the nor4 PMOS stack with no room for a contact head
-(`_257_`) and seven mirrored straps meeting the neighbouring cell's li or licon.
+(`_257_`; heads for a four-stack do not fit at 0.42 µm pitch) — the seven strap
+conflicts were the cell's own rail tabs and internal columns and are handled by
+a legal-shift search of the mirrored column (`evidence/l4_gcd_strap7.log`: all
+seven cells take at least one finger).
 Legal after the router accepts fillable same-net notches: rebuffer15 (both
 fingers, net15 25.8 → 23.0 ps) and `_258_` (whole nand3 NMOS stack, `_102_`
 112 → 60 ps, `evidence/gcd_258_stack_routed*`); after the DRC fix: `_135_`, `_121_`.

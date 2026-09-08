@@ -651,6 +651,56 @@ refuses now, per finger: the nor4's four-PMOS stack (no room for a contact
 head) and, seven times, the neighbouring cell's li or licon inside the
 mirrored strap's span — the next lever.
 
+**The "neighbour's li strap" (2026-09-08).** Followed to the geometry, the
+seven were not a neighbour's straps at all, and not movable ones. Every one
+was a li strap of the *cell's own* layout sitting just past the diffusion end
+— a supply tab from the rail into the outer S/D region with that region's
+licon and the rail mcon under it, or an internal column with contacts on the
+other strip — exactly where the mirror of the inner strap lands. A strap over
+contacts cannot be cut and rerouted the way a P&R wire can; the licons need
+li over them. What can move is *our* column: the mirrored gate finger, its
+contacts and strap can sit further out at the price of a wider outer region
+(more diffusion, a little capacitance). The spacing shift had estimated that
+from the straps alone in one pass; it is now a search — grid steps up to
+0.6 µm until the mirrored straps clear every other net's li by spacing and
+cover none of its cuts, the mirrored contacts clear other cuts, the new
+finger clears other poly, and the mirrored strap is not itself a same-net
+notch against the inner strap (0.16 µm apart is a violation the fill pass
+cannot always cure: on `_129_` the fill was blocked by the rail tab's
+corner). The strap trim was rewritten around the part of the strap that must
+exist, the contact span: anything within spacing of that span refuses,
+anything beyond it trims that side, and a cut of another net counts only by
+overlap (li has no spacing rule against a cut; it must merely not cover it) —
+the old version had refused rail mcons at 0.11 µm and looked on the wrong
+side for a P device. Three router fixes fell out of the same seven cells: a
+strap clipped to its contact span left no source point (the route now starts
+at its centre); a repair that changes nothing (the run stops short inside the
+corridor the band exempts) now closes the corridor next time; and a notch
+fill near another rect of the same route is a same-net notch the iterating
+fill pass will fill, not a reason to call the path unfillable. Result: all
+seven cells take at least one finger (`evidence/l4_gcd_strap7.log`) — and2_0,
+mux2_1, xnor2_2 and lpflow_inputiso1p both; the three lpflow_isobufsrc their
+PMOS, their NMOS still stopped by the rail tab or by a same-net notch the
+guard catches. The nor4's four-PMOS stack stays refused for a reason now
+seen: at the stack's 0.42 µm finger pitch the second far gate's contact head
+cannot sit beside the first's (a head and the next finger's stem need 0.84),
+and the rail side has the next row's diffusion 0.08 µm past the first
+position. A head centred on its finger — the narrowest legal one, cut plus
+two enclosures — is now a candidate and is what a mirrored stack needs, but
+the fix for four in a row is heads alternating sides or a wider mirrored
+pitch; not done. Which brings the question of whether this saves area or
+power: honestly, not yet. The fingers spend filler area that was already
+there and add gate width, i.e. switched capacitance; the two-way balance kept
+the transistor count constant. The saving is indirect — a flow that fixes
+handshake skew with larger cells, inserted buffers or delay padding pays in
+area and power, balancing in place pays in neither — and the direct saving
+would come from dissolving the boundary itself (implant and well enclosure
+between abutting cells), which is not done. Power is not measured; the
+extraction has every net's C, so switched capacitance before and after is the
+next measurement. A zero-area, zero-wire sizing move the process does allow:
+Vt flavour by implant (sky130's lvtn / hvtp layers), which the next entry
+takes up.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 

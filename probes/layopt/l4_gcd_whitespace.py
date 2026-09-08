@@ -111,9 +111,10 @@ def main():
     only = set(sys.argv[sys.argv.index("--only") + 1].split(",")) if "--only" in sys.argv else None
     if only:
         cands = [(a, b) for a, b in cands if a.inst in only]
-    print("   %d logic cells have a fill_4/fill_8 flush on their right; trying %d" % (len(cands), min(MAXC, len(cands))))
+    maxc = len(cands) if only else MAXC
+    print("   %d logic cells have a fill_4/fill_8 flush on their right; trying %d" % (len(cands), min(maxc, len(cands))))
     results = []
-    for a, b in cands[:MAXC]:
+    for a, b in cands[:maxc]:
         inst = a.inst
         net = output_net(ex, inst)
         wp0, r0, d0 = net_delay(ex, net, inst) if net is not None else (0, 0, {})

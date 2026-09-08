@@ -370,14 +370,34 @@ def fill_notches(fl: FlatLayout, ex: Extraction, new_ids: Sequence[int]) -> List
         by_layer.setdefault(r.layer, geom.BinIndex()).add(k, r.rect)
     pending = list(new_set)
     changed = True
+    cut_pairs = {L[c]: (L[lo], L[up]) for lo, c, up in tech.vias}
+    def known(k):
+        return src2net.get(k) if k not in new_set and k not in label else label.get(k)
     while changed and pending:
         changed = False
         for i in list(pending):
             r = fl.rects[i]
-            for k in by_layer[r.layer].query_touch(r.rect):
-                n = src2net.get(k) if k not in new_set else label.get(k)
+            got = None
+            for k in by_layer[r.layer].query_touch(r.rect):           # same-layer contact
+                n = known(k)
                 if n is not None and k != i:
-                    label[i] = n; pending.remove(i); changed = True; break
+                    got = n; break
+            if got is None:                                            # through a cut to the layer below/above
+                for c, (lo, up) in cut_pairs.items():
+                    if r.layer not in (lo, up) or c not in by_layer:
+                        continue
+                    other = up if r.layer == lo else lo
+                    for kc in by_layer[c].query_overlap(r.rect):
+                        for k in by_layer.get(other, geom.BinIndex()).query_overlap(fl.rects[kc].rect):
+                            n = known(k)
+                            if n is not None:
+                                got = n; break
+                        if got is not None:
+                            break
+                    if got is not None:
+                        break
+            if got is not None:
+                label[i] = got; pending.remove(i); changed = True
     added: List[int] = []
     diff_l = L.get(tech.diff)
     for i in new_set:
@@ -568,6 +588,58 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
                 for k in inner_straps]
     shift = deficit([(tech.routing[0], probe_li)])
     shift = int(round(shift / nm(tech.grid_um))) * nm(tech.grid_um) if shift else 0
+    # The deficit above is a first estimate from the straps alone.  Search the
+    # shift upward (grid steps, up to 0.6 um) until the mirrored straps clear
+    # every other net's li by spacing and cover none of its cuts, the mirrored
+    # contacts clear other cuts, and the new gate finger clears other poly: a
+    # cell's own strap at the strip's end (a supply tab beside the outer
+    # region, an internal column) is the usual reason, and a wider outer
+    # region is the price.
+    li_l_ = L[tech.routing[0]]; licon_l_ = L[tech.diff_contact]; poly_l_ = L[tech.poly]
+    cut_ls = {licon_l_} | ({L[tech.vias[0][1]]} if tech.vias else set())
+    sp_li_ = nm(tech.min_space.get(tech.routing[0], 0.17)); sp_cut_ = nm(tech.min_space.get(tech.diff_contact, 0.17)); sp_po_ = nm(tech.min_space.get(tech.poly, 0.21))
+    s2n_ = {sh.src: ex.net_of_shape[k] for k, sh in enumerate(ex.shapes) if sh.src >= 0}
+    inner_licon_rects = [fl.rects[k].rect for k in inner_licons]
+    inner_sid0 = next((q for q, sh in enumerate(ex.shapes) if sh.src == inner_licons[0]), None)
+    inner_net0 = ex.net_of_shape[inner_sid0] if inner_sid0 is not None else None
+    near = geom.BinIndex()
+    for k, r in enumerate(fl.rects):
+        if r.layer in (li_l_, poly_l_) or r.layer in cut_ls:
+            if r.x1 >= D[0] - nm(2.0) and r.x0 <= D[2] + nm(3.0) and r.y1 >= D[1] - nm(3.0) and r.y0 <= D[3] + nm(3.0):
+                near.add(k, r.rect)
+    def legal_shift(sh):
+        m = (lambda x: int(round(2 * xc - x)) + sh) if hi else (lambda x: int(round(2 * xc - x)) - sh)
+        mr = lambda r: (min(m(r[0]), m(r[2])), r[1], max(m(r[0]), m(r[2])), r[3])
+        straps = [mr(fl.rects[k].rect) for k in inner_straps]
+        licons = [mr(r) for r in inner_licon_rects]
+        ext_ = nm(tech.poly_ext_diff)
+        finger = (min(m(g[0]), m(g[2])), g[1] - ext_, max(m(g[0]), m(g[2])), g[3] + ext_)
+        for st in straps:
+            for k in near.query_overlap((st[0] - sp_li_, st[1] - sp_li_, st[2] + sp_li_, st[3] + sp_li_)):
+                r = fl.rects[k]; n = s2n_.get(k)
+                if n is None:
+                    continue
+                if n == inner_net0:
+                    # our own net: fine when merged (overlap / shared edge), a notch when merely near
+                    if r.layer == li_l_ and not (geom.overlaps(r.rect, st) or _shares_edge(r.rect, st)):
+                        return False
+                    continue
+                if r.layer == li_l_ or (r.layer in cut_ls and geom.overlaps(r.rect, st)):
+                    return False
+        for lc in licons:
+            for k in near.query_overlap((lc[0] - sp_cut_, lc[1] - sp_cut_, lc[2] + sp_cut_, lc[3] + sp_cut_)):
+                if fl.rects[k].layer in cut_ls and fl.rects[k].rect != lc:
+                    return False
+        for k in near.query_overlap((finger[0] - sp_po_, finger[1] - sp_po_, finger[2] + sp_po_, finger[3] + sp_po_)):
+            r = fl.rects[k]
+            if r.layer == poly_l_ and s2n_.get(k) != dev.g:
+                return False
+        return True
+    grid_ = nm(tech.grid_um)
+    if not legal_shift(shift):
+        for sh in range(shift, nm(0.6) + 1, grid_):
+            if legal_shift(sh):
+                shift = sh; break
     mx = (lambda x: int(round(2 * xc - x)) + shift) if hi else (lambda x: int(round(2 * xc - x)) - shift)
     def mrect(r: Rect) -> Rect:
         return (min(mx(r[0]), mx(r[2])), r[1], max(mx(r[0]), mx(r[2])), r[3])
@@ -582,7 +654,7 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
         if k == di or r.layer not in (L[tech.diff], L.get("tap")) or not geom.overlaps(r.rect, grown_part):
             continue
         if geom.overlaps(r.rect, D_new) or _shares_edge(r.rect, D_new):
-            if r.layer == L[tech.diff] and r.prov == fl.rects[di].prov and (r.rect[1] >= D[1] and r.rect[3] <= D[3] or r.rect[1] <= D[1] and r.rect[3] >= D[3]):
+            if r.layer == L[tech.diff] and r.prov == fl.rects[di].prov and (geom.overlaps(r.rect, D) or _shares_edge(r.rect, D)):
                 continue                           # a slab of our own strip (the stock cells draw one strip as several rects)
         raise MoveError("add_finger: %s at %s (%s) lies within diffusion spacing of the extended strip"
                         % (inv.get(r.layer, r.layer), [round(v * d, 3) for v in r.rect], r.prov.split("/", 1)[1][:40]))
@@ -645,35 +717,38 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
     lic_hi = max(fl.rects[k].y1 for k in inner_licons) + enc_li
     inner_sid = next((q for q, sh in enumerate(ex.shapes) if sh.src == inner_licons[0]), None)
     inner_net = ex.net_of_shape[inner_sid] if inner_sid is not None else None
-    foreign_layers = {li_l, licon_l}
-    if tech.vias:
-        foreign_layers.add(L[tech.vias[0][1]])
+    cut_layers = {licon_l} | ({L[tech.vias[0][1]]} if tech.vias else set())
     def foreign(k):
         n = src2net.get(k)
         return n is not None and n != inner_net
-    trim_lo, trim_hi = None, None          # strap y bounds forced by conflicts (P: bottom, N: top)
+    # The part of the strap that must exist covers our contacts: [lic_lo, lic_hi].
+    # A foreign li shape within spacing of that part (or a foreign cut under it)
+    # cannot be trimmed away: refuse.  Beyond it, on either side, trim the strap
+    # back to clear (li by spacing; a cut of another net only by overlap -- li
+    # has no spacing rule against a cut, it must merely not cover it).
+    trim_lo, trim_hi = None, None
     for k in inner_straps:
         nr = mrect(fl.rects[k].rect)
         grown = (nr[0] - sp_li, nr[1] - sp_li, nr[2] + sp_li, nr[3] + sp_li)
+        must = (nr[0], lic_lo, nr[2], lic_hi)
         for k2, r2 in enumerate(fl.rects):
-            if r2.layer not in foreign_layers or not foreign(k2) or not geom.overlaps(r2.rect, grown):
+            if (r2.layer != li_l and r2.layer not in cut_layers) or not foreign(k2):
                 continue
-            if dev.kind == "p":
-                if r2.y0 >= lic_lo:
-                    raise MoveError("add_finger: foreign %s at %s conflicts with the mirrored strap over our contacts" % (inv_layers(tech).get(r2.layer, r2.layer), [round(v / 1000.0, 3) for v in r2.rect]))
-                trim_lo = max(trim_lo or -10**9, r2.y1 + sp_li)
-            else:
-                if r2.y1 <= lic_hi:
-                    raise MoveError("add_finger: foreign %s at %s conflicts with the mirrored strap over our contacts" % (inv_layers(tech).get(r2.layer, r2.layer), [round(v / 1000.0, 3) for v in r2.rect]))
-                trim_hi = min(trim_hi or 10**9, r2.y0 - sp_li)
-    if (dev.kind == "p" and trim_lo is not None and trim_lo > lic_lo) or (dev.kind == "n" and trim_hi is not None and trim_hi < lic_hi):
-        raise MoveError("add_finger: foreign li/cuts within spacing of the mirrored strap over our contacts (trimming cannot clear them)")
+            sp = sp_li if r2.layer == li_l else 0
+            if not geom.overlaps(r2.rect, grown if sp else nr):
+                continue
+            if geom.overlaps(r2.rect, (must[0] - sp, must[1] - sp, must[2] + sp, must[3] + sp)):
+                raise MoveError("add_finger: foreign %s at %s (%s) conflicts with the mirrored strap %s over our contacts (y %s..%s)"
+                                % (inv_layers(tech).get(r2.layer, r2.layer), [round(v / 1000.0, 3) for v in r2.rect], r2.prov.split("/", 1)[1][:40],
+                                   [round(v / 1000.0, 3) for v in nr], round(lic_lo / 1000.0, 3), round(lic_hi / 1000.0, 3)))
+            if r2.rect[1] >= lic_hi:                       # beyond the contacts, above
+                trim_hi = min(trim_hi if trim_hi is not None else 10**9, r2.rect[1] - sp)
+            elif r2.rect[3] <= lic_lo:                     # beyond the contacts, below
+                trim_lo = max(trim_lo if trim_lo is not None else -10**9, r2.rect[3] + sp)
     def clip_strap(r: Rect) -> Rect:
-        if dev.kind == "p" and trim_lo is not None:
-            return (r[0], max(r[1], min(trim_lo, lic_lo)), r[2], r[3])
-        if dev.kind == "n" and trim_hi is not None:
-            return (r[0], r[1], r[2], min(r[3], max(trim_hi, lic_hi)))
-        return r
+        y0 = max(r[1], min(trim_lo, lic_lo)) if trim_lo is not None else r[1]
+        y1 = min(r[3], max(trim_hi, lic_hi)) if trim_hi is not None else r[3]
+        return (r[0], y0, r[2], y1)
     new_straps = []
     for k in inner_straps:
         nr = clip_strap(mrect(fl.rects[k].rect))
@@ -700,9 +775,9 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
             raise MoveError("add_finger: inner strap too narrow for a contact")
         # the jumper may sit anywhere along the part of the strap the clipped mirror keeps
         y0, y1 = wide[1], wide[3]
-        if dev.kind == "p" and trim_lo is not None:
+        if trim_lo is not None:
             y0 = max(y0, min(trim_lo, lic_lo))
-        elif dev.kind == "n" and trim_hi is not None:
+        if trim_hi is not None:
             y1 = min(y1, max(trim_hi, lic_hi))
         if y1 - y0 < cs:
             raise MoveError("add_finger: no room for the signal jumper on the strap")
@@ -719,6 +794,8 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
                 xs_ = (nr[0] + nr[2]) // 2
                 for yy in range(nr[1] + cs, nr[3] - cs + 1, max(cs, nm(0.1))):
                     sources.append((0, xs_, yy))
+                if not sources:                              # a strap clipped to its contact span: start at its centre
+                    sources.append((0, xs_, (nr[1] + nr[3]) // 2))
             xs = [r[0] for r in new_span] + [xa]; ys = [r[1] for r in new_span] + [y0]
             rwin = (min(xs) - nm(1.5), min(ys) - nm(1.0), max(r[2] for r in new_span) + nm(1.5), max(r[3] for r in new_span) + nm(1.0))
             res = route.maze_route(fl, tech, inner_net, src2net, sources, rwin, own_ids=[j for _, j in new_straps])
@@ -892,12 +969,18 @@ def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, ne
             else:
                 y0 = g[3] + ext + j * step; ys.append((y0, y0 + tab_h))
         for hy0, hy1 in ys:
-            for tab in range(0, nm(0.8) // step + 1):
-                lx0 = gx1 + tab * step if tab else gx0                     # licon x0: on the finger, or on a tab to its right
-                if tab and lx0 < gx1:
-                    continue
+            for tab in range(-1, nm(0.8) // step + 1):
+                if tab < 0:
+                    # centred on the finger: the narrowest head there is (cut + 2 enc), the
+                    # one that fits between the fingers of a mirrored stack
+                    lx0 = (gx0 + gx1) // 2 - cs // 2
+                    head = (min(gx0, lx0 - enc_poly), hy0, max(gx1, lx0 + cs + enc_poly), hy1)
+                else:
+                    lx0 = gx1 + tab * step if tab else gx0                 # licon x0: on the finger, or on a tab to its right
+                    if tab and lx0 < gx1:
+                        continue
+                    head = (gx0, hy0, lx0 + cs + enc_poly, hy1)
                 licon = (lx0, (hy0 + hy1) // 2 - cs // 2, lx0 + cs, (hy0 + hy1) // 2 + cs // 2)
-                head = (gx0, hy0, licon[2] + enc_poly, hy1)
                 # a head beyond the first position needs a finger-width poly stem
                 # from the overhang out to it, or it is not connected to anything
                 stem = None
@@ -908,6 +991,11 @@ def _plan_contact_bridge(fl, ex, dev, g, gx0, gx1, ext, src2net, nm, L, tech, ne
                 if not clear(diff_l, head, sp_diff, exclude_own=False) or (stem and not clear(diff_l, stem, sp_diff, exclude_own=False)):
                     tally["head vs diffusion"] = tally.get("head vs diffusion", 0) + 1; continue
                 if not clear(poly_l, head, sp_poly) or (stem and not clear(poly_l, stem, sp_poly)):
+                    if os.environ.get("LAYOPT_PLAN_DEBUG") == "2" and tally.get("_dbgp", 0) < 8 and tab < 0 and (hy0 > g[3] + ext + sp_poly or hy1 < g[1] - ext - sp_poly):
+                        tally["_dbgp"] = tally.get("_dbgp", 0) + 1
+                        bi = idx.get(poly_l)
+                        who = [(k, [round(v / 1000, 3) for v in bi.rects[k]], ex.nets[src2net[k]].name if k in src2net else "?") for k in bi.query_overlap((head[0] - sp_poly, head[1] - sp_poly, head[2] + sp_poly, head[3] + sp_poly)) if not own(k)]
+                        print("      plan-debug: head %s stem %s blocked by poly %s" % ([round(v / 1000, 3) for v in head], stem and [round(v / 1000, 3) for v in stem], who[:3]))
                     tally["head vs other poly"] = tally.get("head vs other poly", 0) + 1; continue
                 if not (clear(licon_l, licon, sp_cut, exclude_own=False) and clear(mcon_l, licon, sp_cut, exclude_own=False)):
                     tally["licon vs cuts"] = tally.get("licon vs cuts", 0) + 1; continue
