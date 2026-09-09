@@ -35,79 +35,17 @@ GDS = os.path.join(ORFS, "sky130_fd_sc_hd.gds")
 MIRROR = {"N": "FN", "FN": "N", "FS": "S", "S": "FS"}
 
 
-def layout_of(cells):
-    """[(macro, x_um, orient)] in one row -> FlatLayout (no routing)."""
-    lef = lefdef.Lef()
-    for f in LEFS:
-        lefdef.read_lef(f, lef)
-    w = sum(int(round(lef.macros[m].size[0] * 1000)) for m, _, _ in cells) + 4000
-    comps = " ".join("- u%d %s + PLACED ( %d 0 ) %s ;" % (i, m, int(round(x * 1000)), o) for i, (m, x, o) in enumerate(cells))
-    deftext = """VERSION 5.8 ; DESIGN c ; UNITS DISTANCE MICRONS 1000 ; DIEAREA ( 0 0 ) ( %d 2720 ) ;
-COMPONENTS %d ; %s END COMPONENTS
-SPECIALNETS 2 ; - VPWR %s + USE POWER ; - VGND %s + USE GROUND ; END SPECIALNETS
-END DESIGN""" % (w, len(cells), comps, " ".join("( u%d VPWR )" % i for i in range(len(cells))), " ".join("( u%d VGND )" % i for i in range(len(cells))))
-    with tempfile.TemporaryDirectory() as td:
-        open(os.path.join(td, "c.def"), "w").write(deftext)
-        return lefdef.def2flat(os.path.join(td, "c.def"), LEFS, "", T, gds_lib=GDS)
+# the policy's core lives in layopt/placer.py (Faces: outer nets, orientation faces,
+# strip matching, exact slides); these names keep the probe's text below unchanged
+from layopt import placer as _placer   # noqa: E402
 
-
-_outer_cache = {}
-
-
-def outer_nets(macro):
-    """{'left': {kind: net or None}, 'right': {...}} for the macro placed N, nets by name."""
-    if macro in _outer_cache:
-        return _outer_cache[macro]
-    fl = layout_of([(macro, 1.0, "N")])
-    ex = extract.extract(fl, T)
-    inst = next(r.prov for r in fl.rects if "/u0/" in r.prov)
-    _, box = mv._cell_box(fl, ex, inst)
-    res = {}
-    for side in ("left", "right"):
-        regs = mv._outer_regions(fl, ex, inst, box, side)
-        res[side] = {k: (ex.nets[v[3]].name if v is not None and v[3] is not None else None) for k, v in regs.items()}
-    _outer_cache[macro] = res
-    return res
-
-
-def faces(macro, orient):
-    """(left nets, right nets) as {kind: name} for the macro in this orientation (mirrors swap sides)."""
-    o = outer_nets(macro)
-    if orient in ("FN", "S"):
-        return o["right"], o["left"]
-    return o["left"], o["right"]
-
-
-def match(ra, lb):
-    """strips matched across a boundary: both nets supplies and equal (signals never match across cells)."""
-    n = 0
-    for k in ("p", "n"):
-        a, b = ra.get(k), lb.get(k)
-        if a is not None and a == b and a in T.supply_names:
-            n += 1
-    return n
-
-
-_pair_cache = {}
-
-
-def exact_slide(ma, oa, mb, ob):
-    key = (ma, oa, mb, ob)
-    if key in _pair_cache:
-        return _pair_cache[key]
-    lef = lefdef.Lef()
-    for f in LEFS:
-        lefdef.read_lef(f, lef)
-    wa = lef.macros[ma].size[0]
-    fl = layout_of([(P + "fill_4", 0.0, "N"), (ma, 1.84, oa), (mb, 1.84 + wa, ob), (P + "fill_8", 1.84 + wa + lef.macros[mb].size[0], "N")])
-    ex = extract.extract(fl, T)
-    a = next(r.prov for r in fl.rects if "/u1/" in r.prov); b = next(r.prov for r in fl.rects if "/u2/" in r.prov)
-    try:
-        d, lim, nets = mv._merge_plan(fl, ex, a, b)[:3]
-    except mv.MoveError as e:
-        d, lim, nets = 0, str(e)[:60], []
-    _pair_cache[key] = (max(d, 0) / 1000.0, lim, nets)
-    return _pair_cache[key]
+_F = _placer.Faces(LEFS, GDS, T, cache_path=os.path.join(HERE, "evidence", "pair_slides.json"))
+layout_of = _F.layout_of
+outer_nets = _F.outer_nets
+faces = _F.faces
+match = _F.match
+exact_slide = _F.exact_slide
+_pair_cache = _F._slide
 
 
 def main():

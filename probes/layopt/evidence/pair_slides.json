@@ -1,0 +1,1232 @@
+{
+"sky130_fd_sc_hd__nand2_1|FS|sky130_fd_sc_hd__clkinv_1|FS": [
+0.0,
+"li [2.705, 1.835, 3.135, 2.465] (u1) vs [3.305, 1.395, 3.545, 2.345] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nand2_1|S|sky130_fd_sc_hd__clkinv_1|FS": [
+0.0,
+"li [2.825, 1.835, 3.135, 2.805] (u1) vs [3.305, 1.395, 3.545, 2.345] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nand2_1|FS|sky130_fd_sc_hd__clkinv_1|S": [
+0.0,
+"li [2.705, 1.835, 3.135, 2.465] (u1) vs [3.305, 2.13, 3.59, 2.805] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nand2_1|S|sky130_fd_sc_hd__clkinv_1|S": [
+0.0,
+"li [2.825, 1.835, 3.135, 2.805] (u1) vs [3.305, 1.43, 3.755, 1.96] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|FS|sky130_fd_sc_hd__o21ai_2|FS": [
+0.02,
+"li [2.85, 2.13, 3.135, 2.805] (u1) vs [3.325, 1.835, 3.655, 2.465] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|S|sky130_fd_sc_hd__o21ai_2|FS": [
+0.015,
+"poly [2.83, 1.395, 3.115, 1.725] (u1) vs [3.34, 1.425, 3.63, 1.76] (u2), spacing 0.21",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|FS|sky130_fd_sc_hd__o21ai_2|S": [
+0.005,
+"li [2.685, 1.43, 3.135, 1.96] (u1) vs [3.31, 1.32, 3.625, 1.955] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|S|sky130_fd_sc_hd__o21ai_2|S": [
+0.005,
+"poly [2.83, 1.395, 3.115, 1.725] (u1) vs [3.33, 1.395, 3.62, 1.725] (u2), spacing 0.21",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__xor2_1|FS|sky130_fd_sc_hd__xor2_1|FS": [
+0.0,
+"li [4.655, 0.255, 4.975, 1.355] (u1) vs [5.145, 0.255, 5.315, 2.065] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xor2_1|S|sky130_fd_sc_hd__xor2_1|FS": [
+0.0,
+"li [4.805, 0.255, 4.975, 2.065] (u1) vs [5.145, 0.255, 5.315, 2.065] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xor2_1|FS|sky130_fd_sc_hd__xor2_1|S": [
+0.0,
+"the diffusion regions",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xor2_1|S|sky130_fd_sc_hd__xor2_1|S": [
+0.0,
+"li [4.805, 0.255, 4.975, 2.065] (u1) vs [5.145, 0.255, 5.465, 1.355] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__lpflow_isobufsrc_1|N|sky130_fd_sc_hd__clkinv_1|FN": [
+0.0,
+"li [3.875, 0.725, 4.055, 2.465] (u1) vs [4.225, -0.085, 4.51, 0.59] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__lpflow_isobufsrc_1|N|sky130_fd_sc_hd__nand3_2|FN": [
+0.0,
+"li [3.875, 0.725, 4.055, 2.465] (u1) vs [4.225, -0.085, 4.605, 0.885] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nand3_2|N|sky130_fd_sc_hd__a311oi_2|N": [
+0.05,
+"li [5.055, -0.085, 5.435, 0.885] (u1) vs [5.655, 0.995, 6.32, 1.325] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand3_2|FN|sky130_fd_sc_hd__a311oi_2|N": [
+0.0,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__lpflow_isobufsrc_1|N|sky130_fd_sc_hd__nor2_1|N": [
+0.0,
+"li [3.875, 0.725, 4.055, 2.465] (u1) vs [4.225, 1.075, 4.575, 1.325] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__lpflow_isobufsrc_1|N|sky130_fd_sc_hd__nor2_1|FN": [
+0.0,
+"li [3.875, 0.725, 4.055, 2.465] (u1) vs [4.225, 1.075, 4.575, 1.325] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nor2_1|N|sky130_fd_sc_hd__lpflow_isobufsrc_1|FN": [
+0.0,
+"li [2.785, 1.075, 3.135, 1.325] (u1) vs [3.305, 0.725, 3.485, 2.465] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nor2_1|FN|sky130_fd_sc_hd__lpflow_isobufsrc_1|FN": [
+0.0,
+"li [2.785, 1.075, 3.135, 1.325] (u1) vs [3.305, 0.725, 3.485, 2.465] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__lpflow_isobufsrc_1|N|sky130_fd_sc_hd__lpflow_inputiso1p_1|N": [
+0.06,
+"li [3.875, 0.725, 4.055, 2.465] (u1) vs [4.285, 0.765, 4.64, 1.325] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__o21ai_0|N|sky130_fd_sc_hd__buf_4|FN": [
+0.145,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o21ai_0|FN|sky130_fd_sc_hd__buf_4|FN": [
+0.15,
+"li [3.265, 0.955, 3.595, 1.615] (u1) vs [3.915, 1.485, 4.245, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__a21oi_1|FS|sky130_fd_sc_hd__nor2_1|FS": [
+0.0,
+"the diffusion regions",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__a21oi_1|S|sky130_fd_sc_hd__nor2_1|FS": [
+0.005,
+"poly [3.265, 1.395, 3.575, 1.725] (u1) vs [3.79, 1.395, 4.075, 1.725] (u2), spacing 0.21",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__a21oi_1|FS|sky130_fd_sc_hd__nor2_1|S": [
+0.015,
+"li [3.285, 1.395, 3.58, 1.725] (u1) vs [3.765, 1.395, 4.115, 1.645] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__a21oi_1|S|sky130_fd_sc_hd__nor2_1|S": [
+0.0,
+"poly [3.265, 1.395, 3.575, 1.725] (u1) vs [3.785, 1.395, 4.095, 1.725] (u2), spacing 0.21",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__buf_4|N|sky130_fd_sc_hd__a211oi_4|N": [
+0.14,
+"the diffusion regions",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__buf_4|N|sky130_fd_sc_hd__a211oi_4|FN": [
+0.14,
+"the diffusion regions",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__a211oi_4|N|sky130_fd_sc_hd__clkbuf_16|N": [
+0.0,
+"the diffusion regions",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__a211oi_4|FN|sky130_fd_sc_hd__clkbuf_16|N": [
+0.0,
+"the diffusion regions",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__a211oi_4|N|sky130_fd_sc_hd__clkbuf_16|FN": [
+0.085,
+"the diffusion regions",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__a211oi_4|FN|sky130_fd_sc_hd__clkbuf_16|FN": [
+0.085,
+"the diffusion regions",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkbuf_16|N|sky130_fd_sc_hd__buf_4|FN": [
+0.24,
+"li [10.425, 0.735, 10.865, 1.72] (u1) vs [11.275, 1.485, 11.605, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkbuf_16|FN|sky130_fd_sc_hd__buf_4|FN": [
+0.15,
+"li [10.64, 0.765, 10.955, 1.325] (u1) vs [11.275, 1.485, 11.605, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkbuf_16|N|sky130_fd_sc_hd__nand2_1|N": [
+0.09,
+"li [10.425, 0.735, 10.865, 1.72] (u1) vs [11.125, -0.085, 11.435, 0.885] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkbuf_16|FN|sky130_fd_sc_hd__nand2_1|N": [
+0.0,
+"li [10.64, 0.765, 10.955, 1.325] (u1) vs [11.125, -0.085, 11.435, 0.885] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkbuf_16|N|sky130_fd_sc_hd__nand2_1|FN": [
+0.085,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkbuf_16|FN|sky130_fd_sc_hd__nand2_1|FN": [
+0.0,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|N|sky130_fd_sc_hd__xnor2_1|N": [
+0.0,
+"li [2.875, 1.495, 3.135, 2.805] (u1) vs [3.305, 0.28, 3.475, 1.955] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|FN|sky130_fd_sc_hd__xnor2_1|N": [
+0.0,
+"li [2.825, -0.085, 3.135, 0.885] (u1) vs [3.305, 0.28, 3.475, 1.955] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|N|sky130_fd_sc_hd__xnor2_1|FN": [
+0.0,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|FN|sky130_fd_sc_hd__xnor2_1|FN": [
+0.0,
+"li [2.825, -0.085, 3.135, 0.885] (u1) vs [3.305, 0.345, 3.475, 1.955] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xor2_1|FS|sky130_fd_sc_hd__or4_1|FS": [
+0.0,
+"the diffusion regions",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xor2_1|S|sky130_fd_sc_hd__or4_1|FS": [
+0.005,
+"li [4.805, 0.255, 4.975, 2.065] (u1) vs [5.15, 0.765, 5.47, 1.225] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__or4_1|S|sky130_fd_sc_hd__clkinv_4|FS": [
+0.0,
+"the diffusion regions",
+[
+"spacing",
+"VPWR"
+]
+],
+"sky130_fd_sc_hd__or4_1|S|sky130_fd_sc_hd__clkinv_4|S": [
+0.0,
+"the diffusion regions",
+[
+"spacing",
+"VPWR"
+]
+],
+"sky130_fd_sc_hd__bufinv_16|N|sky130_fd_sc_hd__and2_0|N": [
+0.0,
+"li [12.52, 0.735, 12.795, 1.615] (u1) vs [12.965, 1.185, 13.31, 1.955] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__and2_0|FN|sky130_fd_sc_hd__clkinv_1|N": [
+0.0,
+"li [3.71, 1.185, 4.055, 1.955] (u1) vs [4.225, 1.665, 4.485, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__and2_0|FN|sky130_fd_sc_hd__clkinv_1|FN": [
+0.0,
+"li [3.71, 1.185, 4.055, 1.955] (u1) vs [4.225, 1.665, 4.505, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|N|sky130_fd_sc_hd__nand2b_1|FN": [
+0.045,
+"li [2.85, -0.085, 3.135, 0.59] (u1) vs [3.35, 0.255, 3.72, 2.005] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|FN|sky130_fd_sc_hd__nand2b_1|FN": [
+0.045,
+"li [2.875, 1.665, 3.135, 2.805] (u1) vs [3.35, 0.255, 3.72, 2.005] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|N|sky130_fd_sc_hd__nand2_1|N": [
+0.0,
+"li [2.705, 0.255, 3.135, 0.885] (u1) vs [3.305, -0.085, 3.615, 0.885] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|FN|sky130_fd_sc_hd__nand2_1|N": [
+0.0,
+"poly [2.805, 0.995, 3.115, 1.325] (u1) vs [3.325, 0.995, 3.635, 1.325] (u2), spacing 0.21",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nand2_1|N|sky130_fd_sc_hd__nand2_1|FN": [
+0.0,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|FN|sky130_fd_sc_hd__nand2_1|FN": [
+0.0,
+"li [2.825, -0.085, 3.135, 0.885] (u1) vs [3.305, 0.255, 3.735, 0.885] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__lpflow_isobufsrc_1|N|sky130_fd_sc_hd__buf_6|N": [
+0.195,
+"li [3.875, 0.725, 4.055, 2.465] (u1) vs [4.42, 1.075, 5.325, 1.315] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__lpflow_isobufsrc_1|N|sky130_fd_sc_hd__buf_6|FN": [
+0.01,
+"li [3.875, 0.725, 4.055, 2.465] (u1) vs [4.235, -0.085, 4.565, 0.885] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|FS|sky130_fd_sc_hd__and2_4|FS": [
+0.01,
+"li [2.85, 2.13, 3.135, 2.805] (u1) vs [3.315, 1.915, 3.645, 2.465] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|S|sky130_fd_sc_hd__and2_4|FS": [
+0.01,
+"li [2.895, 1.395, 3.135, 2.345] (u1) vs [3.315, 1.915, 3.645, 2.465] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|FS|sky130_fd_sc_hd__and2_4|S": [
+0.0,
+"li [2.85, 2.13, 3.135, 2.805] (u1) vs [3.305, 0.955, 3.585, 2.105] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|S|sky130_fd_sc_hd__and2_4|S": [
+0.0,
+"li [2.875, -0.085, 3.135, 1.055] (u1) vs [3.305, 0.955, 3.585, 2.105] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__and2_0|FN|sky130_fd_sc_hd__nand2_1|N": [
+0.0,
+"li [3.71, 1.185, 4.055, 1.955] (u1) vs [4.225, 1.495, 4.505, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__and2_0|FN|sky130_fd_sc_hd__nand2_1|FN": [
+0.0,
+"li [3.71, 1.185, 4.055, 1.955] (u1) vs [4.225, 1.495, 4.485, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xnor2_1|FS|sky130_fd_sc_hd__clkbuf_16|FS": [
+0.0,
+"the diffusion regions",
+[
+"VGND",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xnor2_1|S|sky130_fd_sc_hd__clkbuf_16|FS": [
+0.0,
+"li [4.805, 0.765, 4.975, 2.44] (u1) vs [5.145, 1.395, 5.46, 1.955] (u2), spacing 0.17",
+[
+"VGND",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xnor2_1|FS|sky130_fd_sc_hd__clkbuf_16|S": [
+0.09,
+"li [4.805, 0.765, 4.975, 2.375] (u1) vs [5.235, -0.085, 5.505, 0.83] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__xnor2_1|S|sky130_fd_sc_hd__clkbuf_16|S": [
+0.09,
+"li [4.805, 0.765, 4.975, 2.44] (u1) vs [5.235, -0.085, 5.505, 0.83] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkbuf_16|FS|sky130_fd_sc_hd__a31oi_1|FS": [
+0.09,
+"li [10.425, 1.0, 10.865, 1.985] (u1) vs [11.125, 1.395, 11.405, 1.725] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkbuf_16|S|sky130_fd_sc_hd__a31oi_1|FS": [
+0.0,
+"li [10.64, 1.395, 10.955, 1.955] (u1) vs [11.125, 1.395, 11.405, 1.725] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkbuf_16|FS|sky130_fd_sc_hd__a31oi_1|S": [
+0.085,
+"the diffusion regions",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkbuf_16|S|sky130_fd_sc_hd__a31oi_1|S": [
+0.0,
+"the diffusion regions",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__a311oi_1|S|sky130_fd_sc_hd__xnor2_1|FS": [
+0.005,
+"li [4.64, 1.395, 4.97, 1.745] (u1) vs [5.145, 0.765, 5.315, 2.44] (u2), spacing 0.17",
+[
+"VGND",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__a311oi_1|S|sky130_fd_sc_hd__xnor2_1|S": [
+0.0,
+"the diffusion regions",
+[
+"VGND",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__buf_4|N|sky130_fd_sc_hd__and2_0|N": [
+0.15,
+"li [4.035, 1.485, 4.365, 2.805] (u1) vs [4.685, 1.185, 5.03, 1.955] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nor4_1|N|sky130_fd_sc_hd__nand3_1|N": [
+0.005,
+"li [3.795, 0.655, 4.055, 1.665] (u1) vs [4.23, 1.495, 4.485, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nor4_1|FN|sky130_fd_sc_hd__nand3_1|N": [
+0.0,
+"the diffusion regions",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nand3_1|FN|sky130_fd_sc_hd__xnor2_1|N": [
+0.005,
+"li [3.335, 1.495, 3.59, 2.805] (u1) vs [3.765, 0.28, 3.935, 1.955] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand3_1|FN|sky130_fd_sc_hd__xnor2_1|FN": [
+0.0,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|FS|sky130_fd_sc_hd__nor2_1|FS": [
+0.0,
+"the diffusion regions",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|FS|sky130_fd_sc_hd__nor2_1|S": [
+0.0,
+"li [2.685, 1.43, 3.135, 1.96] (u1) vs [3.305, 1.395, 3.655, 1.645] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|S|sky130_fd_sc_hd__nor2_1|S": [
+0.0,
+"poly [2.83, 1.395, 3.115, 1.725] (u1) vs [3.325, 1.395, 3.635, 1.725] (u2), spacing 0.21",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nor2_1|FS|sky130_fd_sc_hd__lpflow_isobufsrc_1|S": [
+0.0,
+"li [2.785, 1.395, 3.135, 1.645] (u1) vs [3.305, 0.255, 3.485, 1.995] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nor2_1|S|sky130_fd_sc_hd__lpflow_isobufsrc_1|S": [
+0.0,
+"li [2.785, 1.395, 3.135, 1.645] (u1) vs [3.305, 0.255, 3.485, 1.995] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__lpflow_isobufsrc_1|FS|sky130_fd_sc_hd__nor2_1|FS": [
+0.0,
+"li [3.875, 0.255, 4.055, 1.995] (u1) vs [4.225, 1.395, 4.575, 1.645] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__lpflow_isobufsrc_1|FS|sky130_fd_sc_hd__nor2_1|S": [
+0.0,
+"li [3.875, 0.255, 4.055, 1.995] (u1) vs [4.225, 1.395, 4.575, 1.645] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xor2_1|FS|sky130_fd_sc_hd__nor4_4|FS": [
+0.0,
+"the diffusion regions",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xor2_1|S|sky130_fd_sc_hd__nor4_4|FS": [
+0.005,
+"li [4.805, 0.255, 4.975, 2.065] (u1) vs [5.15, 1.815, 5.425, 2.805] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xor2_1|FS|sky130_fd_sc_hd__nor4_4|S": [
+0.0,
+"li [4.655, 0.255, 4.975, 1.355] (u1) vs [5.145, 1.095, 5.415, 1.995] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xor2_1|S|sky130_fd_sc_hd__nor4_4|S": [
+0.0,
+"li [4.805, 0.255, 4.975, 2.065] (u1) vs [5.145, 1.095, 5.415, 1.995] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__buf_4|N|sky130_fd_sc_hd__clkbuf_16|N": [
+0.15,
+"li [4.035, 1.485, 4.365, 2.805] (u1) vs [4.685, 0.765, 5.0, 1.325] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__buf_4|N|sky130_fd_sc_hd__clkbuf_16|FN": [
+0.24,
+"li [4.035, 1.485, 4.365, 2.805] (u1) vs [4.775, 0.735, 5.215, 1.72] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__or3_4|N|sky130_fd_sc_hd__buf_4|FN": [
+0.15,
+"li [5.605, 0.735, 5.895, 1.625] (u1) vs [6.215, 1.485, 6.545, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nor3_4|FS|sky130_fd_sc_hd__clkinv_2|FS": [
+0.0,
+"li [7.455, 0.255, 7.735, 2.465] (u1) vs [7.905, 1.43, 9.125, 1.655] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nor3_4|S|sky130_fd_sc_hd__clkinv_2|FS": [
+0.005,
+"li [7.455, 1.815, 7.73, 2.805] (u1) vs [7.905, 1.43, 9.125, 1.655] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nor3_4|FS|sky130_fd_sc_hd__clkinv_2|S": [
+0.0,
+"li [7.455, 0.255, 7.735, 2.465] (u1) vs [7.905, 1.09, 8.185, 1.995] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nor3_4|S|sky130_fd_sc_hd__clkinv_2|S": [
+0.005,
+"li [7.455, 1.815, 7.73, 2.805] (u1) vs [7.905, 1.09, 8.185, 1.995] (u2), spacing 0.17",
+[
+"spacing",
+"VPWR"
+]
+],
+"sky130_fd_sc_hd__clkinv_2|FS|sky130_fd_sc_hd__clkbuf_16|FS": [
+0.0,
+"li [3.315, 1.09, 3.595, 1.995] (u1) vs [3.765, 1.395, 4.08, 1.955] (u2), spacing 0.17",
+[
+"VGND",
+"VPWR"
+]
+],
+"sky130_fd_sc_hd__clkinv_2|S|sky130_fd_sc_hd__clkbuf_16|FS": [
+0.0,
+"li [2.375, 1.43, 3.595, 1.655] (u1) vs [3.765, 1.395, 4.08, 1.955] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkinv_2|FS|sky130_fd_sc_hd__clkbuf_16|S": [
+0.09,
+"li [3.315, 1.09, 3.595, 1.995] (u1) vs [3.855, 1.0, 4.295, 1.985] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkinv_2|S|sky130_fd_sc_hd__clkbuf_16|S": [
+0.09,
+"li [2.375, 1.43, 3.595, 1.655] (u1) vs [3.855, 1.0, 4.295, 1.985] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o21ai_0|FS|sky130_fd_sc_hd__and2_4|FS": [
+0.005,
+"the diffusion regions",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o21ai_0|S|sky130_fd_sc_hd__and2_4|FS": [
+0.01,
+"li [3.265, 1.105, 3.595, 1.765] (u1) vs [3.775, 1.915, 4.105, 2.465] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o21ai_0|FS|sky130_fd_sc_hd__and2_4|S": [
+0.015,
+"li [3.295, 1.595, 3.58, 2.44] (u1) vs [3.765, 0.955, 4.045, 2.105] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o21ai_0|S|sky130_fd_sc_hd__and2_4|S": [
+0.0,
+"li [3.265, 1.105, 3.595, 1.765] (u1) vs [3.765, 0.955, 4.045, 2.105] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__and2_4|FS|sky130_fd_sc_hd__clkinv_1|FS": [
+0.0,
+"li [4.695, 0.955, 4.975, 2.105] (u1) vs [5.145, -0.085, 5.405, 1.055] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__and2_4|S|sky130_fd_sc_hd__clkinv_1|FS": [
+0.01,
+"li [4.635, 1.915, 4.965, 2.465] (u1) vs [5.145, 1.395, 5.385, 2.345] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__and2_4|FS|sky130_fd_sc_hd__clkinv_1|S": [
+0.0,
+"li [4.695, 0.955, 4.975, 2.105] (u1) vs [5.145, 2.13, 5.43, 2.805] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__and2_4|S|sky130_fd_sc_hd__clkinv_1|S": [
+0.01,
+"li [4.635, 1.915, 4.965, 2.465] (u1) vs [5.145, 2.13, 5.43, 2.805] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|FS|sky130_fd_sc_hd__nand2b_1|S": [
+0.045,
+"li [2.85, 2.13, 3.135, 2.805] (u1) vs [3.35, 0.715, 3.72, 2.465] (u2), spacing 0.17",
+[
+"VGND",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|S|sky130_fd_sc_hd__nand2b_1|S": [
+0.045,
+"li [2.875, -0.085, 3.135, 1.055] (u1) vs [3.35, 0.715, 3.72, 2.465] (u2), spacing 0.17",
+[
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nand2b_1|FS|sky130_fd_sc_hd__xnor2_1|FS": [
+0.045,
+"li [3.64, 0.715, 4.01, 2.465] (u1) vs [4.225, 0.765, 4.395, 2.44] (u2), spacing 0.17",
+[
+"VGND",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2b_1|FS|sky130_fd_sc_hd__xnor2_1|S": [
+0.045,
+"li [3.64, 0.715, 4.01, 2.465] (u1) vs [4.225, 0.765, 4.395, 2.375] (u2), spacing 0.17",
+[
+"VGND",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__buf_4|N|sky130_fd_sc_hd__buf_6|N": [
+0.58,
+"licon [4.115, 2.255, 4.285, 2.425] (u1) vs [5.035, 2.255, 5.205, 2.425] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__buf_4|N|sky130_fd_sc_hd__buf_6|FN": [
+0.32,
+"licon [4.115, 2.255, 4.285, 2.425] (u1) vs [4.775, 2.255, 4.945, 2.425] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__buf_6|N|sky130_fd_sc_hd__nor2_1|N": [
+0.0,
+"the diffusion regions",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__buf_6|FN|sky130_fd_sc_hd__nor2_1|N": [
+0.195,
+"li [4.795, 1.075, 5.7, 1.315] (u1) vs [6.065, 1.075, 6.415, 1.325] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__buf_6|N|sky130_fd_sc_hd__nor2_1|FN": [
+0.01,
+"li [5.555, 1.485, 5.885, 2.805] (u1) vs [6.065, 1.075, 6.415, 1.325] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__buf_6|FN|sky130_fd_sc_hd__nor2_1|FN": [
+0.195,
+"li [4.795, 1.075, 5.7, 1.315] (u1) vs [6.065, 1.075, 6.415, 1.325] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__buf_4|N|sky130_fd_sc_hd__o311ai_4|N": [
+0.15,
+"li [4.035, 1.485, 4.365, 2.805] (u1) vs [4.685, 1.485, 5.005, 2.465] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__dfxtp_4|FS|sky130_fd_sc_hd__nor2_4|FS": [
+0.005,
+"li [10.25, 1.085, 10.495, 1.99] (u1) vs [10.67, 1.815, 10.945, 2.805] (u2), spacing 0.17",
+[
+"spacing",
+"VPWR"
+]
+],
+"sky130_fd_sc_hd__dfxtp_4|FS|sky130_fd_sc_hd__nor2_4|S": [
+0.0,
+"li [10.25, 1.085, 10.495, 1.99] (u1) vs [10.665, 0.975, 11.065, 1.995] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nor2_4|FS|sky130_fd_sc_hd__buf_8|S": [
+0.39,
+"li [5.495, 0.975, 5.895, 1.995] (u1) vs [6.455, 1.835, 6.785, 2.805] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nor2_4|S|sky130_fd_sc_hd__buf_8|S": [
+0.38,
+"the diffusion regions",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|N|sky130_fd_sc_hd__o22ai_1|N": [
+0.0,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|FN|sky130_fd_sc_hd__o22ai_1|N": [
+0.0,
+"poly [2.83, 0.995, 3.115, 1.325] (u1) vs [3.325, 0.995, 3.615, 1.325] (u2), spacing 0.21",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|N|sky130_fd_sc_hd__o22ai_1|FN": [
+0.0,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__clkinv_1|FN|sky130_fd_sc_hd__o22ai_1|FN": [
+0.0,
+"li [2.895, 0.375, 3.135, 1.325] (u1) vs [3.305, 1.455, 3.625, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o22ai_1|N|sky130_fd_sc_hd__nand2_1|N": [
+0.0,
+"li [3.715, 0.28, 4.055, 0.865] (u1) vs [4.225, -0.085, 4.535, 0.885] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o22ai_1|FN|sky130_fd_sc_hd__nand2_1|N": [
+0.0,
+"li [3.815, 0.665, 4.055, 1.99] (u1) vs [4.225, -0.085, 4.535, 0.885] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o22ai_1|N|sky130_fd_sc_hd__nand2_1|FN": [
+0.0,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o22ai_1|FN|sky130_fd_sc_hd__nand2_1|FN": [
+0.0,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|N|sky130_fd_sc_hd__clkinv_1|N": [
+0.0,
+"li [2.705, 0.255, 3.135, 0.885] (u1) vs [3.305, 0.375, 3.545, 1.325] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|FN|sky130_fd_sc_hd__clkinv_1|N": [
+0.0,
+"li [2.825, -0.085, 3.135, 0.885] (u1) vs [3.305, 0.375, 3.545, 1.325] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|N|sky130_fd_sc_hd__clkinv_1|FN": [
+0.0,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|FN|sky130_fd_sc_hd__clkinv_1|FN": [
+0.0,
+"li [2.825, -0.085, 3.135, 0.885] (u1) vs [3.305, 0.76, 3.755, 1.29] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nor2_4|N|sky130_fd_sc_hd__inv_8|N": [
+0.0,
+"li [5.495, 0.725, 5.895, 1.745] (u1) vs [6.065, 0.715, 6.41, 1.665] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nor2_4|FN|sky130_fd_sc_hd__inv_8|N": [
+0.005,
+"li [5.615, -0.085, 5.89, 0.905] (u1) vs [6.065, 0.715, 6.41, 1.665] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nor2_4|N|sky130_fd_sc_hd__inv_8|FN": [
+0.0,
+"li [5.495, 0.725, 5.895, 1.745] (u1) vs [6.065, 0.715, 6.385, 1.665] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nor2_4|FN|sky130_fd_sc_hd__inv_8|FN": [
+0.005,
+"li [5.615, -0.085, 5.89, 0.905] (u1) vs [6.065, 0.715, 6.385, 1.665] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__inv_8|N|sky130_fd_sc_hd__buf_6|N": [
+0.195,
+"li [5.575, 0.715, 5.895, 1.665] (u1) vs [6.26, 1.075, 7.165, 1.315] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__inv_8|FN|sky130_fd_sc_hd__buf_6|N": [
+0.195,
+"li [5.55, 0.715, 5.895, 1.665] (u1) vs [6.26, 1.075, 7.165, 1.315] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__inv_8|N|sky130_fd_sc_hd__buf_6|FN": [
+0.01,
+"li [5.575, 0.715, 5.895, 1.665] (u1) vs [6.075, -0.085, 6.405, 0.885] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__inv_8|FN|sky130_fd_sc_hd__buf_6|FN": [
+0.01,
+"li [5.55, 0.715, 5.895, 1.665] (u1) vs [6.075, -0.085, 6.405, 0.885] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__xnor2_1|N|sky130_fd_sc_hd__buf_4|FN": [
+0.14,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__xnor2_1|FN|sky130_fd_sc_hd__buf_4|FN": [
+0.15,
+"li [4.805, 0.28, 4.975, 1.955] (u1) vs [5.295, 1.485, 5.625, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__buf_4|N|sky130_fd_sc_hd__lpflow_isobufsrc_1|FN": [
+0.15,
+"li [4.035, 1.485, 4.365, 2.805] (u1) vs [4.685, 0.725, 4.865, 2.465] (u2), spacing 0.17",
+[
+"spacing",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__nand2b_1|N|sky130_fd_sc_hd__buf_4|FN": [
+0.195,
+"li [3.64, 0.255, 4.01, 2.005] (u1) vs [4.375, 1.485, 4.705, 2.805] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|FS|sky130_fd_sc_hd__o21ai_0|FS": [
+0.0,
+"li [2.875, -0.085, 3.135, 1.225] (u1) vs [3.305, 1.105, 3.635, 1.765] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|S|sky130_fd_sc_hd__o21ai_0|FS": [
+0.0,
+"li [2.825, 1.835, 3.135, 2.805] (u1) vs [3.305, 1.105, 3.635, 1.765] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|FS|sky130_fd_sc_hd__o21ai_0|S": [
+0.0,
+"poly [2.825, 1.395, 3.115, 1.725] (u1) vs [3.325, 1.035, 3.625, 1.365] (u2), spacing 0.21",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|S|sky130_fd_sc_hd__o21ai_0|S": [
+0.0,
+"poly [2.805, 1.395, 3.115, 1.725] (u1) vs [3.325, 1.035, 3.625, 1.365] (u2), spacing 0.21",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o21ai_0|FS|sky130_fd_sc_hd__nand2_1|FS": [
+0.0,
+"poly [3.275, 1.035, 3.575, 1.365] (u1) vs [3.785, 1.395, 4.095, 1.725] (u2), spacing 0.21",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o21ai_0|S|sky130_fd_sc_hd__nand2_1|FS": [
+0.0,
+"li [3.265, 1.105, 3.595, 1.765] (u1) vs [3.765, 1.835, 4.075, 2.805] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o21ai_0|FS|sky130_fd_sc_hd__nand2_1|S": [
+0.0,
+"poly [3.275, 1.035, 3.575, 1.365] (u1) vs [3.785, 1.395, 4.075, 1.725] (u2), spacing 0.21",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__o21ai_0|S|sky130_fd_sc_hd__nand2_1|S": [
+0.0,
+"li [3.265, 1.105, 3.595, 1.765] (u1) vs [3.765, -0.085, 4.025, 1.225] (u2), spacing 0.17",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|S|sky130_fd_sc_hd__a32o_1|S": [
+0.02,
+"the diffusion regions",
+[
+"spacing"
+]
+],
+"sky130_fd_sc_hd__and2_1|S|sky130_fd_sc_hd__and2_0|FS": [
+0.015,
+"li [3.775, 1.035, 4.04, 1.645] (u1) vs [4.225, 0.765, 4.57, 1.535] (u2), spacing 0.17",
+[
+"VGND",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__buf_4|N|sky130_fd_sc_hd__nand2_1|N": [
+0.16,
+"li [4.035, 1.485, 4.365, 2.805] (u1) vs [4.695, 1.055, 5.03, 1.325] (u2), spacing 0.17",
+[
+"VPWR",
+"VGND"
+]
+],
+"sky130_fd_sc_hd__buf_4|N|sky130_fd_sc_hd__nand2_1|FN": [
+0.14,
+"the diffusion regions",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|N|sky130_fd_sc_hd__and2_0|N": [
+0.0,
+"li [2.875, 1.495, 3.135, 2.805] (u1) vs [3.305, 1.185, 3.65, 1.955] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+],
+"sky130_fd_sc_hd__nand2_1|FN|sky130_fd_sc_hd__and2_0|N": [
+0.0,
+"li [2.855, 1.495, 3.135, 2.805] (u1) vs [3.305, 1.185, 3.65, 1.955] (u2), spacing 0.17",
+[
+"VPWR",
+"spacing"
+]
+]
+}

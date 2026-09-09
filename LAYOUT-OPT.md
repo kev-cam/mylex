@@ -1075,6 +1075,57 @@ the spread (`evidence/l4_gcd_121_257_spread.log`; the spread is reported by
 still refuses, for room. The inverter-only balance probes reproduce their
 recorded results to the digit, as they should — nothing in them is a stack.
 
+**The placer hand-off (2026-09-09, `layopt/placer.py`,
+`probes/layopt/l4_placer_handoff.py`).** The flip policy of §2 "placer-side
+flip policy" was a table; now it is something a placer consumes. The core
+moved into the library: `Faces` (a macro's outer S/D nets per orientation
+from layopt's extraction of the cell alone, strip matching, the exact
+dissolve slide of a pair measured on a two-cell layout and cached to disk),
+`row_policy` (the per-row dynamic programme), `plan_hints` (per instance:
+preferred orientation, and the x it should slide left to so that a matched
+boundary abuts), `write_openroad_tcl` / `write_json`. Two refinements the
+table did not need: the programme maximises **micrometres given back**, not
+strips matched — a supply-to-supply boundary whose slide is bounded at zero
+by some other layer is worth no flip — and it does not ask the placer for a
+boundary worth less than 0.1 µm or a slide of more than 5 µm (wire length is
+the placer's currency; seven such were declined on gcd, e.g. a 12.42 µm move
+for 0.01 µm). The gcd flow was split at the hand-off point: placement
+through `optimize_mirroring`, CTS, `repair_timing` and the last
+`detailed_placement` writes the pre-route DEF and database; the routing half
+sources the hints (odb `setOrient`, `setLocation`, `FIRM`), runs
+`check_placement`, routes and reports. One odb fact cost a run: `setOrient`
+keeps the cell *origin*, so a mirrored cell's box moves by its width onto
+its neighbour (seven overlaps, one onto a tap cell); the script now sets the
+location after every flip, not only after a slide.
+
+| gcd, 222 logic cells | |
+|---|---|
+| hints | 9 cells flipped, 4 slid (13.8 µm of movement), 14 boundaries kept (6 two-strip, 8 one-strip) worth 3.08 µm |
+| router's bill, base → hints | wire 5566 → 5553 µm (−0.2 %); WNS −2.80 → −2.80 ns; TNS −111.96 → −112.01 ns; DRC 0 → 0; placement check passes |
+| dissolve on the hinted placement | 13 of 14 hinted boundaries dissolve legally, every one sliding exactly what the hint promised (2.92 µm given back of 3.08); the 14th slides its 0.16 µm too, see below |
+
+The 3.08 µm is 0.4 % of the design's logic width, the same order as the
+policy table predicted; it is now a number a placer can be handed, with its
+price measured on the router's side rather than assumed — and the price is
+nil here: the hinted placement routes 13 µm *shorter*, the slides having
+pulled connected cells together. 2.92 µm of the promise is verified by the
+dissolve on the placement the hints produced. That verification found two
+faults the packed single-row probe could not: `merge_boundary`'s row mode
+chose the cells to slide by rectangles touching the row band, and a cell's li
+and rails overhang the shared rail by 85 nm into the neighbouring row, so
+some of that row's cells slid and others did not (14 of 15 "changed
+topology" on the first run; membership is now by instance, the DEF box
+centre inside the row); and `_slide_limit` only paired shapes that face each
+other, so two li shapes 0.16 µm apart vertically could come to overlap in x
+and violate the 0.17 µm spacing across the corner (two boundaries flagged
+after their slide; shapes within the spacing vertically now count as facing,
+and the pair measurements were redone — two promises shrank, one below the
+0.1 µm threshold and out of the hints). The one boundary not counted slides
+exactly its 0.16 µm and keeps the netlist; its two flags are the nand2_1's
+own li shapes 5 nm apart in x and 0.16 µm in y, present in the stock cell,
+re-keyed because one of them merged with the neighbour's strap
+(`evidence/l4_placer_handoff.log`).
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -1245,9 +1296,11 @@ Planned:
   go back as issues.
 - **ldx**: TH cells on SG13G2 are the first standard-cell-shaped input once
   they have layout (ASYNC-PLAN P2); `tech.SG13G2` is already in the table.
-- **Standard-cell flows**: needs a DEF/LEF-placement → flat merge reader
-  (`def2flat`, not written) so that a Yosys/OpenROAD result of `VX_alu_int` or
-  a TH22 chain can be dissolved.
+- **Standard-cell flows**: `def2flat` reads a placed-and-routed DEF/LEF with
+  the cell GDS (gcd through OpenROAD is the working example); the placer
+  hand-off (`placer.py`: flip-and-abut hints as JSON and as an odb Tcl
+  script sourced after `optimize_mirroring`, before routing) is how layopt
+  asks the placer for boundaries the dissolve can close.
 
 ## 9. Milestones
 

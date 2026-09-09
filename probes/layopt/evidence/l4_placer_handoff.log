@@ -1,0 +1,21 @@
+== 1. hints for gcd_placed.def (427s, 162 pair layouts): 222 logic cells, 9 flipped, 4 slid (13.80 um of movement), 14 boundaries kept (6 two-strip, 8 one-strip) worth 3.08 um
+   hints.tcl touches 12 cells (setOrient / setLocation / FIRM)
+   routed hints in 111s
+== 2. the router's bill: base -> hints: wire 5566 -> 5553 um (-0.2%), WNS -2.80 -> -2.80 ns, TNS -111.96 -> -112.01 ns, DRC 0 -> 0, placement check ok
+== 3. dissolve on the hinted placement (36728 rects, 2472 devices, 16s to flatten):
+   _155_|rebuffer32: promised 0.150 um, slid 0.150 um -> topology kept, 0 new violations
+   rebuffer9|_147_: promised 0.140 um, slid 0.140 um -> topology kept, 0 new violations
+   clkbuf_2_0__f_clk|rebuffer11: promised 0.240 um, slid 0.240 um -> topology kept, 0 new violations
+   _132_|clone6: promised 0.195 um, slid 0.195 um -> topology kept, 0 new violations
+   rebuffer12|_236_: promised 0.150 um, slid 0.150 um -> topology kept, 0 new violations
+   rebuffer13|clkbuf_2_2__f_clk: promised 0.240 um, slid 0.240 um -> topology kept, 0 new violations
+   _160_|rebuffer30: promised 0.150 um, slid 0.150 um -> topology kept, 0 new violations
+   rebuffer10|wire2: promised 0.580 um, slid 0.580 um -> topology kept, 0 new violations
+   rebuffer15|_162_: promised 0.150 um, slid 0.150 um -> topology kept, 0 new violations
+   _254_|load_slew1: promised 0.390 um, slid 0.390 um -> topology kept, 0 new violations
+   _247_|rebuffer5: promised 0.195 um, slid 0.195 um -> topology kept, 0 new violations
+   _113_|rebuffer28: promised 0.150 um, slid 0.150 um -> topology kept, 0 new violations
+   _115_|rebuffer52: promised 0.195 um, slid 0.195 um -> topology kept, 0 new violations
+   rebuffer14|_197_: promised 0.160 um, slid 0.160 um -> topology kept, 2 new violations  <-- not counted
+   13 of 14 hinted boundaries dissolve legally on the hinted placement, 2.92 um given back (hints promised 3.08)
+EXIT 0

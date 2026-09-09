@@ -455,6 +455,45 @@ def test_nor4_stack_spread():
     print("  nor4 PMOS stack mirrored with spread %.2f um: %d new rects, legal, netlist kept" % (mv.LAST_SPREAD[0], len(touched)))
 
 
+def test_placer_hints():
+    """The placer hand-off on a bare row: two buf_4 with a 0.92 um gap. The
+    policy picks orientations that match supply strips across the boundary
+    (at least as many as the placement has), asks the right cell to slide left
+    into abutment, and writes an OpenROAD script with one setOrient per flip,
+    one setLocation per slide and FIRM on each touched cell."""
+    from .. import placer, lefdef
+    lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
+    if not os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__buf_4.gds")):
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    lefs = [os.path.join(lib, "sky130_fd_sc_hd.tlef"), os.path.join(lib, "sky130_fd_sc_hd__buf_4.lef")]
+    with tempfile.TemporaryDirectory() as td:
+        deftext = """VERSION 5.8 ; DESIGN t ; UNITS DISTANCE MICRONS 1000 ; DIEAREA ( 0 0 ) ( 12000 2720 ) ;
+COMPONENTS 2 ; - a sky130_fd_sc_hd__buf_4 + PLACED ( 0 0 ) N ; - b sky130_fd_sc_hd__buf_4 + PLACED ( 3680 0 ) N ; END COMPONENTS
+SPECIALNETS 2 ; - VPWR ( a VPWR ) ( b VPWR ) + USE POWER ; - VGND ( a VGND ) ( b VGND ) + USE GROUND ; END SPECIALNETS
+END DESIGN"""
+        dp = os.path.join(td, "t.def"); open(dp, "w").write(deftext)
+        class LibFaces(placer.Faces):            # per-cell GDS files instead of one merged library
+            def layout_of(self, cells):
+                return _bare_row([(m.replace("sky130_fd_sc_hd__", ""), x, o) for m, x, o in cells])
+        F = LibFaces(lefs, "", T)
+        hints = placer.plan_hints(dp, lefs, "", T, abut=True, measure=False, faces=F)
+        assert [h.inst for h in hints] == ["a", "b"]
+        a, b = hints
+        as_placed = F.match(F.faces(a.macro, a.orient_now)[1], F.faces(b.macro, b.orient_now)[0])
+        chosen = F.match(F.faces(a.macro, a.orient_pref)[1], F.faces(b.macro, b.orient_pref)[0])
+        assert chosen >= as_placed and chosen == b.strips_left == a.strips_right, (as_placed, chosen, b.strips_left)
+        if chosen:
+            assert b.moved and b.x_pref == 2760 and b.partner_left == "a" and not a.moved, (b.x_pref, b.partner_left)
+        tcl = os.path.join(td, "h.tcl"); n = placer.write_openroad_tcl(hints, tcl)
+        text = open(tcl).read()
+        assert text.count("setOrient") == sum(1 for h in hints if h.flipped)
+        assert text.count("setLocation") == sum(1 for h in hints if h.moved)
+        assert text.count("FIRM") == n == sum(1 for h in hints if h.flipped or h.moved)
+        placer.write_json(hints, os.path.join(td, "h.json"))
+        print("  buf_4 | buf_4: as placed %d strips, policy %d (%s | %s), b slides %.2f um; tcl touches %d" % (
+            as_placed, chosen, a.orient_pref, b.orient_pref, (b.x_now - b.x_pref) / 1000.0, n))
+
+
 def test_remove_finger_roundtrip():
     """add_finger then remove_finger on the bare nand2 row gives back the
     original netlist and device sizes, with no new violations."""

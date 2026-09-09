@@ -326,6 +326,23 @@ each, 0.43 µm in all (0.1 % of 518 µm of cell width); `_240_|_241_` applied:
 0.075 µm, no new violation, KLayout isomorphic; four refuse for want of a filler
 beyond the sliding cell. The placer never put two sources face to face.
 
+## The placer hand-off (`l4_placer_handoff.py`, `layopt/placer.py`)
+
+The policy as something OpenROAD consumes. `placer.plan_hints` on the pre-route
+gcd placement (`~/src/gcd-flow/hints/flow_place.tcl` writes it after the last
+`detailed_placement`) gives per instance a preferred orientation and an x to
+slide left to; `write_openroad_tcl` emits `setOrient` / `setLocation` / `FIRM`
+lines that `flow_route.tcl` sources (env `HINTS`) before `check_placement` and
+routing. The programme maximises measured dissolve micrometres, declines
+boundaries under 0.1 µm and slides over 5 µm. gcd: 9 flips, 4 slides (13.8 µm),
+14 boundaries worth 3.08 µm; the router's bill is −13 µm of wire (−0.2 %),
+WNS unchanged, TNS −0.05 ns, DRC 0 → 0. Then the dissolve is applied to the
+hinted placement: 13 of 14 boundaries dissolve legally with the promised slide,
+2.92 µm given back of 3.08 (the 14th slides too; its two flags are the stock
+cell's own li corner pair re-keyed by a strap merge). Evidence: `evidence/gcd_placer_hints.json`,
+`evidence/l4_placer_handoff.log`, `evidence/pair_slides.json` (the measured
+pair slides; the flip-policy probe reads the same cache).
+
 ## The placer-side flip policy (`l4_flip_policy.py`, `evidence/l4_flip_policy.log`)
 
 Per macro, the outer S/D nets on each side from a single-cell extraction; per

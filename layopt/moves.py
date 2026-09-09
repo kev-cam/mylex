@@ -852,11 +852,25 @@ def merge_boundary(fl: FlatLayout, ex: Extraction, inst_a: str, inst_b: str, shi
     cy0, cy1 = min(box_a[1], box_b[1]), max(box_a[3], box_b[3])
     touched: List[int] = []
     # the filler beyond B grows toward B
+    # row membership is by instance, not by rectangle: a cell's li and rails overhang
+    # the shared rail by 85 nm into the neighbouring row, so a rect test would take some
+    # of that row's cells along and leave others (the DEF box when there is one, else
+    # the instance's own bounding box, must have its centre in this row)
     starts: Dict[str, int] = {}; members: Dict[str, List[int]] = {}
+    by_prov: Dict[str, List[int]] = {}
     for i, r in enumerate(fl.rects):
         if r.prov in (inst_a, inst_b) or "/net:" in r.prov or "/pin:" in r.prov or r.y1 <= cy0 or r.y0 >= cy1:
             continue
-        members.setdefault(r.prov, []).append(i); starts[r.prov] = min(starts.get(r.prov, 10**12), r.x0)
+        by_prov.setdefault(r.prov, []).append(i)
+    boxes = getattr(fl, "boxes", {})
+    for p_, ids_ in by_prov.items():
+        if p_ in boxes:
+            yc = (boxes[p_][1] + boxes[p_][3]) / 2.0
+        else:
+            yc = (min(fl.rects[i].y0 for i in ids_) + max(fl.rects[i].y1 for i in ids_)) / 2.0
+        if not (cy0 < yc < cy1):
+            continue
+        members[p_] = ids_; starts[p_] = min(fl.rects[i].x0 for i in ids_)
     if shift_row:
         # a packed row: everything in the row right of B slides with it; the last thing in
         # the row, if it is a filler, grows instead so the rail stays continuous
@@ -1029,13 +1043,17 @@ def _slide_limit(fl: FlatLayout, ex: Extraction, ids_a, ids_b, box_a, box_b, s2n
         ra = fl.rects[i]
         for j in b_near:
             rb = fl.rects[j]
-            if rb.layer != ra.layer or rb.y1 <= ra.y0 or rb.y0 >= ra.y1:
+            if rb.layer != ra.layer:
                 continue
             ln = inv.get(ra.layer)
+            sp = nm(tech.min_space.get(ln, 0.17))
+            # facing, or near enough in y that the spacing rule reaches across the corner:
+            # once their x ranges come to overlap, a y gap under the spacing is a violation
+            if rb.y0 - ra.y1 >= sp or ra.y0 - rb.y1 >= sp:
+                continue
             is_cut = ra.layer in cuts
             if not is_cut and s2n.get(i) is not None and s2n.get(i) == s2n.get(j):
                 continue                                   # same net: they may merge
-            sp = nm(tech.min_space.get(ln, 0.17))
             allowed = rb.x0 - ra.x1 - sp                   # slide that leaves exactly the spacing
             if is_cut and (rb.x0 - ra.x1 - delta) == 0 and ra.y0 == rb.y0 and ra.y1 == rb.y1 and (ra.x1 - ra.x0) == (rb.x1 - rb.x0):
                 continue                                   # they would coincide exactly: one cut
