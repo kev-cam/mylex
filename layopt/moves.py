@@ -524,6 +524,10 @@ def set_vt(fl: FlatLayout, ex: Extraction, dev: Device, flavour: str) -> List[in
                     if geom.overlaps(g, (win[0] - e, win[1] - e, win[2] + e, win[3] + e)):
                         win = [min(win[0], g[0] - e), min(win[1], g[1] - e), max(win[2], g[2] + e), max(win[3], g[3] + e)]
                         swept.append(dv); grew = True
+            # every implant rect the final window reaches is cut, whichever cell it belongs
+            # to: a swept gate straddling a cell boundary may be covered by the neighbour's
+            # implant (a filler's hvtp over a mirrored finger), which covers none of ours
+            covering = [i for i, r in enumerate(fl.rects) if r.layer == lay and r.x1 > r.x0 and geom.overlaps(r.rect, tuple(win))]
             for i in covering:
                 r = fl.rects[i]
                 pieces = geom.subtract(r.rect, [tuple(win)])

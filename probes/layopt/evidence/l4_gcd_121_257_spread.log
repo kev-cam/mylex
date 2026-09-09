@@ -1,0 +1,16 @@
+== gcd.def: 784 instances, 57263 rects, 2472 devices; baseline rule flags 186 (120s)
+   2 logic cells have a fill_4/fill_8 flush on their right; trying 2
+   _121_ (lpflow_isobufsrc_1, fill_4 to its right) [PN]: P finger LEGAL (17 rects)
+   _121_ (lpflow_isobufsrc_1, fill_4 to its right) [PN]: N finger refused -- add_finger: foreign li at [67.515, 35.275, 67.9, 35.915] (_121_/sky130_fd_sc_hd__lpflow_isobufsrc_) conflicts with the mirrored strap [67.985, 35.615, 68.315, 36.255] over our contacts (y 35.585..36.255)
+   _121_ (lpflow_isobufsrc_1, fill_4 to its right) [NP]: N finger LEGAL (10 rects)
+   _121_ (lpflow_isobufsrc_1, fill_4 to its right) [NP]: P finger LEGAL (19 rects)
+      result (N+P): n W=0.42 f=1; n W=0.65 f=1; n W=1.30 f=2; p W=0.42 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1
+      switched energy of the cell's nets: 129.5 -> 143.7 fJ/transition (+14.2, +11%)
+   _257_ (nor4_1, fill_4 to its right) [PN]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M1143 (dpath.a_lt_b$in1\[4\]); with the mirrored stack spread by one pitch: add_finger: diff at [48.895, 42.285, 50.465, 43.285] (_258_/sky130_fd_sc_hd__nand3_1) lies within diffusion spacing of the extended strip
+   _257_ (nor4_1, fill_4 to its right) [PN]: N finger LEGAL (9 rects)
+   _257_ (nor4_1, fill_4 to its right) [NP]: N finger LEGAL (9 rects)
+   _257_ (nor4_1, fill_4 to its right) [NP]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M1143 (dpath.a_lt_b$in1\[4\]); with the mirrored stack spread by one pitch: add_finger: diff at [48.895, 42.285, 50.465, 43.285] (_258_/sky130_fd_sc_hd__nand3_1) lies within diffusion spacing of the extended strip
+      result (N): n W=0.65 f=1; n W=0.65 f=1; n W=1.30 f=2; n W=0.65 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1
+      switched energy of the cell's nets: 220.3 -> 223.1 fJ/transition (+2.8, +1%)
+   legal moves: 2 of 2 attempted
+EXIT 0

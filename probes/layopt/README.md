@@ -203,6 +203,15 @@ unrepaired path (the delta-DRC's same-net notch rule and the move's
 notch-fill pass then deal with it -- `_161_` still passes that way).
 `LAYOPT_FILL_DEBUG=1` traces the notch fills.
 
+`l4_stack_balance.py` -- balance against a series stack: path B driven by a
+nor4_1 (four PMOS in series) between real rows, path A by an inv_1; the nor4's
+PMOS finger exists only through the spread retry. Result: imbalance 152.9 →
+12.5 ps (Vt on all four stacked gates, free; the spread stack finger, +6.9 %
+energy; then the inv_1's PMOS gate lengthened to 0.25 µm), 31 states, legal,
+netlist kept (`evidence/l4_stack_balance.log`, `l4_stack_balanced.gds`). Found
+on the way: `set_vt` did not cut an implant that covered only a *swept* gate
+(a filler's hvtp over a mirrored finger straddling the cell boundary).
+
 All 33 candidates (`--max 33`, `evidence/l4_gcd_all33.log`): 32 take at least
 one finger; baseline 598 flags (was 1012 before the merged-shape rule). Per
 finger, what still refuses: the nor4 PMOS stack (`_257_`): heads for a four-stack

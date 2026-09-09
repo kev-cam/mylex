@@ -1035,6 +1035,46 @@ layouts and that is where it belongs. In sky130 hd rows the W move for a
 cell is `add_finger`; the strips are pinned between the rail margin and a
 0.60 µm mid-row gap whose well rules leave about 0.08 µm of slack.
 
+**Balancing against a series stack (2026-09-09,
+`probes/layopt/l4_stack_balance.py`).** The spread retry was tested where
+it matters: a path whose slow driver is a nor4_1, four PMOS in series on
+the rising edge (R_rise 42 kΩ against an inv_1's 8.7 kΩ), placed between a
+row of nand2_1 above (FS, sharing VDD) so a far-gate head has no rail side
+to borrow. Path A is an inv_1 over the same short wire. Both edges,
+two-stage slew-aware delays, cost = spread + 0.05·mean + 0.5·ΔE/E. The
+greedy search over u1 fingers and gate length, u6 fingers, u6 PMOS Vt:
+
+| step | move | A rise/fall (ps) | B rise/fall (ps) | imbalance | energy |
+|---|---|---|---|---|---|
+| 0 | stock | 100.9 / 87.6 | 251.3 / 90.1 | 152.9 | 578.8 fJ |
+| 1 | nor4 PMOS hvt → std, all four gates | 100.9 / 87.6 | 187.8 / 90.1 | 89.4 | 578.8 |
+| 2 | nor4 PMOS stack finger (spread 0.42 µm) | 100.9 / 87.6 | 144.3 / 93.9 | 49.8 | 618.6 |
+| 3–4 | inv_1 PMOS gate 0.15 → 0.25 µm | 134.9 / 97.0 | 144.3 / 93.9 | 12.5 | 623.5 (+7.7 %) |
+
+The search takes the free move first (Vt), pays for the finger second, and
+closes the rest by slowing the fast path at no area. The stack finger exists
+only through the spread retry — every state with `u6_p = 2` printed the
+0.42 µm spread — and in the first run of this probe it was infeasible for a
+different reason, found and fixed on the way: `set_vt` chose the implant
+rectangles to cut *before* sweeping neighbouring gates into its window, so
+a rectangle covering only a swept gate was never cut. Here the mirrored
+finger nearest the boundary straddles it by 15 nm and the filler's hvtp
+covered that much of the gate; 0.000 µm of a required 0.18 µm enclosure.
+The set is now recomputed from the final window, whichever cell the
+rectangles belong to. A second probe-side correction: the Vt variable
+converted one of the four stacked gates while the delay model took the
+stack's flavour from its first device — all four now convert (the drive
+model's stack factor applies to one flavour). Layout legal (0 new flags),
+netlist kept; KLayout on the result agrees (94/94 devices, 94/94 nets,
+isomorphic; `evidence/l4_stack_balance.log`, `l4_stack_balanced.gds`).
+
+On gcd, the spread retry turns one more refusal into a finger: `_121_`
+(lpflow_isobufsrc_1) takes its PMOS finger after its NMOS finger only with
+the spread (`evidence/l4_gcd_121_257_spread.log`; the spread is reported by
+`LAST_SPREAD`), so both orders now give that cell both fingers; `_257_`
+still refuses, for room. The inverter-only balance probes reproduce their
+recorded results to the digit, as they should — nothing in them is a stack.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
