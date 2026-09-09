@@ -62,10 +62,18 @@ def test_inverter_roundtrip_extract_resize():
     assert x.c_fF > 0
     # resize the NFET to W=1.5: topology preserved, W updated
     sig = ex.signature()
+    base = {drc.key(v) for v in drc.check(fl2, ex)}
+    n_licon = sum(1 for r in fl2.rects if r.layer == T.layers["licon"])
     touched = moves.resize_device_w(fl2, ex, mn, 1.5)
     ex2 = extract.extract(fl2, T)
     mn2 = [d for d in ex2.devices if d.kind == "n"][0]
     assert abs(mn2.w - 1.5) < 1e-6 and ex2.signature() == sig and touched
+    # contact growth: the stretched S/D regions take cuts at the library pitch (0.34 um):
+    # two per column in the 0.5 um of new region, the source strap growing with them
+    n2 = sum(1 for r in fl2.rects if r.layer == T.layers["licon"])
+    assert n2 == n_licon + 4, (n_licon, n2)
+    assert not drc.new_violations(fl2, ex2, touched, base)
+    print("  W 1.0 -> 1.5: %d -> %d diffusion contacts, no new violations" % (n_licon, n2))
     # pushing into the PFET row must be caught
     fl3 = synthetic_inverter(); ex3 = extract.extract(fl3, T)
     base = {drc.key(v) for v in drc.check(fl3, ex3)}

@@ -145,7 +145,120 @@ def resize_device_w(fl: FlatLayout, ex: Extraction, dev: Device, new_w_um: float
                     fl.rects[i].rect = (x0, y0, x1 + dw, y1) if hi else (x0 - dw, y0, x1, y1); touched.append(i)
                 elif ((x0 >= cut) if hi else (x1 <= cut)) and i in own and not is_frame(fl.rects[i].rect):
                     fl.rects[i].rect = (x0 + dw, y0, x1 + dw, y1) if hi else (x0 - dw, y0, x1 - dw, y1); touched.append(i)
-    return sorted(set(touched))
+    touched = sorted(set(touched))
+    if touched and not os.environ.get("LAYOPT_NO_CONTACT_GROWTH"):
+        touched += grow_contacts(fl, ex, dev)
+    return touched
+
+
+def grow_contacts(fl: FlatLayout, ex: Extraction, dev: Device) -> List[int]:
+    """Continue each source/drain contact column of `dev` into whatever room its
+    diffusion region and li strap now have, at the library's pitch (cut size plus
+    cut spacing), keeping the diffusion and li enclosures, the cut-to-gate spacing
+    and the cut spacing.  A stretched region otherwise carries its stock contacts:
+    the Liberty-fitted drive model assumes contacts scale with W, as they do
+    across a library's drive strengths, and the RC model puts the per-cut
+    resistance in parallel.  Same-net cuts change no topology; the delta-DRC
+    still judges the result.  Returns the new rect ids."""
+    tech = ex.tech; L = tech.layers; d = fl.dbu_um
+    def nm_(um):
+        return int(round(um / d))
+    cut, diff, poly, li = L[tech.diff_contact], L[tech.diff], L[tech.poly], L[tech.routing[0]]
+    size = nm_(tech.min_width.get(tech.diff_contact, 0.17)); space = nm_(tech.min_space.get(tech.diff_contact, 0.17))
+    enc_d = nm_(tech.enclosure.get((tech.diff, tech.diff_contact), 0.0))
+    enc_li = nm_(tech.enclosure.get((tech.routing[0], tech.diff_contact), 0.0))
+    pls = nm_(tech.poly_licon_space)
+    by: Dict[Tuple[int, int], geom.BinIndex] = {}
+    for k, r in enumerate(fl.rects):
+        if r.layer in (cut, diff, poly, li):
+            by.setdefault(r.layer, geom.BinIndex()).add(k, r.rect)
+    if cut not in by or diff not in by:
+        return []
+    flow_x = dev.flow_axis == "x"            # W runs along y
+    a0, a1 = (1, 3) if flow_x else (0, 2)    # W-axis coordinates
+    f0, f1 = (0, 2) if flow_x else (1, 3)    # flow-axis coordinates
+    gates = [ex.shapes[s].rect for s in dev.gate_ids]
+    glo = min(g[f0] for g in gates); ghi = max(g[f1] for g in gates)
+    strip = {k for g in gates for k in by[diff].query_overlap(g)}
+    # the device's S/D span along the flow axis: its gates, and out to the next
+    # poly crossing the strip beyond the outer gates (or the diffusion end)
+    lo_b, hi_b = -10**9, 10**9
+    for s in strip:
+        sr = fl.rects[s].rect
+        lo_b = max(lo_b, sr[f0]); hi_b = min(hi_b, sr[f1])
+        for p in by.get(poly, geom.BinIndex()).query_overlap(sr):
+            pr = fl.rects[p].rect
+            if pr[f1] <= glo:
+                lo_b = max(lo_b, pr[f1])
+            if pr[f0] >= ghi:
+                hi_b = min(hi_b, pr[f0])
+    cols: Dict[Tuple[int, int], List[int]] = {}
+    for s in strip:
+        for k in by[cut].query_overlap(fl.rects[s].rect):
+            r = fl.rects[k].rect
+            if r[f0] < lo_b or r[f1] > hi_b:
+                continue
+            if any(geom.overlaps(r, fl.rects[p].rect) for p in by.get(poly, geom.BinIndex()).query_overlap(r)):
+                continue                       # a gate contact, not S/D
+            cols.setdefault((r[f0], r[f1]), []).append(k)
+    src2net = {sh.src: ex.net_of_shape[k] for k, sh in enumerate(ex.shapes) if sh.src >= 0}
+    li_space = nm_(tech.min_space.get(tech.routing[0], 0.17))
+    new: List[int] = []
+    for (c0, c1), ks in cols.items():
+        prov = fl.rects[ks[0]].prov
+        probe = list(fl.rects[ks[0]].rect)
+        # the region and strap this column sits in (along W); the strap is the
+        # narrowest li rect covering the column, and it grows with the cuts when
+        # its end is short of the enclosure, as far as other nets' li allows
+        dr = [fl.rects[s].rect for s in strip if geom.overlaps(fl.rects[s].rect, fl.rects[ks[0]].rect)]
+        sj = [j for j in by.get(li, geom.BinIndex()).query_overlap(fl.rects[ks[0]].rect)
+              if fl.rects[j].rect[f0] <= c0 and fl.rects[j].rect[f1] >= c1]
+        if not dr or not sj:
+            continue
+        strap = min(sj, key=lambda j: fl.rects[j].rect[a1] - fl.rects[j].rect[a0])
+        net = src2net.get(strap)
+        w_lo = max(r[a0] for r in dr) + enc_d
+        w_hi = min(r[a1] for r in dr) - enc_d
+        def strap_ok(rect):
+            """extend `strap` to enclose `rect` if it is short; False when other li is in the way"""
+            sr = list(fl.rects[strap].rect)
+            lo, hi = min(sr[a0], rect[a0] - enc_li), max(sr[a1], rect[a1] + enc_li)
+            if lo == sr[a0] and hi == sr[a1]:
+                return True
+            ext = list(sr); ext[a0] = lo; ext[a1] = hi
+            band = (ext[0] - li_space, ext[1] - li_space, ext[2] + li_space, ext[3] + li_space)
+            for j in by[li].query_overlap(band):
+                if j == strap or not geom.overlaps(band, fl.rects[j].rect):
+                    continue
+                if src2net.get(j) != net or src2net.get(j) is None:
+                    return False
+            fl.rects[strap].rect = tuple(ext); by[li].add(strap, tuple(ext))
+            if strap not in new:
+                new.append(strap)
+            return True
+        def fits(rect):
+            if rect[a0] < w_lo or rect[a1] > w_hi:
+                return False
+            grown = (rect[0] - space, rect[1] - space, rect[2] + space, rect[3] + space)
+            for k in by[cut].query_overlap(grown):
+                if geom.overlaps(grown, fl.rects[k].rect):
+                    return False
+            pgrown = (rect[0] - pls, rect[1] - pls, rect[2] + pls, rect[3] + pls)
+            for p in by.get(poly, geom.BinIndex()).query_overlap(pgrown):
+                if geom.overlaps(pgrown, fl.rects[p].rect):
+                    return False
+            return True
+        for direction in (+1, -1):
+            ys = [fl.rects[k].rect for k in ks]
+            edge = max(r[a1] for r in ys) if direction > 0 else min(r[a0] for r in ys)
+            while True:
+                y0 = edge + space if direction > 0 else edge - space - size
+                rect = list(probe); rect[a0] = y0; rect[a1] = y0 + size; rect = tuple(rect)
+                if not fits(rect) or not strap_ok(rect):
+                    break
+                k = add_rect_dbu(fl, cut, rect, prov); by[cut].add(k, rect); new.append(k)
+                edge = rect[a1] if direction > 0 else rect[a0]
+    return new
 
 
 def _spans_gate(r: Rect, g: Rect, flow: str) -> bool:

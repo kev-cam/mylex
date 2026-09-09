@@ -1010,6 +1010,31 @@ diffusion. The refusal names both attempts. A single-row bare test is too
 kind here — with no row above, a head goes on the rail side happily — so the
 test helper now builds several rows, alternating N/FS with shared rails.
 
+**Contact growth (2026-09-09).** A stretched S/D region carried its stock
+contacts. The Liberty-fitted drive model assumes contacts scale with W, as
+they do across a library's drive strengths (buf_4: two or three licons per
+1.0 µm PMOS column at a 0.34 µm pitch, one per 0.65 µm NMOS column), and the
+RC model puts the 70 Ω per licon in parallel, so a region that grows without
+contacts is inconsistent with both. `grow_contacts(fl, ex, dev)` continues
+each S/D column of the device into whatever room its region has, at cut size
+plus cut spacing, keeping the diffusion and li enclosures, the cut-to-gate
+spacing and the cut spacing; the column's li strap grows with the cuts when
+its end is short of the enclosure, as far as other nets' li allows. Same-net
+cuts add no topology; the delta-DRC judges the result. `resize_device_w`
+runs it after the stretch (`LAYOPT_NO_CONTACT_GROWTH=1` skips it). On the
+synthetic inverter W 1.0 → 1.5 gives 12 → 16 diffusion contacts, netlist
+kept, no new violations. The timing value is small — tens of ohms against a
+device of kilohms — the point is a layout that stays at the library's
+contact density. Found on the way, and worth stating: `resize_device_w` on a
+*shared-provenance* standard cell is not a usable move. It grows every
+rectangle crossing the cut line within the device footprint, which in a
+buf_4 includes li wires and the neighbouring gates; the topology guard and
+the delta-DRC reject it (signature changed, three flags), so nothing unsafe
+gets through, but the move was written for kestrel's one-device-per-cell
+layouts and that is where it belongs. In sky130 hd rows the W move for a
+cell is `add_finger`; the strips are pinned between the rail margin and a
+0.60 µm mid-row gap whose well rules leave about 0.08 µm of slack.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -1069,8 +1094,9 @@ Vctrl 0.9 V) — a library of them is what a `drive.py` module will hold.
 ## 5. Moves
 
 Implemented: device W stretch toward either end of the gate (`side`;
-contact arrays do not grow yet — the stretched S/D region simply carries the
-same contacts; in a shared-provenance cell nothing else moves), wire width
+the S/D contact columns grow into the new region at the library pitch,
+`grow_contacts`; in a shared-provenance cell nothing else moves — and there
+the stretch is not usable, see §2 "Contact growth"), wire width
 about the centre-line, translate, add rectangle, **add finger across the cell
 edge** (`add_finger`: mirrored gate + S/D column, implant/well extension;
 gate tied by a poly bridge (rail side first), a column bridge to aligned
