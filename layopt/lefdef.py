@@ -371,8 +371,21 @@ ORIENT = {"N": (False, 0), "W": (False, 90), "S": (False, 180), "E": (False, 270
           "FS": (True, 0), "FW": (True, 90), "FN": (True, 180), "FE": (True, 270)}
 
 
+def place_transform(lef: "Lef", macro: str, orient: str, x_nm: int, y_nm: int):
+    """(Ref, offset) taking cell-local nm coordinates to the flat layout for a
+    cell placed with its ORIENTED box's lower-left at (x_nm, y_nm) -- the
+    DEF convention; the same transform def2flat applies to the cell GDS."""
+    m = lef.macros.get(macro)
+    w_nm, h_nm = (int(round(m.size[0] * 1000)), int(round(m.size[1] * 1000))) if m else (0, 0)
+    mirror, angle = ORIENT[orient]
+    ref = Ref(macro, (0, 0), mirror_x=mirror, angle=angle)
+    corners = [gds._xform(p, ref, (0, 0)) for p in ((0, 0), (w_nm, 0), (0, h_nm), (w_nm, h_nm))]
+    llx, lly = min(p[0] for p in corners), min(p[1] for p in corners)
+    return ref, (x_nm - llx, y_nm - lly)
+
+
 def def2flat(def_path: str, lef_paths: List[str], gds_dir: str, tech: Tech,
-             gds_name: Optional[str] = None, gds_lib: Optional[str] = None) -> FlatLayout:
+             gds_name: Optional[str] = None, gds_lib=None) -> FlatLayout:
     """Build the flat layout of a placed-and-routed DEF.  Cell geometry comes
     from gds_dir/<macro>.gds (or gds_name(macro) -> path), or, when gds_lib is
     given, from that one merged GDS library holding every macro as a cell."""
@@ -390,12 +403,16 @@ def def2flat(def_path: str, lef_paths: List[str], gds_dir: str, tech: Tech,
                 "mcon": "mcon", "via": "via1", "via2": "via2", "via3": "via3", "via4": "via4",
                 "poly": "poly", "nwell": "nwell", "pwell": None}
     libs: Dict[str, gds.Library] = {}
-    merged = gds.read(gds_lib) if gds_lib else None
+    # one merged library, or several (a cell library plus layopt's merged-cell GDS)
+    merged = [gds.read(g) for g in ([gds_lib] if isinstance(gds_lib, str) else list(gds_lib))] if gds_lib else None
     flat_cache: Dict[str, FlatLayout] = {}
 
     def cell_lib(macro: str) -> gds.Library:
         if merged is not None:
-            return merged
+            for lib in merged:
+                if macro in lib.structs:
+                    return lib
+            raise KeyError("cell %s in none of the GDS libraries" % macro)
         if macro not in libs:
             path = gds_name(macro) if gds_name else os.path.join(gds_dir, macro + ".gds")
             libs[macro] = gds.read(path)

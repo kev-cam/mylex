@@ -1126,6 +1126,23 @@ own li shapes 5 nm apart in x and 0.16 µm in y, present in the stock cell,
 re-keyed because one of them merged with the neighbour's strap
 (`evidence/l4_placer_handoff.log`).
 
+**The dissolved group as a cell for the router (2026-09-09,
+`layopt/mergedcell.py`, `probes/layopt/l4_merged_cell.py`).** After a
+dissolve the pair is one piece of geometry on no legal site, and a router
+working from LEF knows nothing about it. `MergedCell.build` turns a group's
+flat geometry into a LEF MACRO (CLASS BLOCK; the two cells' pins in group
+coordinates, each renamed `<inst>_<pin>`, the supply and well pins merged
+into one each, every port kept including the nwell/pwell ports of VPB/VNB;
+every other li1/met1 shape an obstruction, pin shapes carved out) and a GDS
+cell of the same name with the geometry itself; `rewrite_def` replaces the
+components by one FIXED instance of the macro, renames their pin references
+in NETS and SPECIALNETS, and moves every other instance to where the
+dissolve left it — off the site grid, which the router does not mind and the
+FIXED status keeps a later legalisation from touching. `def2flat` reads a
+list of GDS libraries now, the cell library and the merged cells together, so
+the routed result can be flattened and extracted like any other. On gcd's
+hinted placement: 13 of 14 hinted boundaries dissolve (2.92 µm given back; the 14th is the re-keyed li corner pair of §2 above and is not taken), 13 merged macros of 4.5–12.3 µm with 8–12 pins and 34–82 obstruction rectangles each, 55 instances moved by the row shifts; OpenROAD routes the rewritten DEF to completion with 0 DRC violations and 5559 µm of wire (base 5566); the routed result flattened with library plus merged cells extracts to 2472 devices and 2102 nets, its device-level topology EQUAL to the original routed gcd, and KLayout agrees (2472/2472 devices, 1353/1353 nets, isomorphic). The chain placer → hints → dissolve → merged cells → router → extraction closes on a real design with the netlist intact. The 2.92 µm is what the row shifts freed at the row ends, not yet reclaimed by the placer; giving it back to the placer is the next step, and a larger design than gcd the one after.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 

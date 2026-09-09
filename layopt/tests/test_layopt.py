@@ -769,6 +769,68 @@ def test_merge_boundary():
 
 
 
+def test_merged_cell():
+    """The dissolved inv_1(FN)|inv_1 pair as a cell for the router: a LEF macro
+    that reads back with the pair's size, the two cells' pins renamed and the
+    supplies merged, obstructions for the rest of the metal; a GDS cell; and
+    the DEF rewritten around one FIXED instance of it with the pin references
+    renamed and the filler beyond moved where the dissolve left it."""
+    from .. import moves as mv, mergedcell, lefdef
+    lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
+    if not os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__inv_1.gds")):
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    cells = [("fill_4", 0.0, "N"), ("inv_1", 1.84, "FN"), ("inv_1", 3.22, "N"), ("fill_8", 4.60, "N")]
+    comps = "\n".join("    - u%d sky130_fd_sc_hd__%s + PLACED ( %d 0 ) %s ;" % (i, m, int(x * 1000), o) for i, (m, x, o) in enumerate(cells))
+    deftext = """VERSION 5.8 ;
+DESIGN t ;
+UNITS DISTANCE MICRONS 1000 ;
+DIEAREA ( 0 0 ) ( 12000 2720 ) ;
+COMPONENTS 4 ;
+%s
+END COMPONENTS
+SPECIALNETS 2 ;
+    - VPWR ( u1 VPWR ) ( u2 VPWR ) + USE POWER ;
+    - VGND ( u1 VGND ) ( u2 VGND ) + USE GROUND ;
+END SPECIALNETS
+NETS 2 ;
+    - n1 ( u1 Y ) ( u2 A ) + USE SIGNAL ;
+    - n2 ( u2 Y ) + USE SIGNAL ;
+END NETS
+END DESIGN
+""" % comps            # one statement per line, as OpenROAD writes it (the rewriter works line by line)
+    lefs = [os.path.join(lib, "sky130_fd_sc_hd.tlef")] + [os.path.join(lib, "sky130_fd_sc_hd__%s.lef" % m) for m in ("fill_4", "inv_1", "fill_8")]
+    with tempfile.TemporaryDirectory() as td:
+        dp = os.path.join(td, "t.def"); open(dp, "w").write(deftext)
+        fl = lefdef.def2flat(dp, lefs, lib, T); d = lefdef.read_def(dp)
+        lef = lefdef.Lef()
+        for f in lefs:
+            lefdef.read_lef(f, lef)
+        ex = extract.extract(fl, T)
+        a, b = next((a, b) for a, b, _, _ in mv.boundary_candidates(fl, ex) if "u1" in a)
+        mv.merge_boundary(fl, ex, a, b)
+        mc = mergedcell.MergedCell.build(fl, lef, T, d, [a, b], "layopt_m0")
+        # the per-cell library LEFs carry no VPB/VNB (the ORFS merged LEF does; they follow the same path)
+        want = {"u1_A", "u1_Y", "u2_A", "u2_Y", "VPWR", "VGND"} | {p for p in lef.macros["sky130_fd_sc_hd__inv_1"].pins if p in ("VPB", "VNB")}
+        assert set(mc.pins) == want, sorted(mc.pins)
+        assert mc.rects, "expected the group's geometry"     # (an inv_1's li and met1 are all pin: no obstructions is right)
+        lp = os.path.join(td, "m.lef"); mergedcell.lef_library([mc], lp)
+        back = lefdef.read_lef(lp)
+        m = back.macros["layopt_m0"]
+        w_exp = (fl.boxes[b][2] - fl.boxes[a][0]) / 1000.0
+        assert abs(m.size[0] - w_exp) < 1e-6 and abs(m.size[1] - 2.72) < 1e-6, (m.size, w_exp)
+        assert set(m.pins) == set(mc.pins) and all(p.ports for p in m.pins.values())
+        gp = os.path.join(td, "m.gds"); mergedcell.gds_library([mc], gp)
+        assert "layopt_m0" in gds.read(gp).structs
+        new_def = mergedcell.rewrite_def(deftext, d, fl, [mc], scale=1.0)
+        assert "- u1 " not in new_def and "- u2 " not in new_def and "- layopt_m0_i layopt_m0 + FIXED ( 1840 0 ) N ;" in new_def, new_def
+        assert "( layopt_m0_i u1_Y ) ( layopt_m0_i u2_A )" in new_def and "( layopt_m0_i VPWR )" in new_def
+        assert new_def.count("( layopt_m0_i VPWR )") == 1, "supply pin listed once"
+        # the filler beyond slid with the dissolve
+        u3 = next(l for l in new_def.split("\n") if "- u3 " in l)
+        assert "( %d 0 )" % fl.boxes[next(p for p in fl.boxes if "/u3/" in p)][0] in u3, u3
+        print("  merged inv_1(FN)|inv_1: macro %.3f x %.3f um, %d pins, %d obs rects; DEF rewritten" % (m.size[0], m.size[1], len(m.pins), len(mc.obs)))
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):

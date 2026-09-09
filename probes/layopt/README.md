@@ -326,6 +326,17 @@ each, 0.43 µm in all (0.1 % of 518 µm of cell width); `_240_|_241_` applied:
 0.075 µm, no new violation, KLayout isomorphic; four refuse for want of a filler
 beyond the sliding cell. The placer never put two sources face to face.
 
+## The dissolved group as a router cell (`l4_merged_cell.py`, `layopt/mergedcell.py`)
+
+Every hinted boundary that dissolves legally is dissolved on the hinted
+pre-route placement (row mode, cumulatively); each merged group becomes a LEF
+macro (pins renamed `<inst>_<pin>`, supplies and wells merged, the rest
+obstructions) and a GDS cell; the DEF is rewritten around them
+(`flow_route_merged.tcl` in `gcd/` routes it); the routed result is flattened
+with library plus merged cells and compared with the original routed gcd.
+gcd: 13 of 14 boundaries dissolved (2.92 µm), 13 macros, 55 instances moved; routed to completion, 0 DRC, 5559 µm of wire (base 5566); device-level topology equal to the original routed gcd; KLayout isomorphic. Evidence: `evidence/gcd_merged.lef`, `gcd_merged.def`,
+`l4_merged_cell.log`, `gcd_merged_routed.gds`.
+
 ## The placer hand-off (`l4_placer_handoff.py`, `layopt/placer.py`)
 
 The policy as something OpenROAD consumes. `placer.plan_hints` on the pre-route
