@@ -9,7 +9,7 @@ it; the routed result is flattened with the cell library plus the merged
 cells, extracted, and compared with the original routed gcd (device-level
 topology) and with KLayout.
 
-    python3 probes/layopt/l4_merged_cell.py [--no-route]
+    python3 probes/layopt/l4_merged_cell.py [--name gcd] [--flow DIR] [--ref routed.def] [--no-route]
 """
 import copy
 import json
@@ -25,7 +25,9 @@ from layopt import compare, drc as rules, extract, gds as gdsmod, lefdef, merged
 
 T = techmod.SKY130
 ORFS = os.path.expanduser("~/tools/orfs-sky130hd")
-FLOW = os.path.expanduser("~/src/gcd-flow/hints")
+NAME = sys.argv[sys.argv.index("--name") + 1] if "--name" in sys.argv else "gcd"
+FLOW = os.path.expanduser(sys.argv[sys.argv.index("--flow") + 1] if "--flow" in sys.argv else "~/src/%s-flow/hints" % NAME)
+REF_DEF = sys.argv[sys.argv.index("--ref") + 1] if "--ref" in sys.argv else None      # the original routed DEF to compare topology with
 OPENROAD = os.path.expanduser("~/tools/openroad/bin/openroad")
 LEFS = [os.path.join(ORFS, "sky130_fd_sc_hd.tlef"), os.path.join(ORFS, "sky130_fd_sc_hd_merged.lef")]
 GDS = os.path.join(ORFS, "sky130_fd_sc_hd.gds")
@@ -33,8 +35,8 @@ EVID = os.path.join(HERE, "evidence")
 
 
 def main():
-    hinted = os.path.join(FLOW, "gcd_hints_placed.def")
-    hints = json.load(open(os.path.join(EVID, "gcd_placer_hints.json")))
+    hinted = os.path.join(FLOW, "%s_hints_placed.def" % NAME)
+    hints = json.load(open(os.path.join(EVID, "%s_placer_hints.json" % NAME)))
     pairs = [(h["partner_left"], h["inst"]) for h in hints if h.get("partner_left")]
     t0 = time.time()
     lef = lefdef.Lef()
@@ -88,7 +90,7 @@ def main():
     moved = sum(1 for c in d.components if c.placed and prov.get(c.inst) in fl.boxes and fl.boxes[prov[c.inst]][0] != c.x * 1000 // d.dbu_per_um)
     print("== 3. wrote merged.lef (%d macros), merged.gds, merged.def (%d instances moved by the dissolve)" % (len(cells), moved))
     for f in ("merged.lef", "merged.def"):
-        os.system("cp %s %s" % (os.path.join(FLOW, f), os.path.join(EVID, "gcd_" + f)))
+        os.system("cp %s %s" % (os.path.join(FLOW, f), os.path.join(EVID, NAME + "_" + f)))
     if "--no-route" in sys.argv or not os.path.exists(OPENROAD):
         return
     # 4. route
@@ -102,19 +104,20 @@ def main():
     drc = open(os.path.join(FLOW, "route_drc_merged.rpt")).read().count("violation type") if os.path.exists(os.path.join(FLOW, "route_drc_merged.rpt")) else -1
     print("== 4. routed in %.0fs: %s; wire %s um; DRC violations %d; errors: %s" % (time.time() - t1, "complete" if "Complete detail routing" in txt else "INCOMPLETE", wl[-1] if wl else "?", drc,
           [l for l in txt.split("\n") if l.startswith("[ERROR")][:3]))
-    routed = os.path.join(FLOW, "gcd_merged_routed.def")
+    routed = os.path.join(FLOW, "%s_merged_routed.def" % NAME)
     if not os.path.exists(routed):
         return
     # 5. verify: flatten with library + merged cells, extract, compare with the original routed gcd
     t2 = time.time()
     fl_r = lefdef.def2flat(routed, LEFS + [merged_lef], "", T, gds_lib=[GDS, merged_gds])
     ex_r = extract.extract(fl_r, T)
-    fl_ref = lefdef.def2flat(os.path.join(HERE, "gcd", "gcd.def"), LEFS, "", T, gds_lib=GDS)
+    ref_def = REF_DEF or (os.path.join(HERE, "gcd", "gcd.def") if NAME == "gcd" else os.path.join(FLOW, "%s_base.def" % NAME))
+    fl_ref = lefdef.def2flat(ref_def, LEFS, "", T, gds_lib=GDS)
     ex_ref = extract.extract(fl_ref, T)
     same = ex_r.signature() == ex_ref.signature()
-    print("== 5. routed dissolved gcd: %d devices / %d nets vs original routed gcd %d / %d; device-level topology %s (%.0fs)" % (
-        len(ex_r.devices), len(ex_r.nets), len(ex_ref.devices), len(ex_ref.nets), "EQUAL" if same else "DIFFERENT", time.time() - t2))
-    out = os.path.join(EVID, "gcd_merged_routed.gds"); gdsmod.write_flat(fl_r, out)
+    print("== 5. routed dissolved %s: %d devices / %d nets vs the routed reference %s: %d / %d; device-level topology %s (%.0fs)" % (
+        NAME, len(ex_r.devices), len(ex_r.nets), os.path.basename(ref_def), len(ex_ref.devices), len(ex_ref.nets), "EQUAL" if same else "DIFFERENT", time.time() - t2))
+    out = os.path.join(EVID, "%s_merged_routed.gds" % NAME); gdsmod.write_flat(fl_r, out)
     try:
         from l2_real_def import klayout_extract
         cir = out.replace(".gds", "_klayout.cir"); klayout_extract(out, cir)

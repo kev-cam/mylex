@@ -1,0 +1,12 @@
+read_verilog /home/claude/src/alu-flow/alu.v
+hierarchy -check -top alu_top
+synth -top alu_top -flatten
+dfflibmap -liberty /home/claude/tools/orfs-sky130hd/sky130_fd_sc_hd__tt_025C_1v80.lib
+abc -liberty /home/claude/tools/orfs-sky130hd/sky130_fd_sc_hd__tt_025C_1v80.lib
+opt_clean -purge
+setundef -zero
+hilomap -hicell sky130_fd_sc_hd__conb_1 HI -locell sky130_fd_sc_hd__conb_1 LO
+splitnets
+opt_clean -purge
+stat -liberty /home/claude/tools/orfs-sky130hd/sky130_fd_sc_hd__tt_025C_1v80.lib
+write_verilog -noattr -noexpr alu_synth.v

@@ -12,7 +12,7 @@ and .odb; flow_route.tcl, env TAG and HINTS) and ~/tools/openroad/bin/openroad.
 Without OpenROAD the probe still plans the hints and, if the route logs exist,
 reads them.
 
-    python3 probes/layopt/l4_placer_handoff.py [--no-route] [--no-dissolve]
+    python3 probes/layopt/l4_placer_handoff.py [--name gcd] [--flow DIR] [--no-route] [--no-dissolve]
 """
 import os
 import re
@@ -27,7 +27,8 @@ from layopt import drc as rules, extract, lefdef, moves as mv, placer, tech as t
 
 T = techmod.SKY130
 ORFS = os.path.expanduser("~/tools/orfs-sky130hd")
-FLOW = os.path.expanduser("~/src/gcd-flow/hints")
+NAME = sys.argv[sys.argv.index("--name") + 1] if "--name" in sys.argv else "gcd"           # design: <name>_placed.def in the flow dir
+FLOW = os.path.expanduser(sys.argv[sys.argv.index("--flow") + 1] if "--flow" in sys.argv else "~/src/%s-flow/hints" % NAME)
 OPENROAD = os.path.expanduser("~/tools/openroad/bin/openroad")
 LEFS = [os.path.join(ORFS, "sky130_fd_sc_hd.tlef"), os.path.join(ORFS, "sky130_fd_sc_hd_merged.lef")]
 GDS = os.path.join(ORFS, "sky130_fd_sc_hd.gds")
@@ -58,7 +59,7 @@ def read_route(tag):
 
 def main():
     os.makedirs(EVID, exist_ok=True)
-    placed = os.path.join(FLOW, "gcd_placed.def")
+    placed = os.path.join(FLOW, "%s_placed.def" % NAME)
     if not os.path.exists(placed):
         print("no %s: run flow_place.tcl first" % placed); return
     t0 = time.time()
@@ -66,7 +67,7 @@ def main():
     hints = placer.plan_hints(placed, LEFS, GDS, T, abut=True, measure=True, faces=F)
     sm = placer.summary(hints)
     tcl = os.path.join(FLOW, "hints.tcl"); n = placer.write_openroad_tcl(hints, tcl); placer.write_json(hints, os.path.join(FLOW, "hints.json"))
-    placer.write_json(hints, os.path.join(EVID, "gcd_placer_hints.json"))
+    placer.write_json(hints, os.path.join(EVID, "%s_placer_hints.json" % NAME))
     print("== 1. hints for %s (%.0fs, %d pair layouts): %d logic cells, %d flipped, %d slid (%.2f um of movement), %d boundaries kept (%d two-strip, %d one-strip) worth %.2f um" % (
         os.path.basename(placed), time.time() - t0, len(F._slide), sm["cells"], sm["flipped"], sm["moved"], sm["moved_um"], sm["boundaries"], sm["strips_2"], sm["strips_1"], sm["slide_um"]))
     for h in hints:
@@ -81,7 +82,7 @@ def main():
     if rb and rh:
         print("== 2. the router's bill: base -> hints: wire %.0f -> %.0f um (%+.1f%%), WNS %.2f -> %.2f ns, TNS %.2f -> %.2f ns, DRC %d -> %d, placement check %s" % (
             rb["wire_um"], rh["wire_um"], 100 * (rh["wire_um"] - rb["wire_um"]) / rb["wire_um"], rb["wns"], rh["wns"], rb["tns"], rh["tns"], rb["drc"], rh["drc"], "ok" if rh["ok"] else "FAILED (%s overlaps)" % rh["overlaps"]))
-    hinted = os.path.join(FLOW, "gcd_hints_placed.def")
+    hinted = os.path.join(FLOW, "%s_hints_placed.def" % NAME)
     if "--no-dissolve" in sys.argv or not os.path.exists(hinted):
         return
     # 3. the dissolve on the hinted placement: every kept boundary, one at a time from the base
