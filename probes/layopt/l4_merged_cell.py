@@ -9,7 +9,12 @@ it; the routed result is flattened with the cell library plus the merged
 cells, extracted, and compared with the original routed gcd (device-level
 topology) and with KLayout.
 
-    python3 probes/layopt/l4_merged_cell.py [--name gcd] [--flow DIR] [--ref routed.def] [--no-route]
+    python3 probes/layopt/l4_merged_cell.py [--name gcd] [--flow DIR] [--ref routed.def] [--no-route] [--local | --global]
+
+`--local` (the default for designs other than gcd) applies and guards each
+dissolve on the three-row window around it, so a 4000-cell design costs
+seconds per boundary instead of minutes; the whole layout is extracted once
+at the end and compared with the base.
 """
 import copy
 import json
@@ -34,7 +39,68 @@ GDS = os.path.join(ORFS, "sky130_fd_sc_hd.gds")
 EVID = os.path.join(HERE, "evidence")
 
 
+ROW_UM = 2.72
+
+
+def row_window(fl, y0, y1):
+    """A FlatLayout sharing the rect OBJECTS of `fl` that overlap the band
+    [y0, y1] (dbu): a dissolve applied to it mutates the full layout's rects
+    in place; what it appends or deletes is reconciled by `transplant`."""
+    from layopt.gds import FlatLayout
+    sub = FlatLayout(dbu_um=fl.dbu_um, top=fl.top)
+    # every rect in the band, plus every DEF net wire (the PDN, whose labels name the
+    # supply nets -- without the names the rail-cut logic cannot tell a supply) and all labels
+    sub.rects = [r for r in fl.rects if (r.y1 > y0 and r.y0 < y1) or "/net:" in r.prov]
+    sub.texts = list(getattr(fl, "texts", []))
+    sub.boxes = {p: b for p, b in fl.boxes.items() if b[3] > y0 and b[1] < y1}
+    return sub
+
+
+def transplant(fl, sub, before_objs):
+    """After a move on `sub`: rects `sub` dropped leave `fl`, rects it added join it, boxes follow."""
+    now = set(id(r) for r in sub.rects)
+    dropped = set(id(r) for r in before_objs) - now
+    added = [r for r in sub.rects if id(r) not in set(id(x) for x in before_objs)]
+    if dropped:
+        fl.rects = [r for r in fl.rects if id(r) not in dropped]
+    fl.rects += added
+    fl.boxes.update(sub.boxes)
+
+
+def dissolve_local(fl, a_prov, b_prov, base_sig_cache):
+    """merge_boundary(shift_row) on the three-row window around the boundary,
+    guarded on that window (topology signature and DRC keys before/after);
+    on failure the window is restored.  Returns (ok, slid_um, message).
+    Rows are 2.72 um; the band takes the row and both neighbours so shared
+    rails, twinned rail cuts and li overhangs are all in view."""
+    import copy
+    from layopt import drc as rules, extract, moves as mv
+    box = fl.boxes[b_prov]
+    y0, y1 = box[1] - int(ROW_UM * 1000), box[3] + int(ROW_UM * 1000)
+    sub = row_window(fl, y0, y1)
+    snapshot = [(r, r.rect) for r in sub.rects]; boxes0 = dict(sub.boxes); before_objs = list(sub.rects)
+    ex = extract.extract(sub, T)
+    sig0 = ex.signature(); keys0 = {rules.key(v) for v in rules.check(sub, ex)}
+    try:
+        t = mv.merge_boundary(sub, ex, a_prov, b_prov, shift_row=True)
+    except mv.MoveError as e:
+        return False, 0.0, "refused -- %s" % str(e)[:90]
+    slid = mv.LAST_MERGE_DELTA[0] / 1000.0
+    ex2 = extract.extract(sub, T)
+    nv = rules.new_violations(sub, ex2, t, keys0)      # among the rects the move touched, as the global guard does
+    ok = ex2.signature() == sig0 and not nv
+    if not ok:
+        for r, rect in snapshot:
+            r.rect = rect
+        sub.rects = [r for r, _ in snapshot]; sub.boxes = boxes0
+        fl.boxes.update(boxes0)
+        return False, slid, "slid %.3f um but %s, %d new violations -- not taken" % (slid, "topology kept" if ex2.signature() == sig0 else "topology CHANGED", len(nv))
+    transplant(fl, sub, before_objs)
+    return True, slid, "dissolved, slid %.3f um" % slid
+
+
 def main():
+    local = "--local" in sys.argv or ("--global" not in sys.argv and NAME != "gcd")
     hinted = os.path.join(FLOW, "%s_hints_placed.def" % NAME)
     hints = json.load(open(os.path.join(EVID, "%s_placer_hints.json" % NAME)))
     pairs = [(h["partner_left"], h["inst"]) for h in hints if h.get("partner_left")]
@@ -54,6 +120,12 @@ def main():
     # 2. dissolve cumulatively, each boundary guarded on the running layout
     accepted = []; gained = 0.0
     for a, b in pairs:
+        if local:
+            ok, slid, msg = dissolve_local(fl, prov[a], prov[b], None)
+            print("   %s|%s: %s" % (a, b, msg))
+            if ok:
+                accepted.append((a, b)); gained += slid
+            continue
         trial = copy.deepcopy(fl); ex_t = extract.extract(trial, T)
         try:
             t = mv.merge_boundary(trial, ex_t, prov[a], prov[b], shift_row=True)
@@ -66,7 +138,10 @@ def main():
         fl = trial; base = {rules.key(v) for v in rules.check(fl, ex2)}
         accepted.append((a, b)); gained += slid
         print("   %s|%s: dissolved, slid %.3f um" % (a, b, slid))
-    print("== 2. %d of %d boundaries dissolved, %.2f um given back (%.0fs)" % (len(accepted), len(pairs), gained, time.time() - t0))
+    print("== 2. %d of %d boundaries dissolved, %.2f um given back (%.0fs%s)" % (len(accepted), len(pairs), gained, time.time() - t0, "; guarded on three-row windows" if local else ""))
+    if local:
+        ex = extract.extract(fl, T)          # the whole layout once, for the record
+        print("   whole layout after the dissolves: %d rects, %d devices, topology %s the base" % (len(fl.rects), len(ex.devices), "EQUAL to" if ex.signature() == sig else "DIFFERENT from"))
     # 3. groups (a cell may sit in two boundaries) -> merged cells
     parent = {}
     def find(x):
