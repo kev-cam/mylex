@@ -132,7 +132,9 @@ def main():
             bx = fl.boxes[prov_a]
             y0, y1 = bx[1] - 2720, bx[3] + 2720
             fw = gds.FlatLayout(dbu_um=fl.dbu_um, top=fl.top)
-            fw.rects = copy.deepcopy([r for r in fl.rects if (r.y1 > y0 and r.y0 < y1) or "/net:" in r.prov])
+            # the band, plus the supply nets' DEF wires wherever they are (their labels name the
+            # supplies); a routed design's signal wires come along only where they cross the band
+            fw.rects = copy.deepcopy([r for r in fl.rects if (r.y1 > y0 and r.y0 < y1) or ("/net:" in r.prov and r.prov.rsplit(":", 1)[-1] in T.supply_names)])
             fw.texts = copy.deepcopy(list(getattr(fl, "texts", [])))
             fw.boxes = {p_: b_ for p_, b_ in fl.boxes.items() if b_[3] > y0 and b_[1] < y1}
             tw = time.time()

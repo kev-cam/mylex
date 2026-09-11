@@ -50,7 +50,7 @@ def row_window(fl, y0, y1):
     sub = FlatLayout(dbu_um=fl.dbu_um, top=fl.top)
     # every rect in the band, plus every DEF net wire (the PDN, whose labels name the
     # supply nets -- without the names the rail-cut logic cannot tell a supply) and all labels
-    sub.rects = [r for r in fl.rects if (r.y1 > y0 and r.y0 < y1) or "/net:" in r.prov]
+    sub.rects = [r for r in fl.rects if (r.y1 > y0 and r.y0 < y1) or ("/net:" in r.prov and r.prov.rsplit(":", 1)[-1] in T.supply_names)]
     sub.texts = list(getattr(fl, "texts", []))
     sub.boxes = {p: b for p, b in fl.boxes.items() if b[3] > y0 and b[1] < y1}
     return sub
