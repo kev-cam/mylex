@@ -79,6 +79,7 @@ def dissolve_local(fl, a_prov, b_prov, base_sig_cache):
     y0, y1 = box[1] - int(ROW_UM * 1000), box[3] + int(ROW_UM * 1000)
     sub = row_window(fl, y0, y1)
     snapshot = [(r, r.rect) for r in sub.rects]; boxes0 = dict(sub.boxes); before_objs = list(sub.rects)
+    texts0 = [(t, t.xy) for t in sub.texts]
     ex = extract.extract(sub, T)
     sig0 = ex.signature(); keys0 = {rules.key(v) for v in rules.check(sub, ex)}
     try:
@@ -93,6 +94,8 @@ def dissolve_local(fl, a_prov, b_prov, base_sig_cache):
         for r, rect in snapshot:
             r.rect = rect
         sub.rects = [r for r, _ in snapshot]; sub.boxes = boxes0
+        for t_, xy in texts0:
+            t_.xy = xy
         fl.boxes.update(boxes0)
         return False, slid, "slid %.3f um but %s, %d new violations -- not taken" % (slid, "topology kept" if ex2.signature() == sig0 else "topology CHANGED", len(nv))
     transplant(fl, sub, before_objs)
@@ -113,9 +116,8 @@ def main():
     ex = extract.extract(fl, T); sig = ex.signature(); base = {rules.key(v) for v in rules.check(fl, ex)}
     prov = {}
     for r in fl.rects:
-        parts = r.prov.split("/")
-        if len(parts) >= 3:
-            prov.setdefault(parts[1], r.prov)
+        if r.prov.count("/") >= 2 and "/net:" not in r.prov and "/pin:" not in r.prov:
+            prov.setdefault(mergedcell.inst_of(r.prov), r.prov)
     print("== 1. %s: %d rects, %d devices, %d hinted boundaries (%.0fs)" % (os.path.basename(hinted), len(fl.rects), len(ex.devices), len(pairs), time.time() - t0))
     # 2. dissolve cumulatively, each boundary guarded on the running layout
     accepted = []; gained = 0.0
@@ -162,7 +164,8 @@ def main():
     merged_lef = os.path.join(FLOW, "merged.lef"); merged_gds = os.path.join(FLOW, "merged.gds"); merged_def = os.path.join(FLOW, "merged.def")
     mergedcell.lef_library(cells, merged_lef); mergedcell.gds_library(cells, merged_gds)
     open(merged_def, "w").write(mergedcell.rewrite_def(open(hinted).read(), d, fl, cells, scale=1000.0 / d.dbu_per_um))
-    moved = sum(1 for c in d.components if c.placed and prov.get(c.inst) in fl.boxes and fl.boxes[prov[c.inst]][0] != c.x * 1000 // d.dbu_per_um)
+    absorbed = {i for mc in cells for i in mc.insts}
+    moved = sum(1 for c in d.components if c.placed and c.inst not in absorbed and prov.get(c.inst) in fl.boxes and fl.boxes[prov[c.inst]][0] != c.x * 1000 // d.dbu_per_um)
     print("== 3. wrote merged.lef (%d macros), merged.gds, merged.def (%d instances moved by the dissolve)" % (len(cells), moved))
     for f in ("merged.lef", "merged.def"):
         os.system("cp %s %s" % (os.path.join(FLOW, f), os.path.join(EVID, NAME + "_" + f)))
@@ -172,7 +175,7 @@ def main():
     t1 = time.time()
     log = os.path.join(FLOW, "route_merged.log")
     with open(log, "w") as fh:
-        subprocess.run([OPENROAD, "-exit", "flow_route_merged.tcl"], cwd=FLOW, stdout=fh, stderr=subprocess.STDOUT, timeout=3600)
+        subprocess.run([OPENROAD, "-exit", "flow_route_merged.tcl"], cwd=FLOW, stdout=fh, stderr=subprocess.STDOUT, timeout=6 * 3600)
     txt = open(log).read()
     import re
     wl = re.findall(r"Total wire length = (\d+) um", txt)

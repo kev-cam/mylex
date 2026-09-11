@@ -288,12 +288,12 @@ def add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high", 
             raise
         # a mirrored stack whose far gates found no room for their heads: spread the
         # mirrored fingers by one poly pitch and try again (a wider outer region is the price)
-        fl.rects = snapshot; fl.boxes = boxes0
+        fl.rects = _copy.deepcopy(snapshot); fl.boxes = dict(boxes0)     # the retry works on a copy; `snapshot` stays pristine
         try:
             touched = _add_finger(fl, ex, dev, side, bridge, spread_um=ex.tech.min_space.get(ex.tech.poly, 0.21) * 2)
             LAST_SPREAD[0] = ex.tech.min_space.get(ex.tech.poly, 0.21) * 2
         except MoveError as e2:
-            fl.rects = _copy.deepcopy(snapshot); fl.boxes = boxes0
+            fl.rects = snapshot; fl.boxes = boxes0
             raise MoveError("%s; with the mirrored stack spread by one pitch: %s" % (str(e).split("; candidates")[0], str(e2)[:200]))
     else:
         LAST_SPREAD[0] = 0.0
@@ -520,9 +520,11 @@ def set_vt(fl: FlatLayout, ex: Extraction, dev: Device, flavour: str) -> List[in
                     if dv in swept:
                         continue
                     # a gate the window edge would come closer than e to (it stays covered, so
-                    # its enclosure by what remains would be too small)
+                    # its enclosure by what remains would be too small); the device comes in
+                    # with every finger it has
                     if geom.overlaps(g, (win[0] - e, win[1] - e, win[2] + e, win[3] + e)):
-                        win = [min(win[0], g[0] - e), min(win[1], g[1] - e), max(win[2], g[2] + e), max(win[3], g[3] + e)]
+                        for gg in (ex.shapes[q].rect for q in dv.gate_ids):
+                            win = [min(win[0], gg[0] - e), min(win[1], gg[1] - e), max(win[2], gg[2] + e), max(win[3], gg[3] + e)]
                         swept.append(dv); grew = True
             # every implant rect the final window reaches is cut, whichever cell it belongs
             # to: a swept gate straddling a cell boundary may be covered by the neighbour's
@@ -898,8 +900,6 @@ def merge_boundary(fl: FlatLayout, ex: Extraction, inst_a: str, inst_b: str, shi
     if inst_b in getattr(fl, "boxes", {}):
         bx = fl.boxes[inst_b]; fl.boxes[inst_b] = (bx[0] - delta, bx[1], bx[2] - delta, bx[3])
     _settle_rail_cuts(fl, ex, ids_b, s2n, touched)
-    if fprov is not None and fprov in getattr(fl, "boxes", {}):
-        bx = fl.boxes[fprov]; fl.boxes[fprov] = (bx[0] - delta, bx[1], bx[2], bx[3])
     for i, r in enumerate(fl.rects):
         if ("/net:" in r.prov or "/pin:" in r.prov) and r.y1 > cy0 and r.y0 < cy1 and r.prov.rsplit(":", 1)[-1] not in tech.supply_names:
             if r.x0 >= box_b[0] - 1 and r.x1 <= box_b[2] + 1:
@@ -927,7 +927,9 @@ def merge_boundary(fl: FlatLayout, ex: Extraction, inst_a: str, inst_b: str, shi
             if fprov in getattr(fl, "boxes", {}):
                 bx = fl.boxes[fprov]; fl.boxes[fprov] = (bx[0] - delta, bx[1], bx[2], bx[3])
     else:
-        # 2. the filler grows toward B
+        # 2. the filler grows toward B (its box with it)
+        if fprov in getattr(fl, "boxes", {}):
+            bx = fl.boxes[fprov]; fl.boxes[fprov] = (bx[0] - delta, bx[1], bx[2], bx[3])
         for i in members[fprov]:
             r = fl.rects[i]
             if r.x0 <= fx0 + 1 or r.layer in soft_layers:
@@ -1054,8 +1056,10 @@ def _slide_limit(fl: FlatLayout, ex: Extraction, ids_a, ids_b, box_a, box_b, s2n
             is_cut = ra.layer in cuts
             if not is_cut and s2n.get(i) is not None and s2n.get(i) == s2n.get(j):
                 continue                                   # same net: they may merge
+            if rb.x0 < ra.x1:
+                continue                                   # already side by side in x before the slide: not the slide's doing
             allowed = rb.x0 - ra.x1 - sp                   # slide that leaves exactly the spacing
-            if is_cut and (rb.x0 - ra.x1 - delta) == 0 and ra.y0 == rb.y0 and ra.y1 == rb.y1 and (ra.x1 - ra.x0) == (rb.x1 - rb.x0):
+            if is_cut and (rb.x0 - delta) == ra.x0 and ra.y0 == rb.y0 and ra.y1 == rb.y1 and (ra.x1 - ra.x0) == (rb.x1 - rb.x0):
                 continue                                   # they would coincide exactly: one cut
             if allowed < best:
                 best, who = allowed, "%s %s (%s) vs %s (%s), spacing %.2f" % (ln, [round(v * fl.dbu_um, 3) for v in ra.rect], ra.prov.split("/")[1],
@@ -1320,7 +1324,7 @@ def _add_finger(fl: FlatLayout, ex: Extraction, dev: Device, side: str = "high",
     def spread_of(x):
         if not spread:
             return 0
-        return spread * sum(1 for gk in stack if ((x < gk[0]) if hi else (x > gk[2])))
+        return spread * min(len(stack) - 1, sum(1 for gk in stack if ((x < gk[0]) if hi else (x > gk[2]))))
     def mx_base(x):
         return int(round(2 * xc - x)) + (spread_of(x) if hi else -spread_of(x))
     probe_li = [(min(mx_base(fl.rects[k].x0), mx_base(fl.rects[k].x1)), fl.rects[k].y0, max(mx_base(fl.rects[k].x0), mx_base(fl.rects[k].x1)), fl.rects[k].y1)

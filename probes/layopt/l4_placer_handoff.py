@@ -23,7 +23,7 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(HERE, "..", "..")))
 sys.path.insert(0, HERE)
-from layopt import drc as rules, extract, lefdef, moves as mv, placer, tech as techmod   # noqa: E402
+from layopt import drc as rules, extract, lefdef, mergedcell, moves as mv, placer, tech as techmod   # noqa: E402
 
 T = techmod.SKY130
 ORFS = os.path.expanduser("~/tools/orfs-sky130hd")
@@ -41,7 +41,7 @@ def route(tag, hints_tcl=None):
         env["HINTS"] = hints_tcl
     log = os.path.join(FLOW, "route_%s.log" % tag)
     with open(log, "w") as fh:
-        subprocess.run([OPENROAD, "-exit", "flow_route.tcl"], cwd=FLOW, env=env, stdout=fh, stderr=subprocess.STDOUT, timeout=3600)
+        subprocess.run([OPENROAD, "-exit", "flow_route.tcl"], cwd=FLOW, env=env, stdout=fh, stderr=subprocess.STDOUT, timeout=6 * 3600)
     return log
 
 
@@ -93,9 +93,8 @@ def main():
     ex0 = extract.extract(fl0, T); sig = ex0.signature(); base = {rules.key(v) for v in rules.check(fl0, ex0)}
     prov = {}
     for r in fl0.rects:
-        parts = r.prov.split("/")
-        if len(parts) >= 3:
-            prov.setdefault(parts[1], r.prov)
+        if r.prov.count("/") >= 2 and "/net:" not in r.prov and "/pin:" not in r.prov:
+            prov.setdefault(mergedcell.inst_of(r.prov), r.prov)
     print("== 3. dissolve on the hinted placement (%d rects, %d devices, %.0fs to flatten):" % (len(fl0.rects), len(ex0.devices), time.time() - t2))
     import copy
     got = 0.0; n_ok = 0; n_try = 0

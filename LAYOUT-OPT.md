@@ -1143,6 +1143,62 @@ list of GDS libraries now, the cell library and the merged cells together, so
 the routed result can be flattened and extracted like any other. On gcd's
 hinted placement: 13 of 14 hinted boundaries dissolve (2.92 µm given back; the 14th is the re-keyed li corner pair of §2 above and is not taken), 13 merged macros of 4.5–12.3 µm with 8–12 pins and 34–82 obstruction rectangles each, 55 instances moved by the row shifts; OpenROAD routes the rewritten DEF to completion with 0 DRC violations and 5559 µm of wire (base 5566); the routed result flattened with library plus merged cells extracts to 2472 devices and 2102 nets, its device-level topology EQUAL to the original routed gcd, and KLayout agrees (2472/2472 devices, 1353/1353 nets, isomorphic). The chain placer → hints → dissolve → merged cells → router → extraction closes on a real design with the netlist intact. The 2.92 µm is what the row shifts freed at the row ends, not yet reclaimed by the placer; giving it back to the placer is the next step, and a larger design than gcd the one after.
 
+**A review of the placer and merged-cell code (2026-09-11).** Seven
+reviewers, one per dimension, each finding tried by three refuters; 24
+findings, 13 confirmed by all or two of three refuters, the rest judged by
+hand when the refuters ran out of budget. Fixed, in the order of what they
+would have cost:
+
+- *Pair measurement in flipped rows* (`placer.Faces.exact_slide`): the
+  two-cell layout placed its guard fillers N whatever the pair's
+  orientation. An N filler's nwell overhangs its box by 0.19 µm, and beside
+  a cell placed FS or S it lands on that cell's NMOS strip, which the
+  extractor then types PMOS on any nwell overlap; both cells' NMOS became
+  PMOS, the outer regions were priced from the wrong strips, and 31 of the
+  536 FS/S cache entries with an N/FN mirror disagreed with it (a boundary
+  worth 0.13 µm priced 0.02 and dropped, one worth 0.14 priced 0.15). The
+  fillers now take the pair's vertical flip; the FS/S cache entries were
+  purged and remeasured. gcd's recorded figures stood (none of its FS-row
+  pairs hit a wrong entry); the ALU's hints were recomputed.
+- *Row shift* (`merge_boundary`): the trailing filler's DEF box was moved
+  twice, so a rewritten DEF placed it one slide too far left. Once now.
+- *Hierarchical instance names*: the instance was taken as the second
+  '/'-separated field of the provenance; OpenROAD writes hierarchical names
+  with '/' as the divider. `mergedcell.inst_of` takes what lies between the
+  first and last separator, and the probes use it.
+- *DEF component regex* accepted only `orient ;`; OpenROAD may write
+  `+ WEIGHT`, `+ REGION`, `+ PROPERTY`, `+ HALO` after the orientation, and
+  `+ COVER` as a status. All accepted now.
+- *Hint script*: the left partner of a slide is held FIRM too (the contract
+  said both, the script held one); a stale instance name skips its own block
+  instead of aborting the sourced script.
+- *plan_hints*: a placed macro absent from the LEFs no longer raises, it
+  breaks the run (as a filler does), and so does an instance of another row
+  whose box spans this one (a multi-height cell or hard macro), which the
+  abutment slide would otherwise have been asked to move onto.
+- *Merged macro pin DIRECTION* came from a name-suffix guess that wrote
+  conb's HI/LO, adders' SUM/COUT, clock-gates' GCLK and tristates' Z as
+  INPUT; `read_lef` now keeps DIRECTION and the macro copies it.
+- *Supply-pin dedupe* in the DEF rewriter worked per line; OpenROAD wraps a
+  net's pin list eight per line. Per statement now.
+- *Slide limit*: the "cuts coincide" exemption tested abutment; a pair
+  already side by side in x before the slide is no longer the slide's
+  fault (it gave a negative limit and a spurious refusal).
+- *set_vt*: a device swept into the implant window brings all its fingers.
+- *Finger spread*: the region beyond the deepest stack gate keeps its
+  distance to that gate (it was spread one pitch more than the gate).
+- *add_finger retry* worked on the snapshot it might have to restore.
+- *Probes*: a one-hour subprocess timeout would have killed the ALU's
+  routing (six hours now); the row-local dissolve restores moved labels on
+  failure; "instances moved" no longer counts the absorbed cells.
+
+Recorded, not fixed: DEF signal wires straddling a slid cell are torn in the
+routed-DEF dissolve (only wholly-inside segments follow the cell) — the
+topology guard catches it, and the pre-route hand-off has no signal wires;
+and a mirrored rectangle that straddles a stack gate's inward edge is
+stretched by the spread, which is what a diffusion strip or a bar over the
+stack should do.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 

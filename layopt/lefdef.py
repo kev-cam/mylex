@@ -40,6 +40,7 @@ class LefVia:
 class LefPin:
     name: str
     use: str = "SIGNAL"
+    direction: str = "INPUT"
     ports: List[Tuple[str, Tuple[float, float, float, float]]] = field(default_factory=list)
 
 
@@ -136,6 +137,7 @@ def read_lef(path: str, lef: Optional[Lef] = None) -> Lef:
                         if not s:
                             continue
                         if s[0] == "USE": P.use = s[1]
+                        elif s[0] == "DIRECTION": P.direction = " ".join(s[1:])
                         elif s[0] == "LAYER": cur = s[1]
                         elif s[0] == "RECT" and cur:
                             P.ports.append((cur, tuple(float(v) for v in s[1:5])))

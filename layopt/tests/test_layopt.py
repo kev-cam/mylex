@@ -488,9 +488,10 @@ END DESIGN"""
         text = open(tcl).read()
         assert text.count("setOrient") == sum(1 for h in hints if h.flipped)
         assert text.count("setLocation") == sum(1 for h in hints if h.moved)
-        assert text.count("FIRM") == n == sum(1 for h in hints if h.flipped or h.moved)
+        # both cells of an abutment are held: the one that moved and the one it abuts
+        assert text.count("FIRM") == n == sum(1 for h in hints if h.flipped or h.moved or h.partner_right), (text.count("FIRM"), n)
         placer.write_json(hints, os.path.join(td, "h.json"))
-        print("  buf_4 | buf_4: as placed %d strips, policy %d (%s | %s), b slides %.2f um; tcl touches %d" % (
+        print("  buf_4 | buf_4: as placed %d strips, policy %d (%s | %s), b slides %.2f um; tcl holds %d cells" % (
             as_placed, chosen, a.orient_pref, b.orient_pref, (b.x_now - b.x_pref) / 1000.0, n))
 
 

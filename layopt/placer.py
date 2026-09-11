@@ -135,7 +135,10 @@ END DESIGN""" % (w, len(cells), comps, " ".join("( u%d VPWR )" % i for i in rang
         if key in self._slide:
             return self._slide[key]
         wa = self.lef.macros[ma].size[0]; P = ma[:ma.rfind("__") + 2]
-        fl = self.layout_of([(P + "fill_4", 0.0, "N"), (ma, 1.84, oa), (mb, 1.84 + wa, ob), (P + "fill_8", 1.84 + wa + self.lef.macros[mb].size[0], "N")])
+        # the guard fillers take the pair's vertical flip: an N filler's nwell overhangs its
+        # box by 0.19 um and, beside a flipped cell, would land on that cell's NMOS strip
+        fo = "FS" if oa in ("FS", "S") else "N"
+        fl = self.layout_of([(P + "fill_4", 0.0, fo), (ma, 1.84, oa), (mb, 1.84 + wa, ob), (P + "fill_8", 1.84 + wa + self.lef.macros[mb].size[0], fo)])
         ex = extract.extract(fl, self.tech)
         a = next(r.prov for r in fl.rects if "/u1/" in r.prov); b = next(r.prov for r in fl.rects if "/u2/" in r.prov)
         try:
@@ -211,16 +214,27 @@ def plan_hints(def_path: str, lefs: Sequence[str], gds_lib: str, tech: Tech, abu
     F = faces or Faces(lefs, gds_lib, tech)
     d = lefdef.read_def(def_path)
     comps = [c for c in d.components if c.placed]
-    width = {m: int(round(F.lef.macros[m].size[0] * d.dbu_per_um)) for m in {c.macro for c in comps}}
+    width = {m: int(round(F.lef.macros[m].size[0] * d.dbu_per_um)) for m in {c.macro for c in comps} if m in F.lef.macros}
+    height = {m: int(round(F.lef.macros[m].size[1] * d.dbu_per_um)) for m in width}
     rows: Dict[int, List[lefdef.DefComponent]] = defaultdict(list)
     for c in comps:
         rows[c.y].append(c)
+    row_h = min(height.values()) if height else 0
+    # instances placed at another y whose box still spans this row (multi-height cells, hard
+    # macros, anything whose LEF is missing) break runs where they stand
+    def spanning(y):
+        out = []
+        for c in comps:
+            h = height.get(c.macro, 0)
+            if c.y != y and h > row_h and c.y < y + row_h and c.y + h > y:
+                out.append(c)
+        return out
     hints: List[Hint] = []
     for y, cs in sorted(rows.items()):
-        cs.sort(key=lambda c: c.x)
+        cs = sorted(cs + spanning(y), key=lambda c: c.x)
         runs: List[List[lefdef.DefComponent]] = [[]]
         for c in cs:
-            if is_filler(c.macro) or c.macro not in width:
+            if is_filler(c.macro) or c.macro not in width or c.y != y:
                 if runs[-1]:
                     runs.append([])
                 continue
@@ -278,25 +292,29 @@ def write_openroad_tcl(hints: Sequence[Hint], path: str, firm: bool = True) -> i
     lines = ["# layopt placer hints: flips and abutments for the boundary dissolve (layopt/placer.py)",
              "set __blk [ord::get_db_block]"]
     for h in hints:
-        if not (h.flipped or h.moved):
+        if not (h.flipped or h.moved or h.partner_right):
             continue
         n += 1
         lines.append("set __i [$__blk findInst {%s}]" % h.inst)
+        lines.append('if {$__i == "NULL"} { puts "layopt hints: no instance %s" } else {' % h.inst)     # a stale name skips its own block only
         if h.flipped:
-            lines.append("$__i setOrient %s" % DEF_TO_ODB.get(h.orient_pref, h.orient_pref))
+            lines.append("  $__i setOrient %s" % DEF_TO_ODB.get(h.orient_pref, h.orient_pref))
         # odb keeps the cell ORIGIN on setOrient, so a mirrored cell's box moves by its
         # width; setLocation places the box's lower-left, so it follows every flip too
         if h.flipped or h.moved:
-            lines.append("$__i setLocation %d %d" % (h.x_pref, h.y))
+            lines.append("  $__i setLocation %d %d" % (h.x_pref, h.y))
         if firm:
-            lines.append("$__i setPlacementStatus FIRM")
+            lines.append("  $__i setPlacementStatus FIRM")
+        lines.append("}")
         tags = []
         if h.flipped:
             tags.append("flip %s->%s" % (h.orient_now, h.orient_pref))
         if h.moved:
             tags.append("slide %.3f um left to abut %s" % ((h.x_now - h.x_pref) / 1000.0, h.partner_left))
-        lines[-1 if not firm else -2] += "   ;# " + ", ".join(tags)
-    lines.append('puts "layopt hints: %d cells flipped or moved"' % n)
+        if h.partner_right and not h.moved:
+            tags.append("%s abuts on its right" % h.partner_right)
+        lines.append("# " + ", ".join(tags))
+    lines.append('puts "layopt hints: %d cells flipped, moved or held"' % n)
     with open(path, "w") as fh:
         fh.write("\n".join(lines) + "\n")
     return n

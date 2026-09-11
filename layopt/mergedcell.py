@@ -34,6 +34,7 @@ class MergedCell:
     box: Tuple[int, int, int, int]                 # flat dbu
     pins: Dict[str, List[Tuple[str, Tuple[int, int, int, int]]]] = field(default_factory=dict)   # pin -> [(lef layer, rect dbu, macro-local)]
     pin_use: Dict[str, str] = field(default_factory=dict)
+    pin_dir: Dict[str, str] = field(default_factory=dict)       # DIRECTION from the cell's LEF
     obs: List[Tuple[str, Tuple[int, int, int, int]]] = field(default_factory=list)
     rects: List[FlatRect] = field(default_factory=list)          # macro-local geometry, all layers
     pin_map: Dict[Tuple[str, str], str] = field(default_factory=dict)   # (inst, pin) -> merged pin
@@ -45,20 +46,21 @@ class MergedCell:
         L = tech.layers
         inv = {v: k for k, v in L.items()}
         comps = {c.inst: c for c in d.components}
-        insts = [p.split("/")[1] for p in provs]
+        insts = [inst_of(p) for p in provs]
         boxes = [fl.boxes[p] for p in provs]
         box = (min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes))
         ox, oy = box[0], box[1]
         mc = MergedCell(name, insts, box)
         pin_rects: Dict[Tuple[int, int], List[Tuple[int, int, int, int]]] = {}
         for prov, bx in zip(provs, boxes):
-            inst = prov.split("/")[1]
+            inst = inst_of(prov)
             c = comps[inst]
             ref, off = lefdef.place_transform(lef, c.macro, c.orient, bx[0], bx[1])
             for pname, pin in lef.macros[c.macro].pins.items():
                 merged_name = pname if pname in SUPPLY_PINS else "%s_%s" % (inst, pname)
                 mc.pin_map[(inst, pname)] = merged_name
                 mc.pin_use[merged_name] = pin.use
+                mc.pin_dir[merged_name] = getattr(pin, "direction", "INPUT")
                 mc.pins.setdefault(merged_name, [])
                 for lname, (a, b, c2, e) in pin.ports:
                     # every port is kept (the well pins VPB/VNB sit on nwell/pwell); only
@@ -90,7 +92,7 @@ class MergedCell:
         for pname in sorted(self.pins):
             use = self.pin_use.get(pname, "SIGNAL")
             out.append("  PIN %s" % pname)
-            out.append("    DIRECTION %s ;" % ("INOUT" if use in ("POWER", "GROUND") else "INPUT" if not pname.endswith(("_X", "_Y", "_Q", "_Q_N")) else "OUTPUT"))
+            out.append("    DIRECTION %s ;" % ("INOUT" if use in ("POWER", "GROUND") else self.pin_dir.get(pname, "INPUT")))
             out.append("    USE %s ;" % use)
             if use in ("POWER", "GROUND"):
                 out.append("    SHAPE ABUTMENT ;")
@@ -113,6 +115,13 @@ class MergedCell:
         fl = FlatLayout(dbu_um=dbu_um, top=self.name)
         fl.rects = list(self.rects)
         return fl
+
+
+def inst_of(prov: str) -> str:
+    """The DEF instance name in a def2flat provenance 'design/inst/macro' -- the
+    instance may itself contain '/' (OpenROAD writes hierarchical names with the
+    divider), so it is what lies between the first and the last separator."""
+    return prov.split("/", 1)[1].rsplit("/", 1)[0]
 
 
 def lef_library(cells: Sequence[MergedCell], path: str, dbu_um: float = 0.001) -> None:
@@ -155,9 +164,11 @@ def rewrite_def(def_text: str, d: lefdef.Def, fl: FlatLayout, cells: Sequence[Me
     lines = def_text.split("\n")
     out = []
     in_comp = in_nets = False
+    seen = set()
     n_comp = sum(1 for c in d.components) - len(absorbed) + len(cells)
-    boxes = {p.split("/")[1]: b for p, b in fl.boxes.items()}
-    comp_re = re.compile(r"^(\s*-\s+)(\S+)(\s+\S+.*?\+\s+(?:PLACED|FIXED)\s+\(\s*)(-?\d+)(\s+)(-?\d+)(\s*\)\s*)(\S+)(\s*;)")
+    boxes = {inst_of(p): b for p, b in fl.boxes.items()}
+    # '- name macro [+ SOURCE x] + PLACED|FIXED|COVER ( x y ) orient [+ WEIGHT n | + REGION r | + PROPERTY .. | + HALO ..] ;'
+    comp_re = re.compile(r"^(\s*-\s+)(\S+)(\s+\S+.*?\+\s+(?:PLACED|FIXED|COVER)\s+\(\s*)(-?\d+)(\s+)(-?\d+)(\s*\)\s*)(\S+)(.*;)")
     pin_re = re.compile(r"\(\s*(\S+)\s+(\S+)\s*\)")
     for ln in lines:
         st = ln.strip()
@@ -181,6 +192,8 @@ def rewrite_def(def_text: str, d: lefdef.Def, fl: FlatLayout, cells: Sequence[Me
         elif st.startswith("END NETS") or st.startswith("END SPECIALNETS"):
             in_nets = False
         if in_nets:
+            if st.startswith("- "):
+                seen = set()                 # a new net statement (its pin list may wrap over several lines)
             def sub(mm):
                 inst, pin = mm.group(1), mm.group(2)
                 if inst in absorbed:
@@ -189,7 +202,6 @@ def rewrite_def(def_text: str, d: lefdef.Def, fl: FlatLayout, cells: Sequence[Me
                 return mm.group(0)
             ln = pin_re.sub(sub, ln)
             # a supply pin now listed twice for one merged instance: keep one
-            seen = set()
             def dedupe(mm):
                 k = mm.group(0)
                 if k in seen and any(k.endswith(" %s )" % s) for s in SUPPLY_PINS):
