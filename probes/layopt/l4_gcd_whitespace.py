@@ -10,7 +10,8 @@ topology + delta-DRC guard, and report the Elmore delay of the cell's output
 net before/after with R_drv scaled by 1/W (receivers' Cin from their gate
 area at 8.5 fF/um^2).
 
-Usage: l4_gcd_whitespace.py [--def path] [--max N] [--only inst1,inst2]
+Usage: l4_gcd_whitespace.py [--def path] [--max N] [--only inst1,inst2] [--local | --global]
+(--local, the default for a DEF other than gcd's: each candidate judged on its three-row window)
 """
 import copy
 import glob
@@ -103,12 +104,21 @@ def main():
     d = lefdef.read_def(DEF)
     sizes = {m.name: int(round(m.size[0] * 1000)) for m in lef.macros.values()}
     t0 = time.time()
+    local = "--local" in sys.argv or ("--global" not in sys.argv and "gcd" not in os.path.basename(DEF))
     fl = lefdef.def2flat(DEF, lefs, "", T, gds_lib=os.path.join(ORFS, "sky130_fd_sc_hd.gds"))
-    ex = extract.extract(fl, T)
-    sig = ex.signature()
-    base = {drc.key(v) for v in drc.check(fl, ex)}
-    print("== %s: %d instances, %d rects, %d devices; baseline rule flags %d (%.0fs)" % (
-        os.path.basename(DEF), len(d.components), len(fl.rects), len(ex.devices), len(base), time.time() - t0))
+    if local:
+        # a large design: each candidate is judged on the three-row window around it (a deep
+        # copy of the band plus every DEF wire and label, so nets keep their names); the
+        # whole layout is never extracted
+        ex = sig = base = None
+        print("== %s: %d instances, %d rects; candidates judged on three-row windows (%.0fs to flatten)" % (
+            os.path.basename(DEF), len(d.components), len(fl.rects), time.time() - t0))
+    else:
+        ex = extract.extract(fl, T)
+        sig = ex.signature()
+        base = {drc.key(v) for v in drc.check(fl, ex)}
+        print("== %s: %d instances, %d rects, %d devices; baseline rule flags %d (%.0fs)" % (
+            os.path.basename(DEF), len(d.components), len(fl.rects), len(ex.devices), len(base), time.time() - t0))
     cands = candidates(lef, d, sizes)
     only = set(sys.argv[sys.argv.index("--only") + 1].split(",")) if "--only" in sys.argv else None
     if only:
@@ -117,44 +127,62 @@ def main():
     print("   %d logic cells have a fill_4/fill_8 flush on their right; trying %d" % (len(cands), min(maxc, len(cands))))
     results = []
     for a, b in cands[:maxc]:
-        inst = a.inst
-        net = output_net(ex, inst)
-        wp0, r0, d0 = net_delay(ex, net, inst) if net is not None else (0, 0, {})
-        # both orders: a series stack's far-gate bridge needs the field gap's met1 before a
-        # PMOS jumper takes it, and vice versa; keep whichever order legalizes more fingers
-        best_state = None
-        for order in (("p", "n"), ("n", "p")):
-            st = attempt_order(fl, ex, base, sig, inst, a, b, net, order)
-            if best_state is None or len(st[2]) > len(best_state[2]):
-                best_state = st
-            if len(best_state[2]) == 2:
-                break
-        fl2, touched, done = best_state
-        if not done:
-            continue
-        ex3 = extract.extract(fl2, T)
-        legal = True
-        wp1, r1, d1 = (0, 0, {})
-        try:
-            wp1, r1, d1 = net_delay(ex3, net, inst) if net is not None else (0, 0, {})
-        except StopIteration:
-            pass
-        devs = ["%s W=%.2f f=%d" % (x.kind, x.w, x.fingers) for x in ex3.devices if x.prov.split("/")[1] == inst]
-        print("      result (%s): %s" % ("+".join(done), "; ".join(devs)))
-        # the power price: switched capacitance of the nets the cell touches, before and after
-        touched_nets0 = {n for x in ex.devices if x.prov.split("/")[1] == inst for n in (x.g, x.s, x.d) if ex.nets[n].name not in T.supply_names}
-        names = {ex.nets[n].name for n in touched_nets0}
-        touched_nets1 = {i for i, n in ex3.nets.items() if n.name in names}
-        e0 = power.energy_fJ(ex, touched_nets0); e1 = power.energy_fJ(ex3, touched_nets1)
-        print("      switched energy of the cell's nets: %.1f -> %.1f fJ/transition (+%.1f, %+.0f%%)" % (e0, e1, e1 - e0, 100 * (e1 - e0) / e0 if e0 else 0))
-        if net is not None and d0 and d1:
-            print("      output net %s: PMOS W %.2f -> %.2f um, R_rise/R_fall %.0f/%.0f -> %.0f/%.0f ohm; worst-edge Elmore to %d receivers max %.1f -> %.1f ps, mean %.1f -> %.1f ps" % (
-                ex.nets[net].name, wp0, wp1, r0[0], r0[1], r1[0], r1[1], len(d0), max(d0.values()), max(d1.values()),
-                sum(d0.values()) / len(d0), sum(d1.values()) / len(d1)))
-        results.append((inst, legal))
-        if legal and not any(r[1] for r in results[:-1]):
-            gds.write_flat(fl2, os.path.join(EVID, "gcd_%s_fingered.gds" % inst.strip("_")))
+        if local:
+            prov_a = next(p for p in fl.boxes if "/%s/" % a.inst in p)
+            bx = fl.boxes[prov_a]
+            y0, y1 = bx[1] - 2720, bx[3] + 2720
+            fw = gds.FlatLayout(dbu_um=fl.dbu_um, top=fl.top)
+            fw.rects = copy.deepcopy([r for r in fl.rects if (r.y1 > y0 and r.y0 < y1) or "/net:" in r.prov])
+            fw.texts = copy.deepcopy(list(getattr(fl, "texts", [])))
+            fw.boxes = {p_: b_ for p_, b_ in fl.boxes.items() if b_[3] > y0 and b_[1] < y1}
+            tw = time.time()
+            exw = extract.extract(fw, T); sigw = exw.signature(); basew = {drc.key(v) for v in drc.check(fw, exw)}
+            print("   [window %d rects, %d devices, %.0fs]" % (len(fw.rects), len(exw.devices), time.time() - tw))
+            evaluate(fw, exw, basew, sigw, a, b, results, write_gds=False)
+        else:
+            evaluate(fl, ex, base, sig, a, b, results, write_gds=True)
     print("   legal moves: %d of %d attempted" % (sum(1 for _, l in results if l), len(results)))
+
+
+def evaluate(fl, ex, base, sig, a, b, results, write_gds=True):
+    """One candidate cell on the given layout (the whole design, or its window)."""
+    inst = a.inst
+    net = output_net(ex, inst)
+    wp0, r0, d0 = net_delay(ex, net, inst) if net is not None else (0, 0, {})
+    # both orders: a series stack's far-gate bridge needs the field gap's met1 before a
+    # PMOS jumper takes it, and vice versa; keep whichever order legalizes more fingers
+    best_state = None
+    for order in (("p", "n"), ("n", "p")):
+        st = attempt_order(fl, ex, base, sig, inst, a, b, net, order)
+        if best_state is None or len(st[2]) > len(best_state[2]):
+            best_state = st
+        if len(best_state[2]) == 2:
+            break
+    fl2, touched, done = best_state
+    if not done:
+        return
+    ex3 = extract.extract(fl2, T)
+    legal = True
+    wp1, r1, d1 = (0, 0, {})
+    try:
+        wp1, r1, d1 = net_delay(ex3, net, inst) if net is not None else (0, 0, {})
+    except StopIteration:
+        pass
+    devs = ["%s W=%.2f f=%d" % (x.kind, x.w, x.fingers) for x in ex3.devices if x.prov.split("/")[1] == inst]
+    print("      result (%s): %s" % ("+".join(done), "; ".join(devs)))
+    # the power price: switched capacitance of the nets the cell touches, before and after
+    touched_nets0 = {n for x in ex.devices if x.prov.split("/")[1] == inst for n in (x.g, x.s, x.d) if ex.nets[n].name not in T.supply_names}
+    names = {ex.nets[n].name for n in touched_nets0}
+    touched_nets1 = {i for i, n in ex3.nets.items() if n.name in names}
+    e0 = power.energy_fJ(ex, touched_nets0); e1 = power.energy_fJ(ex3, touched_nets1)
+    print("      switched energy of the cell's nets: %.1f -> %.1f fJ/transition (+%.1f, %+.0f%%)" % (e0, e1, e1 - e0, 100 * (e1 - e0) / e0 if e0 else 0))
+    if net is not None and d0 and d1:
+        print("      output net %s: PMOS W %.2f -> %.2f um, R_rise/R_fall %.0f/%.0f -> %.0f/%.0f ohm; worst-edge Elmore to %d receivers max %.1f -> %.1f ps, mean %.1f -> %.1f ps" % (
+            ex.nets[net].name, wp0, wp1, r0[0], r0[1], r1[0], r1[1], len(d0), max(d0.values()), max(d1.values()),
+            sum(d0.values()) / len(d0), sum(d1.values()) / len(d1)))
+    results.append((inst, legal))
+    if write_gds and legal and not any(r[1] for r in results[:-1]):
+        gds.write_flat(fl2, os.path.join(EVID, "gcd_%s_fingered.gds" % inst.strip("_")))
 
 
 def attempt_order(fl, ex, base, sig, inst, a, b, net, order):
