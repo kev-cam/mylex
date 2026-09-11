@@ -326,6 +326,18 @@ each, 0.43 µm in all (0.1 % of 518 µm of cell width); `_240_|_241_` applied:
 0.075 µm, no new violation, KLayout isomorphic; four refuse for want of a filler
 beyond the sliding cell. The placer never put two sources face to face.
 
+## Row windows for large designs (`--local` in `l4_gcd_whitespace.py` and `l4_merged_cell.py`)
+
+The ALU's routed baseline has 850k rectangles; extracting and rule-checking
+the whole of it for every candidate took 15 minutes a cell. Both probes now
+judge each candidate on the three-row window around it (the band's rects,
+the supply nets' DEF wires from anywhere so their labels name the supplies,
+signal wires only where they cross the band). The finger probe copies the
+window and reports on it; the dissolve probe's window shares the layout's
+rect objects, so an accepted dissolve is already in the full layout and a
+refused one is restored. On gcd both give exactly the global verdicts
+(`_121_`, `_257_`; 13 of 14 boundaries, 2.92 µm) at 9-30 s a window.
+
 ## The dissolved group as a router cell (`l4_merged_cell.py`, `layopt/mergedcell.py`)
 
 Every hinted boundary that dissolves legally is dissolved on the hinted
