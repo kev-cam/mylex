@@ -59,8 +59,9 @@ def row_window(fl, y0, y1):
 def transplant(fl, sub, before_objs):
     """After a move on `sub`: rects `sub` dropped leave `fl`, rects it added join it, boxes follow."""
     now = set(id(r) for r in sub.rects)
-    dropped = set(id(r) for r in before_objs) - now
-    added = [r for r in sub.rects if id(r) not in set(id(x) for x in before_objs)]
+    before = set(id(x) for x in before_objs)
+    dropped = before - now
+    added = [r for r in sub.rects if id(r) not in before]
     if dropped:
         fl.rects = [r for r in fl.rects if id(r) not in dropped]
     fl.rects += added
