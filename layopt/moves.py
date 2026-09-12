@@ -912,17 +912,17 @@ def merge_boundary(fl: FlatLayout, ex: Extraction, inst_a: str, inst_b: str, shi
         # off the site grid is not routable in this flow: its pins leave the track grid
         # and the router's access pads on abutting cells' pins then violate li spacing
         # (36 such on the ALU, every one at an abutment of two cells slid by the same
-        # sub-site amount).  What a dissolve frees below a site accumulates per row
-        # (fl.row_slack) until a whole site can be given back; the remainder is a gap
-        # after the merged group, a filler's to take.  (Rail cuts with a twin in
-        # another row stay.)
+        # sub-site amount).  What a dissolve frees below a site stays as a gap after
+        # the merged group, a filler's to take; it cannot be pooled with another
+        # boundary's remainder, since the cells between them would have to move too
+        # (fl.row_slack tallies it per row, for the record).  Rail cuts with a twin in
+        # another row stay.
         site = nm(tech.site_um) if tech.site_um else 0
         if site:
+            shift = (delta // site) * site
             slack = getattr(fl, "row_slack", {}); fl.row_slack = slack
             key = (box_b[1], box_b[3])
-            acc = slack.get(key, 0) + delta
-            shift = (acc // site) * site
-            slack[key] = acc - shift
+            slack[key] = slack.get(key, 0) + delta - shift
         else:
             shift = delta
         LAST_ROW_SHIFT[0] = shift

@@ -346,7 +346,7 @@ macro (CLASS CORE; pins renamed `<inst>_<pin>`, supplies and wells merged, a pin
 port being all the li1/met1 of its net, the rest obstructions) and a GDS cell; the DEF is rewritten around them
 (`flow_route_merged.tcl` in `gcd/` routes it); the routed result is flattened
 with library plus merged cells and compared with the original routed gcd.
-gcd: 13 of 14 boundaries dissolved (2.92 µm, 62 s on three-row windows), 13 macros, 37 other instances moved; routed to completion, 0 DRC, 5586 µm of wire (base 5566); device-level topology equal to the original routed gcd; KLayout isomorphic. Evidence: `evidence/gcd_merged.lef`, `gcd_merged.def`,
+gcd: 12 of 14 boundaries dissolved (2.73 µm freed, 0.46 µm given back as a whole site, 57 s on three-row windows), 12 macros, 5 other instances moved; routed to completion, 0 DRC, 5578 µm of wire (base 5566); device-level topology equal to the original routed gcd; KLayout isomorphic. Evidence: `evidence/gcd_merged.lef`, `gcd_merged.def`,
 `l4_merged_cell.log`, `gcd_merged_routed.gds`.
 
 ## The placer hand-off (`l4_placer_handoff.py`, `layopt/placer.py`)

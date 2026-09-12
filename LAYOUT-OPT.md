@@ -1142,7 +1142,7 @@ dissolve left it — off the site grid, which the router does not mind and the
 FIXED status keeps a later legalisation from touching. `def2flat` reads a
 list of GDS libraries now, the cell library and the merged cells together, so
 the routed result can be flattened and extracted like any other. On gcd's
-hinted placement: 13 of 14 hinted boundaries dissolve (2.92 µm given back; the 14th is the re-keyed li corner pair of §2 above and is not taken), 13 merged macros of 4.5–12.3 µm with 8–12 pins each, 37 other instances moved by the row shifts; OpenROAD routes the rewritten DEF to completion with 0 DRC violations and 5586 µm of wire (base 5566; 5559 with the first, BLOCK-class macros); the routed result flattened with library plus merged cells extracts to 2472 devices and 2102 nets, its device-level topology EQUAL to the original routed gcd, and KLayout agrees (2472/2472 devices, 1353/1353 nets, isomorphic). The chain placer → hints → dissolve → merged cells → router → extraction closes on a real design with the netlist intact. The 2.92 µm is what the row shifts freed at the row ends, not yet reclaimed by the placer; giving it back to the placer is the next step, and a larger design than gcd the one after.
+hinted placement: 13 of 14 hinted boundaries dissolve (2.92 µm given back; the 14th is the re-keyed li corner pair of §2 above and is not taken), 12 merged macros with 8–12 pins each; with the row shift quantised to sites (see the ALU entry) 2.73 µm are freed and 0.46 µm given back as one whole site (the one boundary that freed more than a site), 2.62 µm staying below a site in nine rows, five other instances moved; OpenROAD routes the rewritten DEF to completion with 0 DRC violations and 5578 µm of wire (base 5566); the routed result flattened with library plus merged cells extracts to 2472 devices and 2102 nets, its device-level topology EQUAL to the original routed gcd, and KLayout agrees (2472/2472 devices, 1353/1353 nets, isomorphic). The chain placer → hints → dissolve → merged cells → router → extraction closes on a real design with the netlist intact. The 2.92 µm is what the row shifts freed at the row ends, not yet reclaimed by the placer; giving it back to the placer is the next step, and a larger design than gcd the one after.
 
 **A review of the placer and merged-cell code (2026-09-11).** Seven
 reviewers, one per dimension, each finding tried by three refuters; 24
@@ -1221,14 +1221,19 @@ shift had moved by the same sub-site amount (0.10 to 0.55 µm): a cell off
 the site grid has its pins off the track grid, and the router's access pad
 on one cell's edge pin then violates li spacing against the neighbour's.
 The library's cells abut legally *because* they sit on sites. So the row
-shift now moves standard cells by whole sites only: what a dissolve frees
-below a site accumulates per row (`FlatLayout.row_slack`) until a whole
-site can be given back, the remainder staying as a gap after the merged
-group for a filler to take. The merged group itself stays where the
+shift now moves standard cells by whole sites only, and what a dissolve
+frees below a site stays as a gap after the merged group for a filler to
+take. It cannot be pooled with another boundary's remainder in the same
+row — the first version did that, and on gcd it moved a row by a site
+behind a boundary that had freed 0.195 µm, onto the cell next to it; the
+cells between two boundaries would have to move too, which is the placer's
+job, not a boundary move's. The merged group itself stays where the
 dissolve put it, off-grid and FIXED, which the router accepts. This is the
-honest arithmetic of the dissolve on a placed row: gains are quantised to
-0.46 µm per row, and a row with one 0.15 µm boundary gives nothing back
-until another joins it. ALU-QUANT
+honest arithmetic of the dissolve on a placed row: a boundary gives back
+whole sites only, so almost every one gives back nothing on its own, and
+the value of the dissolve is what a placer makes of the merged cells and
+the gaps beside them — the "hand the freed space back to the placer" step
+that is still open. ALU-QUANT
 
 Two faults the ALU exposed that gcd could not. The pre-route DEF labels its
 supply nets on their first wire, which in this flow is a met5 strap, and an
