@@ -53,6 +53,9 @@ def row_window(fl, y0, y1):
     sub.rects = [r for r in fl.rects if (r.y1 > y0 and r.y0 < y1) or ("/net:" in r.prov and r.prov.rsplit(":", 1)[-1] in T.supply_names)]
     sub.texts = list(getattr(fl, "texts", []))
     sub.boxes = {p: b for p, b in fl.boxes.items() if b[3] > y0 and b[1] < y1}
+    if not hasattr(fl, "row_slack"):
+        fl.row_slack = {}
+    sub.row_slack = fl.row_slack                           # the per-row sub-site remainder is shared (same dict)
     return sub
 
 
@@ -100,7 +103,7 @@ def dissolve_local(fl, a_prov, b_prov, base_sig_cache):
         fl.boxes.update(boxes0)
         return False, slid, "slid %.3f um but %s, %d new violations -- not taken" % (slid, "topology kept" if ex2.signature() == sig0 else "topology CHANGED", len(nv))
     transplant(fl, sub, before_objs)
-    return True, slid, "dissolved, slid %.3f um" % slid
+    return True, slid, "dissolved, slid %.3f um; row moved %.2f um" % (slid, mv.LAST_ROW_SHIFT[0] / 1000.0)
 
 
 def main():
@@ -121,13 +124,13 @@ def main():
             prov.setdefault(mergedcell.inst_of(r.prov), r.prov)
     print("== 1. %s: %d rects, %d devices, %d hinted boundaries (%.0fs)" % (os.path.basename(hinted), len(fl.rects), len(ex.devices), len(pairs), time.time() - t0))
     # 2. dissolve cumulatively, each boundary guarded on the running layout
-    accepted = []; gained = 0.0
+    accepted = []; gained = 0.0; moved_um = 0.0
     for a, b in pairs:
         if local:
             ok, slid, msg = dissolve_local(fl, prov[a], prov[b], None)
             print("   %s|%s: %s" % (a, b, msg))
             if ok:
-                accepted.append((a, b)); gained += slid
+                accepted.append((a, b)); gained += slid; moved_um += mv.LAST_ROW_SHIFT[0] / 1000.0
             continue
         trial = copy.deepcopy(fl); ex_t = extract.extract(trial, T)
         try:
@@ -139,9 +142,11 @@ def main():
         if ex2.signature() != sig or nv:
             print("   %s|%s: slid %.3f um but %s, %d new violations -- not taken" % (a, b, slid, "topology kept" if ex2.signature() == sig else "topology CHANGED", len(nv))); continue
         fl = trial; base = {rules.key(v) for v in rules.check(fl, ex2)}
-        accepted.append((a, b)); gained += slid
+        accepted.append((a, b)); gained += slid; moved_um += mv.LAST_ROW_SHIFT[0] / 1000.0
         print("   %s|%s: dissolved, slid %.3f um" % (a, b, slid))
-    print("== 2. %d of %d boundaries dissolved, %.2f um given back (%.0fs%s)" % (len(accepted), len(pairs), gained, time.time() - t0, "; guarded on three-row windows" if local else ""))
+    slack = getattr(fl, "row_slack", {})
+    print("== 2. %d of %d boundaries dissolved, %.2f um freed, %.2f um of it given back as whole sites (%.2f um left below a site in %d rows) (%.0fs%s)" % (
+        len(accepted), len(pairs), gained, moved_um, sum(slack.values()) / 1000.0, sum(1 for v in slack.values() if v), time.time() - t0, "; guarded on three-row windows" if local else ""))
     if local:
         ex = extract.extract(fl, T)          # the whole layout once, for the record
         print("   whole layout after the dissolves: %d rects, %d devices, topology %s the base" % (len(fl.rects), len(ex.devices), "EQUAL to" if ex.signature() == sig else "DIFFERENT from"))

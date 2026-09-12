@@ -1214,6 +1214,22 @@ utilization past 100 %). Everything gcd went through, at scale:
 | dissolve on the hinted placement (row-local) | 122 of 188 boundaries, 31.9 µm given back, 119 merged macros, 2062 instances moved by the row shifts; the whole layout re-extracted equal to the base |
 | routing with the merged cells | ALU-ROUTE |
 
+The residual after the port refinement was 36 li1 spacing violations that
+would not converge, and none of them was within a micrometre of a merged
+macro. Every one sat at the abutment of two standard cells that the row
+shift had moved by the same sub-site amount (0.10 to 0.55 µm): a cell off
+the site grid has its pins off the track grid, and the router's access pad
+on one cell's edge pin then violates li spacing against the neighbour's.
+The library's cells abut legally *because* they sit on sites. So the row
+shift now moves standard cells by whole sites only: what a dissolve frees
+below a site accumulates per row (`FlatLayout.row_slack`) until a whole
+site can be given back, the remainder staying as a gap after the merged
+group for a filler to take. The merged group itself stays where the
+dissolve put it, off-grid and FIXED, which the router accepts. This is the
+honest arithmetic of the dissolve on a placed row: gains are quantised to
+0.46 µm per row, and a row with one 0.15 µm boundary gives nothing back
+until another joins it. ALU-QUANT
+
 Two faults the ALU exposed that gcd could not. The pre-route DEF labels its
 supply nets on their first wire, which in this flow is a met5 strap, and an
 unrouted signal net through any component pin port — for a net driven by a

@@ -908,24 +908,43 @@ def merge_boundary(fl: FlatLayout, ex: Extraction, inst_a: str, inst_b: str, shi
         if box_b[0] <= tx.xy[0] <= box_b[2] and cy0 <= tx.xy[1] <= cy1:
             tx.xy = (tx.xy[0] - delta, tx.xy[1])
     if shift_row:
-        # 2'. the rest of the row follows B (rail cuts with a twin in another row stay)
+        # 2'. the rest of the row follows B -- by whole placement sites.  A standard cell
+        # off the site grid is not routable in this flow: its pins leave the track grid
+        # and the router's access pads on abutting cells' pins then violate li spacing
+        # (36 such on the ALU, every one at an abutment of two cells slid by the same
+        # sub-site amount).  What a dissolve frees below a site accumulates per row
+        # (fl.row_slack) until a whole site can be given back; the remainder is a gap
+        # after the merged group, a filler's to take.  (Rail cuts with a twin in
+        # another row stay.)
+        site = nm(tech.site_um) if tech.site_um else 0
+        if site:
+            slack = getattr(fl, "row_slack", {}); fl.row_slack = slack
+            key = (box_b[1], box_b[3])
+            acc = slack.get(key, 0) + delta
+            shift = (acc // site) * site
+            slack[key] = acc - shift
+        else:
+            shift = delta
+        LAST_ROW_SHIFT[0] = shift
         for p_ in movers:
+            if not shift:
+                break
             fixed_p = _twinned_rail_cuts(fl, ex, members[p_], s2n)
             for i in members[p_]:
                 if i in fixed_p:
                     continue
                 r = fl.rects[i]
-                fl.rects[i].rect = (r.x0 - delta, r.y0, r.x1 - delta, r.y1); touched.append(i)
+                fl.rects[i].rect = (r.x0 - shift, r.y0, r.x1 - shift, r.y1); touched.append(i)
             if p_ in getattr(fl, "boxes", {}):
-                bx = fl.boxes[p_]; fl.boxes[p_] = (bx[0] - delta, bx[1], bx[2] - delta, bx[3])
+                bx = fl.boxes[p_]; fl.boxes[p_] = (bx[0] - shift, bx[1], bx[2] - shift, bx[3])
             _settle_rail_cuts(fl, ex, members[p_], s2n, touched)
-        if fprov is not None:
+        if fprov is not None and shift:
             for i in members[fprov]:
                 r = fl.rects[i]
                 if r.x0 <= fx0 + 1 or r.layer in soft_layers:
-                    fl.rects[i].rect = (r.x0 - delta, r.y0, r.x1, r.y1); touched.append(i)
+                    fl.rects[i].rect = (r.x0 - shift, r.y0, r.x1, r.y1); touched.append(i)
             if fprov in getattr(fl, "boxes", {}):
-                bx = fl.boxes[fprov]; fl.boxes[fprov] = (bx[0] - delta, bx[1], bx[2], bx[3])
+                bx = fl.boxes[fprov]; fl.boxes[fprov] = (bx[0] - shift, bx[1], bx[2], bx[3])
     else:
         # 2. the filler grows toward B (its box with it)
         if fprov in getattr(fl, "boxes", {}):
@@ -966,6 +985,7 @@ def merge_boundary(fl: FlatLayout, ex: Extraction, inst_a: str, inst_b: str, shi
 
 
 LAST_MERGE_DELTA: List[int] = [0]
+LAST_ROW_SHIFT: List[int] = [0]       # dbu the rest of the row moved in the last shift_row dissolve (whole sites)
 LAST_MERGE_LIMIT: List[str] = [""]      # what bounded the last merge_boundary slide
 
 
