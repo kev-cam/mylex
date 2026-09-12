@@ -84,10 +84,15 @@ class MergedCell:
                         mc.obs.append((LEF_LAYER[ln], (pc[0] - ox, pc[1] - oy, pc[2] - ox, pc[3] - oy)))
         return mc
 
-    def lef_text(self, dbu_um: float = 0.001) -> str:
+    def lef_text(self, dbu_um: float = 0.001, lef_class: str = "CORE") -> str:
+        """`lef_class`: CORE makes the router treat the group as it treats a standard
+        cell (pin access on the pin shapes, no block-obstruction accounting); BLOCK
+        made OpenROAD's global router drop a guide onto li1 beside one of 119 macros
+        on the ALU and stop (DRT-0155).  The width is not a site multiple either way;
+        the instance is FIXED and nothing legalises it."""
         f = lambda v: "%.3f" % (v * dbu_um)
         w, h = self.box[2] - self.box[0], self.box[3] - self.box[1]
-        out = ["MACRO %s" % self.name, "  CLASS BLOCK ;", "  FOREIGN %s 0 0 ;" % self.name, "  ORIGIN 0 0 ;",
+        out = ["MACRO %s" % self.name, "  CLASS %s ;" % lef_class, "  FOREIGN %s 0 0 ;" % self.name, "  ORIGIN 0 0 ;",
                "  SIZE %s BY %s ;" % (f(w), f(h)), "  SYMMETRY X Y ;"]
         for pname in sorted(self.pins):
             use = self.pin_use.get(pname, "SIGNAL")
@@ -124,11 +129,11 @@ def inst_of(prov: str) -> str:
     return prov.split("/", 1)[1].rsplit("/", 1)[0]
 
 
-def lef_library(cells: Sequence[MergedCell], path: str, dbu_um: float = 0.001) -> None:
+def lef_library(cells: Sequence[MergedCell], path: str, dbu_um: float = 0.001, lef_class: str = "CORE") -> None:
     with open(path, "w") as fh:
         fh.write("VERSION 5.7 ;\nBUSBITCHARS \"[]\" ;\nDIVIDERCHAR \"/\" ;\n\n")
         for mc in cells:
-            fh.write(mc.lef_text(dbu_um) + "\n")
+            fh.write(mc.lef_text(dbu_um, lef_class) + "\n")
         fh.write("END LIBRARY\n")
 
 

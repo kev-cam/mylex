@@ -342,7 +342,7 @@ refused one is restored. On gcd both give exactly the global verdicts
 
 Every hinted boundary that dissolves legally is dissolved on the hinted
 pre-route placement (row mode, cumulatively); each merged group becomes a LEF
-macro (pins renamed `<inst>_<pin>`, supplies and wells merged, the rest
+macro (CLASS CORE; pins renamed `<inst>_<pin>`, supplies and wells merged, the rest
 obstructions) and a GDS cell; the DEF is rewritten around them
 (`flow_route_merged.tcl` in `gcd/` routes it); the routed result is flattened
 with library plus merged cells and compared with the original routed gcd.

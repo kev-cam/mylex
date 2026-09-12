@@ -1130,7 +1130,8 @@ re-keyed because one of them merged with the neighbour's strap
 `layopt/mergedcell.py`, `probes/layopt/l4_merged_cell.py`).** After a
 dissolve the pair is one piece of geometry on no legal site, and a router
 working from LEF knows nothing about it. `MergedCell.build` turns a group's
-flat geometry into a LEF MACRO (CLASS BLOCK; the two cells' pins in group
+flat geometry into a LEF MACRO (CLASS CORE — see the ALU entry for why not
+BLOCK; the two cells' pins in group
 coordinates, each renamed `<inst>_<pin>`, the supply and well pins merged
 into one each, every port kept including the nwell/pwell ports of VPB/VNB;
 every other li1/met1 shape an obstruction, pin shapes carved out) and a GDS
@@ -1210,7 +1211,26 @@ utilization past 100 %). Everything gcd went through, at scale:
 | hints | 179 flipped, 76 slid (115 µm of movement), 188 boundaries kept (85 two-strip, 103 one-strip) worth 45.1 µm; 24 slides declined as too long for their gain |
 | router's bill, base → hints | wire 164914 → 164793 µm (−0.07 %); WNS −5.56 → −5.54 ns; TNS −409.8 → −408.9 ns; DRC 0 → 0; placement check passes with 336 cells held |
 | fingers (row-local, 98 of the first 120 candidates of 726 reached in the 4-hour budget) | 98 of 98 cells take at least one finger, 82 both polarities; refusals per finger: 28 series-stack heads, 12 poly in the way, 8 no S/D jumper, 6 no bridge field, 1 foreign li; energy +0 % per cell (`evidence/l4_alu_whitespace.log`) |
-| dissolve on the hinted placement | ALU-DISSOLVE |
+| dissolve on the hinted placement (row-local) | 122 of 188 boundaries, 31.9 µm given back, 119 merged macros, 2062 instances moved by the row shifts; the whole layout re-extracted equal to the base |
+| routing with the merged cells | ALU-ROUTE |
+
+Two faults the ALU exposed that gcd could not. The pre-route DEF labels its
+supply nets on their first wire, which in this flow is a met5 strap, and an
+unrouted signal net through any component pin port — for a net driven by a
+tie cell that port *is* the rail, so the whole VDD rail of a row was named
+`br_trap_cause[1]` and every dissolve on that row failed on "mcon spacing".
+A net's label now sits on its lowest routing layer (the met1 rail), an
+unrouted net is labelled through the design's own PIN or an INPUT port, and
+the extractor keeps a supply name over a signal name on the same net. Then
+the merged macros as CLASS BLOCK: OpenROAD's global router dropped a guide
+onto li1 at a gcell beside one of the 119 macros where the net has no pin
+(net `_3085_`, four standard-cell pins, all elsewhere) and the detailed
+router refused it (DRT-0155); as CLASS CORE the same DEF routes, and gcd's
+13 macros route as CORE too (5586 µm of wire against 5559 as BLOCK, DRC 0,
+netlist equal, KLayout isomorphic). CORE is the default now: the router
+treats the group as a cell, pin access on the pin shapes and no
+block-obstruction accounting, and the off-site width is harmless because
+the instance is FIXED and nothing legalises it.
 
 What scale changed. Extracting and rule-checking the whole layout (850k
 rectangles, 30k devices) for every candidate took 15 minutes a cell, so

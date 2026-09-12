@@ -9,7 +9,7 @@ it; the routed result is flattened with the cell library plus the merged
 cells, extracted, and compared with the original routed gcd (device-level
 topology) and with KLayout.
 
-    python3 probes/layopt/l4_merged_cell.py [--name gcd] [--flow DIR] [--ref routed.def] [--no-route] [--local | --global]
+    python3 probes/layopt/l4_merged_cell.py [--name gcd] [--flow DIR] [--ref routed.def] [--no-route] [--local | --global] [--class CORE|BLOCK]
 
 `--local` (the default for designs other than gcd) applies and guards each
 dissolve on the three-row window around it, so a 4000-cell design costs
@@ -163,7 +163,8 @@ def main():
         cells.append(mc)
         print("   %s = %s: %.3f x %.3f um, %d pins, %d obstruction rects" % (mc.name, "+".join(ordered), (mc.box[2] - mc.box[0]) / 1000, (mc.box[3] - mc.box[1]) / 1000, len(mc.pins), len(mc.obs)))
     merged_lef = os.path.join(FLOW, "merged.lef"); merged_gds = os.path.join(FLOW, "merged.gds"); merged_def = os.path.join(FLOW, "merged.def")
-    mergedcell.lef_library(cells, merged_lef); mergedcell.gds_library(cells, merged_gds)
+    lef_class = sys.argv[sys.argv.index("--class") + 1] if "--class" in sys.argv else "CORE"
+    mergedcell.lef_library(cells, merged_lef, lef_class=lef_class); mergedcell.gds_library(cells, merged_gds)
     open(merged_def, "w").write(mergedcell.rewrite_def(open(hinted).read(), d, fl, cells, scale=1000.0 / d.dbu_per_um))
     absorbed = {i for mc in cells for i in mc.insts}
     moved = sum(1 for c in d.components if c.placed and c.inst not in absorbed and prov.get(c.inst) in fl.boxes and fl.boxes[prov[c.inst]][0] != c.x * 1000 // d.dbu_per_um)
