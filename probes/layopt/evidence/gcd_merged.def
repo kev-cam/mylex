@@ -59,7 +59,7 @@ NONDEFAULTRULES 1 ;
       + LAYER met5 WIDTH 1600 SPACING 3600
     ;
 END NONDEFAULTRULES
-COMPONENTS 282 ;
+COMPONENTS 281 ;
     - TAP_TAPCELL_ROW_0_0 sky130_fd_sc_hd__tapvpwrvgnd_1 + SOURCE DIST + FIXED ( 16100 2720 ) N ;
     - TAP_TAPCELL_ROW_0_1 sky130_fd_sc_hd__tapvpwrvgnd_1 + SOURCE DIST + FIXED ( 29900 2720 ) N ;
     - TAP_TAPCELL_ROW_0_2 sky130_fd_sc_hd__tapvpwrvgnd_1 + SOURCE DIST + FIXED ( 43700 2720 ) N ;
@@ -264,7 +264,6 @@ COMPONENTS 282 ;
     - _244_ sky130_fd_sc_hd__and2_0 + PLACED ( 4140 48960 ) FS ;
     - _245_ sky130_fd_sc_hd__a221o_1 + PLACED ( 7360 46240 ) N ;
     - _246_ sky130_fd_sc_hd__nor2_4 + PLACED ( 16560 62560 ) N ;
-    - _247_ sky130_fd_sc_hd__inv_8 + PLACED ( 21620 62560 ) N ;
     - _248_ sky130_fd_sc_hd__and2_1 + PLACED ( 15180 65280 ) FS ;
     - _249_ sky130_fd_sc_hd__a21oi_2 + PLACED ( 5060 68000 ) N ;
     - _250_ sky130_fd_sc_hd__o21ai_0 + PLACED ( 8280 65280 ) FS ;
@@ -326,7 +325,6 @@ COMPONENTS 282 ;
     - rebuffer16 sky130_fd_sc_hd__buf_4 + SOURCE TIMING + PLACED ( 13340 40800 ) N ;
     - rebuffer3 sky130_fd_sc_hd__buf_4 + SOURCE TIMING + PLACED ( 61180 46240 ) N ;
     - rebuffer4 sky130_fd_sc_hd__buf_4 + SOURCE TIMING + PLACED ( 40940 62560 ) N ;
-    - rebuffer5 sky130_fd_sc_hd__buf_6 + SOURCE TIMING + PLACED ( 25760 62560 ) N ;
     - rebuffer53 sky130_fd_sc_hd__buf_4 + SOURCE TIMING + PLACED ( 65320 73440 ) N ;
     - rebuffer7 sky130_fd_sc_hd__buf_4 + SOURCE TIMING + PLACED ( 13340 51680 ) N ;
     - rebuffer8 sky130_fd_sc_hd__buf_4 + SOURCE TIMING + PLACED ( 59340 32640 ) FS ;
@@ -340,8 +338,9 @@ COMPONENTS 282 ;
     - layopt_m7_i layopt_m7 + FIXED ( 45080 62560 ) N ;
     - layopt_m8_i layopt_m8 + FIXED ( 55660 51680 ) N ;
     - layopt_m9_i layopt_m9 + FIXED ( 63020 13600 ) N ;
-    - layopt_m10_i layopt_m10 + FIXED ( 63940 62560 ) N ;
-    - layopt_m11_i layopt_m11 + FIXED ( 34500 57120 ) N ;
+    - layopt_m10_i layopt_m10 + FIXED ( 21620 62560 ) N ;
+    - layopt_m11_i layopt_m11 + FIXED ( 63940 62560 ) N ;
+    - layopt_m12_i layopt_m12 + FIXED ( 34500 57120 ) N ;
 END COMPONENTS
 PINS 56 ;
     - VDD + NET VDD + SPECIAL + DIRECTION INOUT + USE POWER
@@ -579,7 +578,7 @@ SPECIALNETS 2 ;
       ( _277_ VPB ) ( _276_ VPB ) ( _275_ VPB ) ( _274_ VPB ) ( _273_ VPB ) ( _272_ VPB ) ( _271_ VPB ) ( _270_ VPB )
       ( _269_ VPB ) ( _268_ VPB ) ( _267_ VPB ) ( _266_ VPB ) ( _265_ VPB ) ( _264_ VPB ) ( _263_ VPB ) ( _262_ VPB )
       ( _261_ VPB ) ( _260_ VPB ) ( _259_ VPB ) ( _258_ VPB ) ( _257_ VPB ) ( _256_ VPB ) ( _255_ VPB ) ( layopt_m5_i VPB )
-      ( _253_ VPB ) ( _252_ VPB ) ( _251_ VPB ) ( _250_ VPB ) ( _249_ VPB ) ( _248_ VPB ) ( _247_ VPB ) ( _246_ VPB )
+      ( _253_ VPB ) ( _252_ VPB ) ( _251_ VPB ) ( _250_ VPB ) ( _249_ VPB ) ( _248_ VPB ) ( layopt_m10_i VPB ) ( _246_ VPB )
       ( _245_ VPB ) ( _244_ VPB ) ( _243_ VPB ) ( _242_ VPB ) ( _241_ VPB ) ( _240_ VPB ) ( _239_ VPB ) ( _238_ VPB )
       ( _237_ VPB ) ( layopt_m2_i VPB ) ( _235_ VPB ) ( _234_ VPB ) ( _233_ VPB ) ( _232_ VPB ) ( _231_ VPB ) ( _230_ VPB )
       ( _229_ VPB ) ( _228_ VPB ) ( _227_ VPB ) ( _226_ VPB ) ( _225_ VPB ) ( _224_ VPB ) ( _223_ VPB ) ( _222_ VPB )
@@ -596,7 +595,7 @@ SPECIALNETS 2 ;
       ( _141_ VPB ) ( _140_ VPB ) ( _139_ VPB ) ( _138_ VPB ) ( _137_ VPB ) ( _136_ VPB ) ( _135_ VPB ) ( _134_ VPB )
       ( _133_ VPB ) ( layopt_m4_i VPB ) ( _131_ VPB ) ( _130_ VPB ) ( _129_ VPB ) ( _128_ VPB ) ( _127_ VPB ) ( _126_ VPB )
       ( _125_ VPB ) ( _124_ VPB ) ( _123_ VPB ) ( _122_ VPB ) ( _121_ VPB ) ( _120_ VPB ) ( _119_ VPB ) ( _118_ VPB )
-      ( _117_ VPB ) ( _116_ VPB ) ( layopt_m10_i VPB ) ( _114_ VPB ) ( layopt_m7_i VPB ) ( _112_ VPB ) ( _111_ VPB ) ( _110_ VPB )
+      ( _117_ VPB ) ( _116_ VPB ) ( layopt_m11_i VPB ) ( _114_ VPB ) ( layopt_m7_i VPB ) ( _112_ VPB ) ( _111_ VPB ) ( _110_ VPB )
       ( _109_ VPB ) ( _108_ VPB ) ( _107_ VPB ) ( TAP_TAPCELL_ROW_26_71 VPWR ) ( TAP_TAPCELL_ROW_26_70 VPWR ) ( TAP_TAPCELL_ROW_26_69 VPWR ) ( TAP_TAPCELL_ROW_26_68 VPWR ) ( TAP_TAPCELL_ROW_26_67 VPWR )
       ( TAP_TAPCELL_ROW_25_66 VPWR ) ( TAP_TAPCELL_ROW_25_65 VPWR ) ( TAP_TAPCELL_ROW_24_64 VPWR ) ( TAP_TAPCELL_ROW_24_63 VPWR ) ( TAP_TAPCELL_ROW_24_62 VPWR ) ( TAP_TAPCELL_ROW_23_61 VPWR ) ( TAP_TAPCELL_ROW_23_60 VPWR ) ( TAP_TAPCELL_ROW_22_59 VPWR )
       ( TAP_TAPCELL_ROW_22_58 VPWR ) ( TAP_TAPCELL_ROW_22_57 VPWR ) ( TAP_TAPCELL_ROW_21_56 VPWR ) ( TAP_TAPCELL_ROW_21_55 VPWR ) ( TAP_TAPCELL_ROW_20_54 VPWR ) ( TAP_TAPCELL_ROW_20_53 VPWR ) ( TAP_TAPCELL_ROW_20_52 VPWR ) ( TAP_TAPCELL_ROW_19_51 VPWR )
@@ -612,7 +611,7 @@ SPECIALNETS 2 ;
       ( _278_ VPWR ) ( _277_ VPWR ) ( _276_ VPWR ) ( _275_ VPWR ) ( _274_ VPWR ) ( _273_ VPWR ) ( _272_ VPWR ) ( _271_ VPWR )
       ( _270_ VPWR ) ( _269_ VPWR ) ( _268_ VPWR ) ( _267_ VPWR ) ( _266_ VPWR ) ( _265_ VPWR ) ( _264_ VPWR ) ( _263_ VPWR )
       ( _262_ VPWR ) ( _261_ VPWR ) ( _260_ VPWR ) ( _259_ VPWR ) ( _258_ VPWR ) ( _257_ VPWR ) ( _256_ VPWR ) ( _255_ VPWR )
-      ( layopt_m5_i VPWR ) ( _253_ VPWR ) ( _252_ VPWR ) ( _251_ VPWR ) ( _250_ VPWR ) ( _249_ VPWR ) ( _248_ VPWR ) ( _247_ VPWR )
+      ( layopt_m5_i VPWR ) ( _253_ VPWR ) ( _252_ VPWR ) ( _251_ VPWR ) ( _250_ VPWR ) ( _249_ VPWR ) ( _248_ VPWR ) ( layopt_m10_i VPWR )
       ( _246_ VPWR ) ( _245_ VPWR ) ( _244_ VPWR ) ( _243_ VPWR ) ( _242_ VPWR ) ( _241_ VPWR ) ( _240_ VPWR ) ( _239_ VPWR )
       ( _238_ VPWR ) ( _237_ VPWR ) ( layopt_m2_i VPWR ) ( _235_ VPWR ) ( _234_ VPWR ) ( _233_ VPWR ) ( _232_ VPWR ) ( _231_ VPWR )
       ( _230_ VPWR ) ( _229_ VPWR ) ( _228_ VPWR ) ( _227_ VPWR ) ( _226_ VPWR ) ( _225_ VPWR ) ( _224_ VPWR ) ( _223_ VPWR )
@@ -629,7 +628,7 @@ SPECIALNETS 2 ;
       ( _142_ VPWR ) ( _141_ VPWR ) ( _140_ VPWR ) ( _139_ VPWR ) ( _138_ VPWR ) ( _137_ VPWR ) ( _136_ VPWR ) ( _135_ VPWR )
       ( _134_ VPWR ) ( _133_ VPWR ) ( layopt_m4_i VPWR ) ( _131_ VPWR ) ( _130_ VPWR ) ( _129_ VPWR ) ( _128_ VPWR ) ( _127_ VPWR )
       ( _126_ VPWR ) ( _125_ VPWR ) ( _124_ VPWR ) ( _123_ VPWR ) ( _122_ VPWR ) ( _121_ VPWR ) ( _120_ VPWR ) ( _119_ VPWR )
-      ( _118_ VPWR ) ( _117_ VPWR ) ( _116_ VPWR ) ( layopt_m10_i VPWR ) ( _114_ VPWR ) ( layopt_m7_i VPWR ) ( _112_ VPWR ) ( _111_ VPWR )
+      ( _118_ VPWR ) ( _117_ VPWR ) ( _116_ VPWR ) ( layopt_m11_i VPWR ) ( _114_ VPWR ) ( layopt_m7_i VPWR ) ( _112_ VPWR ) ( _111_ VPWR )
       ( _110_ VPWR ) ( _109_ VPWR ) ( _108_ VPWR ) ( _107_ VPWR ) + USE POWER
       + ROUTED met5 1600 + SHAPE STRIPE ( 2300 57120 ) ( 76360 57120 )
       NEW met5 1600 + SHAPE STRIPE ( 2300 29920 ) ( 76360 29920 )
@@ -799,7 +798,7 @@ SPECIALNETS 2 ;
       ( _277_ VNB ) ( _276_ VNB ) ( _275_ VNB ) ( _274_ VNB ) ( _273_ VNB ) ( _272_ VNB ) ( _271_ VNB ) ( _270_ VNB )
       ( _269_ VNB ) ( _268_ VNB ) ( _267_ VNB ) ( _266_ VNB ) ( _265_ VNB ) ( _264_ VNB ) ( _263_ VNB ) ( _262_ VNB )
       ( _261_ VNB ) ( _260_ VNB ) ( _259_ VNB ) ( _258_ VNB ) ( _257_ VNB ) ( _256_ VNB ) ( _255_ VNB ) ( layopt_m5_i VNB )
-      ( _253_ VNB ) ( _252_ VNB ) ( _251_ VNB ) ( _250_ VNB ) ( _249_ VNB ) ( _248_ VNB ) ( _247_ VNB ) ( _246_ VNB )
+      ( _253_ VNB ) ( _252_ VNB ) ( _251_ VNB ) ( _250_ VNB ) ( _249_ VNB ) ( _248_ VNB ) ( layopt_m10_i VNB ) ( _246_ VNB )
       ( _245_ VNB ) ( _244_ VNB ) ( _243_ VNB ) ( _242_ VNB ) ( _241_ VNB ) ( _240_ VNB ) ( _239_ VNB ) ( _238_ VNB )
       ( _237_ VNB ) ( layopt_m2_i VNB ) ( _235_ VNB ) ( _234_ VNB ) ( _233_ VNB ) ( _232_ VNB ) ( _231_ VNB ) ( _230_ VNB )
       ( _229_ VNB ) ( _228_ VNB ) ( _227_ VNB ) ( _226_ VNB ) ( _225_ VNB ) ( _224_ VNB ) ( _223_ VNB ) ( _222_ VNB )
@@ -816,7 +815,7 @@ SPECIALNETS 2 ;
       ( _141_ VNB ) ( _140_ VNB ) ( _139_ VNB ) ( _138_ VNB ) ( _137_ VNB ) ( _136_ VNB ) ( _135_ VNB ) ( _134_ VNB )
       ( _133_ VNB ) ( layopt_m4_i VNB ) ( _131_ VNB ) ( _130_ VNB ) ( _129_ VNB ) ( _128_ VNB ) ( _127_ VNB ) ( _126_ VNB )
       ( _125_ VNB ) ( _124_ VNB ) ( _123_ VNB ) ( _122_ VNB ) ( _121_ VNB ) ( _120_ VNB ) ( _119_ VNB ) ( _118_ VNB )
-      ( _117_ VNB ) ( _116_ VNB ) ( layopt_m10_i VNB ) ( _114_ VNB ) ( layopt_m7_i VNB ) ( _112_ VNB ) ( _111_ VNB ) ( _110_ VNB )
+      ( _117_ VNB ) ( _116_ VNB ) ( layopt_m11_i VNB ) ( _114_ VNB ) ( layopt_m7_i VNB ) ( _112_ VNB ) ( _111_ VNB ) ( _110_ VNB )
       ( _109_ VNB ) ( _108_ VNB ) ( _107_ VNB ) ( TAP_TAPCELL_ROW_26_71 VGND ) ( TAP_TAPCELL_ROW_26_70 VGND ) ( TAP_TAPCELL_ROW_26_69 VGND ) ( TAP_TAPCELL_ROW_26_68 VGND ) ( TAP_TAPCELL_ROW_26_67 VGND )
       ( TAP_TAPCELL_ROW_25_66 VGND ) ( TAP_TAPCELL_ROW_25_65 VGND ) ( TAP_TAPCELL_ROW_24_64 VGND ) ( TAP_TAPCELL_ROW_24_63 VGND ) ( TAP_TAPCELL_ROW_24_62 VGND ) ( TAP_TAPCELL_ROW_23_61 VGND ) ( TAP_TAPCELL_ROW_23_60 VGND ) ( TAP_TAPCELL_ROW_22_59 VGND )
       ( TAP_TAPCELL_ROW_22_58 VGND ) ( TAP_TAPCELL_ROW_22_57 VGND ) ( TAP_TAPCELL_ROW_21_56 VGND ) ( TAP_TAPCELL_ROW_21_55 VGND ) ( TAP_TAPCELL_ROW_20_54 VGND ) ( TAP_TAPCELL_ROW_20_53 VGND ) ( TAP_TAPCELL_ROW_20_52 VGND ) ( TAP_TAPCELL_ROW_19_51 VGND )
@@ -832,7 +831,7 @@ SPECIALNETS 2 ;
       ( _278_ VGND ) ( _277_ VGND ) ( _276_ VGND ) ( _275_ VGND ) ( _274_ VGND ) ( _273_ VGND ) ( _272_ VGND ) ( _271_ VGND )
       ( _270_ VGND ) ( _269_ VGND ) ( _268_ VGND ) ( _267_ VGND ) ( _266_ VGND ) ( _265_ VGND ) ( _264_ VGND ) ( _263_ VGND )
       ( _262_ VGND ) ( _261_ VGND ) ( _260_ VGND ) ( _259_ VGND ) ( _258_ VGND ) ( _257_ VGND ) ( _256_ VGND ) ( _255_ VGND )
-      ( layopt_m5_i VGND ) ( _253_ VGND ) ( _252_ VGND ) ( _251_ VGND ) ( _250_ VGND ) ( _249_ VGND ) ( _248_ VGND ) ( _247_ VGND )
+      ( layopt_m5_i VGND ) ( _253_ VGND ) ( _252_ VGND ) ( _251_ VGND ) ( _250_ VGND ) ( _249_ VGND ) ( _248_ VGND ) ( layopt_m10_i VGND )
       ( _246_ VGND ) ( _245_ VGND ) ( _244_ VGND ) ( _243_ VGND ) ( _242_ VGND ) ( _241_ VGND ) ( _240_ VGND ) ( _239_ VGND )
       ( _238_ VGND ) ( _237_ VGND ) ( layopt_m2_i VGND ) ( _235_ VGND ) ( _234_ VGND ) ( _233_ VGND ) ( _232_ VGND ) ( _231_ VGND )
       ( _230_ VGND ) ( _229_ VGND ) ( _228_ VGND ) ( _227_ VGND ) ( _226_ VGND ) ( _225_ VGND ) ( _224_ VGND ) ( _223_ VGND )
@@ -849,7 +848,7 @@ SPECIALNETS 2 ;
       ( _142_ VGND ) ( _141_ VGND ) ( _140_ VGND ) ( _139_ VGND ) ( _138_ VGND ) ( _137_ VGND ) ( _136_ VGND ) ( _135_ VGND )
       ( _134_ VGND ) ( _133_ VGND ) ( layopt_m4_i VGND ) ( _131_ VGND ) ( _130_ VGND ) ( _129_ VGND ) ( _128_ VGND ) ( _127_ VGND )
       ( _126_ VGND ) ( _125_ VGND ) ( _124_ VGND ) ( _123_ VGND ) ( _122_ VGND ) ( _121_ VGND ) ( _120_ VGND ) ( _119_ VGND )
-      ( _118_ VGND ) ( _117_ VGND ) ( _116_ VGND ) ( layopt_m10_i VGND ) ( _114_ VGND ) ( layopt_m7_i VGND ) ( _112_ VGND ) ( _111_ VGND )
+      ( _118_ VGND ) ( _117_ VGND ) ( _116_ VGND ) ( layopt_m11_i VGND ) ( _114_ VGND ) ( layopt_m7_i VGND ) ( _112_ VGND ) ( _111_ VGND )
       ( _110_ VGND ) ( _109_ VGND ) ( _108_ VGND ) ( _107_ VGND ) + USE GROUND
       + ROUTED met5 1600 + SHAPE STRIPE ( 2300 70720 ) ( 76360 70720 )
       NEW met5 1600 + SHAPE STRIPE ( 2300 43520 ) ( 76360 43520 )
@@ -1103,7 +1102,7 @@ NETS 255 ;
     - _008_ ( _212_ C1 ) ( _164_ B1 ) ( _112_ X ) + USE SIGNAL ;
     - _009_ ( _212_ A1 ) ( _169_ B1 ) ( _164_ A1 ) ( _163_ A ) ( layopt_m7_i _113__Y ) + USE SIGNAL ;
     - _010_ ( _171_ A ) ( layopt_m1_i _162__C1 ) ( _114_ Y ) + USE SIGNAL ;
-    - _011_ ( _164_ A3 ) ( _212_ A3 ) ( _171_ B ) ( _169_ A1 ) ( _163_ B ) ( layopt_m10_i _115__Y ) + USE SIGNAL ;
+    - _011_ ( _164_ A3 ) ( _212_ A3 ) ( _171_ B ) ( _169_ A1 ) ( _163_ B ) ( layopt_m11_i _115__Y ) + USE SIGNAL ;
     - _012_ ( _161_ A ) ( layopt_m1_i _162__B1 ) ( _116_ Y ) + USE SIGNAL ;
     - _013_ ( _118_ A ) ( _117_ Y ) + USE SIGNAL ;
     - _014_ ( layopt_m8_i _160__A ) ( layopt_m1_i _162__A3 ) ( _173_ B1 ) ( _118_ Y ) + USE SIGNAL ;
@@ -1173,7 +1172,7 @@ NETS 255 ;
       ( _216_ B ) ( _215_ B1_N ) ( _214_ B ) ( _211_ Y ) + USE SIGNAL ;
     - _077_ ( rebuffer4 A ) ( _212_ Y ) + USE SIGNAL ;
     - _078_ ( layopt_m5_i _254__B ) ( _213_ Y ) + USE SIGNAL ;
-    - _079_ ( layopt_m1_i rebuffer15_A ) ( rebuffer14 A ) ( layopt_m4_i clone6_A ) ( layopt_m11_i wire2_A ) ( _252_ A2 ) ( _214_ Y ) + USE SIGNAL ;
+    - _079_ ( layopt_m1_i rebuffer15_A ) ( rebuffer14 A ) ( layopt_m4_i clone6_A ) ( layopt_m12_i wire2_A ) ( _252_ A2 ) ( _214_ Y ) + USE SIGNAL ;
     - _080_ ( _221_ B1 ) ( _219_ B1 ) ( _223_ B1 ) ( _252_ B1 ) ( _235_ B1 ) ( _229_ B1 ) ( _231_ B1 )
       ( _237_ B1 ) ( _245_ B1 ) ( _243_ B1 ) ( _241_ B1 ) ( _239_ B1 ) ( _233_ B1 ) ( _227_ B1 ) ( _225_ B1 )
       ( _217_ B1 ) ( _215_ X ) + USE SIGNAL ;
@@ -1192,7 +1191,7 @@ NETS 255 ;
     - _093_ ( _241_ C1 ) ( _240_ X ) + USE SIGNAL ;
     - _094_ ( _243_ C1 ) ( _242_ X ) + USE SIGNAL ;
     - _095_ ( _245_ C1 ) ( _244_ X ) + USE SIGNAL ;
-    - _096_ ( layopt_m5_i _254__A ) ( _248_ B ) ( _247_ A ) ( _246_ Y ) + USE SIGNAL ;
+    - _096_ ( layopt_m5_i _254__A ) ( _248_ B ) ( layopt_m10_i _247__A ) ( _246_ Y ) + USE SIGNAL ;
     - _097_ ( _262_ B1 ) ( _250_ B1 ) ( _249_ Y ) + USE SIGNAL ;
     - _098_ ( _252_ C1 ) ( _251_ X ) + USE SIGNAL ;
     - _099_ ( _258_ B ) ( _255_ Y ) + USE SIGNAL ;
@@ -1215,15 +1214,15 @@ NETS 255 ;
       ( _293_ CLK ) ( _294_ CLK ) ( _295_ CLK ) ( clkbuf_2_3__f_clk X ) + USE CLOCK ;
     - ctrl$a_reg_en\[0\] ( _280_ DE ) ( _279_ DE ) ( _278_ DE ) ( _277_ DE ) ( _276_ DE ) ( _275_ DE ) ( _274_ DE )
       ( _273_ DE ) ( _272_ DE ) ( _271_ DE ) ( _270_ DE ) ( _269_ DE ) ( _268_ DE ) ( _267_ DE ) ( _266_ DE )
-      ( _265_ DE ) ( _247_ Y ) + USE SIGNAL ;
-    - ctrl$b_reg_en\[0\] ( rebuffer5 A ) ( layopt_m5_i load_slew1_A ) ( layopt_m5_i _254__Y ) + USE SIGNAL ;
+      ( _265_ DE ) ( layopt_m10_i _247__Y ) + USE SIGNAL ;
+    - ctrl$b_reg_en\[0\] ( layopt_m10_i rebuffer5_A ) ( layopt_m5_i load_slew1_A ) ( layopt_m5_i _254__Y ) + USE SIGNAL ;
     - ctrl.state.out\[1\] ( _298_ Q ) ( _262_ B2 ) ( _248_ A ) + USE SIGNAL ;
     - ctrl.state.out\[2\] ( _246_ A ) ( _299_ Q ) ( _262_ A1 ) ( _261_ A ) ( _211_ B ) + USE SIGNAL ;
     - dpath.a_lt_b$in0\[0\] ( rebuffer7 A ) ( _265_ Q ) ( _141_ A_N ) + USE SIGNAL ;
     - dpath.a_lt_b$in0\[10\] ( _275_ Q ) ( _199_ A0 ) ( _122_ B ) ( _121_ A ) + USE SIGNAL ;
     - dpath.a_lt_b$in0\[11\] ( _276_ Q ) ( _120_ SLEEP ) ( _107_ A ) + USE SIGNAL ;
     - dpath.a_lt_b$in0\[12\] ( _277_ Q ) ( _196_ A0 ) ( _117_ B ) ( _116_ B ) + USE SIGNAL ;
-    - dpath.a_lt_b$in0\[13\] ( _278_ Q ) ( _195_ A0 ) ( layopt_m10_i _115__A_N ) ( _114_ B ) + USE SIGNAL ;
+    - dpath.a_lt_b$in0\[13\] ( _278_ Q ) ( _195_ A0 ) ( layopt_m11_i _115__A_N ) ( _114_ B ) + USE SIGNAL ;
     - dpath.a_lt_b$in0\[14\] ( _279_ Q ) ( _194_ A0 ) ( layopt_m7_i _113__A ) ( _112_ A ) + USE SIGNAL ;
     - dpath.a_lt_b$in0\[15\] ( _280_ Q ) ( _253_ A0 ) ( _166_ SLEEP ) ( _165_ A ) + USE SIGNAL ;
     - dpath.a_lt_b$in0\[1\] ( _266_ Q ) ( _209_ A0 ) ( _143_ B ) ( _142_ B ) + USE SIGNAL ;
@@ -1239,7 +1238,7 @@ NETS 255 ;
     - dpath.a_lt_b$in1\[10\] ( _291_ Q ) ( _255_ B ) ( _225_ B2 ) ( _122_ A ) ( _121_ SLEEP ) + USE SIGNAL ;
     - dpath.a_lt_b$in1\[11\] ( _292_ Q ) ( _257_ B ) ( _223_ B2 ) ( _120_ A ) ( _119_ A ) + USE SIGNAL ;
     - dpath.a_lt_b$in1\[12\] ( _293_ Q ) ( _255_ A ) ( _221_ B2 ) ( _117_ A ) ( _116_ A_N ) + USE SIGNAL ;
-    - dpath.a_lt_b$in1\[13\] ( rebuffer53 A ) ( layopt_m10_i rebuffer52_A ) ( _294_ Q ) ( layopt_m10_i _115__B ) ( _114_ A_N ) + USE SIGNAL ;
+    - dpath.a_lt_b$in1\[13\] ( rebuffer53 A ) ( layopt_m11_i rebuffer52_A ) ( _294_ Q ) ( layopt_m11_i _115__B ) ( _114_ A_N ) + USE SIGNAL ;
     - dpath.a_lt_b$in1\[14\] ( _295_ Q ) ( _257_ A ) ( _217_ B2 ) ( layopt_m7_i _113__B ) ( _112_ SLEEP ) + USE SIGNAL ;
     - dpath.a_lt_b$in1\[15\] ( _252_ B2 ) ( _296_ Q ) ( _260_ B ) ( _166_ A ) ( _165_ SLEEP ) + USE SIGNAL ;
     - dpath.a_lt_b$in1\[1\] ( rebuffer16 A ) ( _282_ Q ) ( _109_ A ) + USE SIGNAL ;
@@ -1285,21 +1284,21 @@ NETS 255 ;
     - dpath.b_mux$out\[9\] ( _290_ D ) ( _200_ X ) + USE SIGNAL ;
     - net1 ( _285_ DE ) ( _292_ DE ) ( _282_ DE ) ( _281_ DE ) ( _286_ DE ) ( _289_ DE ) ( _288_ DE )
       ( _287_ DE ) ( _284_ DE ) ( _283_ DE ) ( layopt_m5_i load_slew1_X ) + USE SIGNAL ;
-    - net10 ( _213_ C ) ( _215_ A2 ) ( layopt_m11_i rebuffer10_X ) + USE SIGNAL ;
+    - net10 ( _213_ C ) ( _215_ A2 ) ( layopt_m12_i rebuffer10_X ) + USE SIGNAL ;
     - net11 ( _183_ A2 ) ( _151_ C ) ( layopt_m6_i rebuffer11_X ) + USE SIGNAL ;
     - net12 ( _192_ A ) ( layopt_m2_i rebuffer12_X ) + USE SIGNAL ;
     - net13 ( _260_ A ) ( _245_ B2 ) ( _193_ B ) ( layopt_m3_i rebuffer13_X ) + USE SIGNAL ;
     - net14 ( _217_ A1 ) ( rebuffer14 X ) + USE SIGNAL ;
     - net15 ( _221_ A1 ) ( _219_ A1 ) ( layopt_m1_i rebuffer15_X ) + USE SIGNAL ;
     - net16 ( _259_ D ) ( _243_ B2 ) ( _142_ A ) ( rebuffer16 X ) + USE SIGNAL ;
-    - net2 ( _239_ A1 ) ( _243_ A1 ) ( _245_ A1 ) ( _241_ A1 ) ( _225_ A1 ) ( _233_ A1 ) ( layopt_m11_i wire2_X ) + USE SIGNAL ;
+    - net2 ( _239_ A1 ) ( _243_ A1 ) ( _245_ A1 ) ( _241_ A1 ) ( _225_ A1 ) ( _233_ A1 ) ( layopt_m12_i wire2_X ) + USE SIGNAL ;
     - net28 ( _169_ A2 ) ( _164_ A2 ) ( _163_ C ) ( layopt_m7_i rebuffer28_X ) + USE SIGNAL ;
     - net3 ( layopt_m8_i rebuffer30_A ) ( layopt_m1_i _162__A1 ) ( rebuffer3 X ) + USE SIGNAL ;
     - net30 ( _173_ A2 ) ( layopt_m8_i _160__C ) ( layopt_m8_i rebuffer30_X ) + USE SIGNAL ;
     - net32 ( _180_ B ) ( layopt_m9_i rebuffer32_X ) + USE SIGNAL ;
-    - net4 ( _214_ A ) ( layopt_m11_i rebuffer10_A ) ( rebuffer4 X ) + USE SIGNAL ;
-    - net5 ( _296_ DE ) ( _295_ DE ) ( _294_ DE ) ( _293_ DE ) ( _291_ DE ) ( _290_ DE ) ( rebuffer5 X ) + USE SIGNAL ;
-    - net52 ( _256_ A ) ( layopt_m10_i rebuffer52_X ) + USE SIGNAL ;
+    - net4 ( _214_ A ) ( layopt_m12_i rebuffer10_A ) ( rebuffer4 X ) + USE SIGNAL ;
+    - net5 ( _296_ DE ) ( _295_ DE ) ( _294_ DE ) ( _293_ DE ) ( _291_ DE ) ( _290_ DE ) ( layopt_m10_i rebuffer5_X ) + USE SIGNAL ;
+    - net52 ( _256_ A ) ( layopt_m11_i rebuffer52_X ) + USE SIGNAL ;
     - net53 ( _219_ B2 ) ( rebuffer53 X ) + USE SIGNAL ;
     - net6 ( _223_ A1 ) ( _235_ A1 ) ( _229_ A1 ) ( _231_ A1 ) ( _227_ A1 ) ( _237_ A1 ) ( layopt_m4_i clone6_X ) + USE SIGNAL ;
     - net7 ( _210_ A0 ) ( _193_ A ) ( rebuffer7 X ) + USE SIGNAL ;

@@ -926,6 +926,22 @@ def merge_boundary(fl: FlatLayout, ex: Extraction, inst_a: str, inst_b: str, shi
         else:
             shift = delta
         LAST_ROW_SHIFT[0] = shift
+        gap = delta - shift
+        if gap > 0:
+            # B's rail and well/implant geometry that met its right neighbour keeps meeting
+            # it: those rects stretch back over the gap (a rail mcon with a twin in another
+            # row stayed where it was and must stay enclosed; wells and implants must not
+            # open a notch between two cells that abutted)
+            supply_l = {L[n] for n in tech.routing[:1]}
+            soft = {L[n] for n in (tech.nwell, tech.nsdm, tech.psdm) if n} | {L[f.layer] for f in tech.vt.values()}
+            for i in ids_b:
+                r = fl.rects[i]
+                if r.x1 + delta < box_b[2] - 1:              # (already slid by delta) did not reach B's right edge
+                    continue
+                if r.layer in soft or (r.layer in supply_l and s2n.get(i) is not None and ex.nets[s2n[i]].name in tech.supply_names):
+                    fl.rects[i].rect = (r.x0, r.y0, r.x1 + gap, r.y1)
+                    if i not in touched:
+                        touched.append(i)
         for p_ in movers:
             if not shift:
                 break
