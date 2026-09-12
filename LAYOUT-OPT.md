@@ -1199,6 +1199,31 @@ and a mirrored rectangle that straddles a stack gate's inward edge is
 stretched by the spread, which is what a diffusion strip or a bar over the
 stack should do.
 
+**The second design: VX_alu_int (2026-09-10 → 12, `probes/layopt/alu/`).**
+Vortex's integer ALU, the first target of ASYNC-PLAN, flattened with sv2v,
+synthesised to 3770 sky130hd cells (five times gcd) and placed by the same
+split flow (utilization 33 %, two sites of padding: four put the padded
+utilization past 100 %). Everything gcd went through, at scale:
+
+| VX_alu_int, 4036 logic cells, 101 rows | |
+|---|---|
+| hints | 179 flipped, 76 slid (115 µm of movement), 188 boundaries kept (85 two-strip, 103 one-strip) worth 45.1 µm; 24 slides declined as too long for their gain |
+| router's bill, base → hints | wire 164914 → 164793 µm (−0.07 %); WNS −5.56 → −5.54 ns; TNS −409.8 → −408.9 ns; DRC 0 → 0; placement check passes with 336 cells held |
+| fingers (row-local, 98 of the first 120 candidates of 726 reached in the 4-hour budget) | 98 of 98 cells take at least one finger, 82 both polarities; refusals per finger: 28 series-stack heads, 12 poly in the way, 8 no S/D jumper, 6 no bridge field, 1 foreign li; energy +0 % per cell (`evidence/l4_alu_whitespace.log`) |
+| dissolve on the hinted placement | ALU-DISSOLVE |
+
+What scale changed. Extracting and rule-checking the whole layout (850k
+rectangles, 30k devices) for every candidate took 15 minutes a cell, so
+both the finger probe and the dissolve now work on the three-row window
+around a candidate (`--local`): the band's rectangles, the supply nets'
+DEF wires from anywhere so their labels name the supplies, signal wires
+only where they cross the band. The finger probe copies its window; the
+dissolve's window shares the layout's rectangle objects, so an accepted
+dissolve is already in the full layout and a refused one is restored. On
+gcd both modes give exactly the global verdicts. The pair-slide
+measurement (a two-cell layout per macro pair and orientations) is the
+other cost: 2302 pairs took 11 hours, once, and the cache persists.
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 

@@ -1,0 +1,669 @@
+== alu_base.def: 12809 instances, 850398 rects; candidates judged on three-row windows (18s to flatten)
+   726 logic cells have a fill_4/fill_8 flush on their right; trying 120
+   [window 42417 rects, 448 devices, 21s]
+   _6798_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (23 rects)
+   _6798_ (nor2_1, fill_4 to its right) [PN]: N finger refused -- add_finger: poly at [96.745, 275.545, 96.965, 275.815] (_6798_/sky130_fd_sc_hd__nor2_1) crosses the extended diffusion (it would gate a new transistor)
+   _6798_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (13 rects)
+   _6798_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (22 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 83.5 -> 99.6 fJ/transition (+16.1, +19%)
+   [window 55943 rects, 956 devices, 33s]
+   _6495_ (nor2_1, fill_8 to its right) [PN]: P finger refused -- add_finger: no legal S/D jumper (met1 bar, met1 pads + via1 + met2 bar, routed path, or moving a P&R wire); rejected by: {'met1 bar vs other met1': 156, 'mcon vs other cuts': 2, 'met1 pad vs other met1': 156, 'maze route': {'cells': 139712, 'layers': 3, 'obstacles': 242, 'targets': 7488, 'pops': 33464, 'error': 'no path'}, 'reroute': 'blocker 51586 would vanish entirely'}
+   _6495_ (nor2_1, fill_8 to its right) [PN]: N finger LEGAL (13 rects)
+   _6495_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (13 rects)
+   _6495_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (23 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 89.5 -> 105.3 fJ/transition (+15.7, +18%)
+   [window 55943 rects, 956 devices, 35s]
+   _5223_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (27 rects)
+   _5223_ (nor2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: poly at [148.265, 30.735, 148.485, 31.005] (_5223_/sky130_fd_sc_hd__nor2_1) crosses the extended diffusion (it would gate a new transistor)
+   _5223_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (18 rects)
+   _5223_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (26 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 57.1 -> 73.6 fJ/transition (+16.5, +29%)
+   [window 55943 rects, 956 devices, 22s]
+   _4828_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (30 rects)
+   _4828_ (nor2_1, fill_4 to its right) [PN]: N finger refused -- add_finger: no field for a poly bridge and no place for a contact bridge (poly head + met1 jumper to the gate pin); candidates rejected by: {'head vs diffusion': 18778, 'head vs other poly': 1066}
+   _4828_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (13 rects)
+   _4828_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (26 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 56.7 -> 72.9 fJ/transition (+16.2, +29%)
+   [window 58003 rects, 1054 devices, 17s]
+   _6448_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (32 rects)
+   _6448_ (nor2_1, fill_4 to its right) [PN]: N finger refused -- add_finger: poly at [55.805, 36.175, 56.025, 36.445] (_6448_/sky130_fd_sc_hd__nor2_1) crosses the extended diffusion (it would gate a new transistor)
+   _6448_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (13 rects)
+   _6448_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (22 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 55.5 -> 71.0 fJ/transition (+15.5, +28%)
+   [window 58003 rects, 1054 devices, 18s]
+   _3467_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (14 rects)
+   _3467_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (20 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 111.5 -> 127.7 fJ/transition (+16.1, +14%)
+      output net _3075_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 36.8 -> 21.3 ps, mean 36.8 -> 21.3 ps
+   [window 58003 rects, 1054 devices, 17s]
+   _3466_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (12 rects)
+   _3466_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (20 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 97.3 -> 113.0 fJ/transition (+15.7, +16%)
+      output net _3074_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 31.1 -> 18.3 ps, mean 31.1 -> 18.3 ps
+   [window 58003 rects, 1054 devices, 27s]
+   _3457_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (13 rects)
+   _3457_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (19 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 99.4 -> 113.7 fJ/transition (+14.3, +14%)
+      output net _3065_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 29.2 -> 17.3 ps, mean 29.2 -> 17.3 ps
+   [window 58003 rects, 1054 devices, 30s]
+   _3448_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (14 rects)
+   _3448_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (19 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 139.0 -> 152.6 fJ/transition (+13.6, +10%)
+      output net _3056_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 28.5 -> 17.1 ps, mean 28.5 -> 17.1 ps
+   [window 58003 rects, 1054 devices, 28s]
+   _5261_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (14 rects)
+   _5261_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (22 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 85.0 -> 101.4 fJ/transition (+16.4, +19%)
+      output net _1427_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 51.6 -> 29.4 ps, mean 51.4 -> 29.2 ps
+   [window 58003 rects, 1054 devices, 46s]
+   _6341_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (14 rects)
+   _6341_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (20 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 105.3 -> 120.8 fJ/transition (+15.5, +15%)
+      output net _2484_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 60.5 -> 34.0 ps, mean 60.4 -> 34.0 ps
+   [window 58003 rects, 1054 devices, 23s]
+   _3439_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (14 rects)
+   _3439_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (28 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 146.8 -> 161.8 fJ/transition (+15.0, +10%)
+      output net _3047_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 31.0 -> 18.4 ps, mean 31.0 -> 18.4 ps
+   [window 58003 rects, 1054 devices, 23s]
+   _3437_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (13 rects)
+   _3437_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (25 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 60.1 -> 74.8 fJ/transition (+14.6, +24%)
+      output net _3045_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 56.0 -> 31.6 ps, mean 55.9 -> 31.5 ps
+   [window 56512 rects, 900 devices, 27s]
+   _6547_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (26 rects)
+   _6547_ (nor2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: poly at [26.825, 41.615, 27.045, 41.885] (_6547_/sky130_fd_sc_hd__nor2_1) crosses the extended diffusion (it would gate a new transistor)
+   _6547_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (11 rects)
+   _6547_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (27 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 66.3 -> 83.1 fJ/transition (+16.8, +25%)
+   [window 56512 rects, 900 devices, 24s]
+   _6399_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (28 rects)
+   _6399_ (nor2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: poly at [119.285, 41.625, 119.505, 41.895] (_6399_/sky130_fd_sc_hd__nor2_1) crosses the extended diffusion (it would gate a new transistor)
+   _6399_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (11 rects)
+   _6399_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (39 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=1.30 f=2
+      switched energy of the cell's nets: 61.6 -> 81.7 fJ/transition (+20.1, +33%)
+   [window 56512 rects, 900 devices, 23s]
+   _3612_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (16 rects)
+   _3612_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (23 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 216.6 -> 231.4 fJ/transition (+14.8, +7%)
+   [window 57831 rects, 954 devices, 23s]
+   _3859_ (nor2_1, fill_8 to its right) [PN]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M92 (_3215_); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M92 (_3215_); candidates rejected by: {'met1 bar vs other met1': 1552, 'pin li extension vs other li': 242278, 'head vs other poly': 1640, 
+   _3859_ (nor2_1, fill_8 to its right) [PN]: N finger LEGAL (21 rects)
+   _3859_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (21 rects)
+   _3859_ (nor2_1, fill_8 to its right) [NP]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M92 (_3215_); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M92 (_3215_); candidates rejected by: {'met1 bar vs other met1': 1552, 'pin li extension vs other li': 242278, 'head vs other poly': 1640, 
+      result (N): p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=1.30 f=2
+      switched energy of the cell's nets: 80.8 -> 87.0 fJ/transition (+6.2, +8%)
+   [window 57831 rects, 954 devices, 25s]
+   _4794_ (nor2_1, fill_4 to its right) [PN]: P finger refused -- add_finger: no legal S/D jumper (met1 bar, met1 pads + via1 + met2 bar, routed path, or moving a P&R wire); rejected by: {'met1 bar vs other met1': 156, 'mcon vs other cuts': 2, 'met1 pad vs other met1': 156, 'maze route': {'cells': 139712, 'layers': 3, 'obstacles': 228, 'targets': 8316, 'pops': 37274, 'error': 'no path'}, 'reroute': 'blocker 55625 would vanish entirely'}
+   _4794_ (nor2_1, fill_4 to its right) [PN]: N finger LEGAL (13 rects)
+   _4794_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (13 rects)
+   _4794_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (29 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 75.8 -> 92.1 fJ/transition (+16.3, +21%)
+   [window 57795 rects, 940 devices, 24s]
+   _6513_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (30 rects)
+   _6513_ (nor2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: poly at [83.865, 52.495, 84.085, 52.765] (_6513_/sky130_fd_sc_hd__nor2_1) crosses the extended diffusion (it would gate a new transistor)
+   _6513_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (11 rects)
+   _6513_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (39 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 58.9 -> 75.8 fJ/transition (+16.9, +29%)
+   [window 57837 rects, 936 devices, 21s]
+   _3862_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (32 rects)
+   _3862_ (nor2_1, fill_4 to its right): N finger REJECTED by the guard: topology preserved, 3 new violations
+      min_space poly: rect 57866 vs 57856 0.122 < 0.210 um  [poly _3862_/sky130_fd_sc_hd__nor2_1 vs poly _3862_/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 57866 vs 57838 0.190 < 0.210 um  [poly _3862_/sky130_fd_sc_hd__nor2_1 vs poly _3862_/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 57866 vs 57839 0.190 < 0.210 um  [poly _3862_/sky130_fd_sc_hd__nor2_1 vs poly _3862_/sky130_fd_sc_hd__nor2_1]
+   _3862_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (27 rects)
+   _3862_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (27 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 59.3 -> 75.2 fJ/transition (+15.9, +27%)
+   [window 57837 rects, 936 devices, 23s]
+   _3417_ (nor2_1, fill_8 to its right) [PN]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M12 (11); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M12 (11); candidates rejected by: {'met1 bar vs other met1': 1552, 'pin li extension vs other li': 242278, 'head vs other poly': 1640, 'pad
+   _3417_ (nor2_1, fill_8 to its right) [PN]: N finger LEGAL (19 rects)
+   _3417_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (19 rects)
+   _3417_ (nor2_1, fill_8 to its right) [NP]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M12 (11); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M12 (11); candidates rejected by: {'met1 bar vs other met1': 1552, 'pin li extension vs other li': 242278, 'head vs other poly': 1640, 'pad
+      result (N): p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 50.0 -> 55.5 fJ/transition (+5.5, +11%)
+   [window 58113 rects, 946 devices, 25s]
+   _5371_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (15 rects)
+   _5371_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (30 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 77.2 -> 92.6 fJ/transition (+15.4, +20%)
+      output net _1537_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 87.7 -> 51.4 ps, mean 84.9 -> 48.6 ps
+   [window 58508 rects, 920 devices, 26s]
+   _5527_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (13 rects)
+   _5527_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (31 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 89.5 -> 104.9 fJ/transition (+15.4, +17%)
+      output net _1693_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 61.4 -> 34.4 ps, mean 61.4 -> 34.4 ps
+   [window 58508 rects, 920 devices, 25s]
+   _5204_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _5204_ (nand2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M296 (ex_data[106]); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M296 (ex_data[106]); candidates rejected by: {'licon vs cuts': 440, 'head vs diffusion': 4494, 'head vs other poly': 4072, 'pad and gate pi
+   _5204_ (nand2_1, fill_8 to its right) [NP]: N finger LEGAL (21 rects)
+   _5204_ (nand2_1, fill_8 to its right) [NP]: P finger refused -- add_finger: poly at [197.625, 69.285, 198.105, 69.555] (_5204_/sky130_fd_sc_hd__nand2_1) crosses the extended diffusion (it would gate a new transistor)
+      result (P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 77.2 -> 84.9 fJ/transition (+7.7, +10%)
+      output net _1370_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/7866 ohm; worst-edge Elmore to 4 receivers max 57.5 -> 61.5 ps, mean 57.5 -> 61.5 ps
+   [window 58508 rects, 920 devices, 26s]
+   _6224_ (nor2_1, fill_4 to its right) [PN]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M506 (290); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M506 (290); candidates rejected by: {'met1 bar vs other met1': 1552, 'pin li extension vs other li': 242278, 'head vs other poly': 5084, 'p
+   _6224_ (nor2_1, fill_4 to its right) [PN]: N finger LEGAL (13 rects)
+   _6224_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (13 rects)
+   _6224_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (39 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 35.0 -> 51.7 fJ/transition (+16.7, +48%)
+   [window 58508 rects, 920 devices, 27s]
+   _6850_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (42 rects)
+   _6850_ (nor2_1, fill_4 to its right): N finger REJECTED by the guard: topology preserved, 3 new violations
+      min_space poly: rect 58547 vs 58509 0.190 < 0.210 um  [poly _6850_/sky130_fd_sc_hd__nor2_1 vs poly _6850_/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 58547 vs 58510 0.190 < 0.210 um  [poly _6850_/sky130_fd_sc_hd__nor2_1 vs poly _6850_/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 58547 vs 58528 0.122 < 0.210 um  [poly _6850_/sky130_fd_sc_hd__nor2_1 vs poly _6850_/sky130_fd_sc_hd__nor2_1]
+   _6850_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (11 rects)
+   _6850_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (35 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 81.9 -> 99.0 fJ/transition (+17.1, +21%)
+   [window 59380 rects, 916 devices, 25s]
+   _5657_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _5657_ (nand2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M386 (_1694_); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M386 (_1694_); candidates rejected by: {'head vs diffusion': 9922, 'met1 bar vs other met1': 1444, 'pad and gate pin do not share a height'
+   _5657_ (nand2_1, fill_8 to its right) [NP]: N finger LEGAL (18 rects)
+   _5657_ (nand2_1, fill_8 to its right) [NP]: P finger LEGAL (19 rects)
+      result (N+P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 108.0 -> 122.0 fJ/transition (+14.1, +13%)
+      output net _1821_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 34.9 -> 22.5 ps, mean 34.9 -> 22.5 ps
+   [window 59380 rects, 916 devices, 21s]
+   _3515_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (16 rects)
+   _3515_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (42 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 58.7 -> 75.3 fJ/transition (+16.6, +28%)
+      output net _3119_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 49.9 -> 28.7 ps, mean 49.9 -> 28.7 ps
+   [window 59380 rects, 916 devices, 21s]
+   _6260_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (25 rects)
+   _6260_ (nor2_1, fill_4 to its right) [PN]: N finger refused -- add_finger: no field for a poly bridge and no place for a contact bridge (poly head + met1 jumper to the gate pin); candidates rejected by: {'head vs diffusion': 18778, 'head vs other poly': 1066}
+   _6260_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (15 rects)
+   _6260_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (25 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 75.4 -> 91.2 fJ/transition (+15.8, +21%)
+   [window 59380 rects, 916 devices, 22s]
+   _3517_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (25 rects)
+   _3517_ (nor2_1, fill_4 to its right): N finger REJECTED by the guard: topology preserved, 1 new violations
+      min_space poly: rect 59402 vs 59390 0.122 < 0.210 um  [poly _3517_/sky130_fd_sc_hd__nor2_1 vs poly _3517_/sky130_fd_sc_hd__nor2_1]
+   _3517_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (13 rects)
+   _3517_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (25 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 73.1 -> 92.4 fJ/transition (+19.3, +26%)
+   [window 59380 rects, 916 devices, 21s]
+   _6680_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (16 rects)
+   _6680_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (19 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 42.2 -> 55.4 fJ/transition (+13.2, +31%)
+   [window 56573 rects, 806 devices, 20s]
+   _5765_ (nor2_1, fill_4 to its right): P finger REJECTED by the guard: topology preserved, 6 new violations
+      min_space li: rect 56580 vs 56589 0.165 < 0.170 um  [li _5765_/sky130_fd_sc_hd__nor2_1 vs li _5765_/sky130_fd_sc_hd__nor2_1]
+      min_space li: rect 56582 vs 56589 0.165 < 0.170 um  [li _5765_/sky130_fd_sc_hd__nor2_1 vs li _5765_/sky130_fd_sc_hd__nor2_1]
+      min_space li: rect 56589 vs 56580 0.165 < 0.170 um  [li _5765_/sky130_fd_sc_hd__nor2_1 vs li _5765_/sky130_fd_sc_hd__nor2_1]
+   _5765_ (nor2_1, fill_4 to its right) [PN]: N finger LEGAL (13 rects)
+   _5765_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (13 rects)
+   _5765_ (nor2_1, fill_4 to its right): P finger REJECTED by the guard: topology CHANGED, 1 new violations
+      min_space met2: rect 56610 vs 51592 0.096 < 0.140 um  [met2 _5765_/sky130_fd_sc_hd__nor2_1 vs met2 net:_1708_]
+      result (N): p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 93.6 -> 98.9 fJ/transition (+5.3, +6%)
+   [window 56573 rects, 806 devices, 19s]
+   _5586_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (15 rects)
+   _5586_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (25 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 45.6 -> 59.4 fJ/transition (+13.7, +30%)
+      output net _1751_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 46.3 -> 26.8 ps, mean 46.2 -> 26.7 ps
+   [window 56573 rects, 806 devices, 20s]
+   _6379_ (nor2_1, fill_8 to its right) [PN]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M510 (_2520_); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M510 (_2520_); candidates rejected by: {'licon vs cuts': 860, 'li pad vs other li': 8, 'met1 bar vs other met1': 1360, 'pin li extension vs
+   _6379_ (nor2_1, fill_8 to its right) [PN]: N finger LEGAL (11 rects)
+   _6379_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (11 rects)
+   _6379_ (nor2_1, fill_8 to its right) [NP]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M510 (_2520_); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M510 (_2520_); candidates rejected by: {'licon vs cuts': 860, 'li pad vs other li': 24, 'met1 bar vs other met1': 1360, 'pin li extension v
+      result (N): p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 83.9 -> 89.3 fJ/transition (+5.4, +6%)
+   [window 56573 rects, 806 devices, 20s]
+   _6275_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (27 rects)
+   _6275_ (nor2_1, fill_4 to its right) [PN]: N finger refused -- add_finger: no field for a poly bridge and no place for a contact bridge (poly head + met1 jumper to the gate pin); candidates rejected by: {'head vs diffusion': 18778, 'head vs other poly': 1066}
+   _6275_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (11 rects)
+   _6275_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (27 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 48.5 -> 65.1 fJ/transition (+16.6, +34%)
+   [window 56573 rects, 806 devices, 19s]
+   _6328_ (nor2_1, fill_8 to its right) [PN]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M480 (_2471_); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M480 (_2471_); candidates rejected by: {'met1 bar vs other met1': 5616, 'pin li extension vs other li': 493032, 'head vs other poly': 3280,
+   _6328_ (nor2_1, fill_8 to its right) [PN]: N finger LEGAL (10 rects)
+   _6328_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (10 rects)
+   _6328_ (nor2_1, fill_8 to its right) [NP]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M480 (_2471_); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M480 (_2471_); candidates rejected by: {'met1 bar vs other met1': 5616, 'pin li extension vs other li': 493032, 'head vs other poly': 3280,
+      result (N): p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 67.3 -> 72.4 fJ/transition (+5.0, +8%)
+   [window 56573 rects, 806 devices, 19s]
+   _6200_ (nor2_1, fill_8 to its right) [PN]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M338 (195); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M338 (195); candidates rejected by: {'met1 bar vs other met1': 1552, 'pin li extension vs other li': 242278, 'head vs other poly': 5084, 'p
+   _6200_ (nor2_1, fill_8 to its right) [PN]: N finger LEGAL (16 rects)
+   _6200_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (16 rects)
+   _6200_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (29 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 82.5 -> 99.8 fJ/transition (+17.2, +21%)
+   [window 60121 rects, 1454 devices, 21s]
+   _3471_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (14 rects)
+   _3471_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (23 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 7442.3 -> 7457.7 fJ/transition (+15.4, +0%)
+   [window 60121 rects, 1454 devices, 21s]
+   _3454_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _3454_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (23 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 7436.4 -> 7451.1 fJ/transition (+14.7, +0%)
+   [window 58291 rects, 948 devices, 20s]
+   _5766_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (30 rects)
+   _5766_ (nor2_1, fill_4 to its right): N finger REJECTED by the guard: topology preserved, 1 new violations
+      min_space poly: rect 58318 vs 58308 0.122 < 0.210 um  [poly _5766_/sky130_fd_sc_hd__nor2_1 vs poly _5766_/sky130_fd_sc_hd__nor2_1]
+   _5766_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (16 rects)
+   _5766_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (22 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 85.8 -> 104.1 fJ/transition (+18.3, +21%)
+   [window 58291 rects, 948 devices, 20s]
+   _5570_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _5570_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (20 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 87.0 -> 101.0 fJ/transition (+14.0, +16%)
+   [window 58291 rects, 948 devices, 20s]
+   _6568_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (16 rects)
+   _6568_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (39 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 37.1 -> 52.3 fJ/transition (+15.3, +41%)
+   [window 58291 rects, 948 devices, 20s]
+   _6538_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (26 rects)
+   _6538_ (nor2_1, fill_4 to its right): N finger REJECTED by the guard: topology preserved, 3 new violations
+      min_space poly: rect 58314 vs 58292 0.190 < 0.210 um  [poly _6538_/sky130_fd_sc_hd__nor2_1 vs poly _6538_/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 58314 vs 58293 0.190 < 0.210 um  [poly _6538_/sky130_fd_sc_hd__nor2_1 vs poly _6538_/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 58314 vs 58303 0.122 < 0.210 um  [poly _6538_/sky130_fd_sc_hd__nor2_1 vs poly _6538_/sky130_fd_sc_hd__nor2_1]
+   _6538_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (11 rects)
+   _6538_ (nor2_1, fill_4 to its right) [NP]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M686 (379); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M686 (379); candidates rejected by: {'met1 bar vs other met1': 3240, 'pin li extension vs other li': 487208, 'head vs other poly': 1640, 'p
+      result (P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 99.3 -> 110.0 fJ/transition (+10.8, +11%)
+   [window 58291 rects, 948 devices, 20s]
+   _6431_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (26 rects)
+   _6431_ (nor2_1, fill_8 to its right): N finger REJECTED by the guard: topology preserved, 3 new violations
+      min_space poly: rect 58314 vs 58292 0.190 < 0.210 um  [poly _6431_/sky130_fd_sc_hd__nor2_1 vs poly _6431_/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 58314 vs 58293 0.190 < 0.210 um  [poly _6431_/sky130_fd_sc_hd__nor2_1 vs poly _6431_/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 58314 vs 58303 0.122 < 0.210 um  [poly _6431_/sky130_fd_sc_hd__nor2_1 vs poly _6431_/sky130_fd_sc_hd__nor2_1]
+   _6431_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (13 rects)
+   _6431_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (22 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=1.30 f=2
+      switched energy of the cell's nets: 40.0 -> 55.8 fJ/transition (+15.8, +39%)
+   [window 58291 rects, 948 devices, 20s]
+   _6676_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _6676_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (22 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 46.1 -> 59.9 fJ/transition (+13.8, +30%)
+   [window 57656 rects, 830 devices, 20s]
+   _6540_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (13 rects)
+   _6540_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (21 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 49.0 -> 63.1 fJ/transition (+14.1, +29%)
+      output net _2677_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 33.1 -> 19.5 ps, mean 33.1 -> 19.5 ps
+   [window 57656 rects, 830 devices, 20s]
+   _6246_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (12 rects)
+   _6246_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (54 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 48.1 -> 64.8 fJ/transition (+16.6, +35%)
+      output net _2393_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 29.9 -> 17.5 ps, mean 29.9 -> 17.5 ps
+   [window 57656 rects, 830 devices, 20s]
+   _4815_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (16 rects)
+   _4815_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (23 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 50.2 -> 64.2 fJ/transition (+14.1, +28%)
+      output net _0994_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 31.3 -> 18.7 ps, mean 31.3 -> 18.7 ps
+   [window 58216 rects, 856 devices, 21s]
+   _6206_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (12 rects)
+   _6206_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (20 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 60.5 -> 76.2 fJ/transition (+15.8, +26%)
+      output net _2354_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 60.5 -> 33.9 ps, mean 60.5 -> 33.9 ps
+   [window 58216 rects, 856 devices, 21s]
+   _5572_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _5572_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (28 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 50.3 -> 64.5 fJ/transition (+14.2, +28%)
+   [window 58216 rects, 856 devices, 20s]
+   _5713_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (16 rects)
+   _5713_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (22 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 119.2 -> 134.2 fJ/transition (+15.0, +13%)
+      output net _1876_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 37.7 -> 22.1 ps, mean 37.7 -> 22.1 ps
+   [window 58216 rects, 856 devices, 20s]
+   _3831_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _3831_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (27 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 121.9 -> 138.0 fJ/transition (+16.1, +13%)
+      output net _0036_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 136.3 -> 74.9 ps, mean 135.9 -> 74.5 ps
+   [window 55475 rects, 782 devices, 20s]
+   _5564_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (16 rects)
+   _5564_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (31 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 75.9 -> 90.4 fJ/transition (+14.5, +19%)
+      output net 161: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 36.7 -> 21.6 ps, mean 36.7 -> 21.6 ps
+   [window 57092 rects, 854 devices, 20s]
+   _5917_ (nor2_1, fill_8 to its right) [PN]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M414 (174); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M414 (174); candidates rejected by: {'met1 bar vs other met1': 1552, 'pin li extension vs other li': 242278, 'head vs other poly': 3444, 'p
+   _5917_ (nor2_1, fill_8 to its right) [PN]: N finger LEGAL (10 rects)
+   _5917_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (10 rects)
+   _5917_ (nor2_1, fill_8 to its right) [NP]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M414 (174); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M414 (174); candidates rejected by: {'met1 bar vs other met1': 1552, 'pin li extension vs other li': 242278, 'head vs other poly': 3444, 'p
+      result (N): p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 139.9 -> 144.9 fJ/transition (+5.0, +4%)
+   [window 57092 rects, 854 devices, 20s]
+   _6351_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (13 rects)
+   _6351_ (nand2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M678 (354); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M678 (354); candidates rejected by: {'licon vs cuts': 902, 'head vs other poly': 3280, 'pad and gate pin do not share a height': 44854, 'me
+   _6351_ (nand2_1, fill_8 to its right) [NP]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M678 (354); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M678 (354); candidates rejected by: {'licon vs cuts': 902, 'head vs other poly': 3280, 'pad and gate pin do not share a height': 44854, 'me
+   _6351_ (nand2_1, fill_8 to its right) [NP]: P finger LEGAL (13 rects)
+      result (P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 104.4 -> 112.3 fJ/transition (+7.9, +8%)
+      output net _2494_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/7866 ohm; worst-edge Elmore to 2 receivers max 31.6 -> 34.9 ps, mean 31.6 -> 34.9 ps
+   [window 57092 rects, 854 devices, 20s]
+   _5806_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _5806_ (nand2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M386 (216); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M386 (216); candidates rejected by: {'head vs diffusion': 9922, 'met1 bar vs other met1': 1444, 'pin li extension vs other li': 250558, 'he
+   _5806_ (nand2_1, fill_8 to its right) [NP]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M386 (216); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M386 (216); candidates rejected by: {'head vs diffusion': 9922, 'met1 bar vs other met1': 1444, 'pin li extension vs other li': 250558, 'he
+   _5806_ (nand2_1, fill_8 to its right) [NP]: P finger LEGAL (15 rects)
+      result (P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 100.1 -> 107.8 fJ/transition (+7.7, +8%)
+      output net _1967_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/7866 ohm; worst-edge Elmore to 2 receivers max 28.2 -> 31.7 ps, mean 28.2 -> 31.7 ps
+   [window 57092 rects, 854 devices, 20s]
+   _4651_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (25 rects)
+   _4651_ (nor2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: no field for a poly bridge and no place for a contact bridge (poly head + met1 jumper to the gate pin); candidates rejected by: {'head vs diffusion': 18778, 'head vs other poly': 1066}
+   _4651_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (22 rects)
+   _4651_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (33 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 47.0 -> 64.9 fJ/transition (+17.8, +38%)
+   [window 55453 rects, 798 devices, 18s]
+   _5879_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (24 rects)
+   _5879_ (nor2_1, fill_4 to its right): N finger REJECTED by the guard: topology preserved, 1 new violations
+      min_space poly: rect 55474 vs 55463 0.122 < 0.210 um  [poly _5879_/sky130_fd_sc_hd__nor2_1 vs poly _5879_/sky130_fd_sc_hd__nor2_1]
+   _5879_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (14 rects)
+   _5879_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (32 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=1.30 f=2
+      switched energy of the cell's nets: 63.6 -> 84.4 fJ/transition (+20.8, +33%)
+   [window 55210 rects, 718 devices, 19s]
+   _6124_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _6124_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (21 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 138.2 -> 151.8 fJ/transition (+13.6, +10%)
+      output net _2275_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 53.6 -> 30.2 ps, mean 53.6 -> 30.2 ps
+   [window 55210 rects, 718 devices, 20s]
+   _6032_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (16 rects)
+   _6032_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (23 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 103.6 -> 117.8 fJ/transition (+14.2, +14%)
+      output net _2186_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 57.8 -> 33.1 ps, mean 57.8 -> 33.1 ps
+   [window 55210 rects, 718 devices, 18s]
+   _5943_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (13 rects)
+   _5943_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (27 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 48.9 -> 62.9 fJ/transition (+14.0, +29%)
+      output net _2100_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 37.4 -> 21.6 ps, mean 37.4 -> 21.6 ps
+   [window 55210 rects, 718 devices, 19s]
+   _5944_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (15 rects)
+   _5944_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (31 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 44.4 -> 59.3 fJ/transition (+14.9, +33%)
+      output net _2101_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 31.1 -> 20.6 ps, mean 31.1 -> 20.6 ps
+   [window 55210 rects, 718 devices, 19s]
+   _6066_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _6066_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (21 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 51.8 -> 66.0 fJ/transition (+14.2, +27%)
+      output net _2219_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 30.9 -> 20.4 ps, mean 30.9 -> 20.4 ps
+   [window 55210 rects, 718 devices, 19s]
+   _6296_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (12 rects)
+   _6296_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (25 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 35.9 -> 50.5 fJ/transition (+14.6, +41%)
+   [window 55210 rects, 718 devices, 19s]
+   _5052_ (nor2_1, fill_8 to its right) [PN]: P finger refused -- add_finger: no legal S/D jumper (met1 bar, met1 pads + via1 + met2 bar, routed path, or moving a P&R wire); rejected by: {'met1 bar vs other met1': 89, 'mcon vs other cuts': 138, 'met1 pad vs other met1': 89, 'maze route': {'cells': 139712, 'layers': 3, 'obstacles': 266, 'targets': 9924, 'pops': 36866, 'error': 'no path'}, 'reroute': 'could not reconnect net:ex_data[220] after the cut: no path'}
+   _5052_ (nor2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: no legal S/D jumper (met1 bar, met1 pads + via1 + met2 bar, routed path, or moving a P&R wire); rejected by: {'met1 bar vs other met1': 245, 'mcon vs other cuts': 8, 'met1 pad vs other met1': 245, 'maze route': {'cells': 138168, 'layers': 3, 'obstacles': 219, 'targets': 9669, 'pops': 35906, 'error': 'no path'}, 'reroute': 'through P&R wires: own-net spacing could not be repaired'}
+   _5052_ (nor2_1, fill_8 to its right) [NP]: N finger refused -- add_finger: no legal S/D jumper (met1 bar, met1 pads + via1 + met2 bar, routed path, or moving a P&R wire); rejected by: {'met1 bar vs other met1': 245, 'mcon vs other cuts': 8, 'met1 pad vs other met1': 245, 'maze route': {'cells': 138168, 'layers': 3, 'obstacles': 219, 'targets': 9669, 'pops': 35906, 'error': 'no path'}, 'reroute': 'through P&R wires: own-net spacing could not be repaired'}
+   _5052_ (nor2_1, fill_8 to its right) [NP]: P finger refused -- add_finger: no legal S/D jumper (met1 bar, met1 pads + via1 + met2 bar, routed path, or moving a P&R wire); rejected by: {'met1 bar vs other met1': 89, 'mcon vs other cuts': 138, 'met1 pad vs other met1': 89, 'maze route': {'cells': 139712, 'layers': 3, 'obstacles': 266, 'targets': 9924, 'pops': 36866, 'error': 'no path'}, 'reroute': 'could not reconnect net:ex_data[220] after the cut: no path'}
+   [window 55210 rects, 718 devices, 20s]
+   _3816_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (25 rects)
+   _3816_ (nor2_1, fill_4 to its right): N finger REJECTED by the guard: topology preserved, 1 new violations
+      min_space poly: rect 55232 vs 55223 0.122 < 0.210 um  [poly _3816_/sky130_fd_sc_hd__nor2_1 vs poly _3816_/sky130_fd_sc_hd__nor2_1]
+   _3816_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (17 rects)
+   _3816_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (22 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 75.7 -> 93.8 fJ/transition (+18.1, +24%)
+   [window 55210 rects, 718 devices, 19s]
+   _3818_ (nor2_1, fill_4 to its right): P finger REJECTED by the guard: topology preserved, 2 new violations
+      enclosure met1/via1: rect 48686 vs 48685 0.000 < 0.055 um  [met1 net:_0023_ vs via1 net:_0023_]
+      enclosure met2/via1: rect 48687 vs 48685 0.000 < 0.055 um  [met2 net:_0023_ vs via1 net:_0023_]
+   _3818_ (nor2_1, fill_4 to its right) [PN]: N finger LEGAL (10 rects)
+   _3818_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (10 rects)
+   _3818_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (36 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=1.30 f=2
+      switched energy of the cell's nets: 100.8 -> 117.9 fJ/transition (+17.1, +17%)
+   [window 55210 rects, 718 devices, 19s]
+   _3623_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (28 rects)
+   _3623_ (nor2_1, fill_8 to its right) [PN]: N finger LEGAL (13 rects)
+      result (P+N): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 86.1 -> 102.3 fJ/transition (+16.1, +19%)
+   [window 55210 rects, 718 devices, 19s]
+   _3540_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (16 rects)
+   _3540_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (18 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 122.4 -> 136.5 fJ/transition (+14.1, +12%)
+      output net _3143_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 84.4 -> 47.0 ps, mean 84.4 -> 47.0 ps
+   [window 56831 rects, 860 devices, 19s]
+   _5907_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (29 rects)
+   _5907_ (nor2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: no field for a poly bridge and no place for a contact bridge (poly head + met1 jumper to the gate pin); candidates rejected by: {'head vs diffusion': 18778, 'head vs other poly': 1066}
+   _5907_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (23 rects)
+   _5907_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (25 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 201.5 -> 217.7 fJ/transition (+16.2, +8%)
+   [window 56831 rects, 860 devices, 19s]
+   _5975_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (14 rects)
+   _5975_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (29 rects)
+      result (P+N): p W=1.00 f=1; p W=2.00 f=2; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 115.7 -> 133.6 fJ/transition (+17.9, +15%)
+      output net _2131_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 57.0 -> 31.8 ps, mean 56.9 -> 31.7 ps
+   [window 56831 rects, 860 devices, 19s]
+   _6099_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (13 rects)
+   _6099_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (22 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 98.8 -> 115.5 fJ/transition (+16.7, +17%)
+      output net _2251_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 30.6 -> 18.2 ps, mean 30.6 -> 18.2 ps
+   [window 56831 rects, 860 devices, 20s]
+   _3622_ (nor2_1, fill_8 to its right) [PN]: P finger refused -- add_finger: no legal S/D jumper (met1 bar, met1 pads + via1 + met2 bar, routed path, or moving a P&R wire); rejected by: {'met1 bar vs other met1': 156, 'mcon vs other cuts': 2, 'met1 pad vs other met1': 156, 'maze route': {'cells': 139712, 'layers': 3, 'obstacles': 168, 'targets': 6967, 'pops': 49007, 'error': 'no path'}, 'reroute': 'blocker 55209 would vanish entirely'}
+   _3622_ (nor2_1, fill_8 to its right) [PN]: N finger LEGAL (13 rects)
+   _3622_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (13 rects)
+   _3622_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (30 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 75.1 -> 91.7 fJ/transition (+16.6, +22%)
+   [window 56831 rects, 860 devices, 20s]
+   _6662_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (43 rects)
+   _6662_ (nor2_1, fill_4 to its right) [PN]: N finger refused -- add_finger: poly at [277.065, 128.655, 277.615, 128.925] (_6662_/sky130_fd_sc_hd__nor2_1) crosses the extended diffusion (it would gate a new transistor)
+   _6662_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (17 rects)
+   _6662_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (35 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 49.1 -> 66.4 fJ/transition (+17.4, +35%)
+   [window 56803 rects, 840 devices, 20s]
+   _5486_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (12 rects)
+   _5486_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (27 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 115.8 -> 130.0 fJ/transition (+14.2, +12%)
+      output net _1652_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 43.6 -> 25.0 ps, mean 43.6 -> 25.0 ps
+   [window 56803 rects, 840 devices, 20s]
+   _5634_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (16 rects)
+   _5634_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (21 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 133.4 -> 147.9 fJ/transition (+14.4, +11%)
+      output net _1799_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 29.9 -> 18.1 ps, mean 29.9 -> 18.1 ps
+   [window 58464 rects, 1190 devices, 20s]
+   _4933_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (24 rects)
+   _4933_ (nor2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: no field for a poly bridge and no place for a contact bridge (poly head + met1 jumper to the gate pin); candidates rejected by: {'head vs diffusion': 18778, 'head vs other poly': 1066}
+   _4933_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (15 rects)
+   _4933_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (25 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 198.3 -> 214.0 fJ/transition (+15.7, +8%)
+   [window 58464 rects, 1190 devices, 20s]
+   _4850_ (nor2_1, fill_4 to its right) [PN]: P finger refused -- add_finger: no legal S/D jumper (met1 bar, met1 pads + via1 + met2 bar, routed path, or moving a P&R wire); rejected by: {'met1 bar vs other met1': 61, 'mcon vs other cuts': 194, 'met2 bar vs other met2': 7, 'met1 pad vs other met1': 54, 'maze route': {'cells': 139712, 'layers': 3, 'obstacles': 283, 'targets': 8552, 'pops': 48298, 'error': 'no path'}, 'reroute': 'could not reconnect net:net62 after the cut: no path'}
+   _4850_ (nor2_1, fill_4 to its right) [PN]: N finger LEGAL (11 rects)
+   _4850_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (11 rects)
+   _4850_ (nor2_1, fill_4 to its right) [NP]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M52 (_1026_); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M52 (_1026_); candidates rejected by: {'pad and gate pin do not share a height': 178028, 'met1 bar vs other met1': 1552, 'pin li extension 
+      result (N): p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=1.30 f=2
+      switched energy of the cell's nets: 192.9 -> 198.3 fJ/transition (+5.4, +3%)
+   [window 55889 rects, 816 devices, 19s]
+   _6002_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (14 rects)
+   _6002_ (nand2_1, fill_4 to its right): N finger REJECTED by the guard: topology preserved, 1 new violations
+      enclosure met2/via2: rect 50767 vs 50766 0.000 < 0.040 um  [met2 net:_1643_ vs via2 net:_1643_]
+   _6002_ (nand2_1, fill_4 to its right) [NP]: N finger LEGAL (29 rects)
+   _6002_ (nand2_1, fill_4 to its right) [NP]: P finger LEGAL (18 rects)
+      result (N+P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 69.9 -> 84.8 fJ/transition (+14.9, +21%)
+      output net _2157_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 43.1 -> 25.4 ps, mean 43.1 -> 25.4 ps
+   [window 55889 rects, 816 devices, 19s]
+   _5684_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (14 rects)
+   _5684_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (23 rects)
+      result (P+N): p W=1.00 f=1; p W=2.00 f=2; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 72.6 -> 89.3 fJ/transition (+16.7, +23%)
+      output net _1848_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 32.7 -> 21.1 ps, mean 32.7 -> 21.1 ps
+   [window 55889 rects, 816 devices, 19s]
+   _5952_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (16 rects)
+   _5952_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (24 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 53.9 -> 68.6 fJ/transition (+14.7, +27%)
+   [window 55889 rects, 816 devices, 20s]
+   _4335_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (24 rects)
+   _4335_ (nor2_1, fill_4 to its right): N finger REJECTED by the guard: topology preserved, 3 new violations
+      min_space poly: rect 55910 vs 55890 0.190 < 0.210 um  [poly _4335_/sky130_fd_sc_hd__nor2_1 vs poly _4335_/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 55910 vs 55891 0.190 < 0.210 um  [poly _4335_/sky130_fd_sc_hd__nor2_1 vs poly _4335_/sky130_fd_sc_hd__nor2_1]
+      min_space poly: rect 55910 vs 55899 0.122 < 0.210 um  [poly _4335_/sky130_fd_sc_hd__nor2_1 vs poly _4335_/sky130_fd_sc_hd__nor2_1]
+   _4335_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (22 rects)
+   _4335_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (19 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 99.7 -> 116.2 fJ/transition (+16.4, +16%)
+   [window 55889 rects, 816 devices, 20s]
+   _3595_ (nor2_1, fill_8 to its right) [PN]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M8 (8); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M8 (8); candidates rejected by: {'met1 bar vs other met1': 1552, 'pin li extension vs other li': 242278, 'head vs other poly': 3280, 'pad a
+   _3595_ (nor2_1, fill_8 to its right) [PN]: N finger LEGAL (15 rects)
+   _3595_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (15 rects)
+   _3595_ (nor2_1, fill_8 to its right): P finger REJECTED by the guard: topology preserved, 1 new violations
+      min_space met1: rect 55929 vs 52927 0.070 < 0.140 um  [met1 _3595_/sky130_fd_sc_hd__nor2_1 vs met1 net:_3023_]
+      result (N): p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 59.0 -> 64.5 fJ/transition (+5.5, +9%)
+   [window 55889 rects, 816 devices, 20s]
+   _4703_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (13 rects)
+   _4703_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (25 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 81.6 -> 96.1 fJ/transition (+14.5, +18%)
+   [window 56515 rects, 808 devices, 21s]
+   _5836_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (28 rects)
+   _5836_ (nor2_1, fill_4 to its right) [PN]: N finger refused -- add_finger: poly at [14.405, 144.985, 14.975, 145.255] (_5836_/sky130_fd_sc_hd__nor2_1) crosses the extended diffusion (it would gate a new transistor)
+   _5836_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (11 rects)
+   _5836_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (28 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 75.9 -> 92.0 fJ/transition (+16.1, +21%)
+   [window 56515 rects, 808 devices, 20s]
+   _5877_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (18 rects)
+   _5877_ (nand2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M517 (275); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M517 (275); candidates rejected by: {'head vs diffusion': 9922, 'met1 bar vs other met1': 1444, 'pin li extension vs other li': 250558, 'he
+   _5877_ (nand2_1, fill_8 to its right) [NP]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M517 (275); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M517 (275); candidates rejected by: {'head vs diffusion': 9922, 'met1 bar vs other met1': 1444, 'pin li extension vs other li': 250558, 'he
+   _5877_ (nand2_1, fill_8 to its right) [NP]: P finger LEGAL (18 rects)
+      result (P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 102.1 -> 109.6 fJ/transition (+7.5, +7%)
+   [window 56515 rects, 808 devices, 32s]
+   _6005_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (34 rects)
+   _6005_ (nor2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: foreign li at [64.03, 144.94, 64.2, 145.76] (_6005_/sky130_fd_sc_hd__nor2_1) conflicts with the mirrored strap [64.195, 144.415, 64.285, 145.055] over our contacts (y 144.385..145.055)
+   _6005_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (13 rects)
+   _6005_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (15 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 45.4 -> 62.1 fJ/transition (+16.7, +37%)
+   [window 56515 rects, 808 devices, 23s]
+   _5448_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (16 rects)
+   _5448_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (27 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 118.8 -> 133.1 fJ/transition (+14.3, +12%)
+      output net _1614_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 41.4 -> 24.1 ps, mean 41.4 -> 24.1 ps
+   [window 56515 rects, 808 devices, 21s]
+   _5515_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (32 rects)
+   _5515_ (nor2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: poly at [103.645, 144.985, 103.865, 145.255] (_5515_/sky130_fd_sc_hd__nor2_1) crosses the extended diffusion (it would gate a new transistor)
+   _5515_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (13 rects)
+   _5515_ (nor2_1, fill_8 to its right) [NP]: P finger refused -- add_finger: series stack: no bridge for the mirrored gate of M358 (194); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M358 (194); candidates rejected by: {'met1 bar vs other met1': 1552, 'pad and gate pin do not share a height': 33476, 'pin li extension vs 
+      result (P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 116.5 -> 127.3 fJ/transition (+10.8, +9%)
+   [window 56515 rects, 808 devices, 21s]
+   _3928_ (nor2_1, fill_8 to its right) [PN]: P finger LEGAL (29 rects)
+   _3928_ (nor2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: poly at [138.605, 145.035, 139.115, 145.305] (_3928_/sky130_fd_sc_hd__nor2_1) crosses the extended diffusion (it would gate a new transistor)
+   _3928_ (nor2_1, fill_8 to its right) [NP]: N finger LEGAL (13 rects)
+   _3928_ (nor2_1, fill_8 to its right) [NP]: P finger LEGAL (29 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 114.6 -> 130.6 fJ/transition (+16.0, +14%)
+   [window 56515 rects, 808 devices, 21s]
+   _3808_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (47 rects)
+   _3808_ (nor2_1, fill_4 to its right): N finger REJECTED by the guard: topology preserved, 1 new violations
+      min_space poly: rect 56559 vs 56542 0.122 < 0.210 um  [poly _3808_/sky130_fd_sc_hd__nor2_1 vs poly _3808_/sky130_fd_sc_hd__nor2_1]
+   _3808_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (13 rects)
+   _3808_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (28 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=0.65 f=1; n W=1.30 f=2
+      switched energy of the cell's nets: 61.2 -> 79.9 fJ/transition (+18.7, +31%)
+   [window 56515 rects, 808 devices, 19s]
+   _3810_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (14 rects)
+   _3810_ (nand2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M72 (_0014_); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M72 (_0014_); candidates rejected by: {'head vs diffusion': 9922, 'met1 bar vs other met1': 3756, 'pin li extension vs other li': 358060, '
+   _3810_ (nand2_1, fill_8 to its right) [NP]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M72 (_0014_); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M72 (_0014_); candidates rejected by: {'head vs diffusion': 9922, 'met1 bar vs other met1': 3756, 'pin li extension vs other li': 358060, '
+   _3810_ (nand2_1, fill_8 to its right) [NP]: P finger LEGAL (14 rects)
+      result (P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 101.8 -> 109.7 fJ/transition (+7.9, +8%)
+      output net _0015_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/7866 ohm; worst-edge Elmore to 2 receivers max 37.9 -> 40.9 ps, mean 37.9 -> 40.9 ps
+   [window 55212 rects, 762 devices, 19s]
+   _5611_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (15 rects)
+   _5611_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (33 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 126.4 -> 141.0 fJ/transition (+14.5, +11%)
+      output net _1776_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 40.0 -> 23.1 ps, mean 39.9 -> 23.1 ps
+   [window 55212 rects, 762 devices, 20s]
+   _5605_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (14 rects)
+   _5605_ (nand2_1, fill_8 to its right) [PN]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M304 (176); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M304 (176); candidates rejected by: {'licon vs cuts': 902, 'head vs other poly': 3280, 'pad and gate pin do not share a height': 44854, 'me
+   _5605_ (nand2_1, fill_8 to its right) [NP]: N finger refused -- add_finger: series stack: no bridge for the mirrored gate of M304 (176); with the mirrored stack spread by one pitch: add_finger: series stack: no bridge for the mirrored gate of M304 (176); candidates rejected by: {'licon vs cuts': 902, 'head vs other poly': 3280, 'pad and gate pin do not share a height': 44854, 'me
+   _5605_ (nand2_1, fill_8 to its right) [NP]: P finger LEGAL (14 rects)
+      result (P): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 56.6 -> 64.7 fJ/transition (+8.1, +14%)
+      output net _1770_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/7866 ohm; worst-edge Elmore to 4 receivers max 53.0 -> 56.3 ps, mean 52.9 -> 56.2 ps
+   [window 55212 rects, 762 devices, 19s]
+   _5606_ (nor2_1, fill_4 to its right) [PN]: P finger LEGAL (38 rects)
+   _5606_ (nor2_1, fill_4 to its right) [PN]: N finger refused -- add_finger: poly at [41.085, 150.415, 41.305, 150.685] (_5606_/sky130_fd_sc_hd__nor2_1) crosses the extended diffusion (it would gate a new transistor)
+   _5606_ (nor2_1, fill_4 to its right) [NP]: N finger LEGAL (11 rects)
+   _5606_ (nor2_1, fill_4 to its right) [NP]: P finger LEGAL (28 rects)
+      result (N+P): p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; p W=1.00 f=1; n W=1.30 f=2; n W=0.65 f=1
+      switched energy of the cell's nets: 103.9 -> 122.9 fJ/transition (+19.0, +18%)
+   [window 55212 rects, 762 devices, 19s]
+   _5811_ (nand2_1, fill_4 to its right) [PN]: P finger LEGAL (14 rects)
+   _5811_ (nand2_1, fill_4 to its right) [PN]: N finger LEGAL (28 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 73.7 -> 89.4 fJ/transition (+15.7, +21%)
+      output net _1972_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 32.1 -> 20.7 ps, mean 32.1 -> 20.7 ps
+   [window 55212 rects, 762 devices, 19s]
+   _5866_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _5866_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (31 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 61.5 -> 76.7 fJ/transition (+15.2, +25%)
+      output net _2025_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 6 receivers max 83.6 -> 46.5 ps, mean 83.5 -> 46.4 ps
+   [window 55212 rects, 762 devices, 20s]
+   _3960_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (15 rects)
+   _3960_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (32 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 91.4 -> 105.8 fJ/transition (+14.5, +16%)
+      output net _0165_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 4 receivers max 52.1 -> 29.9 ps, mean 52.0 -> 29.8 ps
+   [window 55212 rects, 762 devices, 20s]
+   _6657_ (nand2_1, fill_8 to its right) [PN]: P finger LEGAL (12 rects)
+   _6657_ (nand2_1, fill_8 to its right) [PN]: N finger LEGAL (25 rects)
+      result (P+N): p W=2.00 f=2; p W=1.00 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1; n W=0.65 f=1
+      switched energy of the cell's nets: 87.5 -> 101.5 fJ/transition (+14.0, +16%)
+      output net _2778_: PMOS W 2.00 -> 3.00 um, R_rise/R_fall 4882/7866 -> 3474/4120 ohm; worst-edge Elmore to 2 receivers max 32.2 -> 19.0 ps, mean 32.2 -> 19.0 ps
+EXIT 124

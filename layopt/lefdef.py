@@ -480,18 +480,40 @@ def def2flat(def_path: str, lef_paths: List[str], gds_dir: str, tech: Tech,
                                      x + int(round(c2 * 1000)), y + int(round(e * 1000)))))
         return out
 
+    order = {n: i for i, n in enumerate(tech.routing)}
+    comps_by = {c.inst: c for c in d.components}
+    pins_by_net: Dict[str, List[DefPin]] = {}
+    for p_ in d.pins:
+        pins_by_net.setdefault(p_.net, []).append(p_)
     for net in d.nets:
         prov = "%s/net:%s" % (d.design, net.name)
         first = None
         for w in net.wires:
             for lname, r in wire_rects(w):
                 fl.rects.append(FlatRect(L[lname], r, prov))
-                if first is None:
+                # the label sits on the lowest routing layer the net uses (a supply's met1
+                # rail rather than its met5 strap: the rail is what the cells' li meets)
+                if first is None or order.get(lname, 99) < order.get(first[0], 99):
                     first = (lname, ((r[0] + r[2]) // 2, (r[1] + r[3]) // 2))
         if first is None:
-            # unrouted net: label through a component pin port if we can
+            # unrouted net: through the design's own PIN if it has one (its geometry is the
+            # net's), else a component INPUT pin port (an output port of a tie cell is the
+            # rail), else any component pin
+            for p_ in pins_by_net.get(net.name, []):
+                if p_.rect and lef2tech.get(p_.layer) in L:
+                    r = tuple(int(round(v * scale)) for v in p_.rect)
+                    first = (lef2tech[p_.layer], ((r[0] + r[2]) // 2, (r[1] + r[3]) // 2)); break
+            ranked = []
             for inst, pin in net.pins:
-                comp = next((c for c in d.components if c.inst == inst), None)
+                comp = comps_by.get(inst)
+                m = lef.macros.get(comp.macro) if comp else None
+                if comp and m and pin in m.pins and m.pins[pin].ports:
+                    ranked.append((0 if getattr(m.pins[pin], "direction", "INPUT").startswith("INPUT") else 1, inst, pin))
+            ranked.sort()
+            for _, inst, pin in ranked:
+                if first is not None:
+                    break
+                comp = comps_by.get(inst)
                 m = lef.macros.get(comp.macro) if comp else None
                 if comp and m and pin in m.pins and m.pins[pin].ports:
                     pl, (a, b, c2, e) = m.pins[pin].ports[0]

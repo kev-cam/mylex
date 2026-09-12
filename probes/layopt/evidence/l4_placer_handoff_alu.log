@@ -1,0 +1,28 @@
+== 1. hints for alu_placed.def (38948s, 2302 pair layouts): 4036 logic cells, 179 flipped, 76 slid (115.46 um of movement), 188 boundaries kept (85 two-strip, 103 one-strip) worth 45.09 um
+   not asked: _6440_ -- abutment with load_slew57 would move it 5.98 um for 0.130 um; not asked
+   not asked: _6369_ -- abutment with load_slew26 would move it 14.26 um for 0.390 um; not asked
+   not asked: rebuffer718 -- abutment with _6489_ would move it 10.58 um for 0.130 um; not asked
+   not asked: _3388_ -- abutment with wire59 would move it 8.74 um for 0.450 um; not asked
+   not asked: _3863_ -- abutment with _3868_ would move it 6.90 um for 0.275 um; not asked
+   not asked: _3884_ -- abutment with _3883_ would move it 5.06 um for 0.440 um; not asked
+   not asked: _5251_ -- abutment with rebuffer559 would move it 5.52 um for 0.330 um; not asked
+   not asked: _3870_ -- abutment with rebuffer201 would move it 5.06 um for 0.150 um; not asked
+   not asked: _3416_ -- abutment with _5440_ would move it 5.06 um for 0.300 um; not asked
+   not asked: rebuffer109 -- abutment with rebuffer70 would move it 7.82 um for 0.460 um; not asked
+   not asked: _6540_ -- abutment with clone617 would move it 12.42 um for 0.230 um; not asked
+   not asked: clone65 -- abutment with clone145 would move it 6.90 um for 0.100 um; not asked
+   not asked: _6137_ -- abutment with rebuffer152 would move it 10.58 um for 0.155 um; not asked
+   not asked: load_slew14 -- abutment with wire2 would move it 11.04 um for 0.700 um; not asked
+   not asked: wire34 -- abutment with _6028_ would move it 6.90 um for 0.395 um; not asked
+   not asked: _3976_ -- abutment with rebuffer88 would move it 6.44 um for 0.160 um; not asked
+   not asked: _4645_ -- abutment with load_slew13 would move it 10.12 um for 0.155 um; not asked
+   not asked: clkload12 -- abutment with _4450_ would move it 9.66 um for 0.105 um; not asked
+   not asked: _3698_ -- abutment with _6606_ would move it 6.90 um for 0.210 um; not asked
+   not asked: rebuffer211 -- abutment with _5698_ would move it 9.20 um for 0.210 um; not asked
+   not asked: _5745_ -- abutment with _5692_ would move it 7.82 um for 0.385 um; not asked
+   not asked: rebuffer215 -- abutment with rebuffer272 would move it 6.44 um for 0.580 um; not asked
+   not asked: _5990_ -- abutment with clkbuf_4_15_0_clk would move it 10.12 um for 0.475 um; not asked
+   not asked: _6641_ -- abutment with rebuffer425 would move it 13.34 um for 0.215 um; not asked
+   hints.tcl touches 336 cells (setOrient / setLocation / FIRM)
+== 2. the router's bill: base -> hints: wire 164914 -> 165426 um (+0.3%), WNS -5.56 -> 0.00 ns, TNS -409.78 -> 0.00 ns, DRC 0 -> 0, placement check FAILED (None overlaps)
+EXIT 0

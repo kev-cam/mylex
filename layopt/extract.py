@@ -288,7 +288,11 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
         for sid in bi.candidates((x, y, x, y)):
             r = shapes[sid].rect
             if r[0] <= x <= r[2] and r[1] <= y <= r[3]:
-                nets[net_of_shape[sid]].name = name
+                cur = nets[net_of_shape[sid]].name
+                # a net labelled both as a supply and as a signal is the supply (a tie
+                # cell's HI/LO port is its rail; a net shorted to a rail is the rail)
+                if not (cur in tech.supply_names and name not in tech.supply_names):
+                    nets[net_of_shape[sid]].name = name
                 return True
         return False
 
