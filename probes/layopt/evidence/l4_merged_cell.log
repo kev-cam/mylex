@@ -1,4 +1,4 @@
-== 1. gcd_hints_placed.def: 36728 rects, 2472 devices, 14 hinted boundaries (16s)
+== 1. gcd_hints_placed.def: 36728 rects, 2472 devices, 14 hinted boundaries (15s)
    _155_|rebuffer32: dissolved, slid 0.150 um
    rebuffer9|_147_: dissolved, slid 0.140 um
    clkbuf_2_0__f_clk|rebuffer11: dissolved, slid 0.240 um
@@ -13,22 +13,23 @@
    _113_|rebuffer28: dissolved, slid 0.150 um
    _115_|rebuffer52: dissolved, slid 0.195 um
    rebuffer14|_197_: slid 0.160 um but topology kept, 2 new violations -- not taken
-== 2. 13 of 14 boundaries dissolved, 2.92 um given back (300s)
-   layopt_m0 = rebuffer9+_147_: 9.980 x 2.720 um, 11 pins, 64 obstruction rects
-   layopt_m1 = rebuffer15+_162_: 12.270 x 2.720 um, 12 pins, 82 obstruction rects
-   layopt_m2 = rebuffer12+_236_: 4.910 x 2.720 um, 9 pins, 38 obstruction rects
-   layopt_m3 = rebuffer13+clkbuf_2_2__f_clk: 11.720 x 2.720 um, 8 pins, 74 obstruction rects
-   layopt_m4 = _132_+clone6: 6.245 x 2.720 um, 9 pins, 43 obstruction rects
-   layopt_m5 = _254_+load_slew1: 9.270 x 2.720 um, 9 pins, 68 obstruction rects
-   layopt_m6 = clkbuf_2_0__f_clk+rebuffer11: 11.720 x 2.720 um, 8 pins, 74 obstruction rects
-   layopt_m7 = _113_+rebuffer28: 5.830 x 2.720 um, 9 pins, 49 obstruction rects
-   layopt_m8 = _160_+rebuffer30: 6.750 x 2.720 um, 10 pins, 51 obstruction rects
-   layopt_m9 = _155_+rebuffer32: 4.450 x 2.720 um, 10 pins, 34 obstruction rects
-   layopt_m10 = _247_+rebuffer5: 8.085 x 2.720 um, 8 pins, 50 obstruction rects
-   layopt_m11 = _115_+rebuffer52: 4.865 x 2.720 um, 9 pins, 39 obstruction rects
-   layopt_m12 = rebuffer10+wire2: 6.320 x 2.720 um, 8 pins, 53 obstruction rects
-== 3. wrote merged.lef (13 macros), merged.gds, merged.def (55 instances moved by the dissolve)
-== 4. routed in 119s: complete; wire 5559 um; DRC violations 0; errors: []
-== 5. routed dissolved gcd: 2472 devices / 2102 nets vs original routed gcd 2472 / 2102; device-level topology EQUAL (15s)
+== 2. 13 of 14 boundaries dissolved, 2.92 um given back (62s; guarded on three-row windows)
+   whole layout after the dissolves: 36730 rects, 2472 devices, topology EQUAL to the base
+   layopt_m0 = rebuffer9+_147_: 9.980 x 2.720 um, 11 pins, 26 obstruction rects
+   layopt_m1 = rebuffer15+_162_: 12.270 x 2.720 um, 12 pins, 40 obstruction rects
+   layopt_m2 = rebuffer12+_236_: 4.910 x 2.720 um, 9 pins, 16 obstruction rects
+   layopt_m3 = rebuffer13+clkbuf_2_2__f_clk: 11.720 x 2.720 um, 8 pins, 14 obstruction rects
+   layopt_m4 = _132_+clone6: 6.245 x 2.720 um, 9 pins, 13 obstruction rects
+   layopt_m5 = _254_+load_slew1: 9.270 x 2.720 um, 9 pins, 26 obstruction rects
+   layopt_m6 = clkbuf_2_0__f_clk+rebuffer11: 11.720 x 2.720 um, 8 pins, 14 obstruction rects
+   layopt_m7 = _113_+rebuffer28: 5.830 x 2.720 um, 9 pins, 23 obstruction rects
+   layopt_m8 = _160_+rebuffer30: 6.750 x 2.720 um, 10 pins, 21 obstruction rects
+   layopt_m9 = _155_+rebuffer32: 4.450 x 2.720 um, 10 pins, 12 obstruction rects
+   layopt_m10 = _247_+rebuffer5: 8.085 x 2.720 um, 8 pins, 6 obstruction rects
+   layopt_m11 = _115_+rebuffer52: 4.865 x 2.720 um, 9 pins, 17 obstruction rects
+   layopt_m12 = rebuffer10+wire2: 6.320 x 2.720 um, 8 pins, 15 obstruction rects
+== 3. wrote merged.lef (13 macros), merged.gds, merged.def (37 instances moved by the dissolve)
+== 4. routed in 121s: complete; wire 5586 um; DRC violations 0; errors: []
+== 5. routed dissolved gcd: 2472 devices / 2102 nets vs the routed reference gcd.def: 2472 / 2102; device-level topology EQUAL (15s)
    KLayout on the routed result: devices 2472/2472 wl True nets 1353/1353 isomorphic True
 EXIT 0

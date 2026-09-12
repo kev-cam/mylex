@@ -1142,7 +1142,7 @@ dissolve left it — off the site grid, which the router does not mind and the
 FIXED status keeps a later legalisation from touching. `def2flat` reads a
 list of GDS libraries now, the cell library and the merged cells together, so
 the routed result can be flattened and extracted like any other. On gcd's
-hinted placement: 13 of 14 hinted boundaries dissolve (2.92 µm given back; the 14th is the re-keyed li corner pair of §2 above and is not taken), 13 merged macros of 4.5–12.3 µm with 8–12 pins and 34–82 obstruction rectangles each, 55 instances moved by the row shifts; OpenROAD routes the rewritten DEF to completion with 0 DRC violations and 5559 µm of wire (base 5566); the routed result flattened with library plus merged cells extracts to 2472 devices and 2102 nets, its device-level topology EQUAL to the original routed gcd, and KLayout agrees (2472/2472 devices, 1353/1353 nets, isomorphic). The chain placer → hints → dissolve → merged cells → router → extraction closes on a real design with the netlist intact. The 2.92 µm is what the row shifts freed at the row ends, not yet reclaimed by the placer; giving it back to the placer is the next step, and a larger design than gcd the one after.
+hinted placement: 13 of 14 hinted boundaries dissolve (2.92 µm given back; the 14th is the re-keyed li corner pair of §2 above and is not taken), 13 merged macros of 4.5–12.3 µm with 8–12 pins each, 37 other instances moved by the row shifts; OpenROAD routes the rewritten DEF to completion with 0 DRC violations and 5586 µm of wire (base 5566; 5559 with the first, BLOCK-class macros); the routed result flattened with library plus merged cells extracts to 2472 devices and 2102 nets, its device-level topology EQUAL to the original routed gcd, and KLayout agrees (2472/2472 devices, 1353/1353 nets, isomorphic). The chain placer → hints → dissolve → merged cells → router → extraction closes on a real design with the netlist intact. The 2.92 µm is what the row shifts freed at the row ends, not yet reclaimed by the placer; giving it back to the placer is the next step, and a larger design than gcd the one after.
 
 **A review of the placer and merged-cell code (2026-09-11).** Seven
 reviewers, one per dimension, each finding tried by three refuters; 24
@@ -1230,7 +1230,19 @@ router refused it (DRT-0155); as CLASS CORE the same DEF routes, and gcd's
 netlist equal, KLayout isomorphic). CORE is the default now: the router
 treats the group as a cell, pin access on the pin shapes and no
 block-obstruction accounting, and the off-site width is harmless because
-the instance is FIXED and nothing legalises it.
+the instance is FIXED and nothing legalises it. As CORE the ALU then routed
+but stalled at 28 violations after twenty iterations where the base run
+reached zero in six. The macro LEF itself was the cause: a cell's LEF pin
+port is often smaller than the li shape it names, and the remainder, cut
+out around the port, became an obstruction abutting the pin with no
+spacing — 732 slivers under 0.14 µm across the 119 macros — so the router
+could not land a via near a pin's edge. Ports and obstructions are now
+assigned by net from a local extraction of the group: every li1/met1
+rectangle on the net a pin's written port touches is part of that pin's
+port, everything else is an obstruction, whole (`MergedCell.refine`;
+`from_library` reads a written macro back to refine it without redoing the
+dissolve). gcd with the refined macros: 0 DRC, 5586 µm, netlist equal,
+KLayout isomorphic.
 
 What scale changed. Extracting and rule-checking the whole layout (850k
 rectangles, 30k devices) for every candidate took 15 minutes a cell, so
