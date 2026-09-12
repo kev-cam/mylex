@@ -79,7 +79,10 @@ def main():
             if not os.path.exists(os.path.join(FLOW, "route_%s.log" % tag)) or tag == "hints":
                 t1 = time.time(); route(tag, hp); print("   routed %s in %.0fs" % (tag, time.time() - t1))
     rb, rh = read_route("base"), read_route("hints")
-    if rb and rh:
+    for tag, r in (("base", rb), ("hints", rh)):
+        if r and not r["ok"]:
+            print("== 2. the %s routing log is incomplete or failed (no 'Complete detail routing', or the placement check failed): rerun it" % tag)
+    if rb and rh and rb["ok"] and rh["ok"]:
         print("== 2. the router's bill: base -> hints: wire %.0f -> %.0f um (%+.1f%%), WNS %.2f -> %.2f ns, TNS %.2f -> %.2f ns, DRC %d -> %d, placement check %s" % (
             rb["wire_um"], rh["wire_um"], 100 * (rh["wire_um"] - rb["wire_um"]) / rb["wire_um"], rb["wns"], rh["wns"], rb["tns"], rh["tns"], rb["drc"], rh["drc"], "ok" if rh["ok"] else "FAILED (%s overlaps)" % rh["overlaps"]))
     hinted = os.path.join(FLOW, "%s_hints_placed.def" % NAME)
