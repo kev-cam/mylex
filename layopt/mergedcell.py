@@ -70,18 +70,80 @@ class MergedCell:
                     if tl in L:
                         pin_rects.setdefault(L[tl], []).append(r)
                     mc.pins[merged_name].append((lname, (r[0] - ox, r[1] - oy, r[2] - ox, r[3] - oy)))
-        # geometry: everything of the group, macro-local; obstructions: routing-layer shapes minus pin shapes
+        # geometry: everything of the group, macro-local
         provset = set(provs)
         for r in fl.rects:
             if r.prov not in provset or r.x1 <= r.x0 or r.y1 <= r.y0:
                 continue
             mc.rects.append(FlatRect(r.layer, (r.x0 - ox, r.y0 - oy, r.x1 - ox, r.y1 - oy), name))
+        mc.refine(tech)
+        return mc
+
+    def refine(self, tech: Tech) -> None:
+        """Ports and obstructions by net.  The group is extracted on its own; every
+        li1/met1 rectangle on the net of a pin's port becomes part of that pin's
+        port (a cell's LEF port rect is often smaller than the shape it names, and
+        the remainder as an obstruction abuts the pin with no spacing -- the
+        router then cannot place a via on the pin's edge, and the slivers the
+        subtraction left were the symptom: 732 under 0.14 um on the ALU's 119
+        macros); every other li1/met1 rectangle is an obstruction, whole.  Pins
+        with ports on other layers (nwell/pwell, cuts) keep them as written."""
+        from . import extract
+        L = tech.layers
+        inv = {v: k for k, v in L.items()}
+        lef2tech = {v: k for k, v in LEF_LAYER.items()}
+        sub = FlatLayout(dbu_um=0.001, top=self.name)
+        sub.rects = [FlatRect(r.layer, r.rect, self.name) for r in self.rects]
+        ex = extract.extract(sub, tech)
+        idx: Dict[Tuple[int, int], geom.BinIndex] = {}
+        src_net: Dict[int, int] = {}
+        for k, sh in enumerate(ex.shapes):
+            if sh.src >= 0:
+                src_net[sh.src] = ex.net_of_shape[k]
+        for i, r in enumerate(sub.rects):
+            if inv.get(r.layer) in LEF_LAYER:
+                idx.setdefault(r.layer, geom.BinIndex()).add(i, r.rect)
+        # which nets each pin's written ports touch
+        net_pin: Dict[int, str] = {}
+        for pname, ports in self.pins.items():
+            for lname, rect in ports:
+                tl = lef2tech.get(lname)
+                if tl not in L or L[tl] not in idx:
+                    continue
+                for i in idx[L[tl]].query_overlap(rect):
+                    if geom.overlaps(sub.rects[i].rect, rect) and i in src_net:
+                        net_pin.setdefault(src_net[i], pname)
+        # ports: the written ones plus every routing-layer rect of the pin's nets; obstructions: the rest
+        new_pins: Dict[str, List[Tuple[str, Tuple[int, int, int, int]]]] = {p: [(l, r) for l, r in ports if lef2tech.get(l) not in L] for p, ports in self.pins.items()}
+        obs: List[Tuple[str, Tuple[int, int, int, int]]] = []
+        for i, r in enumerate(sub.rects):
             ln = inv.get(r.layer)
-            if ln in LEF_LAYER:
-                holes = [h for h in pin_rects.get(r.layer, []) if geom.overlaps(h, r.rect)]
-                for pc in (geom.subtract(r.rect, holes) if holes else [r.rect]):
-                    if pc[2] > pc[0] and pc[3] > pc[1]:
-                        mc.obs.append((LEF_LAYER[ln], (pc[0] - ox, pc[1] - oy, pc[2] - ox, pc[3] - oy)))
+            if ln not in LEF_LAYER:
+                continue
+            p = net_pin.get(src_net.get(i, -1))
+            if p is not None:
+                new_pins[p].append((LEF_LAYER[ln], r.rect))
+            else:
+                obs.append((LEF_LAYER[ln], r.rect))
+        # a written port that met no shape (a cut-layer port, an empty-net port) stays as written
+        for pname, ports in self.pins.items():
+            if not any(lef2tech.get(l) in L for l, _ in new_pins[pname]):
+                new_pins[pname] += [(l, r) for l, r in ports if lef2tech.get(l) in L]
+        self.pins = new_pins
+        self.obs = obs
+
+    @staticmethod
+    def from_library(name: str, lef: lefdef.Lef, lib: "gdsmod.Library") -> "MergedCell":
+        """A merged cell read back from its LEF macro and GDS structure (to refine
+        one written earlier without redoing the dissolve)."""
+        m = lef.macros[name]
+        fl = gdsmod.flatten(lib, top=name)
+        w, h = int(round(m.size[0] * 1000)), int(round(m.size[1] * 1000))
+        mc = MergedCell(name, [], (0, 0, w, h))
+        for pname, pin in m.pins.items():
+            mc.pin_use[pname] = pin.use; mc.pin_dir[pname] = getattr(pin, "direction", "INPUT")
+            mc.pins[pname] = [(l, (int(round(a * 1000)), int(round(b * 1000)), int(round(c * 1000)), int(round(d * 1000)))) for l, (a, b, c, d) in pin.ports]
+        mc.rects = [FlatRect(r.layer, r.rect, name) for r in fl.rects]
         return mc
 
     def lef_text(self, dbu_um: float = 0.001, lef_class: str = "CORE") -> str:
