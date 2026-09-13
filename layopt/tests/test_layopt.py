@@ -886,6 +886,42 @@ END DESIGN
         print("  merged inv_1(S)|inv_1(FS) in an FS row: %.2f um wide (%d sites), built row-N and placed FS" % (w / 1000.0, w // 460))
 
 
+def test_xyce_deck():
+    """A Xyce deck straight from the extraction: the bare inv_1|inv_1 row, the
+    first inverter driven by a step, the second its load; per-finger BSIM4 on
+    the PDK's narrowest bins, distributed RC, undriven inputs tied; the
+    measured delays are positive and the energy per transition is a few fJ.
+    Skipped without Xyce or the PDK models."""
+    from .. import spice, lefdef, rc
+    lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
+    if not (os.path.exists(spice.XYCE) and os.path.exists(os.path.join(spice.PDK, "sky130_fd_pr__nfet_01v8__tt.pm3.spice")) and os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__inv_1.gds"))):
+        print("  (Xyce, the PDK models or the cells not found, skipped)"); return
+    fl = _bare_row([("fill_4", 0.0), ("inv_1", 1.84), ("inv_1", 3.22), ("fill_8", 4.60)])
+    ex = extract.extract(fl, T)
+    lefs = [os.path.join(lib, "sky130_fd_sc_hd.tlef"), os.path.join(lib, "sky130_fd_sc_hd__inv_1.lef")]
+    lef = lefdef.Lef()
+    for f in lefs:
+        lefdef.read_lef(f, lef)
+    m = lef.macros["sky130_fd_sc_hd__inv_1"]
+    def pin(inst_x, name):
+        l_, (a, b, c, d) = m.pins[name].ports[0]
+        return rc.shape_at(ex, "li", inst_x + (a + c) / 2, (b + d) / 2)
+    s_in, s_mid, s_out = pin(1.84, "A"), pin(1.84, "Y"), pin(3.22, "Y")
+    assert None not in (s_in, s_mid, s_out)
+    with tempfile.TemporaryDirectory() as td:
+        models = spice.Models(T, "tt", scratch=os.path.join(td, "m"))
+        d = spice.Deck(ex, {"u1", "u2"}, models, spice.Corner.named("tt"))
+        d.stimulus(s_in, edge="rise", slew_ps=50)
+        d.measure("d1", (s_in, 0.5, "rise"), (s_mid, 0.5, "fall"))
+        d.measure("d2", (s_mid, 0.5, "fall"), (s_out, 0.5, "rise"))
+        res = d.run(os.path.join(td, "inv2.cir"))
+    assert res["_ok"], res["_log"][-300:]
+    assert res["d1"] and res["d2"] and 5e-12 < res["d1"] < 200e-12 and 5e-12 < res["d2"] < 200e-12, res
+    assert 0.5 < res["energy_fJ"] < 50, res["energy_fJ"]
+    print("  inv_1 -> inv_1 in Xyce at tt: %.1f + %.1f ps, %.2f fJ per transition (%d transistors, %d R, %d C)" % (
+        res["d1"] * 1e12, res["d2"] * 1e12, res["energy_fJ"], d.stats["devices"], d.stats["resistors"], d.stats["capacitors"]))
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):

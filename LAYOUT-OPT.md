@@ -1347,7 +1347,26 @@ the point: the imbalance between a gate-limited path and a wire-limited
 path is not a number but a function of the corner, 71 ps at ff and 216 at
 ss on the same layout, so a balance struck at tt is not a balance at ss.
 The objective has to be the worst corner, and the search has to run on the
-simulation (`l5_xyce_balance.py`, next).
+simulation. `l5_xyce_balance.py` does: the two-way search (fingers on both
+drivers, u6's Vt, u1's gate length) with every state re-extracted and
+simulated at the three corners, cost = worst-corner rise+fall imbalance
++ 0.05·mean + 0.5·ΔE/E — 94 states, 1140 decks, twenty minutes:
+
+| state | tt | ss | ff | worst | energy |
+|---|---|---|---|---|---|
+| as placed | 171.5 | 332.0 | 111.4 | 332.0 ps | 61.0 fJ |
+| the fitted model's choice at tt (u1 P1/N3, u6 P2/N4 std-Vt), re-simulated | 21.0 | 46.0 | 15.8 | 46.0 ps | 62.2 fJ |
+| Xyce's choice (u1 P1/N5, u6 P2/N4, hvt kept) | 17.1 | 29.6 | 15.0 | 29.6 ps | 63.8 fJ |
+
+The model's balance, 12.8 ps by its own reckoning, is 21 ps under Xyce at
+tt and 46 at ss; the simulation-judged search lands at 30 ps worst-corner
+for 4.6 % more energy than the base, and it declines the free Vt move the
+model had taken — at ss the standard-Vt PMOS overshoots. Mean delay fell
+140 → 128 ps. The rise/fall asymmetry within a path (A 137/72 ps) is not
+an objective here; a handshake cares about matched arrivals, and both
+edges are matched between the paths.
+
+
 
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):

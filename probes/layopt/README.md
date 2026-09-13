@@ -338,6 +338,20 @@ rect objects, so an accepted dissolve is already in the full layout and a
 refused one is restored. On gcd both give exactly the global verdicts
 (`_121_`, `_257_`; 13 of 14 boundaries, 2.92 µm) at 9-30 s a window.
 
+## Xyce on the extracted layout (`l5_xyce_path.py`, `l5_xyce_balance.py`, `layopt/spice.py`)
+
+A deck straight from the extraction (per-finger BSIM4 on the PDK's narrowest
+model bins, one node per shape with the segment resistances and shape caps,
+foreign gates as capacitors, undriven inputs tied) at tt 1.8 V 25 °C, ss 1.6 V
+100 °C, ff 1.95 V −40 °C. The two-way path at the corners
+(`evidence/l5_xyce_path.log`): the fitted model 3–16 % under Xyce at tt; the
+A−B imbalance 71 / 113 / 216 ps at ff / tt / ss. The balance judged by Xyce over
+the corners (`evidence/l5_xyce_balance.log`, `l5_xyce_balanced.gds`): worst-corner
+imbalance 332 → 29.6 ps for +4.6 % energy, against 46 ps for the state the
+fitted model had chosen. What had blocked Xyce at cell sizes was the model-bin
+picker taking the widest nested bin; `vt_fit.pick` and `spice.Models.bin` take
+the narrowest.
+
 ## The placer re-packs (`l4_merged_cell.py --placed`, `gcd/flow_repack.tcl`, `alu/flow_repack.tcl`)
 
 A merged group as a legal standard cell (width rounded up to sites, SITE

@@ -1,0 +1,25 @@
+== 1. A = u1(inv_4) -> u4 short; B = u6(inv_1) -> u9 over 120 um of met2.  Xyce at tt,ss,ff (9s for 12 decks)
+   tt  A rise/fall   77.0/  75.8  B  189.9/ 134.4  imbalance  171.5 ps  energy 61.8 fJ
+   ss  A rise/fall  148.0/ 129.0  B  364.0/ 244.9  imbalance  332.0 ps  energy 50.5 fJ
+   ff  A rise/fall   52.4/  51.8  B  123.2/  92.5  imbalance  111.4 ps  energy 70.7 fJ
+   worst-corner imbalance 332.0 ps
+== 2. greedy search, every state simulated at the corners; cost = worst-corner imbalance + 0.05 mean + 0.5 dE/E
+  start  cost 1.05  {'u1_p': 4, 'u1_n': 4, 'u6_p': 1, 'u6_n': 1, 'u6_vt': 0, 'u1_lp': 0, 'u1_ln': 0}
+  round 1  cost 0.70592  {'u1_p': 4, 'u1_n': 4, 'u6_p': 2, 'u6_n': 1, 'u6_vt': 0, 'u1_lp': 0, 'u1_ln': 0}  {'worst_ps': 217.5, 'mean_ps': 122.8, 'E_fJ': 61.9, 'tt': 113.1}
+  round 2  cost 0.51915  {'u1_p': 4, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 0, 'u1_lp': 0, 'u1_ln': 0}  {'worst_ps': 154.4, 'mean_ps': 113.2, 'E_fJ': 62.7, 'tt': 81.6}
+  round 3  cost 0.39428  {'u1_p': 4, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'worst_ps': 114.0, 'mean_ps': 107.2, 'E_fJ': 62.6, 'tt': 62.5}
+  round 4  cost 0.35414  {'u1_p': 3, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'worst_ps': 101.0, 'mean_ps': 109.1, 'E_fJ': 62.3, 'tt': 55.7}
+  round 5  cost 0.29205  {'u1_p': 2, 'u1_n': 4, 'u6_p': 2, 'u6_n': 2, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'worst_ps': 84.0, 'mean_ps': 111.8, 'E_fJ': 60.9, 'tt': 46.7}
+  round 6  cost 0.26733  {'u1_p': 2, 'u1_n': 4, 'u6_p': 2, 'u6_n': 3, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'worst_ps': 71.5, 'mean_ps': 110.0, 'E_fJ': 62.6, 'tt': 41.1}
+  round 7  cost 0.24778  {'u1_p': 2, 'u1_n': 4, 'u6_p': 2, 'u6_n': 4, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'worst_ps': 63.4, 'mean_ps': 108.9, 'E_fJ': 63.2, 'tt': 37.8}
+  round 8  cost 0.23426  {'u1_p': 1, 'u1_n': 4, 'u6_p': 2, 'u6_n': 4, 'u6_vt': 1, 'u1_lp': 0, 'u1_ln': 0}  {'worst_ps': 58.6, 'mean_ps': 119.7, 'E_fJ': 62.8, 'tt': 27.5}
+  round 9  cost 0.16951  {'u1_p': 1, 'u1_n': 4, 'u6_p': 2, 'u6_n': 4, 'u6_vt': 0, 'u1_lp': 0, 'u1_ln': 0}  {'worst_ps': 36.2, 'mean_ps': 126.2, 'E_fJ': 62.9, 'tt': 21.9}
+  round 10  cost 0.15798  {'u1_p': 1, 'u1_n': 5, 'u6_p': 2, 'u6_n': 4, 'u6_vt': 0, 'u1_lp': 0, 'u1_ln': 0}  {'worst_ps': 29.6, 'mean_ps': 127.7, 'E_fJ': 63.8, 'tt': 17.1}
+== 3. result: {'u1_p': 1, 'u1_n': 5, 'u6_p': 2, 'u6_n': 4, 'u6_vt': 0, 'u1_lp': 0, 'u1_ln': 0}
+   tt  A rise/fall  137.2/  72.4  B  138.5/  88.3  imbalance   17.1 ps  energy 64.7 fJ
+   ss  A rise/fall  265.9/ 122.5  B  264.1/ 150.3  imbalance   29.6 ps  energy 53.0 fJ
+   ff  A rise/fall   90.0/  49.1  B   91.7/  62.4  imbalance   15.0 ps  energy 73.8 fJ
+   worst-corner imbalance 332.0 -> 29.6 ps; mean delay 140.2 -> 127.7 ps; energy 61.0 -> 63.8 fJ; legal=True topology_ok=True violations=0; 94 states, 1140 Xyce decks
+   u1 devices: ['p W=1.00 L=0.15 fingers=1 hvt', 'n W=3.25 L=0.15 fingers=5 std']
+   u6 devices: ['p W=2.00 L=0.15 fingers=2 hvt', 'n W=2.60 L=0.15 fingers=4 std']
+EXIT 0
