@@ -1285,6 +1285,26 @@ gcd both modes give exactly the global verdicts. The pair-slide
 measurement (a two-cell layout per macro pair and orientations) is the
 other cost: 2302 pairs took 11 hours, once, and the cache persists.
 
+**The placer re-packs (2026-09-13).** The last step of the dissolve's
+area story. A merged group is now a legal standard cell: its width is
+rounded up to whole sites (the row-shift stretch already carries its rail
+and well geometry to that edge), so the DEF can place it PLACED rather
+than FIXED and a placer may move it. `flow_repack.tcl` reads the merged
+LEF and DEF, counts the free sites per row, runs OpenROAD's detailed
+placement and `optimize_mirroring`, counts again, and routes the result;
+the probe's `--placed` runs it and verifies the routed layout against the
+base as before. Two things a placer demands that the router did not: a
+cell's orientation must match its row's, so a group in a flipped row is
+built un-flipped as a row-N cell and placed FS (the router had taken the
+already-flipped geometry placed N); and a cell must declare its SITE, or
+the row check fails it whatever its orientation. gcd: the placement check
+passes, detailed placement and mirroring run, the result routes with 0
+DRC and 5376 µm of wire (base 5566, the merged cells FIXED 5562 — the
+re-optimised mirroring is worth 3 % of wire), netlist equal, KLayout
+isomorphic. The free sites per row tell the area story in one line: base
+2155, dissolved and re-packed 2156. One site, 0.46 µm, the single boundary
+that freed more than a site. REPACK-ALU
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 

@@ -338,6 +338,15 @@ rect objects, so an accepted dissolve is already in the full layout and a
 refused one is restored. On gcd both give exactly the global verdicts
 (`_121_`, `_257_`; 13 of 14 boundaries, 2.92 µm) at 9-30 s a window.
 
+## The placer re-packs (`l4_merged_cell.py --placed`, `gcd/flow_repack.tcl`, `alu/flow_repack.tcl`)
+
+A merged group as a legal standard cell (width rounded up to sites, SITE
+declared, built row-N and placed FS in a flipped row) written PLACED; OpenROAD
+detailed placement and `optimize_mirroring` re-pack the rows, free sites per
+row are counted before and after, the result is routed and verified. gcd: free
+sites 2155 (base) → 2156; routed 0 DRC, 5376 µm of wire (base 5566); netlist
+equal; KLayout isomorphic. REPACK-ALU-README
+
 ## The dissolved group as a router cell (`l4_merged_cell.py`, `layopt/mergedcell.py`)
 
 Every hinted boundary that dissolves legally is dissolved on the hinted
