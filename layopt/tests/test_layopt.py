@@ -896,17 +896,45 @@ def test_xyce_deck():
     lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
     if not (os.path.exists(spice.XYCE) and os.path.exists(os.path.join(spice.PDK, "sky130_fd_pr__nfet_01v8__tt.pm3.spice")) and os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__inv_1.gds"))):
         print("  (Xyce, the PDK models or the cells not found, skipped)"); return
-    fl = _bare_row([("fill_4", 0.0), ("inv_1", 1.84), ("inv_1", 3.22), ("fill_8", 4.60)])
-    ex = extract.extract(fl, T)
-    lefs = [os.path.join(lib, "sky130_fd_sc_hd.tlef"), os.path.join(lib, "sky130_fd_sc_hd__inv_1.lef")]
+    lefs = [os.path.join(lib, "sky130_fd_sc_hd.tlef")] + [os.path.join(lib, "sky130_fd_sc_hd__%s.lef" % c) for c in ("fill_4", "inv_1", "fill_8")]
     lef = lefdef.Lef()
     for f in lefs:
         lefdef.read_lef(f, lef)
     m = lef.macros["sky130_fd_sc_hd__inv_1"]
-    def pin(inst_x, name):
+    def pc(inst_x, name):
         l_, (a, b, c, d) = m.pins[name].ports[0]
-        return rc.shape_at(ex, "li", inst_x + (a + c) / 2, (b + d) / 2)
+        return inst_x + (a + c) / 2, (b + d) / 2
+    (xy, yy), (xa, ya) = pc(1.84, "Y"), pc(3.22, "A")
+    g = lambda v: int(round(v * 1000))
+    # u1.Y wired to u2.A on met1 (li pin -> mcon -> met1 across -> mcon -> li pin), as a router would
+    deftext = """VERSION 5.8 ;
+DESIGN t ;
+UNITS DISTANCE MICRONS 1000 ;
+DIEAREA ( 0 0 ) ( 12000 2720 ) ;
+COMPONENTS 4 ;
+    - u0 sky130_fd_sc_hd__fill_4 + PLACED ( 0 0 ) N ;
+    - u1 sky130_fd_sc_hd__inv_1 + PLACED ( 1840 0 ) N ;
+    - u2 sky130_fd_sc_hd__inv_1 + PLACED ( 3220 0 ) N ;
+    - u3 sky130_fd_sc_hd__fill_8 + PLACED ( 4600 0 ) N ;
+END COMPONENTS
+SPECIALNETS 2 ;
+    - VPWR ( u1 VPWR ) ( u2 VPWR ) + USE POWER ;
+    - VGND ( u1 VGND ) ( u2 VGND ) + USE GROUND ;
+END SPECIALNETS
+NETS 1 ;
+    - n1 ( u1 Y ) ( u2 A ) + ROUTED met1 ( %d %d ) L1M1_PR NEW met1 ( %d %d ) ( %d %d ) NEW met1 ( %d %d ) ( %d %d ) NEW met1 ( %d %d ) L1M1_PR ;
+END NETS
+END DESIGN
+""" % (g(xy), g(yy), g(xy), g(yy), g(xy), g(ya), g(xy), g(ya), g(xa), g(ya), g(xa), g(ya))
+    with tempfile.TemporaryDirectory() as td:
+        dp = os.path.join(td, "t.def"); open(dp, "w").write(deftext)
+        fl = lefdef.def2flat(dp, lefs, lib, T)
+    ex = extract.extract(fl, T)
+    def pin(inst_x, name):
+        x, y = pc(inst_x, name)
+        return rc.shape_at(ex, "li", x, y)
     s_in, s_mid, s_out = pin(1.84, "A"), pin(1.84, "Y"), pin(3.22, "Y")
+    assert ex.net_of_shape[s_mid] == ex.net_of_shape[pin(3.22, "A")], "u1.Y and u2.A are one net"
     assert None not in (s_in, s_mid, s_out)
     with tempfile.TemporaryDirectory() as td:
         models = spice.Models(T, "tt", scratch=os.path.join(td, "m"))
