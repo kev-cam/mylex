@@ -9,7 +9,11 @@ it; the routed result is flattened with the cell library plus the merged
 cells, extracted, and compared with the original routed gcd (device-level
 topology) and with KLayout.
 
-    python3 probes/layopt/l4_merged_cell.py [--name gcd] [--flow DIR] [--ref routed.def] [--no-route] [--local | --global] [--class CORE|BLOCK]
+    python3 probes/layopt/l4_merged_cell.py [--name gcd] [--flow DIR] [--ref routed.def] [--no-route] [--local | --global] [--class CORE|BLOCK] [--placed]
+
+`--placed` writes the merged cells PLACED instead of FIXED and, when the flow
+directory has a `flow_repack.tcl`, hands the DEF to the placer: detailed
+placement and mirroring, free sites per row before and after, then routing.
 
 `--local` (the default for designs other than gcd) applies and guards each
 dissolve on the three-row window around it, so a 4000-cell design costs
@@ -164,13 +168,14 @@ def main():
     cells = []
     for k, (root, members) in enumerate(sorted(groups.items())):
         ordered = sorted(members, key=lambda i: fl.boxes[prov[i]][0])
-        mc = mergedcell.MergedCell.build(fl, lef, T, d, [prov[i] for i in ordered], "layopt_m%d" % k)
+        mc = mergedcell.MergedCell.build(fl, lef, T, d, [prov[i] for i in ordered], "layopt_m%d" % k, site_um=T.site_um)
         cells.append(mc)
         print("   %s = %s: %.3f x %.3f um, %d pins, %d obstruction rects" % (mc.name, "+".join(ordered), (mc.box[2] - mc.box[0]) / 1000, (mc.box[3] - mc.box[1]) / 1000, len(mc.pins), len(mc.obs)))
     merged_lef = os.path.join(FLOW, "merged.lef"); merged_gds = os.path.join(FLOW, "merged.gds"); merged_def = os.path.join(FLOW, "merged.def")
     lef_class = sys.argv[sys.argv.index("--class") + 1] if "--class" in sys.argv else "CORE"
     mergedcell.lef_library(cells, merged_lef, lef_class=lef_class); mergedcell.gds_library(cells, merged_gds)
-    open(merged_def, "w").write(mergedcell.rewrite_def(open(hinted).read(), d, fl, cells, scale=1000.0 / d.dbu_per_um))
+    placed = "--placed" in sys.argv
+    open(merged_def, "w").write(mergedcell.rewrite_def(open(hinted).read(), d, fl, cells, scale=1000.0 / d.dbu_per_um, fixed=not placed))
     absorbed = {i for mc in cells for i in mc.insts}
     moved = sum(1 for c in d.components if c.placed and c.inst not in absorbed and prov.get(c.inst) in fl.boxes and fl.boxes[prov[c.inst]][0] != c.x * 1000 // d.dbu_per_um)
     print("== 3. wrote merged.lef (%d macros), merged.gds, merged.def (%d instances moved by the dissolve)" % (len(cells), moved))
@@ -190,6 +195,23 @@ def main():
     print("== 4. routed in %.0fs: %s; wire %s um; DRC violations %d; errors: %s" % (time.time() - t1, "complete" if "Complete detail routing" in txt else "INCOMPLETE", wl[-1] if wl else "?", drc,
           [l for l in txt.split("\n") if l.startswith("[ERROR")][:3]))
     routed = os.path.join(FLOW, "%s_merged_routed.def" % NAME)
+    if placed and os.path.exists(os.path.join(FLOW, "flow_repack.tcl")):
+        # 4b. the placer re-packs: merged cells PLACED, detailed placement legalises and packs
+        #     the rows, mirroring is re-optimised, the free sites per row are counted before and
+        #     after, and the re-packed placement is routed
+        t1 = time.time()
+        log = os.path.join(FLOW, "route_repack.log")
+        with open(log, "w") as fh:
+            subprocess.run([OPENROAD, "-exit", "flow_repack.tcl"], cwd=FLOW, stdout=fh, stderr=subprocess.STDOUT, timeout=6 * 3600)
+        txt = open(log).read()
+        free = re.findall(r"layopt free sites (\S+): (\d+) sites = ([\d.]+) um", txt)
+        wl = re.findall(r"Total wire length = (\d+) um", txt)
+        drc_p = os.path.join(FLOW, "route_drc_repack.rpt")
+        drc = open(drc_p).read().count("violation type") if os.path.exists(drc_p) else -1
+        print("== 4b. re-packed by the placer in %.0fs: %s; %s; wire %s um; DRC violations %d; errors: %s" % (
+            time.time() - t1, "; ".join("free sites %s: %s (%s um)" % f for f in free), "routed" if "Complete detail routing" in txt else "ROUTING INCOMPLETE",
+            wl[-1] if wl else "?", drc, [l for l in txt.split("\n") if l.startswith("[ERROR")][:3]))
+        routed = os.path.join(FLOW, "%s_repack_routed.def" % NAME)
     if not os.path.exists(routed):
         return
     # 5. verify: flatten with library + merged cells, extract, compare with the original routed gcd

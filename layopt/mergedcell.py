@@ -40,15 +40,24 @@ class MergedCell:
     pin_map: Dict[Tuple[str, str], str] = field(default_factory=dict)   # (inst, pin) -> merged pin
 
     @staticmethod
-    def build(fl: FlatLayout, lef: lefdef.Lef, tech: Tech, d: lefdef.Def, provs: Sequence[str], name: str) -> "MergedCell":
+    def build(fl: FlatLayout, lef: lefdef.Lef, tech: Tech, d: lefdef.Def, provs: Sequence[str], name: str,
+              site_um: float = 0.0) -> "MergedCell":
         """`provs`: the group's instance provenances in `fl` (design/inst/macro), whose
-        geometry in `fl` is the dissolved one and whose `fl.boxes` are where they sit."""
+        geometry in `fl` is the dissolved one and whose `fl.boxes` are where they sit.
+        `site_um`: round the macro's width up to whole placement sites -- a dissolve in
+        row-shift mode leaves the group's rail and well geometry reaching that edge (the
+        sub-site remainder), so the macro is then a legal standard cell a placer may
+        move; leave 0 when a filler grew into the remainder instead."""
         L = tech.layers
         inv = {v: k for k, v in L.items()}
         comps = {c.inst: c for c in d.components}
         insts = [inst_of(p) for p in provs]
         boxes = [fl.boxes[p] for p in provs]
         box = (min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes))
+        if site_um:
+            site = int(round(site_um * 1000))
+            w = box[2] - box[0]
+            box = (box[0], box[1], box[0] + ((w + site - 1) // site) * site, box[3])
         ox, oy = box[0], box[1]
         mc = MergedCell(name, insts, box)
         pin_rects: Dict[Tuple[int, int], List[Tuple[int, int, int, int]]] = {}
@@ -221,8 +230,9 @@ def gds_library(cells: Sequence[MergedCell], path: str, dbu_um: float = 0.001) -
         fh.write(b"".join(out))
 
 
-def rewrite_def(def_text: str, d: lefdef.Def, fl: FlatLayout, cells: Sequence[MergedCell], scale: float = 1.0) -> str:
-    """The DEF with each merged group's components replaced by one FIXED
+def rewrite_def(def_text: str, d: lefdef.Def, fl: FlatLayout, cells: Sequence[MergedCell], scale: float = 1.0, fixed: bool = True) -> str:
+    """The DEF with each merged group's components replaced by one FIXED (or,
+    with `fixed=False`, PLACED -- a placer may then move it as a cell)
     instance of its macro, their pin references renamed, and every other
     placed instance at the x its `fl.boxes` entry now has (the dissolve slid
     the row).  `scale`: flat dbu per DEF unit (1 for 1 nm / 1000 per um).
@@ -243,7 +253,7 @@ def rewrite_def(def_text: str, d: lefdef.Def, fl: FlatLayout, cells: Sequence[Me
             in_comp = True; out.append("COMPONENTS %d ;" % n_comp); continue
         if in_comp and st == "END COMPONENTS":
             for mc in cells:
-                out.append("    - %s_i %s + FIXED ( %d %d ) N ;" % (mc.name, mc.name, int(round(mc.box[0] / scale)), int(round(mc.box[1] / scale))))
+                out.append("    - %s_i %s + %s ( %d %d ) N ;" % (mc.name, mc.name, "FIXED" if fixed else "PLACED", int(round(mc.box[0] / scale)), int(round(mc.box[1] / scale))))
             in_comp = False; out.append(ln); continue
         if in_comp:
             m = comp_re.match(ln)
