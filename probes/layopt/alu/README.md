@@ -23,3 +23,11 @@ nor2 524, o21ai 425, mux2i 204, edfxtp 151, ...). Built 2026-09-10 in
 put the ALU's padded utilization at 103 %). The layopt probes take
 `--name alu`: `../l4_placer_handoff.py --name alu`, `../l4_merged_cell.py --name alu`,
 `../l4_gcd_whitespace.py --def ~/src/alu-flow/hints/alu_base.def`.
+
+Results (2026-09-13; `../evidence/l4_placer_handoff_alu.log`, `l4_alu_whitespace.log`,
+`l4_merged_cell_alu.log`, `alu_placer_hints.json`, `alu_merged.lef/.def`; the
+44 MB routed GDS stays out of the repository): hints 188 boundaries worth
+45.1 µm (routed wire −0.07 %, DRC 0); fingers 98 of 98 cells; dissolve 154 of
+188 (38.7 µm freed, 7.36 µm given back as whole sites), 154 merged cells,
+routed with 0 DRC (+0.09 % wire), device-level topology equal to the base,
+KLayout isomorphic on 29870 devices.
