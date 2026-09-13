@@ -1312,6 +1312,43 @@ answer for a 33 %-utilization sky130hd placement: 0.05 % of the row
 length, and the dissolve's measurable value on these designs is the
 merged cell itself and what a placer does with it, not area.
 
+**L5 — Xyce on the extracted layout (2026-09-13, `layopt/spice.py`,
+`probes/layopt/l5_xyce_path.py`).** The architect's redirect: the point is
+not area but asynchronous timing that holds over the operating range, and
+the next step is to simulate the extracted circuits and optimise the
+critical paths for speed and power on the simulation, not the fitted
+model. `spice.Deck` writes a Xyce deck for a chosen set of cells straight
+from the extraction: one BSIM4 transistor per finger on the PDK's models,
+one node per conducting shape, the resistances of `rc.net_segments`
+between them, each shape's capacitance to ground, foreign gates on a net
+as gate capacitances, undriven inputs of the set held at a level, at a
+process/voltage/temperature corner (`Corner`: tt 1.8 V 25 °C, ss 1.6 V
+100 °C, ff 1.95 V −40 °C, the library's own; `Models` converts the pm3
+files of each process once). What had blocked this — "Xyce fails the
+operating point below about 2 µm" — was never the simulator: the PDK's
+model bins are nested (every width bin starts at zero, with wmax 100, 7,
+5, 3, 2, 1.68, 1.26, 1.0, 0.84, 0.74 µm …) and the bin picker took the
+first match, the widest, whose parameters are wrong for a
+standard-cell-sized device. The narrowest matching bin converges at once;
+inv_1 at its real size simulates in a second. On the two-way balance
+layout (A: inv_4 to a nand2 over a short wire; B: inv_1 to a nand2 over
+120 µm of met2), driver-plus-receiver 50 % delays in ps:
+
+| corner | A rise | A fall | B rise | B fall | A − B rise | A − B fall |
+|---|---|---|---|---|---|---|
+| model (tt) | 73.6 | 66.9 | 163.2 | 130.2 | 90 | 63 |
+| Xyce tt | 77.0 | 75.8 | 189.9 | 134.4 | 113 | 59 |
+| Xyce ss | 148.0 | 129.0 | 364.0 | 244.9 | 216 | 116 |
+| Xyce ff | 52.4 | 51.8 | 123.2 | 92.5 | 71 | 41 |
+
+The fitted model is 3–16 % under Xyce at tt, most of it in the receiver
+stage; usable for search direction, not for a verdict. The corner rows are
+the point: the imbalance between a gate-limited path and a wire-limited
+path is not a number but a function of the corner, 71 ps at ff and 216 at
+ss on the same layout, so a balance struck at tt is not a balance at ss.
+The objective has to be the worst corner, and the search has to run on the
+simulation (`l5_xyce_balance.py`, next).
+
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
 
@@ -1482,6 +1519,12 @@ Planned:
   go back as issues.
 - **ldx**: TH cells on SG13G2 are the first standard-cell-shaped input once
   they have layout (ASYNC-PLAN P2); `tech.SG13G2` is already in the table.
+- **stat-sim, SPEF node models**: the architect's ask (2026-09-13): in
+  stat-sim's Python resolver-generator flow, a pre-P&R node is to be
+  replaced by a SPEF-based model of the wiring that makes up the node,
+  in place of the plain resolver; the cell models stay analog-like and the
+  resolver piece is independent of the model style. layopt's `rc.write_spef`
+  (or the P&R SPEF) is the source; the generator side is stat-sim's.
 - **Standard-cell flows**: `def2flat` reads a placed-and-routed DEF/LEF with
   the cell GDS (gcd through OpenROAD is the working example); the placer
   hand-off (`placer.py`: flip-and-abut hints as JSON and as an odb Tcl

@@ -70,14 +70,21 @@ def bins(path):
 
 
 def pick(path, l_um, w_um):
+    """The narrowest model bin containing (L, W).  The PDK's bins are nested
+    (every width bin starts at 0, with wmax 100, 7, 5, 3, 2, 1.68, 1.26, 1.0,
+    0.84, 0.74 um ...): the first match is the widest bin, whose parameters
+    are wrong below a few um -- Xyce's operating point then fails for any
+    standard-cell-sized device, which is what looked like a simulator limit."""
     l, w = l_um * 1e-6, w_um * 1e-6
-    for name, lmin, lmax, wmin, wmax in bins(path):
-        if lmin <= l < lmax and wmin <= w < wmax:
-            return name
-    # the geometry bins are sometimes given in um in the corner files; try that reading
-    for name, lmin, lmax, wmin, wmax in bins(path):
-        if lmin <= l_um < lmax and wmin <= w_um < wmax:
-            return name
+    best = None
+    for scale in (1.0, 1e-6):         # metres, or um in some corner files
+        for name, lmin, lmax, wmin, wmax in bins(path):
+            if lmin <= l / scale < lmax and wmin <= w / scale < wmax:
+                key = (wmax - wmin, lmax - lmin)
+                if best is None or key < best[0]:
+                    best = (key, name)
+        if best:
+            return best[1]
     raise KeyError("no model bin for L=%g W=%g in %s" % (l_um, w_um, path))
 
 
