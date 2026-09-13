@@ -1211,8 +1211,8 @@ utilization past 100 %). Everything gcd went through, at scale:
 | hints | 179 flipped, 76 slid (115 µm of movement), 188 boundaries kept (85 two-strip, 103 one-strip) worth 45.1 µm; 24 slides declined as too long for their gain |
 | router's bill, base → hints | wire 164914 → 164793 µm (−0.07 %); WNS −5.56 → −5.54 ns; TNS −409.8 → −408.9 ns; DRC 0 → 0; placement check passes with 336 cells held |
 | fingers (row-local, 98 of the first 120 candidates of 726 reached in the 4-hour budget) | 98 of 98 cells take at least one finger, 82 both polarities; refusals per finger: 28 series-stack heads, 12 poly in the way, 8 no S/D jumper, 6 no bridge field, 1 foreign li; energy +0 % per cell (`evidence/l4_alu_whitespace.log`) |
-| dissolve on the hinted placement (row-local) | 122 of 188 boundaries, 31.9 µm given back, 119 merged macros, 2062 instances moved by the row shifts; the whole layout re-extracted equal to the base |
-| routing with the merged cells | ALU-ROUTE |
+| dissolve on the hinted placement (row-local, site-quantised shift) | 154 of 188 boundaries, 38.7 µm freed, 7.36 µm of it given back as whole sites (16 boundaries freed a site or more), 154 merged macros, 483 other instances moved; the whole layout re-extracted equal to the base |
+| routing with the merged cells (CLASS CORE, ports by net) | complete, 0 DRC violations, 165067 µm of wire (base 164914, +0.09 %); the routed result flattened with library plus merged cells extracts to 29870 devices, device-level topology EQUAL to the routed base (25612 nets against 25609: three more isolated pieces, no device moved between nets); KLayout agrees, 29870/29870 devices, 15772/15772 nets, isomorphic |
 
 The residual after the port refinement was 36 li1 spacing violations that
 would not converge, and none of them was within a micrometre of a merged
@@ -1238,7 +1238,10 @@ placed row: a boundary gives back
 whole sites only, so almost every one gives back nothing on its own, and
 the value of the dissolve is what a placer makes of the merged cells and
 the gaps beside them — the "hand the freed space back to the placer" step
-that is still open. ALU-QUANT
+that is still open. On the ALU: 38.7 µm freed by 154 boundaries, 7.36 µm
+of it given back as whole sites by the 16 that freed a site or more, 35.9
+µm left as sub-site gaps in 75 rows. Against the ALU's 45.1 µm the hints
+promised, the dissolve delivers 38.7 in geometry and 7.4 on the site grid.
 
 Two faults the ALU exposed that gcd could not. The pre-route DEF labels its
 supply nets on their first wire, which in this flow is a met5 strap, and an

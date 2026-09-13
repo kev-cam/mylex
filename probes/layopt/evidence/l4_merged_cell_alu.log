@@ -1,0 +1,350 @@
+== 1. alu_hints_placed.def: 472135 rects, 29870 devices, 188 hinted boundaries (200s)
+   _6709_|rebuffer419: dissolved, slid 0.150 um; row moved 0.00 um
+   _6702_|rebuffer421: dissolved, slid 0.155 um; row moved 0.00 um
+   wire49|_6775_: dissolved, slid 0.190 um; row moved 0.00 um
+   wire60|_5005_: dissolved, slid 0.150 um; row moved 0.00 um
+   load_slew51|wire62: dissolved, slid 0.320 um; row moved 0.00 um
+   _6391_|_4882_: dissolved, slid 0.385 um; row moved 0.00 um
+   rebuffer539|_3495_: dissolved, slid 0.520 um; row moved 0.46 um
+   rebuffer716|_6367_: dissolved, slid 0.150 um; row moved 0.00 um
+   _3387_|_5237_: dissolved, slid 0.235 um; row moved 0.00 um
+   rebuffer117|_3492_: dissolved, slid 0.150 um; row moved 0.00 um
+   _3463_|clkload2: dissolved, slid 0.105 um; row moved 0.00 um
+   _3403_|load_slew6: dissolved, slid 0.130 um; row moved 0.00 um
+   _4983_|rebuffer102: dissolved, slid 0.525 um; row moved 0.46 um
+   _3505_|rebuffer637: dissolved, slid 0.140 um; row moved 0.00 um
+   _6859_|rebuffer418: dissolved, slid 0.155 um; row moved 0.00 um
+   load_slew56|_6497_: dissolved, slid 0.130 um; row moved 0.00 um
+   rebuffer113|_5243_: dissolved, slid 0.195 um; row moved 0.00 um
+   rebuffer668|_5242_: dissolved, slid 0.230 um; row moved 0.00 um
+   rebuffer259|_3467_: slid 0.160 um but topology kept, 2 new violations -- not taken
+   _5229_|rebuffer260: dissolved, slid 0.150 um; row moved 0.00 um
+   rebuffer196|_3748_: slid 0.155 um but topology kept, 4 new violations -- not taken
+   load_slew61|_6282_: dissolved, slid 0.150 um; row moved 0.00 um
+   rebuffer667|load_slew64: dissolved, slid 0.320 um; row moved 0.00 um
+   load_slew64|rebuffer263: refused -- merge_boundary: load_slew64 and rebuffer263 do not abut
+   _5238_|rebuffer195: dissolved, slid 0.150 um; row moved 0.00 um
+   load_slew40|_4799_: slid 0.130 um but topology CHANGED, 0 new violations -- not taken
+   _3747_|load_slew27: dissolved, slid 0.560 um; row moved 0.46 um
+   _5110_|max_cap11: dissolved, slid 0.180 um; row moved 0.00 um
+   _3855_|clkbuf_4_3_0_clk: dissolved, slid 0.100 um; row moved 0.00 um
+   _3762_|rebuffer715: dissolved, slid 0.410 um; row moved 0.00 um
+   rebuffer714|_5395_: dissolved, slid 0.310 um; row moved 0.00 um
+   rebuffer200|_5392_: dissolved, slid 0.150 um; row moved 0.00 um
+   _5391_|rebuffer199: dissolved, slid 0.210 um; row moved 0.00 um
+   _6400_|rebuffer198: dissolved, slid 0.150 um; row moved 0.00 um
+   _4775_|rebuffer414: dissolved, slid 0.150 um; row moved 0.00 um
+   _5111_|wire37: dissolved, slid 0.125 um; row moved 0.00 um
+   _3875_|clkbuf_4_0_0_clk: dissolved, slid 0.100 um; row moved 0.00 um
+   _3873_|clkload0: dissolved, slid 0.515 um; row moved 0.46 um
+   rebuffer155|_4927_: dissolved, slid 0.150 um; row moved 0.00 um
+   rebuffer197|_5404_: dissolved, slid 0.275 um; row moved 0.00 um
+   rebuffer106|_6317_: dissolved, slid 0.150 um; row moved 0.00 um
+   _5031_|rebuffer148: slid 0.175 um but topology kept, 2 new violations -- not taken
+   _3848_|rebuffer114: slid 0.160 um but topology kept, 1 new violations -- not taken
+   rebuffer410|clkbuf_4_5_0_clk: dissolved, slid 0.240 um; row moved 0.00 um
+   rebuffer153|rebuffer378: dissolved, slid 0.820 um; row moved 0.46 um
+   rebuffer157|_4973_: dissolved, slid 0.140 um; row moved 0.00 um
+   _4973_|rebuffer100: refused -- merge_boundary: _4973_ and rebuffer100 do not abut
+   _5452_|load_slew24: dissolved, slid 0.260 um; row moved 0.00 um
+   rebuffer147|_6502_: dissolved, slid 0.150 um; row moved 0.00 um
+   _5022_|rebuffer146: dissolved, slid 0.150 um; row moved 0.00 um
+   rebuffer150|rebuffer151: dissolved, slid 0.460 um; row moved 0.46 um
+   _3755_|rebuffer90: dissolved, slid 0.150 um; row moved 0.00 um
+   _3414_|load_slew54: dissolved, slid 0.130 um; row moved 0.00 um
+   rebuffer560|rebuffer724: dissolved, slid 0.460 um; row moved 0.46 um
+   rebuffer561|_6577_: dissolved, slid 0.155 um; row moved 0.00 um
+   _5450_|rebuffer620: dissolved, slid 0.320 um; row moved 0.00 um
+   wire4|_3923_: dissolved, slid 0.150 um; row moved 0.00 um
+   _3923_|rebuffer202: refused -- merge_boundary: _3923_ and rebuffer202 do not abut
+   _3511_|rebuffer411: slid 0.160 um but topology kept, 1 new violations -- not taken
+   rebuffer726|_6576_: dissolved, slid 0.395 um; row moved 0.00 um
+   _5247_|wire23: dissolved, slid 0.130 um; row moved 0.00 um
+   rebuffer619|load_slew31: dissolved, slid 0.440 um; row moved 0.00 um
+   _5245_|rebuffer264: dissolved, slid 0.150 um; row moved 0.00 um
+   _3480_|rebuffer66: dissolved, slid 0.390 um; row moved 0.00 um
+   rebuffer91|rebuffer218: dissolved, slid 0.460 um; row moved 0.46 um
+   _6382_|rebuffer67: dissolved, slid 0.210 um; row moved 0.00 um
+   rebuffer101|_6274_: dissolved, slid 0.100 um; row moved 0.00 um
+   _6304_|rebuffer99: dissolved, slid 0.155 um; row moved 0.00 um
+   _3839_|rebuffer154: dissolved, slid 0.150 um; row moved 0.00 um
+   _4712_|rebuffer407: dissolved, slid 0.200 um; row moved 0.00 um
+   rebuffer96|_6298_: dissolved, slid 0.155 um; row moved 0.00 um
+   rebuffer116|_6331_: dissolved, slid 0.130 um; row moved 0.00 um
+   _4711_|clkload5: dissolved, slid 0.260 um; row moved 0.00 um
+   clkload5|_6170_: refused -- merge_boundary: clkload5 and _6170_ do not abut
+   rebuffer621|_6435_: dissolved, slid 0.150 um; row moved 0.00 um
+   rebuffer203|_3662_: dissolved, slid 0.150 um; row moved 0.00 um
+   _3666_|rebuffer94: dissolved, slid 0.150 um; row moved 0.00 um
+   _6171_|rebuffer382: dissolved, slid 0.150 um; row moved 0.00 um
+   _6205_|rebuffer86: dissolved, slid 0.150 um; row moved 0.00 um
+   _6169_|_4710_: dissolved, slid 0.385 um; row moved 0.00 um
+   _6461_|rebuffer616: dissolved, slid 0.155 um; row moved 0.00 um
+   _5412_|rebuffer105: dissolved, slid 0.150 um; row moved 0.00 um
+   rebuffer84|_5195_: dissolved, slid 0.195 um; row moved 0.00 um
+   _6289_|load_slew32: slid 0.140 um but topology kept, 1 new violations -- not taken
+   rebuffer219|_6249_: dissolved, slid 0.140 um; row moved 0.00 um
+   _5360_|rebuffer85: dissolved, slid 0.210 um; row moved 0.00 um
+   rebuffer725|_5713_: slid 0.160 um but topology kept, 2 new violations -- not taken
+   rebuffer666|rebuffer97: dissolved, slid 0.460 um; row moved 0.46 um
+   rebuffer379|_6518_: slid 0.160 um but topology kept, 2 new violations -- not taken
+   _3831_|rebuffer69: slid 0.160 um but topology kept, 1 new violations -- not taken
+   load_slew9|_6449_: slid 0.140 um but topology kept, 2 new violations -- not taken
+   load_slew33|_6214_: dissolved, slid 0.390 um; row moved 0.00 um
+   _3964_|wire15: dissolved, slid 0.130 um; row moved 0.00 um
+   _5097_|rebuffer256: dissolved, slid 0.155 um; row moved 0.00 um
+   _3672_|rebuffer77: dissolved, slid 0.150 um; row moved 0.00 um
+   rebuffer76|_4732_: slid 0.160 um but topology kept, 2 new violations -- not taken
+   rebuffer156|_4659_: dissolved, slid 0.150 um; row moved 0.00 um
+   rebuffer733|_6749_: slid 0.160 um but topology kept, 2 new violations -- not taken
+   rebuffer75|_4626_: dissolved, slid 0.150 um; row moved 0.00 um
+   rebuffer721|_5620_: slid 0.160 um but topology kept, 2 new violations -- not taken
+   rebuffer730|_6124_: slid 0.140 um but topology kept, 2 new violations -- not taken
+   _5943_|rebuffer727: slid 0.160 um but topology kept, 1 new violations -- not taken
+   _5727_|rebuffer723: dissolved, slid 0.150 um; row moved 0.00 um
+   _6036_|rebuffer728: dissolved, slid 0.255 um; row moved 0.00 um
+   rebuffer729|_5639_: dissolved, slid 0.155 um; row moved 0.00 um
+   _6110_|_6088_: dissolved, slid 0.400 um; row moved 0.00 um
+   rebuffer92|_5277_: dissolved, slid 0.140 um; row moved 0.00 um
+   _3675_|rebuffer95: slid 0.175 um but topology kept, 1 new violations -- not taken
+   clone719|_6003_: dissolved, slid 0.215 um; row moved 0.00 um
+   clone615|_5688_: dissolved, slid 0.100 um; row moved 0.00 um
+   _3900_|rebuffer74: dissolved, slid 0.155 um; row moved 0.00 um
+   _4593_|_4616_: dissolved, slid 0.385 um; row moved 0.00 um
+   _6046_|_6044_: dissolved, slid 0.400 um; row moved 0.00 um
+   _4606_|_4612_: dissolved, slid 0.175 um; row moved 0.00 um
+   rebuffer189|rebuffer346: dissolved, slid 0.580 um; row moved 0.46 um
+   _4587_|rebuffer420: dissolved, slid 0.195 um; row moved 0.00 um
+   _5455_|_5451_: dissolved, slid 0.215 um; row moved 0.00 um
+   rebuffer536|rebuffer531: dissolved, slid 0.580 um; row moved 0.46 um
+   _4333_|wire18: dissolved, slid 0.130 um; row moved 0.00 um
+   _5479_|rebuffer720: dissolved, slid 0.150 um; row moved 0.00 um
+   _4582_|rebuffer344: dissolved, slid 0.155 um; row moved 0.00 um
+   _5937_|_6048_: dissolved, slid 0.260 um; row moved 0.00 um
+   rebuffer722|_5504_: slid 0.400 um but topology kept, 2 new violations -- not taken
+   _4603_|_4991_: dissolved, slid 0.275 um; row moved 0.00 um
+   _3952_|rebuffer530: dissolved, slid 0.155 um; row moved 0.00 um
+   _3942_|rebuffer537: dissolved, slid 0.215 um; row moved 0.00 um
+   _5936_|rebuffer289: dissolved, slid 0.150 um; row moved 0.00 um
+   _4920_|wire63: dissolved, slid 0.270 um; row moved 0.00 um
+   _4034_|load_slew5: dissolved, slid 0.390 um; row moved 0.00 um
+   _6952_|load_slew39: dissolved, slid 0.515 um; row moved 0.46 um
+   _5329_|rebuffer204: dissolved, slid 0.195 um; row moved 0.00 um
+   _6526_|rebuffer205: slid 0.175 um but topology kept, 2 new violations -- not taken
+   _5428_|rebuffer93: dissolved, slid 0.190 um; row moved 0.00 um
+   _5432_|_5431_: dissolved, slid 0.385 um; row moved 0.00 um
+   rebuffer68|_5323_: dissolved, slid 0.210 um; row moved 0.00 um
+   _6919_|_6917_: dissolved, slid 0.385 um; row moved 0.00 um
+   _6917_|wire25: refused -- merge_boundary: _6917_ and wire25 do not abut
+   load_slew21|rebuffer72: dissolved, slid 0.320 um; row moved 0.00 um
+   rebuffer112|_3711_: slid 0.150 um but topology CHANGED, 0 new violations -- not taken
+   _4125_|clone534: dissolved, slid 0.100 um; row moved 0.00 um
+   _4272_|rebuffer665: dissolved, slid 0.155 um; row moved 0.00 um
+   rebuffer533|_4438_: slid 0.180 um but topology kept, 2 new violations -- not taken
+   _4039_|_3753_: dissolved, slid 0.400 um; row moved 0.00 um
+   _5300_|rebuffer261: dissolved, slid 0.150 um; row moved 0.00 um
+   _3915_|_3914_: dissolved, slid 0.385 um; row moved 0.00 um
+   _3705_|rebuffer119: dissolved, slid 0.150 um; row moved 0.00 um
+   _4192_|rebuffer87: dissolved, slid 0.150 um; row moved 0.00 um
+   _3785_|rebuffer98: dissolved, slid 0.150 um; row moved 0.00 um
+   rebuffer258|_5556_: slid 0.175 um but topology kept, 2 new violations -- not taken
+   _5650_|rebuffer262: slid 0.160 um but topology kept, 1 new violations -- not taken
+   _3539_|rebuffer216: dissolved, slid 0.215 um; row moved 0.00 um
+   rebuffer108|_5643_: dissolved, slid 0.535 um; row moved 0.46 um
+   _5291_|rebuffer118: slid 0.160 um but topology kept, 1 new violations -- not taken
+   _3691_|clkload8: dissolved, slid 0.255 um; row moved 0.00 um
+   rebuffer107|_3713_: slid 0.160 um but topology kept, 2 new violations -- not taken
+   rebuffer223|_3690_: dissolved, slid 0.330 um; row moved 0.00 um
+   _3551_|rebuffer103: dissolved, slid 0.150 um; row moved 0.00 um
+   _5829_|rebuffer115: dissolved, slid 0.150 um; row moved 0.00 um
+   _5153_|rebuffer111: dissolved, slid 0.155 um; row moved 0.00 um
+   _5159_|_5281_: dissolved, slid 0.175 um; row moved 0.00 um
+   _4130_|_4044_: dissolved, slid 0.385 um; row moved 0.00 um
+   rebuffer110|rebuffer273: dissolved, slid 0.580 um; row moved 0.46 um
+   rebuffer217|_5783_: dissolved, slid 0.255 um; row moved 0.00 um
+   rebuffer190|_4042_: dissolved, slid 0.195 um; row moved 0.00 um
+   rebuffer211|rebuffer214: dissolved, slid 0.440 um; row moved 0.00 um
+   rebuffer214|rebuffer213: refused -- merge_boundary: rebuffer214 and rebuffer213 do not abut
+   clkload14|_3682_: dissolved, slid 0.455 um; row moved 0.00 um
+   _5745_|_5697_: dissolved, slid 0.385 um; row moved 0.00 um
+   _3715_|rebuffer212: dissolved, slid 0.230 um; row moved 0.00 um
+   rebuffer212|clkbuf_4_9_0_clk: refused -- merge_boundary: rebuffer212 and clkbuf_4_9_0_clk do not abut
+   clkbuf_4_11_0_clk|_5855_: dissolved, slid 0.475 um; row moved 0.46 um
+   _4239_|wire38: dissolved, slid 0.130 um; row moved 0.00 um
+   _4285_|rebuffer270: dissolved, slid 0.150 um; row moved 0.00 um
+   _4390_|rebuffer282: slid 0.180 um but topology kept, 1 new violations -- not taken
+   clkbuf_4_14_0_clk|_5959_: dissolved, slid 0.475 um; row moved 0.46 um
+   _6026_|_4548_: dissolved, slid 0.400 um; row moved 0.00 um
+   _4528_|rebuffer288: slid 0.160 um but topology kept, 1 new violations -- not taken
+   _4277_|_4243_: dissolved, slid 0.400 um; row moved 0.00 um
+   _4283_|_4315_: dissolved, slid 0.400 um; row moved 0.00 um
+   _5644_|rebuffer269: dissolved, slid 0.195 um; row moved 0.00 um
+   rebuffer210|_4246_: dissolved, slid 0.150 um; row moved 0.00 um
+   _4279_|load_slew58: dissolved, slid 0.150 um; row moved 0.00 um
+   _4321_|_4354_: dissolved, slid 0.400 um; row moved 0.00 um
+   _4421_|_4401_: dissolved, slid 0.385 um; row moved 0.00 um
+   _5961_|_4485_: dissolved, slid 0.385 um; row moved 0.00 um
+   _4493_|_4518_: dissolved, slid 0.400 um; row moved 0.00 um
+   rebuffer426|_6729_: dissolved, slid 0.215 um; row moved 0.00 um
+   rebuffer424|_6823_: dissolved, slid 0.210 um; row moved 0.00 um
+== 2. 154 of 188 boundaries dissolved, 38.70 um freed, 7.36 um of it given back as whole sites (35.90 um left below a site in 75 rows) (3425s; guarded on three-row windows)
+   whole layout after the dissolves: 472174 rects, 29870 devices, topology EQUAL to the base
+   layopt_m0 = rebuffer117+_3492_: 5.830 x 2.720 um, 9 pins, 23 obstruction rects
+   layopt_m1 = rebuffer539+_3495_: 9.600 x 2.720 um, 10 pins, 22 obstruction rects
+   layopt_m2 = rebuffer203+_3662_: 3.990 x 2.720 um, 9 pins, 9 obstruction rects
+   layopt_m3 = clkload14+_3682_: 7.825 x 2.720 um, 11 pins, 3 obstruction rects
+   layopt_m4 = rebuffer223+_3690_: 6.570 x 2.720 um, 10 pins, 21 obstruction rects
+   layopt_m5 = _4039_+_3753_: 4.660 x 2.720 um, 14 pins, 8 obstruction rects
+   layopt_m6 = _3915_+_3914_: 4.215 x 2.720 um, 13 pins, 5 obstruction rects
+   layopt_m7 = wire4+_3923_: 9.050 x 2.720 um, 10 pins, 19 obstruction rects
+   layopt_m8 = rebuffer190+_4042_: 5.325 x 2.720 um, 9 pins, 6 obstruction rects
+   layopt_m9 = _4130_+_4044_: 5.135 x 2.720 um, 15 pins, 10 obstruction rects
+   layopt_m10 = _4277_+_4243_: 4.660 x 2.720 um, 14 pins, 8 obstruction rects
+   layopt_m11 = rebuffer210+_4246_: 4.450 x 2.720 um, 10 pins, 12 obstruction rects
+   layopt_m12 = _4283_+_4315_: 4.660 x 2.720 um, 14 pins, 8 obstruction rects
+   layopt_m13 = _4321_+_4354_: 4.660 x 2.720 um, 14 pins, 8 obstruction rects
+   layopt_m14 = _4421_+_4401_: 4.215 x 2.720 um, 13 pins, 5 obstruction rects
+   layopt_m15 = _5961_+_4485_: 5.135 x 2.720 um, 15 pins, 10 obstruction rects
+   layopt_m16 = _4493_+_4518_: 4.660 x 2.720 um, 14 pins, 8 obstruction rects
+   layopt_m17 = _6026_+_4548_: 4.660 x 2.720 um, 14 pins, 8 obstruction rects
+   layopt_m18 = _4606_+_4612_: 4.425 x 2.720 um, 12 pins, 12 obstruction rects
+   layopt_m19 = _4593_+_4616_: 4.215 x 2.720 um, 13 pins, 5 obstruction rects
+   layopt_m20 = rebuffer75+_4626_: 5.830 x 2.720 um, 9 pins, 19 obstruction rects
+   layopt_m21 = rebuffer156+_4659_: 3.990 x 2.720 um, 8 pins, 9 obstruction rects
+   layopt_m22 = _6169_+_4710_: 4.215 x 2.720 um, 13 pins, 5 obstruction rects
+   layopt_m23 = _6391_+_4882_: 4.215 x 2.720 um, 13 pins, 5 obstruction rects
+   layopt_m24 = rebuffer155+_4927_: 5.830 x 2.720 um, 10 pins, 19 obstruction rects
+   layopt_m25 = rebuffer157+_4973_: 5.840 x 2.720 um, 9 pins, 23 obstruction rects
+   layopt_m26 = _4603_+_4991_: 7.545 x 2.720 um, 12 pins, 20 obstruction rects
+   layopt_m27 = wire60+_5005_: 4.450 x 2.720 um, 10 pins, 12 obstruction rects
+   layopt_m28 = rebuffer84+_5195_: 5.325 x 2.720 um, 9 pins, 6 obstruction rects
+   layopt_m29 = _3387_+_5237_: 12.645 x 2.720 um, 10 pins, 3 obstruction rects
+   layopt_m30 = rebuffer668+_5242_: 7.130 x 2.720 um, 10 pins, 16 obstruction rects
+   layopt_m31 = rebuffer113+_5243_: 4.865 x 2.720 um, 9 pins, 17 obstruction rects
+   layopt_m32 = rebuffer92+_5277_: 12.280 x 2.720 um, 12 pins, 30 obstruction rects
+   layopt_m33 = _5159_+_5281_: 6.265 x 2.720 um, 12 pins, 22 obstruction rects
+   layopt_m34 = rebuffer68+_5323_: 5.770 x 2.720 um, 10 pins, 10 obstruction rects
+   layopt_m35 = rebuffer200+_5392_: 4.910 x 2.720 um, 9 pins, 16 obstruction rects
+   layopt_m36 = rebuffer714+_5395_: 11.190 x 2.720 um, 10 pins, 29 obstruction rects
+   layopt_m37 = rebuffer197+_5404_: 6.165 x 2.720 um, 9 pins, 16 obstruction rects
+   layopt_m38 = _5432_+_5431_: 4.215 x 2.720 um, 13 pins, 5 obstruction rects
+   layopt_m39 = _5455_+_5451_: 8.525 x 2.720 um, 12 pins, 28 obstruction rects
+   layopt_m40 = rebuffer729+_5639_: 4.445 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m41 = rebuffer108+_5643_: 5.445 x 2.720 um, 12 pins, 14 obstruction rects
+   layopt_m42 = clone615+_5688_: 10.940 x 2.720 um, 10 pins, 9 obstruction rects
+   layopt_m43 = _5745_+_5697_: 4.215 x 2.720 um, 13 pins, 5 obstruction rects
+   layopt_m44 = rebuffer217+_5783_: 7.105 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m45 = clkbuf_4_11_0_clk+_5855_: 11.945 x 2.720 um, 12 pins, 10 obstruction rects
+   layopt_m46 = clkbuf_4_14_0_clk+_5959_: 11.945 x 2.720 um, 12 pins, 10 obstruction rects
+   layopt_m47 = clone719+_6003_: 5.305 x 2.720 um, 9 pins, 6 obstruction rects
+   layopt_m48 = _6046_+_6044_: 4.660 x 2.720 um, 14 pins, 8 obstruction rects
+   layopt_m49 = _5937_+_6048_: 4.340 x 2.720 um, 11 pins, 12 obstruction rects
+   layopt_m50 = _6110_+_6088_: 4.660 x 2.720 um, 14 pins, 8 obstruction rects
+   layopt_m51 = load_slew33+_6214_: 6.510 x 2.720 um, 9 pins, 17 obstruction rects
+   layopt_m52 = rebuffer219+_6249_: 4.920 x 2.720 um, 11 pins, 14 obstruction rects
+   layopt_m53 = rebuffer101+_6274_: 10.480 x 2.720 um, 9 pins, 31 obstruction rects
+   layopt_m54 = load_slew61+_6282_: 4.450 x 2.720 um, 10 pins, 12 obstruction rects
+   layopt_m55 = rebuffer96+_6298_: 4.445 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m56 = rebuffer106+_6317_: 5.830 x 2.720 um, 9 pins, 23 obstruction rects
+   layopt_m57 = rebuffer116+_6331_: 8.610 x 2.720 um, 9 pins, 17 obstruction rects
+   layopt_m58 = rebuffer716+_6367_: 3.990 x 2.720 um, 9 pins, 9 obstruction rects
+   layopt_m59 = rebuffer621+_6435_: 5.830 x 2.720 um, 9 pins, 23 obstruction rects
+   layopt_m60 = load_slew56+_6497_: 9.530 x 2.720 um, 11 pins, 20 obstruction rects
+   layopt_m61 = rebuffer147+_6502_: 4.450 x 2.720 um, 10 pins, 12 obstruction rects
+   layopt_m62 = rebuffer726+_6576_: 6.965 x 2.720 um, 10 pins, 21 obstruction rects
+   layopt_m63 = rebuffer561+_6577_: 5.825 x 2.720 um, 12 pins, 13 obstruction rects
+   layopt_m64 = rebuffer426+_6729_: 5.305 x 2.720 um, 9 pins, 6 obstruction rects
+   layopt_m65 = wire49+_6775_: 11.310 x 2.720 um, 8 pins, 14 obstruction rects
+   layopt_m66 = rebuffer424+_6823_: 5.770 x 2.720 um, 10 pins, 10 obstruction rects
+   layopt_m67 = _6919_+_6917_: 4.215 x 2.720 um, 13 pins, 5 obstruction rects
+   layopt_m68 = _3875_+clkbuf_4_0_0_clk: 12.320 x 2.720 um, 10 pins, 12 obstruction rects
+   layopt_m69 = _3855_+clkbuf_4_3_0_clk: 10.940 x 2.720 um, 10 pins, 9 obstruction rects
+   layopt_m70 = rebuffer410+clkbuf_4_5_0_clk: 11.720 x 2.720 um, 8 pins, 14 obstruction rects
+   layopt_m71 = _3873_+clkload0: 11.445 x 2.720 um, 10 pins, 7 obstruction rects
+   layopt_m72 = _3463_+clkload2: 8.635 x 2.720 um, 8 pins, 0 obstruction rects
+   layopt_m73 = _4711_+clkload5: 11.700 x 2.720 um, 10 pins, 16 obstruction rects
+   layopt_m74 = _3691_+clkload8: 8.485 x 2.720 um, 9 pins, 0 obstruction rects
+   layopt_m75 = _4125_+clone534: 10.940 x 2.720 um, 10 pins, 9 obstruction rects
+   layopt_m76 = _5452_+load_slew24: 13.080 x 2.720 um, 10 pins, 33 obstruction rects
+   layopt_m77 = _3747_+load_slew27: 8.640 x 2.720 um, 11 pins, 26 obstruction rects
+   layopt_m78 = rebuffer619+load_slew31: 9.680 x 2.720 um, 8 pins, 26 obstruction rects
+   layopt_m79 = _6952_+load_slew39: 10.065 x 2.720 um, 12 pins, 22 obstruction rects
+   layopt_m80 = _4034_+load_slew5: 11.110 x 2.720 um, 9 pins, 47 obstruction rects
+   layopt_m81 = _3414_+load_slew54: 11.370 x 2.720 um, 10 pins, 29 obstruction rects
+   layopt_m82 = _4279_+load_slew58: 6.290 x 2.720 um, 10 pins, 26 obstruction rects
+   layopt_m83 = _3403_+load_slew6: 8.610 x 2.720 um, 8 pins, 17 obstruction rects
+   layopt_m84 = rebuffer667+load_slew64: 12.560 x 2.720 um, 8 pins, 23 obstruction rects
+   layopt_m85 = _5110_+max_cap11: 14.540 x 2.720 um, 12 pins, 26 obstruction rects
+   layopt_m86 = _4983_+rebuffer102: 11.435 x 2.720 um, 10 pins, 101 obstruction rects
+   layopt_m87 = _3551_+rebuffer103: 6.290 x 2.720 um, 10 pins, 26 obstruction rects
+   layopt_m88 = _5412_+rebuffer105: 12.270 x 2.720 um, 12 pins, 40 obstruction rects
+   layopt_m89 = _5153_+rebuffer111: 4.445 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m90 = _5829_+rebuffer115: 5.830 x 2.720 um, 9 pins, 23 obstruction rects
+   layopt_m91 = _3705_+rebuffer119: 8.590 x 2.720 um, 9 pins, 39 obstruction rects
+   layopt_m92 = _5022_+rebuffer146: 3.990 x 2.720 um, 9 pins, 9 obstruction rects
+   layopt_m93 = rebuffer150+rebuffer151: 5.060 x 2.720 um, 8 pins, 18 obstruction rects
+   layopt_m94 = _3839_+rebuffer154: 4.910 x 2.720 um, 9 pins, 16 obstruction rects
+   layopt_m95 = _5238_+rebuffer195: 4.910 x 2.720 um, 9 pins, 19 obstruction rects
+   layopt_m96 = _6400_+rebuffer198: 5.830 x 2.720 um, 9 pins, 23 obstruction rects
+   layopt_m97 = _5391_+rebuffer199: 8.530 x 2.720 um, 10 pins, 16 obstruction rects
+   layopt_m98 = _5329_+rebuffer204: 4.865 x 2.720 um, 9 pins, 17 obstruction rects
+   layopt_m99 = _3715_+rebuffer212: 9.890 x 2.720 um, 9 pins, 47 obstruction rects
+   layopt_m100 = rebuffer211+rebuffer214: 7.840 x 2.720 um, 8 pins, 12 obstruction rects
+   layopt_m101 = _3539_+rebuffer216: 5.305 x 2.720 um, 9 pins, 6 obstruction rects
+   layopt_m102 = rebuffer91+rebuffer218: 5.060 x 2.720 um, 8 pins, 18 obstruction rects
+   layopt_m103 = _5097_+rebuffer256: 4.445 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m104 = _5229_+rebuffer260: 3.990 x 2.720 um, 8 pins, 9 obstruction rects
+   layopt_m105 = _5300_+rebuffer261: 5.830 x 2.720 um, 9 pins, 19 obstruction rects
+   layopt_m106 = _5245_+rebuffer264: 12.270 x 2.720 um, 11 pins, 58 obstruction rects
+   layopt_m107 = _5644_+rebuffer269: 5.325 x 2.720 um, 9 pins, 6 obstruction rects
+   layopt_m108 = _4285_+rebuffer270: 3.990 x 2.720 um, 9 pins, 9 obstruction rects
+   layopt_m109 = rebuffer110+rebuffer273: 6.320 x 2.720 um, 8 pins, 15 obstruction rects
+   layopt_m110 = _5936_+rebuffer289: 5.830 x 2.720 um, 9 pins, 19 obstruction rects
+   layopt_m111 = _4582_+rebuffer344: 4.445 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m112 = rebuffer189+rebuffer346: 6.320 x 2.720 um, 8 pins, 15 obstruction rects
+   layopt_m113 = rebuffer153+rebuffer378: 8.840 x 2.720 um, 8 pins, 23 obstruction rects
+   layopt_m114 = _6171_+rebuffer382: 4.450 x 2.720 um, 10 pins, 12 obstruction rects
+   layopt_m115 = _4712_+rebuffer407: 8.080 x 2.720 um, 9 pins, 15 obstruction rects
+   layopt_m116 = _4775_+rebuffer414: 4.450 x 2.720 um, 10 pins, 12 obstruction rects
+   layopt_m117 = _6859_+rebuffer418: 4.445 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m118 = _6709_+rebuffer419: 4.450 x 2.720 um, 10 pins, 9 obstruction rects
+   layopt_m119 = _4587_+rebuffer420: 7.625 x 2.720 um, 10 pins, 23 obstruction rects
+   layopt_m120 = _6702_+rebuffer421: 4.445 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m121 = _3952_+rebuffer530: 4.445 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m122 = rebuffer536+rebuffer531: 6.320 x 2.720 um, 8 pins, 15 obstruction rects
+   layopt_m123 = _3942_+rebuffer537: 5.305 x 2.720 um, 9 pins, 6 obstruction rects
+   layopt_m124 = _6461_+rebuffer616: 5.365 x 2.720 um, 11 pins, 12 obstruction rects
+   layopt_m125 = _5450_+rebuffer620: 5.660 x 2.720 um, 10 pins, 21 obstruction rects
+   layopt_m126 = _3505_+rebuffer637: 4.460 x 2.720 um, 10 pins, 12 obstruction rects
+   layopt_m127 = _3480_+rebuffer66: 9.270 x 2.720 um, 9 pins, 24 obstruction rects
+   layopt_m128 = _4272_+rebuffer665: 4.445 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m129 = _6382_+rebuffer67: 5.770 x 2.720 um, 10 pins, 10 obstruction rects
+   layopt_m130 = _3762_+rebuffer715: 6.030 x 2.720 um, 10 pins, 12 obstruction rects
+   layopt_m131 = load_slew21+rebuffer72: 12.560 x 2.720 um, 8 pins, 23 obstruction rects
+   layopt_m132 = _5479_+rebuffer720: 4.910 x 2.720 um, 9 pins, 16 obstruction rects
+   layopt_m133 = _5727_+rebuffer723: 3.990 x 2.720 um, 9 pins, 9 obstruction rects
+   layopt_m134 = rebuffer560+rebuffer724: 5.060 x 2.720 um, 8 pins, 18 obstruction rects
+   layopt_m135 = _6036_+rebuffer728: 9.865 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m136 = _3900_+rebuffer74: 5.365 x 2.720 um, 11 pins, 12 obstruction rects
+   layopt_m137 = _3672_+rebuffer77: 3.990 x 2.720 um, 9 pins, 9 obstruction rects
+   layopt_m138 = _5360_+rebuffer85: 5.770 x 2.720 um, 10 pins, 10 obstruction rects
+   layopt_m139 = _6205_+rebuffer86: 8.590 x 2.720 um, 9 pins, 39 obstruction rects
+   layopt_m140 = _4192_+rebuffer87: 4.910 x 2.720 um, 9 pins, 16 obstruction rects
+   layopt_m141 = _3755_+rebuffer90: 4.910 x 2.720 um, 9 pins, 19 obstruction rects
+   layopt_m142 = _5428_+rebuffer93: 4.870 x 2.720 um, 9 pins, 19 obstruction rects
+   layopt_m143 = _3666_+rebuffer94: 5.830 x 2.720 um, 9 pins, 19 obstruction rects
+   layopt_m144 = rebuffer666+rebuffer97: 5.060 x 2.720 um, 8 pins, 18 obstruction rects
+   layopt_m145 = _3785_+rebuffer98: 5.830 x 2.720 um, 9 pins, 23 obstruction rects
+   layopt_m146 = _6304_+rebuffer99: 4.445 x 2.720 um, 10 pins, 13 obstruction rects
+   layopt_m147 = _3964_+wire15: 8.610 x 2.720 um, 9 pins, 17 obstruction rects
+   layopt_m148 = _4333_+wire18: 10.910 x 2.720 um, 10 pins, 34 obstruction rects
+   layopt_m149 = _5247_+wire23: 9.530 x 2.720 um, 9 pins, 24 obstruction rects
+   layopt_m150 = _5111_+wire37: 16.895 x 2.720 um, 12 pins, 30 obstruction rects
+   layopt_m151 = _4239_+wire38: 10.910 x 2.720 um, 10 pins, 34 obstruction rects
+   layopt_m152 = load_slew51+wire62: 12.560 x 2.720 um, 8 pins, 23 obstruction rects
+   layopt_m153 = _4920_+wire63: 15.830 x 2.720 um, 10 pins, 30 obstruction rects
+== 3. wrote merged.lef (154 macros), merged.gds, merged.def (483 instances moved by the dissolve)
+== 4. routed in 4346s: complete; wire 165067 um; DRC violations 0; errors: []
+== 5. routed dissolved alu: 29870 devices / 25612 nets vs the routed reference alu_base.def: 29870 / 25609; device-level topology EQUAL (312s)
+   KLayout on the routed result: devices 29870/29870 wl True nets 15772/15772 isomorphic True
+EXIT 0
