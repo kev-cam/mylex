@@ -56,6 +56,7 @@ class Tech:
     sd_min_len: float = 0.25           # minimum source/drain length beside a gate (sky130 poly.7)
     l_range: Tuple[float, float] = (0.15, 0.50)   # gate lengths the drive model was characterised over
     site_um: float = 0.0               # placement site width; a row shift moves standard cells by whole sites (0 = no quantisation)
+    site_name: str = ""                # the LEF SITE a standard cell declares (a merged cell declares it too, or a placer's row check fails it)
     # two-edge driver model (drive.py): R_rise = k_p * Wp^-beta_p, R_fall = k_n * Wn^-beta_n,
     # series stacks x(1 + (n-1)(stack-1)); fitted from the Liberty by probes/layopt/drive_fit.py
     drive: Optional["DriveModel"] = None
@@ -108,7 +109,7 @@ SKY130 = Tech(
     routing=["li", "met1", "met2", "met3", "met4", "met5"],
     vias=[("li", "mcon", "met1"), ("met1", "via1", "met2"), ("met2", "via2", "met3"),
           ("met3", "via3", "met4"), ("met4", "via4", "met5")],
-    nsdm="nsdm", psdm="psdm", diff_contact="licon", site_um=0.46,
+    nsdm="nsdm", psdm="psdm", diff_contact="licon", site_um=0.46, site_name="unithd",
     nfet_model="sky130_fd_pr__nfet_01v8", pfet_model="sky130_fd_pr__pfet_01v8",
     rsh={"poly": 48.2, "li": 12.8, "met1": 0.125, "met2": 0.125, "met3": 0.047, "met4": 0.047, "met5": 0.029},
     rvia={"licon": 70.0, "mcon": 9.3, "via1": 4.5, "via2": 4.5, "via3": 3.4, "via4": 0.38},

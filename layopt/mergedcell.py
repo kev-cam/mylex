@@ -38,6 +38,7 @@ class MergedCell:
     obs: List[Tuple[str, Tuple[int, int, int, int]]] = field(default_factory=list)
     rects: List[FlatRect] = field(default_factory=list)          # macro-local geometry, all layers
     pin_map: Dict[Tuple[str, str], str] = field(default_factory=dict)   # (inst, pin) -> merged pin
+    orient: str = "N"                              # the macro is built in row-N orientation; a group in a flipped row is placed FS
 
     @staticmethod
     def build(fl: FlatLayout, lef: lefdef.Lef, tech: Tech, d: lefdef.Def, provs: Sequence[str], name: str,
@@ -60,6 +61,15 @@ class MergedCell:
             box = (box[0], box[1], box[0] + ((w + site - 1) // site) * site, box[3])
         ox, oy = box[0], box[1]
         mc = MergedCell(name, insts, box)
+        # a group in a flipped row (its cells FS or S) is built un-flipped, as a row-N cell,
+        # and placed FS: a placer checks that a cell's orientation matches its row's, and
+        # may move the cell to a row of either orientation
+        flipped = comps[insts[0]].orient in ("FS", "S")
+        mc.orient = "FS" if flipped else "N"
+        h = box[3] - box[1]
+        def loc(r):                                   # absolute -> macro-local, un-flipped
+            x0, y0, x1, y1 = r[0] - ox, r[1] - oy, r[2] - ox, r[3] - oy
+            return (x0, h - y1, x1, h - y0) if flipped else (x0, y0, x1, y1)
         pin_rects: Dict[Tuple[int, int], List[Tuple[int, int, int, int]]] = {}
         for prov, bx in zip(provs, boxes):
             inst = inst_of(prov)
@@ -78,13 +88,13 @@ class MergedCell:
                     tl = {v: k for k, v in LEF_LAYER.items()}.get(lname)
                     if tl in L:
                         pin_rects.setdefault(L[tl], []).append(r)
-                    mc.pins[merged_name].append((lname, (r[0] - ox, r[1] - oy, r[2] - ox, r[3] - oy)))
+                    mc.pins[merged_name].append((lname, loc(r)))
         # geometry: everything of the group, macro-local
         provset = set(provs)
         for r in fl.rects:
             if r.prov not in provset or r.x1 <= r.x0 or r.y1 <= r.y0:
                 continue
-            mc.rects.append(FlatRect(r.layer, (r.x0 - ox, r.y0 - oy, r.x1 - ox, r.y1 - oy), name))
+            mc.rects.append(FlatRect(r.layer, loc(r.rect), name))
         mc.refine(tech)
         return mc
 
@@ -155,7 +165,7 @@ class MergedCell:
         mc.rects = [FlatRect(r.layer, r.rect, name) for r in fl.rects]
         return mc
 
-    def lef_text(self, dbu_um: float = 0.001, lef_class: str = "CORE") -> str:
+    def lef_text(self, dbu_um: float = 0.001, lef_class: str = "CORE", site_name: str = "") -> str:
         """`lef_class`: CORE makes the router treat the group as it treats a standard
         cell (pin access on the pin shapes, no block-obstruction accounting); BLOCK
         made OpenROAD's global router drop a guide onto li1 beside one of 119 macros
@@ -164,7 +174,7 @@ class MergedCell:
         f = lambda v: "%.3f" % (v * dbu_um)
         w, h = self.box[2] - self.box[0], self.box[3] - self.box[1]
         out = ["MACRO %s" % self.name, "  CLASS %s ;" % lef_class, "  FOREIGN %s 0 0 ;" % self.name, "  ORIGIN 0 0 ;",
-               "  SIZE %s BY %s ;" % (f(w), f(h)), "  SYMMETRY X Y ;"]
+               "  SIZE %s BY %s ;" % (f(w), f(h)), "  SYMMETRY X Y ;"] + (["  SITE %s ;" % site_name] if site_name else [])
         for pname in sorted(self.pins):
             use = self.pin_use.get(pname, "SIGNAL")
             out.append("  PIN %s" % pname)
@@ -200,11 +210,11 @@ def inst_of(prov: str) -> str:
     return prov.split("/", 1)[1].rsplit("/", 1)[0]
 
 
-def lef_library(cells: Sequence[MergedCell], path: str, dbu_um: float = 0.001, lef_class: str = "CORE") -> None:
+def lef_library(cells: Sequence[MergedCell], path: str, dbu_um: float = 0.001, lef_class: str = "CORE", site_name: str = "") -> None:
     with open(path, "w") as fh:
         fh.write("VERSION 5.7 ;\nBUSBITCHARS \"[]\" ;\nDIVIDERCHAR \"/\" ;\n\n")
         for mc in cells:
-            fh.write(mc.lef_text(dbu_um, lef_class) + "\n")
+            fh.write(mc.lef_text(dbu_um, lef_class, site_name) + "\n")
         fh.write("END LIBRARY\n")
 
 
@@ -253,7 +263,7 @@ def rewrite_def(def_text: str, d: lefdef.Def, fl: FlatLayout, cells: Sequence[Me
             in_comp = True; out.append("COMPONENTS %d ;" % n_comp); continue
         if in_comp and st == "END COMPONENTS":
             for mc in cells:
-                out.append("    - %s_i %s + %s ( %d %d ) N ;" % (mc.name, mc.name, "FIXED" if fixed else "PLACED", int(round(mc.box[0] / scale)), int(round(mc.box[1] / scale))))
+                out.append("    - %s_i %s + %s ( %d %d ) %s ;" % (mc.name, mc.name, "FIXED" if fixed else "PLACED", int(round(mc.box[0] / scale)), int(round(mc.box[1] / scale)), mc.orient))
             in_comp = False; out.append(ln); continue
         if in_comp:
             m = comp_re.match(ln)
