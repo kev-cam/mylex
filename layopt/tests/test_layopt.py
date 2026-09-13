@@ -832,6 +832,60 @@ END DESIGN
         print("  merged inv_1(FN)|inv_1: macro %.3f x %.3f um, %d pins, %d obs rects; DEF rewritten" % (m.size[0], m.size[1], len(m.pins), len(mc.obs)))
 
 
+def test_merged_cell_flipped_row():
+    """The same inv_1(FN)|inv_1 pair in a flipped (FS) row above a row of
+    nand2_1: the merged cell is built as a row-N cell (VPWR at its top, VGND
+    at its bottom, like every library cell) and placed FS, declares the
+    tech's SITE, and its width is a whole number of sites."""
+    from .. import moves as mv, mergedcell, lefdef
+    lib = os.path.expanduser("~/tools/sky130_fd_sc_hd")
+    if not os.path.exists(os.path.join(lib, "sky130_fd_sc_hd__inv_1.gds")):
+        print("  (sky130_fd_sc_hd cells not found, skipped)"); return
+    lefs = [os.path.join(lib, "sky130_fd_sc_hd.tlef")] + [os.path.join(lib, "sky130_fd_sc_hd__%s.lef" % m) for m in ("fill_4", "inv_1", "fill_8", "nand2_1")]
+    row0 = "\n".join("    - r%d sky130_fd_sc_hd__nand2_1 + PLACED ( %d 0 ) N ;" % (i, i * 1380) for i in range(8))
+    row1 = "\n".join("    - u%d sky130_fd_sc_hd__%s + PLACED ( %d 2720 ) %s ;" % (i, m, int(x * 1000), o) for i, (m, x, o) in enumerate([("fill_4", 0.0, "FS"), ("inv_1", 1.84, "S"), ("inv_1", 3.22, "FS"), ("fill_8", 4.60, "FS")]))
+    deftext = """VERSION 5.8 ;
+DESIGN t ;
+UNITS DISTANCE MICRONS 1000 ;
+DIEAREA ( 0 0 ) ( 12000 5440 ) ;
+ROW ROW_0 unithd 0 0 N DO 26 BY 1 STEP 460 0 ;
+ROW ROW_1 unithd 0 2720 FS DO 26 BY 1 STEP 460 0 ;
+COMPONENTS 12 ;
+%s
+%s
+END COMPONENTS
+SPECIALNETS 2 ;
+    - VPWR ( u1 VPWR ) ( u2 VPWR ) + USE POWER ;
+    - VGND ( u1 VGND ) ( u2 VGND ) + USE GROUND ;
+END SPECIALNETS
+NETS 2 ;
+    - n1 ( u1 Y ) ( u2 A ) + USE SIGNAL ;
+    - n2 ( u2 Y ) + USE SIGNAL ;
+END NETS
+END DESIGN
+""" % (row0, row1)
+    with tempfile.TemporaryDirectory() as td:
+        dp = os.path.join(td, "t.def"); open(dp, "w").write(deftext)
+        fl = lefdef.def2flat(dp, lefs, lib, T); d = lefdef.read_def(dp)
+        lef = lefdef.Lef()
+        for f in lefs:
+            lefdef.read_lef(f, lef)
+        ex = extract.extract(fl, T)
+        a, b = next((a, b) for a, b, _, _ in mv.boundary_candidates(fl, ex) if "/u1/" in a and "/u2/" in b)
+        mv.merge_boundary(fl, ex, a, b, shift_row=True)
+        mc = mergedcell.MergedCell.build(fl, lef, T, d, [a, b], "layopt_f0", site_um=T.site_um)
+        assert mc.orient == "FS", mc.orient
+        w = mc.box[2] - mc.box[0]
+        assert w % 460 == 0, w
+        vp = [r for l, r in mc.pins["VPWR"] if l == "met1"]; vg = [r for l, r in mc.pins["VGND"] if l == "met1"]
+        assert vp and vg and min(r[1] for r in vp) > max(r[3] for r in vg), "row-N cell: VPWR above VGND"
+        text = mc.lef_text(site_name=T.site_name)
+        assert "SITE unithd ;" in text and "CLASS CORE ;" in text
+        new_def = mergedcell.rewrite_def(deftext, d, fl, [mc], scale=1.0, fixed=False)
+        assert "- layopt_f0_i layopt_f0 + PLACED ( 1840 2720 ) FS ;" in new_def, [l for l in new_def.split("\n") if "layopt_f0" in l]
+        print("  merged inv_1(S)|inv_1(FS) in an FS row: %.2f um wide (%d sites), built row-N and placed FS" % (w / 1000.0, w // 460))
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):
