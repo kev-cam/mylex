@@ -1366,6 +1366,28 @@ model had taken — at ss the standard-Vt PMOS overshoots. Mean delay fell
 an objective here; a handshake cares about matched arrivals, and both
 edges are matched between the paths.
 
+**A real critical path (`l5_xyce_critical.py`).** OpenROAD's timer names
+the ALU's worst path: 30 stages of the adder's carry chain, 7.3 ns, the
+slow arcs the rising outputs of o311ai/a311oi pairs (three PMOS in
+series). The probe cuts a segment of it out of the routed layout — six
+stages `_3674_` to `_3686_`, with the six nets' wiring, the nine fan-out
+cells and every row neighbour within 6 µm, 114 cells and 36k rectangles —
+extracts it, holds the side input of every stage at the level that makes
+the path transparent (a brute-force assignment over the Liberty
+function), and simulates the segment delay from the first stage's input to
+the last stage's output, both input edges, at the three corners:
+
+| corner | rising input | falling input | energy |
+|---|---|---|---|
+| tt | 1042 ps | 1262 ps | 686 fJ |
+| ss | 2110 ps | 2438 ps | 551 fJ |
+| ff | 638 ps | 797 ps | 786 fJ |
+
+The timer had 1680 ps for the same segment at tt from placement
+parasitics and its own slews; the routed wiring and the PDK's transistors
+say 1042–1262. The search over a second finger on the P or N side of each
+stage, judged by the worst corner: CRITICAL-RESULT
+
 
 
 **What the geometry says about kestrel's PLL layout** (all found by the
@@ -1538,6 +1560,15 @@ Planned:
   go back as issues.
 - **ldx**: TH cells on SG13G2 are the first standard-cell-shaped input once
   they have layout (ASYNC-PLAN P2); `tech.SG13G2` is already in the table.
+- **stat-sim, the critical paths by simulation** (2026-09-13, stat-sim
+  branch `spef-rc-tree`: `bind.py`, `sweep.py`): a gate netlist bound to
+  Liberty-generated prob_load cell models, simulated in nvc at a falling
+  clock period; the flops whose D node is caught moving at the capture edge
+  first are the critical endpoints. On gcd it names the timer's worst flops
+  at the timer's clock (clean at 3.5 ns, `_265_`..`_272_` at 3.0 ns; STA:
+  `_267_`..`_279_` at 3.33 ns). The architect's way to find what layopt
+  should optimise, without a timer; the SPEF from OpenRCX or from
+  `rc.write_spef` annotates the wiring.
 - **stat-sim, SPEF node models**: the architect's ask (2026-09-13): in
   stat-sim's Python resolver-generator flow, a pre-P&R node is to be
   replaced by a SPEF-based model of the wiring that makes up the node,
