@@ -30,4 +30,6 @@ Results (2026-09-13; `../evidence/l4_placer_handoff_alu.log`, `l4_alu_whitespace
 45.1 µm (routed wire −0.07 %, DRC 0); fingers 98 of 98 cells; dissolve 154 of
 188 (38.7 µm freed, 7.36 µm given back as whole sites), 154 merged cells,
 routed with 0 DRC (+0.09 % wire), device-level topology equal to the base,
-KLayout isomorphic on 29870 devices.
+KLayout isomorphic on 29870 devices; re-packed by the placer (`--placed`,
+`flow_repack.tcl`): free sites 34821 → 34837, routed 0 DRC, 162445 µm of wire
+(−1.5 %), netlist equal, KLayout isomorphic.

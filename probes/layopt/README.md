@@ -345,7 +345,9 @@ declared, built row-N and placed FS in a flipped row) written PLACED; OpenROAD
 detailed placement and `optimize_mirroring` re-pack the rows, free sites per
 row are counted before and after, the result is routed and verified. gcd: free
 sites 2155 (base) → 2156; routed 0 DRC, 5376 µm of wire (base 5566); netlist
-equal; KLayout isomorphic. REPACK-ALU-README
+equal; KLayout isomorphic. ALU: 154 merged cells placed, free sites 34821 → 34837,
+routed 0 DRC, 162445 µm of wire (base 164914), netlist equal, KLayout isomorphic
+(`evidence/l4_merged_cell_alu.log`).
 
 ## The dissolved group as a router cell (`l4_merged_cell.py`, `layopt/mergedcell.py`)
 

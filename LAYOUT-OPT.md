@@ -1303,7 +1303,14 @@ DRC and 5376 µm of wire (base 5566, the merged cells FIXED 5562 — the
 re-optimised mirroring is worth 3 % of wire), netlist equal, KLayout
 isomorphic. The free sites per row tell the area story in one line: base
 2155, dissolved and re-packed 2156. One site, 0.46 µm, the single boundary
-that freed more than a site. REPACK-ALU
+that freed more than a site. The ALU, all 154 merged cells as placed
+standard cells: the placement check passes, the re-packed placement
+routes with 0 DRC and 162445 µm of wire (base 164914, −1.5 %), netlist
+equal, KLayout isomorphic on 29870 devices; free sites 34821 → 34837, the
+16 sites (7.36 µm) the dissolve freed in whole sites. That is the area
+answer for a 33 %-utilization sky130hd placement: 0.05 % of the row
+length, and the dissolve's measurable value on these designs is the
+merged cell itself and what a placer does with it, not area.
 
 **What the geometry says about kestrel's PLL layout** (all found by the
 extractor, worth fixing upstream in `layout/gds_gen.py`):
