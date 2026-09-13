@@ -218,20 +218,43 @@ def main():
                 t += moves.add_finger(f_, e_, dev, side="high")
             return t
         return apply
+    def vt(inst):
+        """every PMOS of the stage to standard Vt (a series stack's gates go together)"""
+        def apply(f_, e_, n):
+            if n == 0:
+                return []
+            t = []
+            for _ in range(8):
+                e_ = extract.extract(f_, T)
+                left = [x for x in e_.devices if x.prov == prov[inst] and x.kind == "p" and T.flavour_of_model(x.model) != "std"]
+                if not left:
+                    break
+                t += moves.set_vt(f_, e_, left[0], "std")
+            return t
+        return apply
     variables = []
     for inst, macro, *_ in seg:
         for kind in ("p", "n"):
             variables.append(optimize.IntVariable("%s_%s" % (inst.strip("_"), kind), 1, 2, 1, fingers(inst, kind)))
+        variables.append(optimize.IntVariable("%s_vt" % inst.strip("_"), 0, 1, 0, vt(inst)))
     counter = [0]
     def cost(f_, e_, x):
         counter[0] += 1
         sim = simulate(e_, "s%d" % counter[0]); w, e = worst(sim)
         return w / w0 + 0.5 * (e - e0) / e0, {"worst_ps": round(w, 1), "E_fJ": round(e, 1), "tt_rise": round(sim["tt"]["rise"][0], 1) if "tt" in sim else None}
-    print("== 3. greedy search: a second finger on the P or N side of each stage, every state simulated at the corners; cost = worst-corner delay + 0.5 dE/E")
     prob = optimize.DiscreteProblem(fl, T, variables, cost)
-    best = optimize.greedy_search(prob, verbose=True)
+    if "--state" in sys.argv:
+        # evaluate one given state (a dict of variable -> value) instead of searching
+        import ast as _ast
+        st = _ast.literal_eval(sys.argv[sys.argv.index("--state") + 1])
+        x = [st.get(v.name, v.x0) for v in variables]
+        best = prob.evaluate(x, keep=True)
+        print("== 3. the given state, simulated at the corners")
+    else:
+        print("== 3. greedy search: a second finger on the P or N side of each stage, or its PMOS at standard Vt; every state simulated at the corners; cost = worst-corner delay + 0.5 dE/E")
+        best = optimize.greedy_search(prob, verbose=True)
     sim1 = simulate(best.ex, "best"); w1, e1 = worst(sim1)
-    print("== 4. result: %s" % {v.name: x for v, x in zip(variables, best.x) if x != 1})
+    print("== 4. result: %s" % {v.name: x for v, x in zip(variables, best.x) if x != v.x0})
     for c in CORN:
         print("   %-3s rise-in %7.1f ps (out slew %5.1f)  fall-in %7.1f ps (out slew %5.1f)  energy %.1f fJ" % (c, sim1[c]["rise"][0], sim1[c]["rise"][2], sim1[c]["fall"][0], sim1[c]["fall"][2], (sim1[c]["rise"][1] + sim1[c]["fall"][1]) / 2))
     print("   worst-corner segment delay %.1f -> %.1f ps (%.0f%%); energy %.1f -> %.1f fJ (%+.0f%%); legal=%s topology_ok=%s violations=%d; %d states, %d decks" % (

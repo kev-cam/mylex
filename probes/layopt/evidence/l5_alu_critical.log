@@ -1,0 +1,23 @@
+== 1. OpenROAD's worst path: 30 stages, 7.29 ns; the segment _3674_.._3686_: _3674_(o311ai_4) -> _3677_(a311oi_4) -> rebuffer189(buf_6) -> _3680_(o311ai_4) -> _3683_(a311oi_2) -> _3686_(o311ai_2) (1.68 ns by the timer)
+   reduced layout: 114 cells (6 on the path, 9 fan-out, the rest row neighbours), 6 nets kept, 35791 rects, 342 devices (6s)
+== 2. Xyce, the segment as laid out (input _3674_/A1 -> output _3686_/Y), both input edges:
+   tt  rise-in  1041.9 ps (out slew  53.3)  fall-in  1262.1 ps (out slew 149.3)  energy 685.6 fJ
+   ss  rise-in  2109.9 ps (out slew 106.1)  fall-in  2437.9 ps (out slew 251.1)  energy 551.2 fJ
+   ff  rise-in   637.8 ps (out slew  39.7)  fall-in   796.5 ps (out slew 105.2)  energy 785.5 fJ
+   worst-corner segment delay 2437.9 ps (timer, tt: 1680 ps)
+== 3. greedy search: a second finger on the P or N side of each stage, or its PMOS at standard Vt; every state simulated at the corners; cost = worst-corner delay + 0.5 dE/E
+  start  cost 1  {'3674_p': 1, '3674_n': 1, '3674_vt': 0, '3677_p': 1, '3677_n': 1, '3677_vt': 0, 'rebuffer189_p': 1, 'rebuffer189_n': 1, 'rebuffer189_vt': 0, '3680_p': 1, '3680_n': 1, '3680_vt': 0, '3683_p': 1, '3683_n': 1, '3683_vt': 0, '3686_p': 1, '3686_n': 1, '3686_vt': 0}
+  round 1  cost 0.92733  {'3674_p': 1, '3674_n': 1, '3674_vt': 0, '3677_p': 1, '3677_n': 1, '3677_vt': 0, 'rebuffer189_p': 1, 'rebuffer189_n': 1, 'rebuffer189_vt': 0, '3680_p': 1, '3680_n': 1, '3680_vt': 1, '3683_p': 1, '3683_n': 1, '3683_vt': 0, '3686_p': 1, '3686_n': 1, '3686_vt': 0}  {'worst_ps': 2261.5, 'E_fJ': 673.7, 'tt_rise': 1042.2}
+  round 2  cost 0.86908  {'3674_p': 1, '3674_n': 1, '3674_vt': 1, '3677_p': 1, '3677_n': 1, '3677_vt': 0, 'rebuffer189_p': 1, 'rebuffer189_n': 1, 'rebuffer189_vt': 0, '3680_p': 1, '3680_n': 1, '3680_vt': 1, '3683_p': 1, '3683_n': 1, '3683_vt': 0, '3686_p': 1, '3686_n': 1, '3686_vt': 0}  {'worst_ps': 2120.2, 'E_fJ': 673.3, 'tt_rise': 1042.8}
+  round 3  cost 0.85351  {'3674_p': 1, '3674_n': 1, '3674_vt': 1, '3677_p': 1, '3677_n': 1, '3677_vt': 0, 'rebuffer189_p': 1, 'rebuffer189_n': 1, 'rebuffer189_vt': 1, '3680_p': 1, '3680_n': 1, '3680_vt': 1, '3683_p': 1, '3683_n': 1, '3683_vt': 0, '3686_p': 1, '3686_n': 1, '3686_vt': 0}  {'worst_ps': 2083.1, 'E_fJ': 672.8, 'tt_rise': 1025.2}
+  round 4  cost 0.83398  {'3674_p': 1, '3674_n': 1, '3674_vt': 1, '3677_p': 1, '3677_n': 1, '3677_vt': 0, 'rebuffer189_p': 1, 'rebuffer189_n': 1, 'rebuffer189_vt': 1, '3680_p': 1, '3680_n': 1, '3680_vt': 1, '3683_p': 1, '3683_n': 1, '3683_vt': 1, '3686_p': 1, '3686_n': 1, '3686_vt': 0}  {'worst_ps': 2034.6, 'E_fJ': 673.3, 'tt_rise': 929.2}
+  round 5  cost 0.78273  {'3674_p': 1, '3674_n': 1, '3674_vt': 1, '3677_p': 1, '3677_n': 1, '3677_vt': 0, 'rebuffer189_p': 1, 'rebuffer189_n': 1, 'rebuffer189_vt': 1, '3680_p': 1, '3680_n': 1, '3680_vt': 1, '3683_p': 1, '3683_n': 1, '3683_vt': 1, '3686_p': 1, '3686_n': 1, '3686_vt': 1}  {'worst_ps': 1910.8, 'E_fJ': 672.7, 'tt_rise': 926.8}
+Traceback (most recent call last):
+  File "/usr/local/src/mylex/probes/layopt/l5_xyce_critical.py", line 258, in <module>
+    main()
+  File "/usr/local/src/mylex/probes/layopt/l5_xyce_critical.py", line 249, in main
+    print("== 4. result: %s" % {v.name: x for v, x in zip(variables, best.x) if x != v.init})
+  File "/usr/local/src/mylex/probes/layopt/l5_xyce_critical.py", line 249, in <dictcomp>
+    print("== 4. result: %s" % {v.name: x for v, x in zip(variables, best.x) if x != v.init})
+AttributeError: 'IntVariable' object has no attribute 'init'
+EXIT 1

@@ -352,6 +352,15 @@ fitted model had chosen. What had blocked Xyce at cell sizes was the model-bin
 picker taking the widest nested bin; `vt_fit.pick` and `spice.Models.bin` take
 the narrowest.
 
+`l5_xyce_critical.py` -- OpenROAD's worst path on the ALU (`alu/sta_worst.tcl`,
+`evidence/alu_sta_worst.rpt`: a 30-stage carry chain), a six-stage segment cut
+from the routed layout with wiring, fan-out and neighbours, side inputs
+sensitised from the Liberty functions, simulated at the corners (tt 1042/1262
+ps against the timer's 1680), then a greedy search over fingers and PMOS Vt per
+stage judged by the worst corner: five stages to standard Vt, no finger,
+2438 → 1911 ps worst-corner (−22 %) at no energy (`evidence/l5_alu_critical*.log`,
+`.gds`). `--state '{...}'` re-simulates one state.
+
 ## The placer re-packs (`l4_merged_cell.py --placed`, `gcd/flow_repack.tcl`, `alu/flow_repack.tcl`)
 
 A merged group as a legal standard cell (width rounded up to sites, SITE

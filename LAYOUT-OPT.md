@@ -1386,7 +1386,26 @@ the last stage's output, both input edges, at the three corners:
 The timer had 1680 ps for the same segment at tt from placement
 parasitics and its own slews; the routed wiring and the PDK's transistors
 say 1042–1262. The search over a second finger on the P or N side of each
-stage, judged by the worst corner: CRITICAL-RESULT
+stage, judged by the worst corner, found nothing: every second finger
+made the worst corner worse, since in a chain of complex gates with
+fan-out two a wider stage mostly loads the stage before it, and the
+energy term charges it too (13 states, `evidence/l4_alu_critical_fingers.log`).
+With the PMOS Vt of each stage as a move as well, five rounds took five
+stages to standard Vt and never a finger:
+
+| corner | rising input | falling input | energy |
+|---|---|---|---|
+| tt | 1042 → 927 ps | 1262 → 1016 ps | 686 → 683 fJ |
+| ss | 2110 → 1870 ps | 2438 → 1911 ps | 551 → 554 fJ |
+| ff | 638 → 562 ps | 797 → 637 ps | 786 → 782 fJ |
+
+Worst-corner segment delay 2438 → 1911 ps, −22 %, at no energy and no
+width, legal, netlist kept (`evidence/l5_alu_critical.log`,
+`l5_alu_critical_result.log`, `l5_alu_critical_3674_3686.gds`). For a
+carry chain of three-PMOS stacks the lever is the implant, not the
+finger — which is what the two-way probe had already shown for a single
+stack, and what the fitted model alone could not have ranked over the
+corners.
 
 
 

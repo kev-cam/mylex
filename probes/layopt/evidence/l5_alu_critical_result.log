@@ -1,0 +1,14 @@
+== 1. OpenROAD's worst path: 30 stages, 7.29 ns; the segment _3674_.._3686_: _3674_(o311ai_4) -> _3677_(a311oi_4) -> rebuffer189(buf_6) -> _3680_(o311ai_4) -> _3683_(a311oi_2) -> _3686_(o311ai_2) (1.68 ns by the timer)
+   reduced layout: 114 cells (6 on the path, 9 fan-out, the rest row neighbours), 6 nets kept, 35791 rects, 342 devices (9s)
+== 2. Xyce, the segment as laid out (input _3674_/A1 -> output _3686_/Y), both input edges:
+   tt  rise-in  1041.9 ps (out slew  53.3)  fall-in  1262.1 ps (out slew 149.3)  energy 685.6 fJ
+   ss  rise-in  2109.9 ps (out slew 106.1)  fall-in  2437.9 ps (out slew 251.1)  energy 551.2 fJ
+   ff  rise-in   637.8 ps (out slew  39.7)  fall-in   796.5 ps (out slew 105.2)  energy 785.5 fJ
+   worst-corner segment delay 2437.9 ps (timer, tt: 1680 ps)
+== 3. the given state, simulated at the corners
+== 4. result: {'3674_vt': 1, 'rebuffer189_vt': 1, '3680_vt': 1, '3683_vt': 1, '3686_vt': 1}
+   tt  rise-in   926.8 ps (out slew  49.6)  fall-in  1015.6 ps (out slew 121.9)  energy 682.8 fJ
+   ss  rise-in  1869.5 ps (out slew 102.4)  fall-in  1910.8 ps (out slew 199.0)  energy 553.5 fJ
+   ff  rise-in   561.7 ps (out slew  35.9)  fall-in   637.1 ps (out slew  87.5)  energy 781.6 fJ
+   worst-corner segment delay 2437.9 -> 1910.8 ps (-22%); energy 674.1 -> 672.7 fJ (-0%); legal=True topology_ok=True violations=0; 1 states, 6 decks
+EXIT 0
