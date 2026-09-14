@@ -1,0 +1,9 @@
+read_verilog small.v
+hierarchy -check -top small
+proc; flatten; opt -full
+techmap; opt -full
+simplemap
+opt_clean
+write_json work/small.json
+write_verilog -noattr work/small.gates.v
+stat
