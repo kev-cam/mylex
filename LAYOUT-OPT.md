@@ -1670,7 +1670,51 @@ Planned:
   fork passes, the unsized one fails (§2). Next: the flop side — stat-sim's
   metastable latch as the receiver, so a fork skew becomes an MTBF.
 
+- **L4 — the whole chain on two designs — DONE (2026-09-08 → 13).** Finger,
+  Vt and gate-length moves under the guards; the boundary dissolve with the
+  placer hand-off (flip-and-abut hints as an odb script), merged cells as
+  legal standard cells the placer re-packs, the router's bill measured; gcd
+  and the Vortex ALU through it end to end, netlist equal, KLayout
+  isomorphic (§2 entries of those dates). The area verdict: whole sites only,
+  0.05 % of row length at 33 % utilization; the value is the merged cell and
+  what a placer does with it, not area.
+- **L5 — Xyce in the loop — DONE for paths (2026-09-13).** `spice.py` writes
+  a corner deck straight from the extraction (per-finger BSIM4 on the PDK's
+  narrowest bins, distributed RC); the two-way balance judged by Xyce over
+  tt/ss/ff (332 → 29.6 ps worst-corner); the ALU's carry-chain segment (six
+  stages) −22 % worst-corner by Vt alone, a second finger never helping.
+  stat-sim's clock sweep (bind.py, sweep.py; branch `spef-rc-tree`) finds
+  the critical endpoints by simulation and matches the timer on gcd.
+
 ## 10. Open decisions and risks
+
+**Where this stands, to pick up (2026-09-14).** Everything is committed:
+mylex `async-docs` (this file, `layopt/`, `probes/layopt/` with READMEs and
+`evidence/`), stat-sim branch `spef-rc-tree` (pushed, not merged to main:
+`spef.py` tree plan, `bind.py`, `sweep.py`, README section "Finding the
+critical paths by raising the clock", `test/sweep_*.log`). The flows live
+in `~/src/gcd-flow/hints` and `~/src/alu-flow/hints` (scripts copied to
+`probes/layopt/{gcd,alu}/`). The to-do list, in order of value:
+
+1. The asynchronous netlists from the RTL translation (the other Claude):
+   bind them, sweep them, extract them, and run the Xyce-judged balance on
+   their handshake paths — the purpose of all of the above.
+2. The whole 30-stage ALU critical path at the corners before and after the
+   Vt move (`l5_xyce_critical.py --from _3414_ --to _6919_`): the reduced
+   layout builds (1339 cells, 3512 devices) but the 28-cell deck fails
+   Xyce's operating point — untied side inputs of the extra cells or a
+   contention among the ties; to be diagnosed on the deck it writes.
+3. Refit the drive model and the Vt multipliers at real device sizes now
+   that narrow devices simulate (`drive_fit.py`, `vt_fit.py` still run at
+   twenty times cell size).
+4. stat-sim: the hold side of the flop check (a `d` event within THOLD after
+   the clock edge; the DFF model's own note calls it a known gap); a
+   protocol-aware stimulus for the ALU (its long paths sit behind the
+   operation field and valid/ready); the fitted model's alternating-vector
+   ALU run was still going when this was written.
+5. Dissolve gains on the site grid are sub-site almost everywhere; only a
+   placer re-packing whole rows would turn them into area, and at 0.05 % it
+   is not worth a placer's while on these designs.
 
 - Name.
 - Output hierarchy: today the result is flat (that *is* the point), with
