@@ -1,0 +1,8 @@
+work/
+mwork*/
+vectors.txt
+alu.v
+alu_top.sv
+defs.txt
+tb_alu_replay.vhd
+*.o

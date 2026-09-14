@@ -40,7 +40,16 @@ This is why the emitter is a mylex `.so` dlopened by nvc/gsm over a stable C ABI
   `mapper/run_map.sh` (exit 0) proves two designs end-to-end vs the sync golden:
   `small.v` (`y=sel?a+b:a^b`) → **512/512**, and `acc.v` (`r<=rst?0:r+din`,
   sync-reset folded to logic via `dfflegalize -cell $_DFF_P_`) → **16 cycles ==
-  running sum**. Next: `alu.gates.il`/`VX_alu_int` + the 3-oracle differential.
+  running sum**.
+- **★ REAL ALU (`VX_alu_int`) — dual-rail NCL, verified GREEN.** `mapper/alu/run_alu.sh`
+  (exit 0): Vortex `VX_alu_int.sv` → sv2v (`defs.txt` tinygpu config) → `alu.v` (26
+  modules) → yosys → gate netlist → `map_ncl.py` → **4533 dual-rail comb gates + 188
+  sync-emulation registers** → NVC replay of the committed vvp-oracle `vectors.txt`
+  (`probes/alutest`) → **42 cycles, 27 results, 7 branches identical to the oracle** —
+  the same numbers the synchronous ALU produces. `tb_alu_ncl_replay.vhd` mirrors
+  `probes/alutest/tb_alu_replay.vhd` (same timing/pre-history) but encodes inputs to
+  dual-rail and decodes outputs. This is the artifact the layopt pipeline waits on
+  (LAYOUT-OPT.md to-do #1). ($scopeinfo cells skipped; reset flops folded to `$_DFF_P_`.)
 
 ## Prior decisions honored (from the async-docs documentation)
 
@@ -84,9 +93,11 @@ scale sim; raw-NCL phase-batched GPU sim has a modest ceiling.
    as a tap per PIPES §7.1; refinement (a)-(d)).
 5. ✅ **[P3→P4 seed]** netlist mapper (`map_ncl.py`) — combinational (512/512) AND
    sequential `$_DFF_`→sync-emulation register (16-cycle acc) → NVC == sync golden. GREEN.
-6. **[P4]** scale the mapper to `alu.gates.il` / `VX_alu_int` (reset/$_SDFF_ variants,
-   multi-clock guards), verify via the 3-oracle differential (`probes/gsm`); hand the
-   async netlist + RT constraints to the layopt pipeline (its to-do #1).
+6. ✅ **[P4]** `VX_alu_int` → dual-rail NCL, verified vs the vvp oracle (42 cyc). GREEN.
+7. **[next]** hand `alu_top_ncl` to the layopt pipeline (bind/sweep/extract/Xyce-balance
+   the handshake paths); then `VX_execute` / soft-FPU scale (native `$_SDFF_`/`$_DFFE_`
+   variants instead of `dfflegalize`, multi-clock guards); P0 `.so` over the real ABI;
+   P1 contract ADR (`execute_if`/`commit_if` elastic pipes + ack-less `branch_ctl_if`).
 
 Genuinely open / to decide: rail-polarity ADR ratification, the dual-rail-clocked third
 binding variant (for the both-rails-high assertion), completion-detection circuitry,

@@ -55,6 +55,7 @@ def main():
             if isinstance(b, int): allnets.add(b)
     for p in ports.values(): note(p["bits"])
     for c in cells.values():
+        if c["type"] == "$scopeinfo": continue
         for conn in c["connections"].values(): note(conn)
     dual_nets = allnets - clock_nets
 
@@ -113,6 +114,8 @@ def main():
     gi = 0
     for cname, c in cells.items():
         t = c["type"]; conn = c["connections"]
+        if t == "$scopeinfo":
+            continue                      # yosys hierarchy metadata, no logic
         if t == "$_BUF_":
             L.append(f"  n{conn['Y'][0]} <= {dsig(conn['A'][0])};"); continue
         if t in DFFS:

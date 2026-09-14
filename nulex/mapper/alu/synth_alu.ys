@@ -1,0 +1,10 @@
+read_verilog -sv work/alu.v
+hierarchy -check -top alu_top
+proc; flatten; opt -full
+techmap; opt -full
+dfflegalize -cell $_DFF_P_ x
+simplemap
+opt_clean
+write_json work/alu.json
+write_verilog -noattr work/alu.gates.v
+stat
