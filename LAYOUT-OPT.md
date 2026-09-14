@@ -1587,7 +1587,16 @@ Planned:
   at the timer's clock (clean at 3.5 ns, `_265_`..`_272_` at 3.0 ns; STA:
   `_267_`..`_279_` at 3.33 ns). The architect's way to find what layopt
   should optimise, without a timer; the SPEF from OpenRCX or from
-  `rc.write_spef` annotates the wiring.
+  `rc.write_spef` annotates the wiring. Grown since (2026-09-14) into
+  table-timed cells (each cell interpolating its Liberty delay and transition
+  tables at event time, the output transition handed to the next stage
+  through the node), receivers on their own nodes of the SPEF tree, and
+  direct metastable-capture counting at the flops: gcd's endpoints are caught
+  at 3.75 ns and clean at 4.0 against the timer's 3.33 plus setup. Its limit
+  is the vectors: on the ALU a generic testbench exercises 2 ns of logic
+  where the static worst path is 7.3, because the long paths sit behind the
+  operation field and the valid/ready protocol — the design's own stimulus is
+  needed there, which the async translation will bring.
 - **stat-sim, SPEF node models**: the architect's ask (2026-09-13): in
   stat-sim's Python resolver-generator flow, a pre-P&R node is to be
   replaced by a SPEF-based model of the wiring that makes up the node,
