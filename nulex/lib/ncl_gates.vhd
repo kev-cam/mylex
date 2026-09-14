@@ -128,6 +128,28 @@ begin
   y.H <= m000 or m001 or m100 or m110;
 end architecture dims;
 
+-- ncl_dff : posedge D register, SYNC-EMULATION binding.
+-- Holds a dual-rail value and clocks it on the rising edge of an ordinary
+-- (single-rail) clock. This is NOT a QDI NCL register -- it is the legal
+-- sync-emulation binding of a register boundary (ASYNC-PLAN §1/§4): no
+-- completion, no NULL cycling, just a clocked dual-rail latch. The true QDI
+-- register (hysteresis + completion, DATA/NULL alternation) is future work,
+-- gated on a sequential NCL cell existing. `st` inits to DATA0 so `q` is a
+-- well-formed dual-rail value before the first edge (a reset preamble defines
+-- the functional state).
+library IEEE; use IEEE.std_logic_1164.all; library ncl; use ncl.ncl.all;
+entity ncl_dff is
+  port ( clk : in std_logic; d : in ncl_logic; q : out ncl_logic );
+end entity ncl_dff;
+architecture sync_emu of ncl_dff is
+  signal st : ncl_logic := NCL_DATA0;
+begin
+  process (clk) begin
+    if rising_edge(clk) then st <= d; end if;
+  end process;
+  q <= st;
+end architecture sync_emu;
+
 -- ===========================================================================
 -- ncl_add4_behav — 4-bit adder, BEHAVIORAL dual-rail binding (lib/ncl ncl_add).
 --   The sync-emulation-adjacent reference (decode/add/re-encode). Fast to

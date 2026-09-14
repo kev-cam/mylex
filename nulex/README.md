@@ -30,15 +30,17 @@ This is why the emitter is a mylex `.so` dlopened by nvc/gsm over a stable C ABI
 - **DFF/DFFE — deferred to a sync-emulation binding** (no sequential NCL register
   cell exists yet; §"Prior decisions"). The mapper leaves flops as clocked latches
   until a hysteresis NCL register cell lands.
-- **Netlist mapper — first increment GREEN.** `map_ncl.py` reads a yosys gate
-  netlist (`write_json` over `{$_AND_,$_OR_,$_XOR_,$_NAND_,$_NOR_,$_XNOR_,$_NOT_,
-  $_MUX_}`) and emits a dual-rail NCL VHDL netlist instantiating the gate entities,
-  one per cell (each 1-bit net → one `ncl_logic`; constants → `NCL_DATA0/1`).
-  `mapper/run_map.sh` (exit 0): `small.v` (`y = sel ? a+b : a^b`) → yosys
-  (`synth.ys`, `techmap; simplemap` — this build has no `abc`, a complete-basis
-  subset) → 17-cell netlist → mapped → **512/512 == sync golden** in NVC.
-  This is the P3→P4 spine on a small fixture; next is `alu.gates.il` +
-  sequential ($_DFF_) handling.
+- **Netlist mapper — combinational + sequential GREEN.** `map_ncl.py` reads a yosys
+  `write_json` gate netlist and emits a dual-rail NCL VHDL netlist instantiating the
+  gate entities one per cell:
+  - combinational `{$_AND_,$_OR_,$_XOR_,$_NAND_,$_NOR_,$_XNOR_,$_NOT_,$_MUX_}` →
+    QDI dual-rail (each 1-bit net → one `ncl_logic`; constants → `NCL_DATA0/1`);
+  - registers `$_DFF_P_` → `ncl_dff` (sync-emulation binding); clock nets kept
+    single-rail `std_logic`, data nets dual-rail.
+  `mapper/run_map.sh` (exit 0) proves two designs end-to-end vs the sync golden:
+  `small.v` (`y=sel?a+b:a^b`) → **512/512**, and `acc.v` (`r<=rst?0:r+din`,
+  sync-reset folded to logic via `dfflegalize -cell $_DFF_P_`) → **16 cycles ==
+  running sum**. Next: `alu.gates.il`/`VX_alu_int` + the 3-oracle differential.
 
 ## Prior decisions honored (from the async-docs documentation)
 
@@ -80,11 +82,11 @@ scale sim; raw-NCL phase-batched GPU sim has a modest ceiling.
    env-pinned, NULL-fallback, no mapping logic (regression-neutral added consumer).
 4. **[P1]** contract ADR (`execute_if`/`commit_if` elastic pipes + ack-less `branch_ctl_if`
    as a tap per PIPES §7.1; refinement (a)-(d)).
-5. ✅ **[P3→P4 seed]** netlist mapper (`map_ncl.py`) — small design → yosys gate
-   netlist → dual-rail NCL netlist → NVC 512/512 == sync golden. GREEN.
-6. **[P4]** scale the mapper: sequential `$_DFF_` → sync-emulation register, then
-   `alu.gates.il` / `VX_alu_int`, verified via the 3-oracle differential
-   (`probes/gsm`); hand the async netlist + RT constraints to the layopt pipeline.
+5. ✅ **[P3→P4 seed]** netlist mapper (`map_ncl.py`) — combinational (512/512) AND
+   sequential `$_DFF_`→sync-emulation register (16-cycle acc) → NVC == sync golden. GREEN.
+6. **[P4]** scale the mapper to `alu.gates.il` / `VX_alu_int` (reset/$_SDFF_ variants,
+   multi-clock guards), verify via the 3-oracle differential (`probes/gsm`); hand the
+   async netlist + RT constraints to the layopt pipeline (its to-do #1).
 
 Genuinely open / to decide: rail-polarity ADR ratification, the dual-rail-clocked third
 binding variant (for the both-rails-high assertion), completion-detection circuitry,

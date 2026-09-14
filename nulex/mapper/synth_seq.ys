@@ -1,0 +1,10 @@
+read_verilog acc.v
+hierarchy -check -top acc
+proc; flatten; opt -full
+techmap; opt -full
+dfflegalize -cell $_DFF_P_ x
+simplemap
+opt_clean
+write_json work/acc.json
+write_verilog -noattr work/acc.gates.v
+stat

@@ -1,5 +1,5 @@
 work/
-mwork/
+mwork*/
 *.o
 *.so
 __pycache__/
