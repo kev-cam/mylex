@@ -97,3 +97,42 @@ runtime like this (compiled — the C/GPU form, cf. gpubuild) instead of clocked
 is the correctness-proving prototype of that runtime.
 
 Usage: `actor_sim.py <netlist.json> <top> [cycles] [activity]`.
+
+## The COMPILED actor runtime (`map_actor_c.py`) — real wall-clock
+
+`actor_sim.py` is Python, so it measures evaluation *count*, not time.
+`map_actor_c.py` is the compiled form: it codegens a self-contained C simulator
+from the same gate netlist (netlist baked in as static arrays; `gcc -O2`), with
+the identical two engines — oblivious (every gate + every register each cycle)
+and actor (event-driven; a register fires only when its D changed). Verified
+three ways: C-oblivious == the Python oblivious (`check` mode vs a dumped
+stimulus/trace — codegen fidelity), C-actor == C-oblivious (the `verify` sweep),
+and the Python actor == Python oblivious (above). `run_actor_rt.sh <json> <top>`
+runs all of it.
+
+**Wall-clock, `gcc -O2` (this box):**
+
+| design | activity | oblivious | actor | **wall speed-up** |
+|---|--:|--:|--:|--:|
+| `alu_top` (4.5k gates, 188 regs) | 0.002% | 930 ms | 44 ms | **20.9×** |
+| `alu_top` | 1.1% | 852 ms | 63 ms | **13.5×** |
+| `alu_top` | 2.2% | 964 ms | 113 ms | 8.5× |
+| `alu_top` | 22% | 962 ms | 807 ms | 1.2× |
+| `exec_top` Tier A (37k gates, 3.8k regs) | 0.07% | 1685 ms | 48 ms | **35×** |
+| `exec_top` Tier A | 1.5% | 1234 ms | 76 ms | **16.2×** |
+| `exec_top` Tier A | 4% | 1357 ms | 229 ms | 5.9× |
+| `exec_top` Tier A | 20% | 1802 ms | 888 ms | 2.0× |
+| `exec_top` Tier A | 42% | 1712 ms | 1771 ms | 0.97× (crossover) |
+
+So the Python eval-count reduction **is real wall-clock**: 20–35× at the
+single-fraction-of-a-percent activity typical of an idle-heavy design, and the
+register-heavy exec wins *more* than the ALU (3.8k flops skipped). Honest tail:
+at very high activity (every input toggling every cycle) the actor **thrashes**
+— re-evaluating cones many times per settle — and is 30–100× *slower*; crossover
+is ~25–42% activity. The actor form is the right engine precisely for the
+low-activity regime (Vortex, GPU RTL), and the wrong one for saturated logic.
+
+**This is the payoff step** the async work was aiming at: the mapped Vortex
+netlists, run through this compiled event-driven engine instead of a clocked
+`ncl_dff`, execute in time proportional to their activity — faster than sync
+wherever the design is mostly idle, and provably bit-identical.

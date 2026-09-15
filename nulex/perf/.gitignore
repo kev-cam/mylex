@@ -1,2 +1,7 @@
 async_vs_sync
+*_rt
+*_rt.c
+*_stim.txt
+*.log
 *.o
+__pycache__/

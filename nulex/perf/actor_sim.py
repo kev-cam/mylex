@@ -186,7 +186,29 @@ def make_stim(nl, cycles, activity, seed=1):
         stim.append(changes)
     return stim, in_nets
 
+def dump(path, top, cycles, activity, outfile):
+    """Write stimulus + oblivious output trace for map_actor_c.py's `check` mode.
+    Format: '<cycles> <nin> <nout>' then per cycle '<nchg> <pos> <val>...' and a
+    line of NOUT output bits. Positions index the flattened input-net list and
+    the bit string the flattened output-bit list -- the same order the C builds."""
+    nl = load(path, top)
+    in_nets = [b for _, bits in nl["in_ports"] for b in bits if isinstance(b, int)]
+    pos = {n: i for i, n in enumerate(in_nets)}
+    out_bits = [b for _, bits in nl["out_ports"] for b in bits]
+    stim, _ = make_stim(nl, cycles, activity)
+    trace, _ = run(nl, stim, actor=False)          # pre-clock outputs, same as C check
+    with open(outfile, "w") as f:
+        f.write(f"{cycles} {len(in_nets)} {len(out_bits)}\n")
+        for c in range(cycles):
+            items = [(pos[n], v) for n, v in stim[c] if n in pos]
+            f.write(str(len(items)) + "".join(f" {p} {v}" for p, v in items) + "\n")
+            f.write("".join(str(b) for row in trace[c] for b in row) + "\n")
+    print(f"dumped {cycles} cycles ({len(in_nets)} in / {len(out_bits)} out) to {outfile}")
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "dump":
+        _, _, path, top, cyc, act, out = sys.argv
+        dump(path, top, int(cyc), float(act), out); return
     path, top = sys.argv[1], sys.argv[2]
     cycles   = int(sys.argv[3]) if len(sys.argv) > 3 else 500
     activity = float(sys.argv[4]) if len(sys.argv) > 4 else 0.02
