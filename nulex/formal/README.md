@@ -1,0 +1,52 @@
+# nulex/formal — the nulex → layopt hand-off (isochronic-fork constraints)
+
+`constraints.py` is the nulex side of the async **layout hand-off** (ASYNC-PLAN §8,
+LAYOUT-OPT.md §6 / L3). It closes the interface `probes/layopt/l3_fork_balance.py`
+flagged as open: *"the path set is given by hand (nulex's constraint extraction
+will emit it)."*
+
+## What it produces
+
+Reads a yosys gate netlist (`write_json`) and emits, for every multi-fanout net,
+an **isochronic-fork path set** — the QDI/NCL correctness object: a net that forks
+to several gate inputs must reach them with matched delay or a transition orphans
+and the handshake breaks. Output (`<top>_forks.json`) per fork:
+
+```
+{ "net": <id>, "driver": {inst,pin,kind}, "receivers": [{inst,pin}...],
+  "fanout": N, "kind": "isochronic" | "clock_reset_dist", "weight": N }
+```
+
+which maps 1:1 onto layopt's path set `- <net> ( <driver_inst> <pin> ) ( <recv_inst>
+<pin> ) ...` — i.e. `objective.fork_balance(ex, net, driver_shape, [receiver_shapes])`.
+Clock/reset distribution forks are tagged separately (that's skew, not orphan);
+isochronic forks are ranked widest-first (the wider the fork, the harder to balance
+in geometry). `usage: constraints.py <netlist.json> <top> [out.json]`.
+
+## How layopt consumes it
+
+After P&R, layopt maps each fork's `(inst, pin)` endpoints to physical shapes and
+runs `objective.fork_balance` / the `l3_fork_balance` optimizer to minimise the
+Elmore-delay spread across the branches (resizing branch wires / devices) under the
+topology + DRC guard — automatically, over all enumerated forks, instead of one
+hand-written net. Weights (fanout, and later per-branch criticality) prioritise the
+budget. Completion-tree drive balance (LAYOUT-OPT.md:1543) is the same shape with a
+lower-bound objective.
+
+## Demonstrated (sync gate netlists — layopt's proven sky130 targets)
+
+- `alu_top` (`VX_alu_int`, the ASYNC-PLAN first target, already through layopt on
+  sky130): **1686 isochronic forks, 7726 branch endpoints**, fanout up to 152-way
+  → `alu_forks.json`.
+- `exec_top` Tier A: **21,557 forks**, fanout up to 732-way → `exec_forks.json`.
+
+## Async note
+
+Run here on the synchronous gate netlists because those are what layopt physically
+places today (the NCL threshold cells still lack a LEF/GDS view — ASYNC-PLAN §10).
+The extractor is netlist-agnostic: the *same* tool run on the flattened dual-rail
+NCL netlist yields the QDI-critical isochronic forks (each dual-rail signal's fork,
+plus the completion-tree forks). Producing that flattened dual-rail gate netlist
+(the `map_ncl` output lowered past the behavioral `lib/ncl` functions to structural
+threshold cells) is the next nulex step; the constraint format and layopt's
+consumption path are unchanged.
