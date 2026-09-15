@@ -136,3 +136,42 @@ low-activity regime (Vortex, GPU RTL), and the wrong one for saturated logic.
 netlists, run through this compiled event-driven engine instead of a clocked
 `ncl_dff`, execute in time proportional to their activity — faster than sync
 wherever the design is mostly idle, and provably bit-identical.
+
+## Real activity under a program (`measure_activity.py`)
+
+Synthetic random-toggle activity is a knob; a real program is the answer. This
+drives the mapped ALU with its actual vvp-oracle instruction stream (`probes/
+alutest/vectors.txt` — 42 real ADD/SUB/SLT/AND/OR/XOR/SLL/SRL/branch ops) and
+measures the true activity, then replays the same instructions with idle cycles
+inserted to model GPGPU issue rates (memory-bound → low IPC → execute stage idle
+most cycles). The actor's work is **instruction-bound, not cycle-bound** (a
+constant ~61k evals regardless of the idle gaps — idle cycles cost it nothing):
+
+| workload | IPC | activity | work speed-up |
+|---|--:|--:|--:|
+| dense stress test | 1.0 | **29.5%** | 3.4× |
+| moderate | 0.25 | 7.6% | 13× |
+| memory-bound GPU | 0.125 | 3.8% | 26× |
+| heavily stalled | 0.06 | 1.9% | 52× |
+
+Even a *dense* instruction stream is only ~30% active (wide datapath, few bits
+toggle per op); realistic memory-bound GPGPU execution lands in the **1–8%
+active / 13–52× region**. All rows verified `actor == oblivious`.
+
+## Two forms, two substrates — the `ncl_dff` form is the GPU/FPGA target
+
+The event-driven actor and the dense `ncl_dff` are **complementary bindings of
+the same mapped netlist**, and the dense one is not a dead end:
+
+| form | substrate | wins by | regime |
+|---|---|---|---|
+| `ncl_dff` dense (sync-emulation) | **GPU / FPGA** | many-instance parallelism (SIMT / hardware) | throughput, any activity |
+| actor (event-driven) | **CPU** | idle-skipping | single instance, low activity |
+
+The dense form does fixed work every cycle — regular, branch-free, data-parallel
+— ideal for GPU SIMT (batch thousands of instances, no divergence, exactly
+`gpubuild`'s SoA farm) and for FPGA (it *is* the synchronous circuit). On SIMT
+the divergence cost of the actor's dynamic worklist *exceeds* the idle-skip
+benefit — which is why `GPU-SIM.md` recommends "events become data, fixed-shape
+batches", not a ported event queue. The actor form is the CPU single-/few-
+instance low-activity engine. Same netlist; pick the engine for the substrate.
