@@ -50,6 +50,20 @@ This is why the emitter is a mylex `.so` dlopened by nvc/gsm over a stable C ABI
   `probes/alutest/tb_alu_replay.vhd` (same timing/pre-history) but encodes inputs to
   dual-rail and decodes outputs. This is the artifact the layopt pipeline waits on
   (LAYOUT-OPT.md to-do #1). ($scopeinfo cells skipped; reset flops folded to `$_DFF_P_`.)
+- **★ VX_execute (Tier A: ALU+MULDIV, LSU, SFU; F disabled) — dual-rail NCL, verified
+  GREEN.** `mapper/exec/run_exec.sh`: `VX_execute` → sv2v → `exec.v` (38 modules) → yosys
+  (memory lowered, reset folded) → `map_ncl.py` → **37,058 dual-rail comb gates + 3,828
+  sync-emulation registers, 76 ports**. Verified SELF-CONTAINED: `map_plain.py` emits a
+  `std_logic` reference from the same gate netlist and `gen_ncl_diff.py` drives both with
+  identical random stimulus in one NVC sim → **NCL == plain gates over 201 cycles, every
+  output every cycle** (`NCL-DIFF PASS`). The independent vvp oracle isn't usable here
+  (this box's Vortex differs from the probes' by 2 bits in `lsu req_data`, and sv2v/iverilog
+  here can't resolve the `cta_lane_t` `type()` the probes' toolchain did) — the ALU flow
+  already proved the mapper against the vvp oracle, and this differential proves the transform
+  faithful at full execute-stage scale. NVC needs `-M 1g` for the 42k-instance units.
+  Helpers: `map_plain.py` (std_logic reference), `gen_ncl_diff.py` (manifest-driven
+  NCL-vs-plain equivalence TB, scalar-LFSR stimulus — sidesteps an nvc SSE `numeric_std`
+  vector-xor SIGSEGV).
 
 ## Prior decisions honored (from the async-docs documentation)
 
@@ -94,10 +108,13 @@ scale sim; raw-NCL phase-batched GPU sim has a modest ceiling.
 5. ✅ **[P3→P4 seed]** netlist mapper (`map_ncl.py`) — combinational (512/512) AND
    sequential `$_DFF_`→sync-emulation register (16-cycle acc) → NVC == sync golden. GREEN.
 6. ✅ **[P4]** `VX_alu_int` → dual-rail NCL, verified vs the vvp oracle (42 cyc). GREEN.
-7. **[next]** hand `alu_top_ncl` to the layopt pipeline (bind/sweep/extract/Xyce-balance
-   the handshake paths); then `VX_execute` / soft-FPU scale (native `$_SDFF_`/`$_DFFE_`
-   variants instead of `dfflegalize`, multi-clock guards); P0 `.so` over the real ABI;
-   P1 contract ADR (`execute_if`/`commit_if` elastic pipes + ack-less `branch_ctl_if`).
+7. ✅ **[P4]** `VX_execute` Tier A → dual-rail NCL (37k gates + 3828 regs), self-contained
+   differential GREEN. Memory lowered; `map_plain.py` + `gen_ncl_diff.py` added.
+8. **[next]** hand `alu_top_ncl` / `exec_top_ncl` to the layopt pipeline (bind/sweep/extract/
+   Xyce-balance the handshake paths); Tier B soft-FPU scale (native `$_SDFF_`/`$_DFFE_`
+   instead of `dfflegalize`, multi-clock guards, an abc-yosys to match `synth_alu.ys`);
+   P0 `.so` over the real ABI; P1 contract ADR (elastic `execute_if`/`commit_if` + ack-less
+   `branch_ctl_if`). vvp-oracle replay generator deferred until the Vortex version aligns.
 
 Genuinely open / to decide: rail-polarity ADR ratification, the dual-rail-clocked third
 binding variant (for the both-rails-high assertion), completion-detection circuitry,
