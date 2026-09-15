@@ -64,6 +64,15 @@ This is why the emitter is a mylex `.so` dlopened by nvc/gsm over a stable C ABI
   Helpers: `map_plain.py` (std_logic reference), `gen_ncl_diff.py` (manifest-driven
   NCL-vs-plain equivalence TB, scalar-LFSR stimulus — sidesteps an nvc SSE `numeric_std`
   vector-xor SIGSEGV).
+- **★ VX_execute Tier B (+ soft FPU, NUM_EX_UNITS=4, `-DASIC`) — dual-rail NCL, verified
+  GREEN.** `mapper/exec/run_exec_tierB.sh`: `gen_wrapper.py --num-ex-units 4` + the 15
+  `fpu/` sources → sv2v → `exec_tierB.v` (55 modules) → yosys (**126,821 cells**) →
+  `map_ncl.py` → **114,736 dual-rail comb gates + 10,634 sync-emulation registers, 82
+  ports** — the soft FPU (Wallace multiplier, CSA trees, FMA, div/sqrt, rounding) uses
+  the SAME gate primitives, all handled. Self-contained differential: **NCL == plain
+  gates over 201 random cycles, every output every cycle** (`NCL-DIFF PASS`), ~3× Tier A
+  scale. NVC needs `-M 4g` (analyze) and **`-H 8g`** (the ~125k-instance elaboration heap;
+  ~9 GB RAM). The mapper is unchanged from Tier A — this proves it scales to the full FPU.
 
 ## Prior decisions honored (from the async-docs documentation)
 
@@ -110,11 +119,15 @@ scale sim; raw-NCL phase-batched GPU sim has a modest ceiling.
 6. ✅ **[P4]** `VX_alu_int` → dual-rail NCL, verified vs the vvp oracle (42 cyc). GREEN.
 7. ✅ **[P4]** `VX_execute` Tier A → dual-rail NCL (37k gates + 3828 regs), self-contained
    differential GREEN. Memory lowered; `map_plain.py` + `gen_ncl_diff.py` added.
-8. **[next]** hand `alu_top_ncl` / `exec_top_ncl` to the layopt pipeline (bind/sweep/extract/
-   Xyce-balance the handshake paths); Tier B soft-FPU scale (native `$_SDFF_`/`$_DFFE_`
-   instead of `dfflegalize`, multi-clock guards, an abc-yosys to match `synth_alu.ys`);
-   P0 `.so` over the real ABI; P1 contract ADR (elastic `execute_if`/`commit_if` + ack-less
-   `branch_ctl_if`). vvp-oracle replay generator deferred until the Vortex version aligns.
+8. ✅ **[P4]** `VX_execute` Tier B (+ soft FPU) → dual-rail NCL (114k gates + 10.6k regs),
+   self-contained differential GREEN at ~3× scale.
+9. **[next]** hand `alu_top_ncl` / `exec_top_ncl` to the layopt pipeline (bind/sweep/extract/
+   Xyce-balance the handshake paths); P0 `.so` over the real ABI; P1 contract ADR (elastic
+   `execute_if`/`commit_if` + ack-less `branch_ctl_if`). Deferred: native `$_SDFF_`/`$_DFFE_`
+   handling (vs `dfflegalize`-fold), an abc-yosys to match `synth_alu.ys`'s NAND/NOR/XNOR,
+   and the vvp-oracle replay path (blocked until the Vortex version aligns). The true QDI
+   register (hysteresis + completion, replacing the sync-emulation `ncl_dff`) awaits a
+   sequential NCL cell.
 
 Genuinely open / to decide: rail-polarity ADR ratification, the dual-rail-clocked third
 binding variant (for the both-rails-high assertion), completion-detection circuitry,

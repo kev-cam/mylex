@@ -1,0 +1,9 @@
+read_verilog -sv work/exec_tierB.v
+hierarchy -check -top exec_top
+proc; flatten; opt -full
+memory_collect; memory_map; opt -full
+techmap; opt -full
+dfflegalize -cell $_DFF_P_ x
+simplemap
+opt_clean
+write_json work/exec_tierB.json
