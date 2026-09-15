@@ -4,15 +4,29 @@ The physical-implementation side of nulex (ASYNC-PLAN §8/§10, LAYOUT-OPT.md L3
 nulex emits isochronic-fork constraints (`../formal/constraints.py`); layopt places
 and balances them in sky130 geometry. This directory reproduces the toolchain.
 
-## Two scripts, by privilege
+## Three scripts, by privilege
 
 | script | sudo? | does |
 |---|---|---|
 | `install_pdk.sh` | no | sky130 PDK via volare venv; wires layopt's LIB dir (`~/tools/sky130_fd_sc_hd`: tlef + merged LEF + per-cell GDS split) |
-| `install_layout_root.sh` | **yes** | OpenROAD clone + `DependencyInstaller.sh` (apt) + optional KLayout. Does *not* build. |
+| `install_layout_root.sh` | **yes** | OpenROAD clone + `DependencyInstaller.sh -base` (apt only) + optional KLayout. Does *not* build, does *not* touch cmake. |
+| `build_openroad.sh` | no | `DependencyInstaller.sh -common -local` (real cmake + from-source deps → `~/.local`) then `Build.sh -local` (~30–60 min). |
 
-Run order: `bash install_pdk.sh` (user)  →  `sudo bash install_layout_root.sh` (root)
-→  `~/tools/OpenROAD/etc/Build.sh` (user, ~30-60 min).
+Run order: `bash install_pdk.sh` (user) → `sudo bash install_layout_root.sh` (root)
+→ `bash build_openroad.sh` (user).
+
+## Two gotchas this box hit (why the split, not a bare `-all`)
+
+1. **`DependencyInstaller.sh` with no flag errors out** — it demands one of
+   `-all|-base|-common|-bazel|-bazel-dev` (`error "You must use one of: ..."`).
+   That was the first failure. Always pass a flag.
+2. **The smak `cmake` shim must not be clobbered.** `/usr/local/bin/cmake` is a
+   symlink to smak's driver (reports 3.31.4); OpenROAD wants 3.31.9. A root
+   `-all`/`-common` would install cmake with `--prefix=/usr/local`, overwriting
+   that symlink, and route every dep's cmake through smak's interpreter. So root
+   runs only `-base` (apt, no cmake), and the common deps + build run non-root
+   with `-local` → everything in `~/.local`, whose `bin` precedes `/usr/local/bin`
+   in PATH, so a real cmake shadows the shim and the shim is left intact.
 
 ## What's needed vs optional
 
