@@ -27,6 +27,18 @@ Run order: `bash install_pdk.sh` (user) → `sudo bash install_layout_root.sh` (
    runs only `-base` (apt, no cmake), and the common deps + build run non-root
    with `-local` → everything in `~/.local`, whose `bin` precedes `/usr/local/bin`
    in PATH, so a real cmake shadows the shim and the shim is left intact.
+3. **OpenROAD's default build system is now Bazel** (hermetic, needs `bazelisk`
+   and re-fetches its own toolchain, ignoring the `~/.local` deps). `build_openroad.sh`
+   passes `Build.sh -cmake-build`, which uses the classic CMake build that consumes
+   exactly the deps `-common` installed (its pre-compile check wants
+   cmake/bison/flex/swig/gcc/g++, all present in `~/.local/bin`).
+
+## Result (validated 2026-09-15)
+
+OpenROAD `26Q3-2260-ge2787ffca2` built + installed to `~/.local/bin/openroad`
+(on PATH). Smoke test: reads the sky130 tech + cell LEF, 14 layers, 1000 dbu/µm,
+**all 437 std-cell masters** load and resolve by name. KLayout 0.30.0 present.
+Full stack — sky130 PDK, Xyce, KLayout, OpenROAD — installed and validated.
 
 ## What's needed vs optional
 

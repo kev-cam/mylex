@@ -22,8 +22,13 @@ command -v cmake >/dev/null && echo "cmake in PATH: $(command -v cmake) ($(cmake
 echo "== 1/2  common deps -> ~/.local  (DependencyInstaller.sh -common -local)"
 bash "$DEST/etc/DependencyInstaller.sh" -common -local
 
-echo "== 2/2  build OpenROAD  (Build.sh -local, ~/.local prefixes)"
-BUILD_ARGS=(-local)
+echo "== 2/2  build OpenROAD  (Build.sh -cmake-build -local, ~/.local prefixes)"
+# -cmake-build: OpenROAD's default build system is now Bazel (hermetic, needs
+# bazelisk and re-fetches its own toolchain, ignoring the ~/.local deps above).
+# -cmake-build (useBazel=no) uses the classic CMake build, which consumes
+# exactly the from-source deps -common installed. Its pre-compile check wants
+# cmake/bison/flex/swig/gcc/g++ (all present in ~/.local/bin, first in PATH).
+BUILD_ARGS=(-cmake-build -local)
 [ -f "$DEPS_FILE" ] && BUILD_ARGS+=("-deps-prefixes-file=$DEPS_FILE")
 bash "$DEST/etc/Build.sh" "${BUILD_ARGS[@]}"
 
