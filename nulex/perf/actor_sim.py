@@ -35,13 +35,17 @@ def load(path, top):
     ports, cells = m["ports"], m["cells"]
     gates = []    # (kind, [in_nets], out_net) ; kind in BIN | 'not' | 'mux'
     regs  = []    # (d_net, q_net)
+    rst   = []    # parallel to regs: async active-low reset net, or None ($_DFF_P_)
+    # (clock net C is ignored: every flop ticks each cycle = the ungated form;
+    #  gated-clock power behavior is a later refinement.)
     for c in cells.values():
         t = c["type"]; k = c["connections"]
         if t == "$scopeinfo": continue
         if t in BIN:      gates.append((t, [k["A"][0], k["B"][0]], k["Y"][0]))
         elif t == "$_NOT_": gates.append(("not", [k["A"][0]], k["Y"][0]))
         elif t == "$_MUX_": gates.append(("mux", [k["A"][0], k["B"][0], k["S"][0]], k["Y"][0]))
-        elif t == "$_DFF_P_": regs.append((k["D"][0], k["Q"][0]))
+        elif t == "$_DFF_P_":  regs.append((k["D"][0], k["Q"][0])); rst.append(None)
+        elif t == "$_DFF_PN0_": regs.append((k["D"][0], k["Q"][0])); rst.append(k["R"][0])  # async reset-to-0, active low
         elif t == "$_BUF_": gates.append(("buf", [k["A"][0]], k["Y"][0]))
         else: sys.exit("unhandled cell " + t)
     in_ports  = [(n, p["bits"]) for n, p in ports.items()
@@ -73,10 +77,11 @@ def load(path, top):
     for gi, (_, ins, _) in enumerate(gates):
         for b in ins:
             if isinstance(b, int): consumers.setdefault(b, []).append(gi)
-    d_regs = {}                  # net -> registers whose D is this net
+    d_regs = {}                  # net -> registers triggered when it changes (D input OR reset)
     for ri, (d, q) in enumerate(regs):
         if isinstance(d, int): d_regs.setdefault(d, []).append(ri)
-    return dict(gates=gates, regs=regs, order=order, consumers=consumers,
+        if isinstance(rst[ri], int): d_regs.setdefault(rst[ri], []).append(ri)
+    return dict(gates=gates, regs=regs, rst=rst, order=order, consumers=consumers,
                 d_regs=d_regs, in_ports=in_ports, out_ports=out_ports)
 
 def gval(kind, ins):
@@ -96,7 +101,10 @@ def run(nl, stim, actor, snaps=None):
     """Simulate; return (output-trace, work-count). actor=False -> oblivious.
     If snaps is a list, a copy of the net-value map is appended each cycle."""
     gates, regs, order = nl["gates"], nl["regs"], nl["order"]
-    consumers, d_regs = nl["consumers"], nl["d_regs"]
+    consumers, d_regs, rst = nl["consumers"], nl["d_regs"], nl["rst"]
+    def nextq(ri):   # reset-aware captured value: async active-low reset forces 0
+        r = rst[ri]
+        return 0 if (r is not None and netval(v, r) == 0) else netval(v, regs[ri][0])
     v = {}
     for _, q in regs: v[q] = 0
     trace, work = [], 0
@@ -107,7 +115,7 @@ def run(nl, stim, actor, snaps=None):
             k, ins, y = gates[gi]
             v[y] = gval(k, [netval(v, b) for b in ins])
         for ri, (d, q) in enumerate(regs):
-            if netval(v, d) != v[q]: dirty_reg.add(ri)
+            if nextq(ri) != v[q]: dirty_reg.add(ri)
         for cyc, inbits in enumerate(stim):
             # 1. apply input changes, propagate through comb (event-driven)
             q = deque()
@@ -135,7 +143,7 @@ def run(nl, stim, actor, snaps=None):
             for ri in list(dirty_reg):
                 d, qn = regs[ri]
                 work += 1
-                nv = netval(v, d)
+                nv = nextq(ri)
                 if nv != v[qn]: upd.append((qn, nv))
             dirty_reg.clear()
             for qn, nv in upd:
@@ -163,7 +171,7 @@ def run(nl, stim, actor, snaps=None):
                 work += 1
                 v[y] = gval(k, [netval(v, b) for b in ins])
             trace.append(outputs(v, nl["out_ports"]))
-            nd = [netval(v, d) for d, _ in regs]      # every register, every cycle
+            nd = [nextq(ri) for ri in range(len(regs))]  # every register, every cycle
             for ri, (_, qn) in enumerate(regs):
                 work += 1; v[qn] = nd[ri]
             if snaps is not None: snaps.append(dict(v))

@@ -47,18 +47,20 @@ def main():
         raise SystemExit("bad bit %r" % b)
 
     gtype, ga, gb, gs, gy = [], [], [], [], []
-    regs_d, regs_q = [], []
+    regs_d, regs_q, regs_r = [], [], []   # regs_r: async active-low reset net (dense), or -1
     cons = {}   # net -> [gate idx]  (real, non-const inputs only)
-    dreg = {}   # net -> [reg idx]
+    dreg = {}   # net -> [reg idx]  (triggered by D input OR reset change)
     def add_cons(net, gi):
         if net >= 2: cons.setdefault(net, []).append(gi)
     for c in cells.values():
         t = c["type"]; k = c["connections"]
         if t == "$scopeinfo": continue
-        if t == "$_DFF_P_":
+        if t in ("$_DFF_P_", "$_DFF_PN0_"):
             d, q = N(k["D"][0]), N(k["Q"][0])
-            ri = len(regs_d); regs_d.append(d); regs_q.append(q)
+            r = N(k["R"][0]) if t == "$_DFF_PN0_" else -1
+            ri = len(regs_d); regs_d.append(d); regs_q.append(q); regs_r.append(r)
             if d >= 2: dreg.setdefault(d, []).append(ri)
+            if r >= 2: dreg.setdefault(r, []).append(ri)
             continue
         if t not in TYPES: sys.exit("unhandled cell " + t)
         gi = len(gtype)
@@ -120,11 +122,14 @@ def main():
     W.append(carr("g_b","int32_t",gb)); W.append(carr("g_s","int32_t",gs)); W.append(carr("g_y","int32_t",gy))
     W.append(carr("cons_off","int32_t",cons_off)); W.append(carr("cons_idx","int32_t",flat_c))
     W.append(carr("r_d","int32_t",regs_d)); W.append(carr("r_q","int32_t",regs_q))
+    W.append(carr("r_r","int32_t",regs_r))   # async reset net per reg, or -1
     W.append(carr("dreg_off","int32_t",dreg_off)); W.append(carr("dreg_idx","int32_t",flat_d))
     W.append(carr("topo","int32_t",order))
     W.append(carr("in_nets","int32_t",in_nets)); W.append(carr("out_bits","int32_t",out_bits))
     W.append(r"""
 static int8_t val[NNETS];
+/* reset-aware captured value: async active-low reset (r_r>=0) forces 0 */
+#define RQ(r) ((r_r[r] >= 0 && !val[r_r[r]]) ? 0 : val[r_d[r]])
 static inline int ev(int g){
     int a=val[g_a[g]],b=val[g_b[g]],s=val[g_s[g]];
     switch(g_type[g]){
@@ -150,7 +155,7 @@ static uint64_t run_obliv(int cycles,uint32_t thresh,uint32_t seed,uint64_t*work
         for(int i=0;i<NIN;i++) if(xr()<thresh) val[in_nets[i]]=xr()&1;
         for(int i=0;i<NG;i++){ int g=topo[i]; val[g_y[g]]=ev(g); w++; }
         uint64_t oc=ocheck(); trace=(trace^oc)*1099511628211ULL;
-        for(int r=0;r<NR;r++) nd[r]=val[r_d[r]];
+        for(int r=0;r<NR;r++) nd[r]=RQ(r);
         for(int r=0;r<NR;r++){ val[r_q[r]]=nd[r]; w++; }
     }
     *work=w; return trace;
@@ -174,7 +179,7 @@ static uint64_t run_actor(int cycles,uint32_t thresh,uint32_t seed,uint64_t*work
         if(ny!=val[yn]){ val[yn]=ny; for(int _k=cons_off[yn];_k<cons_off[yn+1];_k++) GPUSH(cons_idx[_k]); RDIRTY(yn); } }
     /* prime: full topo eval so all nets are defined, then dirty regs where D!=Q */
     for(int i=0;i<NG;i++){ int g=topo[i]; val[g_y[g]]=ev(g); }
-    for(int r=0;r<NR;r++) if(val[r_d[r]]!=val[r_q[r]]){ rinr[r]=1; rstk[rt++]=r; }
+    for(int r=0;r<NR;r++) if(RQ(r)!=val[r_q[r]]){ rinr[r]=1; rstk[rt++]=r; }
     for(int c=0;c<cycles;c++){
         for(int i=0;i<NIN;i++) if(xr()<thresh){ int nv=xr()&1; int n=in_nets[i];
             if(val[n]!=nv){ val[n]=nv; for(int _k=cons_off[n];_k<cons_off[n+1];_k++) GPUSH(cons_idx[_k]); RDIRTY(n); } }
@@ -182,7 +187,7 @@ static uint64_t run_actor(int cycles,uint32_t thresh,uint32_t seed,uint64_t*work
         uint64_t oc=ocheck(); trace=(trace^oc)*1099511628211ULL;
         /* clock: two-phase capture of dirty regs, then apply */
         int nu=0;
-        for(int i=0;i<rt;i++){ int r=rstk[i]; rinr[r]=0; w++; int nv=val[r_d[r]];
+        for(int i=0;i<rt;i++){ int r=rstk[i]; rinr[r]=0; w++; int nv=RQ(r);
             if(nv!=val[r_q[r]]){ upd_r[nu]=r; upd_v[nu]=nv; nu++; } }
         rt=0;
         for(int i=0;i<nu;i++){ int r=upd_r[i]; int qn=r_q[r]; val[qn]=upd_v[i];
@@ -208,7 +213,7 @@ int main(int argc,char**argv){
             for(int i=0;i<NG;i++){ int g=topo[i]; val[g_y[g]]=ev(g); }
             if(fscanf(f,"%s",ob)!=1)return 4;
             for(int i=0;i<NOUT;i++){ int want=ob[i]-'0'; if(want!=val[out_bits[i]]) bad++; }
-            for(int r=0;r<NR;r++) nd[r]=val[r_d[r]];
+            for(int r=0;r<NR;r++) nd[r]=RQ(r);
             for(int r=0;r<NR;r++) val[r_q[r]]=nd[r];
         }
         printf("check: %d cycles, %d output-bit mismatches vs actor_sim.py oblivious dump -> %s\n",
