@@ -4,3 +4,9 @@ add4_comb.vhd
 add4_qdi.vhd
 w_comb/
 w_qdi/
+reg4rtl.json
+reg4_qdi.v
+reg4_qdi.vhd
+reg4_qdi.json
+wreg/
+wq/

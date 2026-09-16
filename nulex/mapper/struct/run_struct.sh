@@ -25,4 +25,16 @@ for B in comb qdi; do
   $NVC --std=2008 -L $NVCLIB --work=w_$B -e add4  >/dev/null 2>&1
   echo "   nvc bind=$B: analyze+elaborate OK"
 done
+echo "== 4. structural QDI register (ncl_reg.vhd): 4-phase capture + completion in nvc"
+rm -rf wreg
+$NVC --std=2008 -L $NVCLIB --work=wreg -a $LIB                       >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wreg -a $HERE/../../lib/ncl_reg.vhd >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wreg -a tb_ncl_reg.vhd             >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wreg -e tb_ncl_reg                 >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wreg -r tb_ncl_reg 2>&1 | grep -E "PASS|FAIL"
+echo "== 4b. sequential design with a QDI register bank (--reg qdi) -> handshake fork"
+yosys -q -p "read_verilog reg4rtl.v; hierarchy -top reg4; proc; flatten; opt; dfflegalize -cell \$_DFF_P_ x; simplemap; opt_clean; write_json reg4rtl.json"
+python3 $MAP reg4rtl.json reg4 reg4_qdi.v --target verilog --reg qdi
+yosys -q -p "read_verilog reg4_qdi.v; hierarchy -top reg4; flatten; write_json reg4_qdi.json"
+python3 $HERE/../../formal/constraints.py reg4_qdi.json reg4
 echo "=== STRUCTURAL FLOW GREEN ==="

@@ -22,6 +22,13 @@ isochronic-fork extraction.
 `th_cells.vhd` carries both architectures per cell (`comb`/`qdi`); a third
 `phys` (SG13G2/logic3da) binding is future work.
 
+Registers: `--reg sync` (default) emits the sync-emulation `ncl_dff`; `--reg qdi`
+emits a **structural QDI register bank** (`../../lib/ncl_reg.vhd`): each bit's two
+rails are TH22 C-elements gated by a shared 4-phase request `ki`, with completion
+`ko` = a C-element chain over every bit's is-DATA. No clock — the delay-insensitive
+handshake. This adds `ki`/`ko` ports and makes the request-distribution and
+completion-tree forks extractable (they don't exist with the clocked `ncl_dff`).
+
 ## What run_struct.sh proves (on `add4`, a=b=4 bit → 5-bit sum)
 
 1. **Fork extraction:** 17 gates → 68×th22 + 14×th12 + 10×th13 (DIMS survives
@@ -31,11 +38,18 @@ isochronic-fork extraction.
    flow does.
 2. **Functional:** the TH netlist (comb) decodes to `a+b` for all 256 inputs.
 3. **Both VHDL bindings** analyze + elaborate in nvc.
+4. **Structural QDI register** (`ncl_reg.vhd`): a 4-bit register captures 5 values
+   through DATA→NULL 4-phase cycles with correct completion (`ko`) in nvc; a
+   sequential RTL design (`reg4rtl.v`) emitted with `--reg qdi` yields the 8-way
+   `ki` handshake fork (request distribution to every rail latch).
 
 ## Not yet (the honest edges)
 
-- Sequential: `$_DFF_P_` emits an `ncl_dff` sync-emulation instance (VHDL) or a
-  blackbox reg (Verilog); a true QDI register (hysteresis + completion) still
-  doesn't exist, so completion-tree / handshake forks aren't generated.
+- The QDI register bank is a SINGLE 4-phase stage with a shared `ki`/`ko`.
+  Multi-stage pipeline handshake synthesis (stage N's `ki` = NOT stage N+1's `ko`,
+  plus the request/ack network) is not yet generated from the netlist topology.
+- `constraints.py` tags the `ki` request as an ordinary isochronic fork; a QDI-
+  aware pass would classify handshake/completion forks as skew-tolerant (like
+  clock distribution) rather than orphan-critical.
 - `qdi` cells are functional hysteresis models, not characterized physical cells;
   physical P&R of the TH netlist waits on TH-cell layout views (LEF/GDS).
