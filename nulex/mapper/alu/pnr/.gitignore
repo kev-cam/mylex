@@ -9,3 +9,6 @@ alu_top.sky130.json
 route_drc*
 alu_forks_logical.json
 alu_forks_phys.json
+alu_top_hinted.*
+alu_forks_phys_hinted.json
+fork_targets.tcl

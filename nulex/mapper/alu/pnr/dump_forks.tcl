@@ -5,10 +5,12 @@
 # isochronic orphan forks — same split constraints.py makes with CTRL_PINS).
 set P /home/claude/tools/orfs-sky130hd
 set D [file dirname [file normalize [info script]]]
+set ODB [expr {[info exists ::env(ODB)] ? $::env(ODB) : "$D/alu_top.odb"}]
+set OUT [expr {[info exists ::env(OUT)] ? $::env(OUT) : "$D/alu_forks_phys.json"}]
 read_lef $P/sky130_fd_sc_hd.tlef
 read_lef $P/sky130_fd_sc_hd_merged.lef
 read_liberty $P/sky130_fd_sc_hd__tt_025C_1v80.lib
-read_db $D/alu_top.odb
+read_db $ODB
 set block [ord::get_db_block]
 set dbu [$block getDbUnitsPerMicron]
 # JSON-escape: backslash first, then doublequote (Verilog escaped ids carry both)
@@ -38,7 +40,7 @@ foreach net [$block getNets] {
 # sort by fanout desc
 set forks [lsort -integer -decreasing -index 0 [lmap f $forks {list [llength [lindex $f 2]] $f}]]
 
-set fh [open $D/alu_forks_phys.json w]
+set fh [open $OUT w]
 puts $fh "\{ \"design\": \"alu_top\", \"dbu\": $dbu, \"n_forks\": [llength $forks], \"forks\": \["
 set first 1
 foreach entry $forks {
@@ -57,5 +59,5 @@ foreach entry $forks {
 }
 puts $fh " \] \}"
 close $fh
-puts "dump_forks: wrote $D/alu_forks_phys.json  ([llength $forks] signal forks, fanout>=2)"
+puts "dump_forks: wrote $OUT  ([llength $forks] signal forks, fanout>=2)"
 exit

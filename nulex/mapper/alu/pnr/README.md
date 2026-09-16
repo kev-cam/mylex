@@ -25,6 +25,13 @@ hand-built DEF) applied to a real OpenROAD DEF.
     # 4. measure (+optionally balance) each fork's spread on the real routed RC
     python3 alu_fork_balance.py --top 15 [--balance]
 
+    # 5. PLACEMENT hand-off: close the wide (placement-limited) forks by moving
+    #    each one's driver buffer to its receivers' centroid, then re-place+route
+    python3 gen_fork_hints.py --span-um 100 --top 30   # -> fork_targets.tcl
+    openroad -exit flow_hinted.tcl                     # setLocation+legalize+CTS+route -> alu_top_hinted.def
+    ODB=$PWD/alu_top_hinted.odb OUT=$PWD/alu_forks_phys_hinted.json openroad -exit dump_forks.tcl
+    python3 compare_forks.py                            # before/after spread per moved fork
+
 ## Files (this dir)
 
 | file | role |
@@ -32,8 +39,11 @@ hand-built DEF) applied to a real OpenROAD DEF.
 | `synth_sky130.ys` | yosys: alu_top → sky130 cells (mirrors `gcd/synth.ys`) |
 | `constraint.sdc` | relaxed 10 ns clock (geometry run, not timing closure) |
 | `flow_alu.tcl` | OpenROAD floorplan→route (from `probes/layopt/gcd/flow.tcl`; 35% util, `unithd`) |
-| `dump_forks.tcl` | routed `.odb` → physical fork set (driver+receiver pins, placed xy), signal nets only |
-| `alu_fork_balance.py` | `def2flat`→`extract`→`objective.fork_balance` per fork; `--balance` runs the width-resize optimizer |
+| `dump_forks.tcl` | routed `.odb` → physical fork set (driver+receiver pins, placed xy), signal nets only; env `ODB`/`OUT` |
+| `alu_fork_balance.py` | `def2flat`→`extract`→`objective.fork_balance` per fork; `--balance` runs the width-resize optimizer; `--def`/`--forks` |
+| `gen_fork_hints.py` | wide forks → `fork_targets.tcl` (driver → receiver-centroid target) |
+| `flow_hinted.tcl` | re-place+route from `alu_placed.odb` with the driver moves (`setLocation`+legalize+CTS+route) → `alu_top_hinted.def` |
+| `compare_forks.py` | per-fork branch-delay spread, baseline vs hinted routed DEF |
 | `*.def / *.odb / *.v / *.json` | P&R outputs (gitignored — regenerable) |
 
 ## Why constraints.py gained `--lef`
@@ -66,6 +76,28 @@ behavior, not a mismatch.
   move the spread. The effective lever for the wide forks is **placement**
   (layopt's placer hand-off, `probes/layopt/l4_placer_handoff.py`), not post-route
   wire width. This is exactly the signal nulex→layopt exists to surface.
+
+### Placement hand-off closes the wide forks (the fix)
+
+`l4_placer_handoff.py` proper is a flip-and-abut *compaction* planner (no fork
+awareness), but its `setLocation`+FIRM hint→re-place→re-route→re-measure loop is
+the right vehicle. Each wide fork's driver is a `repair_design` **buffer** that
+serves only that net, so `gen_fork_hints.py` moves it to the receivers' centroid
+and `flow_hinted.tcl` re-legalizes + re-routes (24 of 30 relocated, **0 DRC**,
+29283 µm² — no area penalty). Result on the moved forks (`compare_forks.py`):
+
+    18 forks matched, summed branch-delay spread 459.7 -> 230.2 ps  (-49.9%)
+    net11  61.76 -> 5.79 ps (-91%)   net50 33.4 -> 7.2 (-78%)   net46 -71%   net58 -65%
+
+Moving one dedicated driver buffer toward its sinks' centroid halves the tail
+imbalance (worst fork −91%); a few forks regress (one driver can't centre every
+fork, and re-routing perturbs neighbours), but the net effect is a clean halving
+at zero DRC/area cost. Whole-design mean spread over all ~920 measured forks also
+fell **1.28 → 1.04 ps**. (The single worst fork, `_3074_` 63 ps, is a 160 µm
+fork just below the 202 µm top-30 cut and was not relocated — lower `--span-um`
+to include it.) This is the placement lever the measurement predicted, and the
+full nulex→layout loop closed: enumerate forks → route → measure → **fix by
+placement** → re-measure.
 
 ## Platform
 

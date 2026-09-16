@@ -27,8 +27,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))) 
 from layopt import extract, lefdef, moves, objective, optimize, rc, tech  # noqa: E402
 
 P = "/home/claude/tools/orfs-sky130hd"
-DEF = os.path.join(HERE, "alu_top.def")
-FORKS = os.path.join(HERE, "alu_forks_phys.json")
+DEF = sys.argv[sys.argv.index("--def") + 1] if "--def" in sys.argv else os.path.join(HERE, "alu_top.def")
+FORKS = sys.argv[sys.argv.index("--forks") + 1] if "--forks" in sys.argv else os.path.join(HERE, "alu_forks_phys.json")
 T = tech.SKY130
 R_DRIVE = 3000.0    # ohm, nominal sky130 1.8V drive (same for every branch of a net -> fair within-net spread)
 C_IN = 2.1          # fF, nominal receiver gate cap
