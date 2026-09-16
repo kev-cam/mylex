@@ -16,3 +16,6 @@ pinc.json
 pinc_qdi.*
 wp/
 wi/
+accm.json
+accm_desync.vhd
+wam/

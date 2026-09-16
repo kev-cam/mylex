@@ -58,4 +58,14 @@ $NVC --std=2008 -L $NVCLIB --work=wi -a pinc_qdi.vhd >/dev/null 2>&1
 $NVC --std=2008 -L $NVCLIB --work=wi -a tb_pinc.vhd  >/dev/null 2>&1
 $NVC --std=2008 -L $NVCLIB --work=wi -e tb_pinc      >/dev/null 2>&1
 $NVC --std=2008 -L $NVCLIB --work=wi -r tb_pinc 2>&1 | grep -E "PASS|FAIL"
+echo "== 6. CYCLIC/FEEDBACK desync — accumulator r <= r + din (QDI pipeline rejects this)"
+yosys -q -p "read_verilog accm.v; hierarchy -top accm; proc; flatten; opt; techmap; opt; dfflegalize -cell \$_DFF_P_ x; simplemap; abc -g AND,OR,XOR,MUX; opt_clean; write_json accm.json"
+python3 $MAP accm.json accm accm_desync.vhd --target vhdl --reg desync >/dev/null
+rm -rf wam
+$NVC --std=2008 -L $NVCLIB --work=wam -a $LIB                             >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wam -a $HERE/../../lib/ncl_reg_desync.vhd >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wam -a accm_desync.vhd                  >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wam -a tb_accm.vhd                     >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wam -e tb_accm                         >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wam -r tb_accm 2>&1 | grep -E "PASS|FAIL"
 echo "=== STRUCTURAL FLOW GREEN ==="

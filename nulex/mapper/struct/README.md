@@ -32,8 +32,16 @@ phase of what its successor holds); the output stage's request is the external
 `ki_in`, and `ko_out`/`ko_in` expose the output/input completions. No clock — a
 self-timed pipeline. This makes the per-stage request-distribution and
 completion-tree forks extractable (they don't exist with the clocked `ncl_dff`).
-Register feedback (a cyclic register dependency, e.g. an accumulator) is rejected
-— async desync of cyclic logic is out of scope.
+Register feedback (a cyclic dependency) is rejected by `qdi` — use `--reg desync`.
+
+`--reg desync` handles **cyclic/feedback** logic (accumulators, counters, FSMs) that
+pure QDI 4-phase can't (a self-loop can't return-to-NULL without losing its state).
+It's the **desynchronization / bundled-data** binding (`../../lib/ncl_reg_desync.vhd`):
+a stateless (comb) datapath that returns to NULL, and a register captured by a LOCAL
+self-timed clock = completion detection through a MATCHED DELAY (so the next-state has
+settled before capture; raw completion can pulse on a transient-complete value while a
+stateless net settles). One capture per DATA token; the post-capture feedback recompute
+is not re-latched. Registers share one bank/local-clock (VHDL target).
 
 ## What run_struct.sh proves (on `add4`, a=b=4 bit → 5-bit sum)
 
@@ -51,14 +59,18 @@ Register feedback (a cyclic register dependency, e.g. an accumulator) is rejecte
    datapath with comb logic between stages (`pinc`) computes `q = d+1` self-timed.
    Fork extraction shows the per-stage request forks (`ki_in`, `~ko_s1`, `~ko_s2`
    each 8-way) — the handshake network.
+6. **Cyclic/feedback desync** (`--reg desync`): an accumulator `r <= r + din` (which
+   `--reg qdi` rejects as a feedback loop) is emitted as a stateless DIMS datapath +
+   a matched-delay desync register and, in nvc, accumulates `sum mod 16` correctly
+   over a sequence — self-timed, no clock.
 
 ## Not yet (the honest edges)
 
-- Only **feed-forward** pipelines. A cyclic register dependency (accumulator,
-  state machine with feedback) is rejected — async desynchronization of cyclic
-  logic is a deeper problem out of scope here.
-- `constraints.py` tags the `ki` request as an ordinary isochronic fork; a QDI-
-  aware pass would classify handshake/completion forks as skew-tolerant (like
-  clock distribution) rather than orphan-critical.
+- `--reg desync` is **bundled-data** (a matched delay `TCOMB`), not pure QDI — it
+  trades delay-insensitivity for the ability to hold state around a loop, which is
+  the standard desynchronization trade. It collects all registers into one shared-
+  clock bank (correct but conservative for designs with several independent loops)
+  and targets VHDL (the register is a clocked process; a structural completion-tree
+  form for fork extraction on feedback designs is future work).
 - `qdi` cells are functional hysteresis models (100 ps gate delay), not
   characterized physical cells; physical P&R waits on TH-cell layout views (LEF/GDS).
