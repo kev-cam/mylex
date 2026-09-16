@@ -1,0 +1,11 @@
+# large P&R outputs — regenerable from synth_sky130.ys + flow_alu.tcl
+*.def
+*.odb
+*.pnr.v
+alu_top.sky130.v
+alu_top.sky130.json
+*.log
+*.rpt
+route_drc*
+alu_forks_logical.json
+alu_forks_phys.json

@@ -16,9 +16,11 @@ isochronic-fork path set (driver pin + receiver pins) that layopt's
 are tagged separately (skew, not orphan). Forks are ranked by fanout (the wider
 the fork, the harder to balance).
 
-Usage: constraints.py <netlist.json> <top> [out.json]
+For a generic gate netlist the built-in gate map suffices; for a technology-
+mapped netlist (e.g. sky130_fd_sc_hd cells) pass --lef so pin directions come
+from the LEF: constraints.py <netlist.json> <top> [out.json] [--lef LEF ...]
 """
-import json, sys
+import json, os, sys
 from collections import defaultdict
 
 # per gate cell: (input pins, output pin). Clock/reset pins flagged for tagging.
@@ -28,16 +30,52 @@ CELLS = {
     "$_NOT_": (["A"], "Y"), "$_BUF_": (["A"], "Y"), "$_MUX_": (["A", "B", "S"], "Y"),
     "$_DFF_P_": (["D", "C"], "Q"), "$_DFF_PN0_": (["D", "C", "R"], "Q"),
 }
-CTRL_PINS = {"C", "R"}     # clock / reset: distribution skew, not orphan
+CTRL_PINS = {"C", "R"}     # generic clock / reset: distribution skew, not orphan
+
+# sky130 (and general std-cell) pin-name heuristics for the LEF-derived path.
+POWER_PINS = {"VGND", "VPWR", "VPB", "VNB", "VDD", "VSS", "VDDPE", "VDDCE", "VSSE"}
+def _is_clk(p):  return "CLK" in p or "GCLK" in p
+def _is_ctrl(p): return _is_clk(p) or "RESET" in p or p in ("SET_B", "SLEEP", "SLEEP_B", "SCE", "SCD", "NOTIFIER")
+
+def lef_cell_pins(lef_paths):
+    """macro -> (input_pins, output_pins) from LEF pin DIRECTION, skipping power.
+    Lets constraints.py enumerate forks on a technology-mapped netlist (sky130
+    cells), not just the generic gate map above."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, os.path.abspath(os.path.join(here, "..", "..")))  # repo root -> layopt
+    from layopt import lefdef
+    lef = lefdef.Lef()
+    for p in lef_paths:
+        lefdef.read_lef(p, lef)
+    out = {}
+    for name, m in lef.macros.items():
+        ins, outs = [], []
+        for pn, pin in m.pins.items():
+            if pn in POWER_PINS:
+                continue
+            d = getattr(pin, "direction", "INPUT").upper()
+            if d.startswith("OUTPUT"):
+                outs.append(pn)
+            elif d.startswith("INPUT"):
+                ins.append(pn)
+        if outs:
+            out[name] = (ins, outs)
+    return out
 
 def main():
-    jpath, top = sys.argv[1], sys.argv[2]
-    out = sys.argv[3] if len(sys.argv) > 3 else None
+    argv = sys.argv[1:]
+    lef_paths = []
+    while "--lef" in argv:
+        i = argv.index("--lef"); lef_paths.append(argv[i + 1]); del argv[i:i + 2]
+    jpath, top = argv[0], argv[1]
+    out = argv[2] if len(argv) > 2 else None
     m = json.load(open(jpath))["modules"][top]
     ports, cells = m["ports"], m["cells"]
+    lef_cells = lef_cell_pins(lef_paths) if lef_paths else {}   # macro -> (ins, outs)
 
     driver = {}                      # net -> (inst, pin, kind)   kind: gate|input|reg
     recv = defaultdict(list)         # net -> [(inst, pin, is_ctrl)]
+    unknown = defaultdict(int)       # cell types skipped (no pin info)
     # module ports: an input port drives its net; an output port is a sink (ignored as fork receiver)
     for pn, p in ports.items():
         if p["direction"] == "input":
@@ -47,14 +85,23 @@ def main():
     for inst, c in cells.items():
         t = c["type"]
         if t == "$scopeinfo": continue
-        if t not in CELLS: continue   # $mem etc. handled separately (skip for fork sets)
-        ins, outp = CELLS[t]
         k = c["connections"]
-        for b in k.get(outp, []):
-            if isinstance(b, int): driver[b] = (inst, outp, "reg" if outp == "Q" else "gate")
+        if t in CELLS:               # generic gate map
+            ins, outs = CELLS[t][0], [CELLS[t][1]]
+            ctrl = lambda pin: pin in CTRL_PINS
+            is_reg = "$_DFF" in t
+        elif t in lef_cells:         # technology-mapped cell (pins from LEF DIRECTION)
+            ins, outs = lef_cells[t]
+            ctrl = _is_ctrl
+            is_reg = ("df" in t.split("__")[-1]) or ("dl" in t.split("__")[-1]) or any(_is_clk(p) for p in ins)
+        else:
+            unknown[t] += 1; continue
+        for outp in outs:
+            for b in k.get(outp, []):
+                if isinstance(b, int): driver[b] = (inst, outp, "reg" if is_reg else "gate")
         for pin in ins:
             for b in k.get(pin, []):
-                if isinstance(b, int): recv[b].append((inst, pin, pin in CTRL_PINS))
+                if isinstance(b, int): recv[b].append((inst, pin, ctrl(pin)))
 
     forks = []
     for net, rcvs in recv.items():
@@ -82,8 +129,12 @@ def main():
     tot_recv = sum(f["fanout"] for f in iso)
     fh = defaultdict(int)
     for f in iso: fh[f["fanout"]] += 1
-    print("%s: %d isochronic-fork path sets (%d branch endpoints), %d clock/reset-dist forks"
-          % (top, len(iso), tot_recv, len(ctl)))
+    print("%s: %d isochronic-fork path sets (%d branch endpoints), %d clock/reset-dist forks%s"
+          % (top, len(iso), tot_recv, len(ctl),
+             ("  [from LEF pin dirs: %d cell types]" % len(lef_cells)) if lef_cells else ""))
+    if unknown:
+        print("  WARNING: %d cell types skipped (no pin info): %s"
+              % (len(unknown), ", ".join(sorted(unknown)[:8])))
     print("  fanout distribution (isochronic): " +
           ", ".join("%d-way:%d" % (k, fh[k]) for k in sorted(fh)))
     print("  top forks (widest first):")

@@ -1,0 +1,14 @@
+# alu_top -> sky130_fd_sc_hd mapped netlist for OpenROAD P&R (mirrors gcd/synth.ys)
+read_verilog -sv work/alu.v
+hierarchy -check -top alu_top
+synth -top alu_top -flatten
+dfflibmap -liberty /home/claude/tools/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+abc -liberty /home/claude/tools/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+opt_clean -purge
+setundef -zero
+hilomap -hicell sky130_fd_sc_hd__conb_1 HI -locell sky130_fd_sc_hd__conb_1 LO
+splitnets
+opt_clean -purge
+stat -liberty /home/claude/tools/pdk/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+write_verilog -noattr -noexpr pnr/alu_top.sky130.v
+write_json pnr/alu_top.sky130.json

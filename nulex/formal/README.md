@@ -33,11 +33,25 @@ hand-written net. Weights (fanout, and later per-branch criticality) prioritise 
 budget. Completion-tree drive balance (LAYOUT-OPT.md:1543) is the same shape with a
 lower-bound objective.
 
-## Demonstrated (sync gate netlists — layopt's proven sky130 targets)
+## Cell pin directions: generic gates or `--lef`
 
-- `alu_top` (`VX_alu_int`, the ASYNC-PLAN first target, already through layopt on
-  sky130): **1686 isochronic forks, 7726 branch endpoints**, fanout up to 152-way
-  → `alu_forks.json`.
+The built-in gate map (`CELLS`) covers a generic yosys netlist (`$_AND_`, …). For
+a **technology-mapped** netlist (sky130_fd_sc_hd cells, i.e. what actually gets
+placed) pass `--lef <lef>...`: pin input/output directions then come from the LEF
+`DIRECTION`, so the same tool enumerates forks on any placed design. Clock/reset
+pins are split off by name heuristic (`CLK*`, `RESET*`, `SET_B`, …).
+
+    constraints.py <netlist.json> <top> [out.json] [--lef LEF ...]
+
+## Demonstrated
+
+- **`alu_top` (`VX_alu_int`) technology-mapped to sky130 and placed+routed** — the
+  full loop (`../mapper/alu/pnr/`): `constraints.py --lef` finds **1807 isochronic
+  forks, 8338 branch endpoints** (fanout to 152-way) + 1 clock-distribution fork;
+  the routed design's 1699 physical signal forks were measured on real geometry by
+  `alu_fork_balance.py` (worst as-routed branch-delay spread ~63 ps). This is the
+  first end-to-end run: enumerate → route → measure/optimise on real sky130 RC.
+- `alu_top` generic gate netlist (pre-map): 1686 isochronic forks → `alu_forks.json`.
 - `exec_top` Tier A: **21,557 forks**, fanout up to 732-way → `exec_forks.json`.
 
 ## Async note
