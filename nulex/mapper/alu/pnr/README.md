@@ -83,21 +83,25 @@ behavior, not a mismatch.
 awareness), but its `setLocation`+FIRM hint→re-place→re-route→re-measure loop is
 the right vehicle. Each wide fork's driver is a `repair_design` **buffer** that
 serves only that net, so `gen_fork_hints.py` moves it to the receivers' centroid
-and `flow_hinted.tcl` re-legalizes + re-routes (24 of 30 relocated, **0 DRC**,
-29283 µm² — no area penalty). Result on the moved forks (`compare_forks.py`):
+and `flow_hinted.tcl` re-legalizes + re-routes (`--span-um 155 --top 80`: 45 of 64
+relocated, **0 DRC**, 29236 µm² — no area penalty). Result on the moved forks
+(`compare_forks.py`):
 
-    18 forks matched, summed branch-delay spread 459.7 -> 230.2 ps  (-49.9%)
-    net11  61.76 -> 5.79 ps (-91%)   net50 33.4 -> 7.2 (-78%)   net46 -71%   net58 -65%
+    35 forks matched, summed branch-delay spread 826.7 -> 349.0 ps  (-57.8%)
+    _3074_ 63.10 -> 0.58 ps (-99%)   _3070_ -92%   net11 61.8 -> 12.6 (-80%)
+    net59 -80%   net50/46/60/62 ~ -72%
 
-Moving one dedicated driver buffer toward its sinks' centroid halves the tail
-imbalance (worst fork −91%); a few forks regress (one driver can't centre every
-fork, and re-routing perturbs neighbours), but the net effect is a clean halving
-at zero DRC/area cost. Whole-design mean spread over all ~920 measured forks also
-fell **1.28 → 1.04 ps**. (The single worst fork, `_3074_` 63 ps, is a 160 µm
-fork just below the 202 µm top-30 cut and was not relocated — lower `--span-um`
-to include it.) This is the placement lever the measurement predicted, and the
-full nulex→layout loop closed: enumerate forks → route → measure → **fix by
-placement** → re-measure.
+Moving one dedicated driver buffer toward its sinks' centroid closes the tail
+imbalance: the single worst fork (`_3074_`) drops **63 → 0.58 ps (−99%)** and the
+summed spread across the 35 wide forks more than halves, at zero DRC/area cost.
+A few forks regress (one driver can't centre every fork, and re-routing perturbs
+neighbours — e.g. net20 +45%), but the aggregate is decisive. Whole-design over
+all ~920 measured forks: **max spread 63.1 → 34.6 ps (−45%), mean 1.28 → 0.79 ps
+(−38%)**, median unchanged (most forks were already balanced). (An earlier
+narrower run, `--span-um 100 --top 30`, gave −49.9% but left `_3074_` untouched;
+widening to catch the 155–202 µm band closed it.) This is the placement lever the
+measurement predicted, and the full nulex→layout loop closed: enumerate forks →
+route → measure → **fix by placement** → re-measure.
 
 ## Platform
 
