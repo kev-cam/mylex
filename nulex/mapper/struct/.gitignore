@@ -19,3 +19,9 @@ wi/
 accm.json
 accm_desync.vhd
 wam/
+add4.json
+add4_th_full.v
+add4_th_clean.v
+add4_th.def
+add4_th.odb
+th_route_drc.rpt
