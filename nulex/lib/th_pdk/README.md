@@ -26,12 +26,24 @@ Demonstrated (`../../mapper/struct/run_th_pnr.sh`): the `add4` structural TH net
 — **0 DRC**, 594 µm² — then layopt `def2flat` + `extract` reads the routed design
 (11964 shapes, 352 nets), the same extraction that feeds `objective.fork_balance`.
 
+## Composed cells (not a single sky130 gate)
+
+The hysteretic C-elements and weighted/threshold gates are **composed** from the leaf
+cells above — see `../th_compose.vhd` (behavioral, verified vs spec in `tb_compose`)
+and `../th_compose.v` (sky130-cell netlists for P&R):
+
+- **Hysteretic C-element** (`th22/33/44` `composed`): `y = set(inputs) | (y & any(inputs))`
+  with the feedback net as the state. For 2-in this is the Muller C-element = `maj3(a,b,y)`.
+- **Weighted / threshold** (`th23w2/th34w2/th24/th34`): Boolean compositions of and/or.
+
+Verified: `run_struct.sh` step 7 checks all four weighted cells exhaustively and the
+three C-elements against the hysteretic (`qdi`) reference; `run_th_pnr.sh` step 5 routes
+a design of four Muller C-elements (`maj3` + feedback) + a weighted cell through OpenROAD
+— **0 DRC** — so the feedback loops route cleanly.
+
 ## Limits (honest)
 
-- These are the **comb** TH cells (the DIMS datapath). The hysteretic `qdi` C-elements
-  and the weighted/threshold gates (th24/th34/th34w2/th23w2, used only by the Fant
-  adder) are not single sky130 cells — they need a composed cell (a Muller C-element
-  is a feedback AOI) and are future work.
 - Realized-on-sky130, not native TH silicon: the "layout" is a real sky130 cell's
   layout, characterized timing and all — sound for P&R/extraction, but the QDI timing
-  assumptions of a true TH cell (hysteresis) aren't in the comb sky130 mapping.
+  assumptions of a true TH cell aren't in the sky130 mapping (a real C-element would be
+  one characterized cell, not a `maj3` + a feedback wire whose delay must be bounded).

@@ -26,4 +26,6 @@ fl=lefdef.def2flat("add4_th.def", lefs, "/home/claude/tools/sky130_fd_sc_hd", T)
 ex=extract.extract(fl, T)
 print("   layopt: %d rects -> %d shapes, %d nets extracted from the placed+routed TH design"%(len(fl.rects),len(ex.shapes),len(ex.nets)))
 PY
+echo "== 5. composed cells physical — Muller C-elements (maj3 feedback) + weighted, through P&R"
+openroad -exit flow_cel.tcl 2>&1 | grep -iE "Number of violations = 0|Design area|cel-flow: DONE"
 echo "=== TH PHYSICAL FLOW GREEN ==="

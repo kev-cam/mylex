@@ -68,4 +68,11 @@ $NVC --std=2008 -L $NVCLIB --work=wam -a accm_desync.vhd                  >/dev/
 $NVC --std=2008 -L $NVCLIB --work=wam -a tb_accm.vhd                     >/dev/null 2>&1
 $NVC --std=2008 -L $NVCLIB --work=wam -e tb_accm                         >/dev/null 2>&1
 $NVC --std=2008 -L $NVCLIB --work=wam -r tb_accm 2>&1 | grep -E "PASS|FAIL"
+echo "== 7. composed hysteretic C-elements + weighted TH cells (vs behavioral spec)"
+rm -rf wc
+$NVC --std=2008 -L $NVCLIB --work=wc -a $LIB                            >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wc -a $HERE/../../lib/th_compose.vhd  >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wc -a tb_compose.vhd                 >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wc -e tb_compose                     >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wc -r tb_compose 2>&1 | grep -E "PASS|FAIL"
 echo "=== STRUCTURAL FLOW GREEN ==="
