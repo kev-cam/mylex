@@ -20,8 +20,16 @@ For a generic gate netlist the built-in gate map suffices; for a technology-
 mapped netlist (e.g. sky130_fd_sc_hd cells) pass --lef so pin directions come
 from the LEF: constraints.py <netlist.json> <top> [out.json] [--lef LEF ...]
 """
-import json, os, sys
+import json, os, re, sys
 from collections import defaultdict
+
+# QDI handshake/completion control nets, by the nulex naming convention
+# (map_ncl_struct): request ki*, completion ko*, and the completion tree cd*/acc*.
+# Checked only AFTER the dual-rail (_L/_H) data test, so a data signal the user
+# happened to call e.g. "ack" (rails ack_L/ack_H) is still classed as data.
+_HANDSHAKE_RE = re.compile(r"^(ki|ko|cd|acc)(_|\d|$)")
+def _is_handshake(name):
+    return bool(_HANDSHAKE_RE.match(name))
 
 # per gate cell: (input pins, output pin). Clock/reset pins flagged for tagging.
 CELLS = {
@@ -75,6 +83,17 @@ def main():
     m = modules[top]
     ports, cells = m["ports"], m["cells"]
     lef_cells = lef_cell_pins(lef_paths) if lef_paths else {}   # macro -> (ins, outs)
+    # net-name resolution (for QDI-aware tagging): a dual-rail NCL netlist names its
+    # data rails <sig>_L / <sig>_H, and its single-rail handshake/completion control
+    # ki*/ko*/cd*/acc*. Dual-rail data forks are orphan-critical (match delay); the
+    # single-rail control forks are skew-tolerant (drive balance) — the QDI point.
+    netnames = m.get("netnames", {})
+    name_of = {}
+    for nm, info in netnames.items():
+        for b in info.get("bits", []):
+            if isinstance(b, int) and (b not in name_of or (name_of[b].startswith("$") and not nm.startswith("$"))):
+                name_of[b] = nm
+    dual_rail = any(nm.endswith("_L") or nm.endswith("_H") for nm in netnames)
     # third pin-direction source: a cell whose type is another module in this JSON
     # (kept opaque, e.g. blackbox TH cells in a structural NCL netlist) — take its
     # input/output pins from that submodule's own port directions. No LEF needed.
@@ -127,20 +146,33 @@ def main():
         drv = driver.get(net)
         if drv is None: continue      # undriven / constant
         is_ctrl = all(r[2] for r in rcvs)
+        name = name_of.get(net, "")
+        is_rail = name.endswith("_L") or name.endswith("_H")   # dual-rail data rail
+        if is_rail:
+            kind = "isochronic"                 # dual-rail DATA: an orphaned branch breaks the handshake
+        elif _is_handshake(name):
+            kind = "handshake"                  # ki/ko/completion control: skew-tolerant, not orphan
+        elif is_ctrl:
+            kind = "clock_reset_dist"           # sync clock/reset distribution (skew, not orphan)
+        else:
+            kind = "isochronic"                 # single-rail data (minterms; or a sync data net)
+        objective = "match_delay" if kind == "isochronic" else "skew_tolerant"
         forks.append({
-            "net": net,
+            "net": net, "name": name,
             "driver": {"inst": drv[0], "pin": drv[1], "kind": drv[2]},
             "receivers": [{"inst": r[0], "pin": r[1]} for r in rcvs],
             "fanout": len(rcvs),
-            "kind": "clock_reset_dist" if is_ctrl else "isochronic",
+            "kind": kind, "objective": objective,
             "weight": len(rcvs),      # wider fork = harder to balance = higher weight
         })
-    forks.sort(key=lambda f: (f["kind"] != "isochronic", -f["fanout"]))
+    order = {"isochronic": 0, "handshake": 1, "clock_reset_dist": 2}
+    forks.sort(key=lambda f: (order.get(f["kind"], 3), -f["fanout"]))
 
     iso = [f for f in forks if f["kind"] == "isochronic"]
+    hsk = [f for f in forks if f["kind"] == "handshake"]
     ctl = [f for f in forks if f["kind"] == "clock_reset_dist"]
     result = {"design": top, "source": jpath, "n_forks": len(forks),
-              "n_isochronic": len(iso), "n_clock_reset": len(ctl), "forks": forks}
+              "n_isochronic": len(iso), "n_handshake": len(hsk), "n_clock_reset": len(ctl), "forks": forks}
     if out:
         json.dump(result, open(out, "w"), indent=1)
     # human summary
@@ -150,6 +182,11 @@ def main():
     print("%s: %d isochronic-fork path sets (%d branch endpoints), %d clock/reset-dist forks%s"
           % (top, len(iso), tot_recv, len(ctl),
              ("  [from LEF pin dirs: %d cell types]" % len(lef_cells)) if lef_cells else ""))
+    if dual_rail:
+        print("  QDI: %d isochronic (dual-rail DATA -> match delay), %d handshake/completion "
+              "(single-rail ki/ko -> skew-tolerant drive balance)" % (len(iso), len(hsk)))
+        for f in hsk[:4]:
+            print("    handshake %-10s -> %d receivers (skew-tolerant)" % (f["name"] or f["net"], f["fanout"]))
     if unknown:
         print("  WARNING: %d cell types skipped (no pin info): %s"
               % (len(unknown), ", ".join(sorted(unknown)[:8])))

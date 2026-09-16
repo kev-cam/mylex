@@ -13,9 +13,31 @@ to several gate inputs must reach them with matched delay or a transition orphan
 and the handshake breaks. Output (`<top>_forks.json`) per fork:
 
 ```
-{ "net": <id>, "driver": {inst,pin,kind}, "receivers": [{inst,pin}...],
-  "fanout": N, "kind": "isochronic" | "clock_reset_dist", "weight": N }
+{ "net": <id>, "name": <net name>, "driver": {inst,pin,kind}, "receivers": [{inst,pin}...],
+  "fanout": N, "kind": "isochronic"|"handshake"|"clock_reset_dist",
+  "objective": "match_delay"|"skew_tolerant", "weight": N }
 ```
+
+## QDI-aware fork kinds
+
+A dual-rail NCL netlist has two structurally different fork classes, and layout
+must treat them differently:
+
+- **`isochronic`** — a fork of a dual-rail DATA rail (`<sig>_L`/`<sig>_H`). An
+  orphaned (unmatched) branch breaks the handshake, so these need **matched delay**
+  (`objective: match_delay`). This is the orphan-critical set.
+- **`handshake`** — a fork of the single-rail request/completion control network
+  (`ki*`/`ko*`/`cd*`/`acc*`, from `map_ncl_struct --reg qdi`). The completion
+  detection + C-elements absorb skew by design, so these are **skew-tolerant**
+  (`objective: skew_tolerant`) — a lower-bound / drive-balance objective, like clock
+  distribution, not an orphan constraint.
+- **`clock_reset_dist`** — a synchronous clock/reset fork (single-rail, by pin
+  heuristic); also `skew_tolerant`.
+
+Classification: dual-rail (`_L`/`_H`) is tested first, so a data signal the user
+named e.g. `ack` (rails `ack_L`/`ack_H`) is still DATA; only the reserved single-rail
+`ki/ko/cd/acc` control nets are tagged `handshake`. A purely combinational NCL
+netlist has zero handshake forks; a pipeline has one request fork per stage.
 
 which maps 1:1 onto layopt's path set `- <net> ( <driver_inst> <pin> ) ( <recv_inst>
 <pin> ) ...` — i.e. `objective.fork_balance(ex, net, driver_shape, [receiver_shapes])`.
