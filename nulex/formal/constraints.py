@@ -29,6 +29,8 @@ CELLS = {
     "$_NAND_": (["A", "B"], "Y"), "$_NOR_": (["A", "B"], "Y"), "$_XNOR_": (["A", "B"], "Y"),
     "$_NOT_": (["A"], "Y"), "$_BUF_": (["A"], "Y"), "$_MUX_": (["A", "B", "S"], "Y"),
     "$_DFF_P_": (["D", "C"], "Q"), "$_DFF_PN0_": (["D", "C", "R"], "Q"),
+    # coarse RTL inverter/buffer (e.g. the single-rail handshake ack network's NOT)
+    "$not": (["A"], "Y"), "$buf": (["A"], "Y"), "$_ANDNOT_": (["A", "B"], "Y"),
 }
 CTRL_PINS = {"C", "R"}     # generic clock / reset: distribution skew, not orphan
 

@@ -52,7 +52,7 @@ begin
     if a = '1' and b = '1' then st := '1';          -- threshold met -> set
     elsif a = '0' and b = '0' then st := '0';       -- all NULL -> reset
     end if;                                          -- else HOLD (hysteresis)
-    y <= st;
+    y <= st after 100 ps;
   end process;
 end architecture qdi;
 
@@ -71,7 +71,7 @@ begin
     if b = '1' then n := n + 1; end if;
     if c = '1' then n := n + 1; end if;
     if n >= 2 then st := '1'; elsif n = 0 then st := '0'; end if;
-    y <= st;
+    y <= st after 100 ps;
   end process;
 end architecture qdi;
 
@@ -87,7 +87,7 @@ begin
     if a = '1' and b = '1' and c = '1' then st := '1';
     elsif a = '0' and b = '0' and c = '0' then st := '0';
     end if;
-    y <= st;
+    y <= st after 100 ps;
   end process;
 end architecture qdi;
 
@@ -108,7 +108,7 @@ begin
     if a='1' then n:=n+1; end if; if b='1' then n:=n+1; end if;
     if c='1' then n:=n+1; end if; if d='1' then n:=n+1; end if;
     if n >= 2 then st := '1'; elsif n = 0 then st := '0'; end if;
-    y <= st;
+    y <= st after 100 ps;
   end process;
 end architecture qdi;
 
@@ -128,7 +128,7 @@ begin
     if a='1' then n:=n+1; end if; if b='1' then n:=n+1; end if;
     if c='1' then n:=n+1; end if; if d='1' then n:=n+1; end if;
     if n >= 3 then st := '1'; elsif n = 0 then st := '0'; end if;
-    y <= st;
+    y <= st after 100 ps;
   end process;
 end architecture qdi;
 
@@ -143,7 +143,7 @@ begin
     if a='1' and b='1' and c='1' and d='1' then st := '1';
     elsif a='0' and b='0' and c='0' and d='0' then st := '0';
     end if;
-    y <= st;
+    y <= st after 100 ps;
   end process;
 end architecture qdi;
 
@@ -161,7 +161,7 @@ begin
     if b = '1' then w := w + 1; end if;
     if c = '1' then w := w + 1; end if;
     if w >= 2 then st := '1'; elsif w = 0 then st := '0'; end if;
-    y <= st;
+    y <= st after 100 ps;
   end process;
 end architecture qdi;
 
@@ -179,6 +179,6 @@ begin
     if c = '1' then w := w + 1; end if;
     if d = '1' then w := w + 1; end if;
     if w >= 3 then st := '1'; elsif w = 0 then st := '0'; end if;
-    y <= st;
+    y <= st after 100 ps;
   end process;
 end architecture qdi;

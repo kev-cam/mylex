@@ -23,11 +23,17 @@ isochronic-fork extraction.
 `phys` (SG13G2/logic3da) binding is future work.
 
 Registers: `--reg sync` (default) emits the sync-emulation `ncl_dff`; `--reg qdi`
-emits a **structural QDI register bank** (`../../lib/ncl_reg.vhd`): each bit's two
-rails are TH22 C-elements gated by a shared 4-phase request `ki`, with completion
-`ko` = a C-element chain over every bit's is-DATA. No clock — the delay-insensitive
-handshake. This adds `ki`/`ko` ports and makes the request-distribution and
+emits a **multi-stage QDI pipeline**. Registers are assigned 4-phase STAGES by
+their register-to-register dependency depth (`pipeline_stages`); each stage is a
+bank of TH22 C-element latches (`../../lib/ncl_reg.vhd`) gated by that stage's
+request, with completion `ko_s` = a C-element chain over the stage's is-DATA bits.
+The handshake is wired **`ki_s = NOT(ko_{s+1})`** (a stage captures the opposite
+phase of what its successor holds); the output stage's request is the external
+`ki_in`, and `ko_out`/`ko_in` expose the output/input completions. No clock — a
+self-timed pipeline. This makes the per-stage request-distribution and
 completion-tree forks extractable (they don't exist with the clocked `ncl_dff`).
+Register feedback (a cyclic register dependency, e.g. an accumulator) is rejected
+— async desync of cyclic logic is out of scope.
 
 ## What run_struct.sh proves (on `add4`, a=b=4 bit → 5-bit sum)
 
@@ -39,17 +45,20 @@ completion-tree forks extractable (they don't exist with the clocked `ncl_dff`).
 2. **Functional:** the TH netlist (comb) decodes to `a+b` for all 256 inputs.
 3. **Both VHDL bindings** analyze + elaborate in nvc.
 4. **Structural QDI register** (`ncl_reg.vhd`): a 4-bit register captures 5 values
-   through DATA→NULL 4-phase cycles with correct completion (`ko`) in nvc; a
-   sequential RTL design (`reg4rtl.v`) emitted with `--reg qdi` yields the 8-way
-   `ki` handshake fork (request distribution to every rail latch).
+   through DATA→NULL 4-phase cycles with correct completion (`ko`) in nvc.
+5. **Multi-stage pipeline handshake:** a 3-stage shift register (`pipe3`) flows 6
+   values through 3 self-timed async stages (nvc, ~6 ns, no clock), and a 2-stage
+   datapath with comb logic between stages (`pinc`) computes `q = d+1` self-timed.
+   Fork extraction shows the per-stage request forks (`ki_in`, `~ko_s1`, `~ko_s2`
+   each 8-way) — the handshake network.
 
 ## Not yet (the honest edges)
 
-- The QDI register bank is a SINGLE 4-phase stage with a shared `ki`/`ko`.
-  Multi-stage pipeline handshake synthesis (stage N's `ki` = NOT stage N+1's `ko`,
-  plus the request/ack network) is not yet generated from the netlist topology.
+- Only **feed-forward** pipelines. A cyclic register dependency (accumulator,
+  state machine with feedback) is rejected — async desynchronization of cyclic
+  logic is a deeper problem out of scope here.
 - `constraints.py` tags the `ki` request as an ordinary isochronic fork; a QDI-
   aware pass would classify handshake/completion forks as skew-tolerant (like
   clock distribution) rather than orphan-critical.
-- `qdi` cells are functional hysteresis models, not characterized physical cells;
-  physical P&R of the TH netlist waits on TH-cell layout views (LEF/GDS).
+- `qdi` cells are functional hysteresis models (100 ps gate delay), not
+  characterized physical cells; physical P&R waits on TH-cell layout views (LEF/GDS).

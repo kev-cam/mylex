@@ -10,3 +10,9 @@ reg4_qdi.vhd
 reg4_qdi.json
 wreg/
 wq/
+pipe3.json
+pipe3_qdi.*
+pinc.json
+pinc_qdi.*
+wp/
+wi/

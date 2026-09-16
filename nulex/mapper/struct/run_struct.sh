@@ -37,4 +37,25 @@ yosys -q -p "read_verilog reg4rtl.v; hierarchy -top reg4; proc; flatten; opt; df
 python3 $MAP reg4rtl.json reg4 reg4_qdi.v --target verilog --reg qdi
 yosys -q -p "read_verilog reg4_qdi.v; hierarchy -top reg4; flatten; write_json reg4_qdi.json"
 python3 $HERE/../../formal/constraints.py reg4_qdi.json reg4
+echo "== 5. MULTI-STAGE pipeline handshake — 3-stage shift register (pipe3)"
+yosys -q -p "read_verilog pipe3.v; hierarchy -top pipe3; proc; flatten; opt; dfflegalize -cell \$_DFF_P_ x; simplemap; opt_clean; write_json pipe3.json"
+python3 $MAP pipe3.json pipe3 pipe3_qdi.v --target verilog --reg qdi
+yosys -q -p "read_verilog pipe3_qdi.v; hierarchy -top pipe3; flatten; write_json pipe3_qdi.json"
+python3 $HERE/../../formal/constraints.py pipe3_qdi.json pipe3 | head -2   # 3 per-stage handshake forks
+python3 $MAP pipe3.json pipe3 pipe3_qdi.vhd --target vhdl --bind qdi --reg qdi >/dev/null
+rm -rf wp
+$NVC --std=2008 -L $NVCLIB --work=wp -a $LIB >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wp -a pipe3_qdi.vhd >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wp -a tb_pipe3.vhd  >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wp -e tb_pipe3      >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wp -r tb_pipe3 2>&1 | grep -E "PASS|FAIL"
+echo "== 5b. multi-stage pipeline WITH comb logic between stages (pinc: q=d+1)"
+yosys -q -p "read_verilog pinc.v; hierarchy -top pinc; proc; flatten; opt; techmap; opt; dfflegalize -cell \$_DFF_P_ x; simplemap; abc -g AND,OR,XOR,MUX; opt_clean; write_json pinc.json"
+python3 $MAP pinc.json pinc pinc_qdi.vhd --target vhdl --bind qdi --reg qdi >/dev/null
+rm -rf wi
+$NVC --std=2008 -L $NVCLIB --work=wi -a $LIB >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wi -a pinc_qdi.vhd >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wi -a tb_pinc.vhd  >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wi -e tb_pinc      >/dev/null 2>&1
+$NVC --std=2008 -L $NVCLIB --work=wi -r tb_pinc 2>&1 | grep -E "PASS|FAIL"
 echo "=== STRUCTURAL FLOW GREEN ==="

@@ -178,7 +178,7 @@ def main():
             continue
         if t == "$_DFF_P_":
             if reg_mode == "qdi":
-                reg_bits.append((conn["D"][0], conn["Q"][0]))   # captured by the shared handshake below
+                reg_bits.append((cname, conn["D"][0], conn["Q"][0]))   # staged + handshaked below
             else:
                 body.append(dff_inst(V, clk(conn["C"][0]), conn["D"][0], conn["Q"][0], rail))
             continue
@@ -186,29 +186,104 @@ def main():
     if unhandled:
         sys.exit("unhandled cell types: %s (fold with dfflegalize/simplemap first)" % sorted(set(unhandled)))
 
-    # ---- QDI register bank (--reg qdi): one 4-phase stage, shared request ki,
-    #      completion ko = C-element chain over every bit's is-DATA. TH cells only,
-    #      so the request-distribution + completion-tree forks are extractable. ----
+    # ---- QDI pipeline (--reg qdi): assign registers to 4-phase STAGES by their
+    #      register-to-register dependency depth, build a QDI register per stage,
+    #      and wire the handshake: stage s request ki_s = NOT(ko of stage s+1);
+    #      completion ko_s = C-element chain over the stage's per-bit is-DATA.
+    #      ki of the last (output) stage is the external ki_in; ko_out/ko_in expose
+    #      the output/input completions. TH cells only -> the per-stage request
+    #      distribution and completion-tree forks are all extractable. ----
     extra_ports = []
     if reg_bits:
-        extra_ports = [("ki", "input", "std_logic"), ("ko", "output", "std_logic")]
-        cds = []
-        for j, (dbit, qbit) in enumerate(reg_bits):
-            body.append(th_inst("th22", [rail(dbit, "L"), "ki"], rail(qbit, "L")))   # rail latch
-            body.append(th_inst("th22", [rail(dbit, "H"), "ki"], rail(qbit, "H")))
-            cd = "cd%d" % j; minterm_sigs.append(cd); cds.append(cd)
-            body.append(th_inst("th12", [rail(qbit, "L"), rail(qbit, "H")], cd))     # per-bit is-DATA
-        prev = cds[0]
-        for j in range(1, len(cds)):
-            acc = "acc%d" % j; minterm_sigs.append(acc)
-            body.append(th_inst("th22", [prev, cds[j]], acc)); prev = acc            # completion chain
-        body.append(assign("ko", prev))
+        stage_of = pipeline_stages(cells)                     # reg cell name -> stage
+        maxs = max(stage_of[c] for c, _, _ in reg_bits)
+        by_stage = {}
+        for cname, dbit, qbit in reg_bits:
+            by_stage.setdefault(stage_of[cname], []).append((dbit, qbit))
+        extra_ports = [("ki_in", "input", "std_logic"),
+                       ("ko_out", "output", "std_logic"), ("ko_in", "output", "std_logic")]
+        NOT = (lambda a: "~" + a) if V else (lambda a: "not " + a)
+        for s in range(maxs + 1):
+            kis = "ki_in" if s == maxs else "ki_s%d" % s        # request into stage s
+            kos = "ko_s%d" % s
+            if s != maxs:
+                minterm_sigs.append(kis)
+                body.append(assign(kis, NOT("ko_s%d" % (s + 1))))   # ki_s = NOT(downstream ko)
+            minterm_sigs.append(kos)
+            cds = []
+            for j, (dbit, qbit) in enumerate(by_stage[s]):
+                body.append(th_inst("th22", [rail(dbit, "L"), kis], rail(qbit, "L")))
+                body.append(th_inst("th22", [rail(dbit, "H"), kis], rail(qbit, "H")))
+                cd = "cd_s%d_%d" % (s, j); minterm_sigs.append(cd); cds.append(cd)
+                body.append(th_inst("th12", [rail(qbit, "L"), rail(qbit, "H")], cd))
+            prev = cds[0]
+            for j in range(1, len(cds)):
+                acc = "acc_s%d_%d" % (s, j); minterm_sigs.append(acc)
+                body.append(th_inst("th22", [prev, cds[j]], acc)); prev = acc
+            body.append(assign(kos, prev))
+        body.append(assign("ko_out", "ko_s%d" % maxs))
+        body.append(assign("ko_in", "ko_s0"))
 
     text = (emit_verilog if V else emit_vhdl)(top, ports, dual_nets, clock_nets, minterm_sigs, body, extra_ports)
     open(out, "w").write(text)
     ng = sum(1 for c in cells.values() if c["type"] in G2_RAILS or c["type"] == "$_MUX_")
     print("wrote %s (target=%s%s): %d gate cells -> TH-cell instances, %d data nets, %d minterm nets"
           % (out, target, "" if V else "/bind=" + bind, ng, len(dual_nets), len(minterm_sigs)))
+
+
+def pipeline_stages(cells):
+    """Assign each $_DFF_P_ register a 4-phase pipeline STAGE = its depth in the
+    register-to-register dependency graph (0 = captures from primary inputs).
+    A register R depends on R' if R''s Q is in R's D backward comb cone. Raises on
+    register feedback (a cyclic dependency is not a feed-forward pipeline)."""
+    drv = {}                       # net -> driving comb cell
+    reg_of_q, reg_d = {}, {}       # q_net -> reg name ; reg name -> d_net
+    for name, c in cells.items():
+        t = c["type"]
+        if t == "$_DFF_P_":
+            reg_of_q[c["connections"]["Q"][0]] = name
+            reg_d[name] = c["connections"]["D"][0]
+        elif t != "$scopeinfo":
+            for b in c["connections"].get("Y", []):
+                if isinstance(b, int):
+                    drv[b] = c
+
+    def deps_of(dnet):
+        seen, stack, regs = set(), [dnet], set()
+        while stack:
+            n = stack.pop()
+            if not isinstance(n, int):
+                continue
+            if n in reg_of_q:
+                regs.add(reg_of_q[n]); continue      # boundary: another register's Q
+            if n in seen:
+                continue
+            seen.add(n)
+            c = drv.get(n)
+            if c is None:
+                continue                              # primary input / constant
+            for pin, conns in c["connections"].items():
+                if pin == "Y":
+                    continue
+                stack.extend(conns)
+        return regs
+
+    deps = {r: deps_of(reg_d[r]) for r in reg_d}
+    stage = {}
+
+    def st(r, path):
+        if r in stage:
+            return stage[r]
+        if r in path:
+            raise SystemExit("register feedback loop through %s: not a feed-forward pipeline "
+                             "(async desync of cyclic logic is out of scope)" % r)
+        s = 0 if not deps[r] else 1 + max(st(x, path | {r}) for x in deps[r])
+        stage[r] = s
+        return s
+
+    for r in reg_d:
+        st(r, set())
+    return stage
 
 
 def port_wire(V, pname, i, w, bit, direction):
