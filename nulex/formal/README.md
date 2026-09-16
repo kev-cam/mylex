@@ -35,11 +35,17 @@ lower-bound objective.
 
 ## Cell pin directions: generic gates or `--lef`
 
-The built-in gate map (`CELLS`) covers a generic yosys netlist (`$_AND_`, …). For
-a **technology-mapped** netlist (sky130_fd_sc_hd cells, i.e. what actually gets
-placed) pass `--lef <lef>...`: pin input/output directions then come from the LEF
-`DIRECTION`, so the same tool enumerates forks on any placed design. Clock/reset
-pins are split off by name heuristic (`CLK*`, `RESET*`, `SET_B`, …).
+Cell pin directions come from one of three sources, tried in order:
+1. the built-in gate map (`CELLS`) — a generic yosys netlist (`$_AND_`, …);
+2. `--lef <lef>...` — a **technology-mapped** netlist (sky130_fd_sc_hd cells, what
+   actually gets placed): directions from the LEF `DIRECTION`;
+3. the JSON's own **submodule ports** — a cell whose type is another module in the
+   netlist (kept opaque, e.g. blackbox threshold cells in a structural NCL netlist)
+   takes its input/output pins from that submodule's port directions. No LEF, no
+   hardcoded map — this is what lets the same extractor run on the async TH netlist
+   (see `th_struct_poc/`).
+
+Clock/reset pins are split off by name heuristic (`CLK*`, `RESET*`, `SET_B`, …).
 
     constraints.py <netlist.json> <top> [out.json] [--lef LEF ...]
 

@@ -69,9 +69,21 @@ def main():
         i = argv.index("--lef"); lef_paths.append(argv[i + 1]); del argv[i:i + 2]
     jpath, top = argv[0], argv[1]
     out = argv[2] if len(argv) > 2 else None
-    m = json.load(open(jpath))["modules"][top]
+    modules = json.load(open(jpath))["modules"]
+    m = modules[top]
     ports, cells = m["ports"], m["cells"]
     lef_cells = lef_cell_pins(lef_paths) if lef_paths else {}   # macro -> (ins, outs)
+    # third pin-direction source: a cell whose type is another module in this JSON
+    # (kept opaque, e.g. blackbox TH cells in a structural NCL netlist) — take its
+    # input/output pins from that submodule's own port directions. No LEF needed.
+    json_cells = {}
+    for mn, mm in modules.items():
+        if mn == top:
+            continue
+        ins = [pn for pn, p in mm.get("ports", {}).items() if p.get("direction") == "input"]
+        outs = [pn for pn, p in mm.get("ports", {}).items() if p.get("direction") == "output"]
+        if outs:
+            json_cells[mn] = (ins, outs)
 
     driver = {}                      # net -> (inst, pin, kind)   kind: gate|input|reg
     recv = defaultdict(list)         # net -> [(inst, pin, is_ctrl)]
@@ -92,6 +104,10 @@ def main():
             is_reg = "$_DFF" in t
         elif t in lef_cells:         # technology-mapped cell (pins from LEF DIRECTION)
             ins, outs = lef_cells[t]
+            ctrl = _is_ctrl
+            is_reg = ("df" in t.split("__")[-1]) or ("dl" in t.split("__")[-1]) or any(_is_clk(p) for p in ins)
+        elif t in json_cells:        # opaque submodule (e.g. structural TH cell) — pins from its ports
+            ins, outs = json_cells[t]
             ctrl = _is_ctrl
             is_reg = ("df" in t.split("__")[-1]) or ("dl" in t.split("__")[-1]) or any(_is_clk(p) for p in ins)
         else:
