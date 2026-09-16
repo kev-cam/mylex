@@ -1,0 +1,6 @@
+*.json
+*_th.v
+add4_comb.vhd
+add4_qdi.vhd
+w_comb/
+w_qdi/
