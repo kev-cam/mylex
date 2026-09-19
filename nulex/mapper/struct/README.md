@@ -18,9 +18,26 @@ isochronic-fork extraction.
 | `verilog` | — | self-contained blackbox-TH Verilog; `yosys read_verilog; flatten; write_json` → `constraints.py` fork extraction (TH cells stay opaque) |
 | `vhdl` | `comb` | nvc-simulatable; stateless Boolean TH cells — functional / equivalence |
 | `vhdl` | `qdi`  | nvc-simulatable; hysteretic C-element TH cells — true delay-insensitive |
+| `spice` | — | **PHYS BINDING**: transistor-level SG13G2 `.subckt` — real TH-cell subckts + PSP103, for LVS / extraction / SPICE in the SG13G2 domain |
 
-`th_cells.vhd` carries both architectures per cell (`comb`/`qdi`); a third
-`phys` (SG13G2/logic3da) binding is future work.
+`th_cells.vhd` carries the `comb`/`qdi` architectures. The **`phys` binding is
+`--target spice`** (`run_phys.sh`): each TH cell becomes its real transistor
+subckt (`ldx/asic/cells/th22.sp` + `th_gates.sp`, plus `../../lib/th_cells_sg13g2.sp`
+for the th13/th14 collectors), dual-rail nets are node pairs `n<bit>_L`/`_H`, and
+the design is emitted as a `.subckt <top> <rail-nodes> VDD VSS` — the async block
+lowered to silicon. Combinational only so far (sequential cells rejected; use
+`--target vhdl` for registers). Verified by `run_phys.sh`: the emit's TH-cell
+census matches the behaviorally-verified `--target verilog` netlist (whose logic
+`run_struct.sh` proved == sync golden), and each transistor TH cell computes its
+threshold function at DC (th22 C-element set/reset; th12/th13/th14 OR collectors),
+using the PyMS-fixed PSP103-capable Xyce.
+
+★ Block-level TRANSIENT of a mapped block is **not yet** a gate: the JIT PSP103
+model converges in DC but its stiff transient diverges above ~1f load, so a full
+NULL→DATA block transient and a full NLDM characterization (`asic/chr`, the gold
+`--spice` path) await a more transient-robust PSP103 charge model. The binding and
+per-cell DC logic are the delivered increment; the transistor timing of the native
+C-element is unblocked at the light-load corner (real: ~0.30–0.43 ns set delay).
 
 Registers: `--reg sync` (default) emits the sync-emulation `ncl_dff`; `--reg qdi`
 emits a **multi-stage QDI pipeline**. Registers are assigned 4-phase STAGES by

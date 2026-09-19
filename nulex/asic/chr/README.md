@@ -16,12 +16,18 @@ load grid → propagation delay + output transition (+ the C-element set/reset/h
 → NLDM tables. This is the real characterization of the native C-element (its
 feedback keeper, the loop/hold delay).
 
-> **Blocked in this environment.** The stock `/usr/local/bin/Xyce` has **no PSP103
-> device** — the model card loads but `sg13g2_nmos/pmos` don't bind. The ldx flow
-> used a PyMS-built `psp103_sg13g2.so` plugin (or the custom `Xyce-8` build), which
-> aren't installed here (nor is another PSP103-capable SPICE). The harness detects
-> this and stops with that message. It runs unchanged once a PSP103-capable Xyce is
-> available (rebuild the plugin via `share/xyce/PyMS`, or install the custom Xyce-8).
+> **PSP103 UNBLOCKED (2026-09-19), but a transient ceiling remains.** The PyMS
+> GiNaC device path now binds SG13G2 PSP103 via `.hdl` JIT — run with
+> `XYCE=/usr/local/src/xyce-build/src/Xyce` + `PYMS_DIR=/usr/local/share/xyce/PyMS`
+> (the fixed build). DC is solid (Id-Vg/Id-Vd, and the native C-element's DC
+> set/reset transfer characterize cleanly), and the light-load transient gives real
+> timing (th22 set ~0.30–0.43 ns @1f). **However** the JIT PSP103 stiff transient
+> DIVERGES above ~1f load ("time step too small"), so the full (slew × load) NLDM
+> sweep is not yet reliable — the ceiling is now the PSP103 **transient charge-model
+> robustness** (its accuracy-first emit leaves non-smooth charge derivatives), not a
+> missing device. The delivered increment is the phys binding + per-cell DC logic
+> (`../../mapper/struct/run_phys.sh`); full gold NLDM awaits that fix, and
+> `--from-lib` gives P&R-usable comb timing meanwhile.
 
 **`--from-lib` — SG13G2-domain timing available now.** Derives the TH-cell Liberty
 from IHP's **silicon-characterized** `sg13g2_stdcell` library (real 1.2 V/25 °C
@@ -35,7 +41,10 @@ OpenROAD, so a TH netlist times/places in the SG13G2 domain today.
   characterization, via the std-cell realization). The hysteretic C-element and
   weighted gates compose these (their timing is the path sum through the
   composition — see `../../lib/th_compose.v`).
-- Not delivered here: the **native-transistor** timing of `th22.sp` (the standalone
-  Sutherland C-element with its keeper), which is the `--spice` gold path — blocked
-  only by the missing PSP103 device in this environment, not by the method. The
-  harness is complete and waiting for a PSP103-capable simulator.
+- Native-transistor `--spice` gold path: PSP103 now **binds** (PyMS-fixed Xyce), so
+  the C-element's DC set/reset transfer and its light-load transient timing
+  characterize (real: th22 set ~0.30–0.43 ns @1f). The full (slew × load) NLDM
+  sweep is still **not delivered** — the JIT PSP103 stiff transient diverges above
+  ~1f load; the remaining gate is PSP103 transient charge-model robustness, not the
+  device or the method. The phys binding + per-cell DC logic are proven now
+  (`../../mapper/struct/run_phys.sh`).

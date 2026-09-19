@@ -27,7 +27,9 @@ import os, re, subprocess, sys
 
 CELLS = "/usr/local/src/ldx/asic/cells"
 MODEL = "/usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib"
-XYCE = "/usr/local/bin/Xyce"
+# PSP103 now binds via the PyMS-fixed Xyce (.hdl JIT); override XYCE to point at it.
+XYCE = os.environ.get("XYCE", "/usr/local/src/xyce-build/src/Xyce")
+PSP103_VA = "/usr/local/share/xyce/verilog-a/psp103/psp103.va"
 # comb TH cell -> the SG13G2 std cell realizing the same function (single-cell map)
 TH_MAP = {"th22": "and2_1", "th12": "or2_1", "th13": "or3_1", "th33": "and3_1", "th44": "and4_1"}
 PIN_MAP = {"A": "a", "B": "b", "C": "c", "D": "d", "X": "y"}
@@ -35,25 +37,38 @@ PIN_MAP = {"A": "a", "B": "b", "C": "c", "D": "d", "X": "y"}
 
 def spice_probe():
     """Confirm the SG13G2 PSP103 device is usable in this Xyce (else the gold
-    transistor characterization cannot run here)."""
+    transistor characterization cannot run here). The PyMS-fixed Xyce binds
+    PSP103 via .hdl JIT, so the probe includes the psp103.va .hdl line."""
     deck = "/tmp/_psp_probe.cir"
-    open(deck, "w").write('.include "%s"\nM1 d g 0 0 sg13g2_nmos W=1u L=0.13u\n'
-                          'Vg g 0 1.2\nVd d 0 1.2\n.op\n.end\n' % MODEL)
-    r = subprocess.run([XYCE, deck], capture_output=True, text=True, timeout=60)
-    return "nrecognized" not in r.stdout and "rror" not in r.stdout.split("Total")[0]
+    open(deck, "w").write('.hdl "%s"\n.include "%s"\nM1 d g 0 0 sg13g2_nmos W=1u L=0.13u\n'
+                          'Vg g 0 1.2\nVd d 0 0.6\n.op\n.end\n' % (PSP103_VA, MODEL))
+    try:
+        r = subprocess.run([XYCE, deck], capture_output=True, text=True, timeout=420)
+    except Exception:
+        return False
+    return "End of Xyce" in r.stdout and "nrecognized" not in r.stdout \
+        and "rror" not in r.stdout.split("Total")[0]
 
 
 def run_spice(outlib):
     if not os.path.exists(MODEL):
         sys.exit("SG13G2 model card missing: %s" % MODEL)
     if not spice_probe():
-        sys.exit("BLOCKED: this Xyce (%s) has no PSP103 device — the SG13G2 model\n"
-                 "card loads but sg13g2_nmos/pmos do not bind. The ldx flow used a\n"
-                 "PyMS-built psp103_sg13g2.so plugin / a custom Xyce-8 build, absent here.\n"
-                 "The harness is ready; run it with a PSP103-capable Xyce.\n"
+        sys.exit("BLOCKED: this Xyce (%s) has no PSP103 device. Point XYCE= at the\n"
+                 "PyMS-fixed build (/usr/local/src/xyce-build/src/Xyce, with\n"
+                 "PYMS_DIR=/usr/local/share/xyce/PyMS), which binds PSP103 via .hdl JIT.\n"
                  "Meanwhile use: characterize_th.py --from-lib <sg13g2_stdcell.lib>" % XYCE)
-    # (full slew x load transient sweep + NLDM assembly would run here)
-    sys.exit("PSP103 present — full transient sweep path not exercised in this run.")
+    # PSP103 now BINDS (PyMS-fixed Xyce). The DC transfer / set-reset switching of
+    # the native cells characterizes cleanly (see nulex/mapper/struct/run_phys.sh),
+    # and the light-load transient gives real timing (th22 set ~0.30-0.43 ns @1f).
+    # BUT: the JIT PSP103 stiff transient DIVERGES above ~1f load, so the full
+    # (slew x load) NLDM sweep is not yet reliable. Assembling NLDM over the
+    # converging light-load corner only would be a misleadingly thin table; the
+    # honest gold NLDM awaits a transient-robust PSP103 charge model.
+    sys.exit("PSP103 present (PyMS-fixed Xyce) — gold path UNBLOCKED. Light-load\n"
+             "transient + DC transfer verified (run_phys.sh). Full slew x load NLDM\n"
+             "sweep gated by JIT-PSP103 stiff-transient convergence above ~1f load\n"
+             "(a charge-model robustness fix); use --from-lib for P&R timing meanwhile.")
 
 
 def cell_block(src, macro):

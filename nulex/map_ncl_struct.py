@@ -14,11 +14,18 @@ MULTIPLE VERSIONS (pick with the flags below):
       --bind qdi    hysteretic C-element TH cells (true delay-insensitive)
   --target verilog  self-contained Verilog with (* blackbox *) TH modules, for
                     `yosys read_verilog; flatten; write_json` -> constraints.py.
+  --target spice    PHYS BINDING: a transistor-level SG13G2 .subckt instantiating
+                    the real TH-cell subckts (ldx/asic/cells/th22.sp + th_gates.sp
+                    + lib/th_cells_sg13g2.sp) with PSP103 devices — the async block
+                    lowered to silicon for LVS / extraction / SPICE in the SG13G2
+                    domain. Dual-rail nets are node pairs n{bit}_L/_H; collectors
+                    and the NOT rail-swap are 0-ohm ties. Combinational only so far
+                    (sequential cells rejected; registers stay on --target vhdl).
 
 Rail convention (lib/ncl): .L = value-1 (t), .H = value-0 (f). DATA0=(L0,H1),
 DATA1=(L1,H0), NULL=(0,0). A dual-rail net n{bit} is two std_logic rails.
 
-Usage: map_ncl_struct.py <netlist.json> <top> <out> [--target vhdl|verilog] [--bind comb|qdi]
+Usage: map_ncl_struct.py <netlist.json> <top> <out> [--target vhdl|verilog|spice] [--bind comb|qdi]
 """
 import json
 import sys
@@ -91,14 +98,20 @@ def main():
     dual_nets = sorted(allnets - clock_nets)
 
     V = (target == "verilog")
+    S = (target == "spice")   # phys binding: transistor-level SG13G2 netlist
 
     def rail(bit, r):
         """rail r ('L'|'H') of a data bit -> target expression."""
         if isinstance(bit, int):
+            if S:
+                return "n%d_%s" % (bit, r)
             return ("n%d_%s" % (bit, r)) if V else ("n%d.%s" % (bit, r))
         # constants: DATA0=(L0,H1), DATA1=(L1,H0)
-        one = "1'b1" if V else "'1'"
-        zero = "1'b0" if V else "'0'"
+        if S:
+            one, zero = "VDD", "VSS"   # rail node tied to the supply rails
+        else:
+            one = "1'b1" if V else "'1'"
+            zero = "1'b0" if V else "'0'"
         if bit == "0":
             return zero if r == "L" else one
         if bit == "1":
@@ -133,6 +146,10 @@ def main():
 
     def th_inst(cell, ins, y):
         pnames = ["a", "b", "c", "d"][:len(ins)]
+        if S:
+            # SPICE subckt call: X<uid> <inputs...> <y> VDD VSS <cell>
+            # (th cell subckt port order is A B [C D] Y VDD VSS)
+            return "  X%d %s %s VDD VSS %s" % (uid(), " ".join(ins), y, cell)
         if V:
             args = ", ".join(".%s(%s)" % (p, s) for p, s in zip(pnames, ins)) + ", .y(%s)" % y
             return "  %s u%d (%s);" % (cell, uid(), args)
@@ -145,6 +162,9 @@ def main():
         return _uid[0]
 
     def assign(lhs, rhs):
+        if S:
+            # SPICE net alias: 0-ohm tie (rhs is a driven cell output / port node).
+            return "  R%d %s %s 0" % (uid(), lhs, rhs)
         return ("  assign %s = %s;" % (lhs, rhs)) if V else ("  %s <= %s;" % (lhs, rhs))
 
     # ---- port wiring ----
@@ -153,9 +173,12 @@ def main():
         is_clk = (w == 1 and p["direction"] == "input" and p["bits"][0] in clock_nets)
         for i, b in enumerate(p["bits"]):
             if is_clk:
+                if S:
+                    sys.exit("--target spice: clocked/sequential designs not supported yet "
+                             "(combinational phys binding only)")
                 body.append(assign(clk(b), pname))
                 continue
-            body.append(port_wire(V, pname, i, w, b, p["direction"]))
+            body.append(port_wire(V, pname, i, w, b, p["direction"], S))
 
     # ---- cells ----
     reg_bits = []          # (dbit, qbit) for --reg qdi (a single-stage QDI bank)
@@ -179,6 +202,9 @@ def main():
             emit_cell({"s": conn["S"][0], "a": conn["A"][0], "b": conn["B"][0]}, conn["Y"][0], MUX_MIN, MUX_RAILS)
             continue
         if t == "$_DFF_P_":
+            if S:
+                sys.exit("--target spice: sequential cells ($_DFF_P_) not supported yet "
+                         "(combinational phys binding only; use --target vhdl for registers)")
             if reg_mode in ("qdi", "desync"):
                 reg_bits.append((cname, conn["D"][0], conn["Q"][0]))   # bound below per reg_mode
             else:
@@ -243,6 +269,8 @@ def main():
 
     if V:
         text = emit_verilog(top, ports, dual_nets, clock_nets, minterm_sigs, body, extra_ports)
+    elif S:
+        text = emit_spice(top, ports, dual_nets, clock_nets, minterm_sigs, body, extra_ports)
     else:
         text = emit_vhdl(top, ports, dual_nets, clock_nets, minterm_sigs, body, extra_ports, reg_decls)
     open(out, "w").write(text)
@@ -306,9 +334,21 @@ def pipeline_stages(cells):
     return stage
 
 
-def port_wire(V, pname, i, w, bit, direction):
+def spice_port_nodes(pname, w):
+    """The two rail nodes exposed on the .subckt interface for each bit of a port."""
+    if w == 1:
+        return [("%s_L" % pname, "%s_H" % pname)]
+    return [("%s_L_%d" % (pname, i), "%s_H_%d" % (pname, i)) for i in range(w)]
+
+
+def port_wire(V, pname, i, w, bit, direction, S=False):
     if not isinstance(bit, int):
-        return "  // const port bit" if V else "  -- const port bit"
+        return "  * const port bit" if S else ("  // const port bit" if V else "  -- const port bit")
+    if S:
+        nl, nh = spice_port_nodes(pname, w)[i]
+        # 0-ohm ties: input port node -> internal rail net (and out net -> port node).
+        return ("  Rpl_%s_%d %s n%d_L 0\n  Rph_%s_%d %s n%d_H 0"
+                % (pname, i, nl, bit, pname, i, nh, bit))
     if V:
         pl = "%s_L[%d]" % (pname, i) if w > 1 else "%s_L" % pname
         ph = "%s_H[%d]" % (pname, i) if w > 1 else "%s_H" % pname
@@ -330,6 +370,37 @@ def dff_inst(V, c, dbit, qbit, rail):
 
 TH_PORTS = {"th12": 2, "th13": 3, "th14": 4, "th22": 2, "th23": 3, "th33": 3,
             "th24": 4, "th34": 4, "th44": 4, "th23w2": 3, "th34w2": 4}
+
+
+def emit_spice(top, ports, dual_nets, clock_nets, minterm_sigs, body, extra_ports):
+    """Phys binding: a transistor-level SG13G2 .subckt of the dual-rail NCL netlist.
+    Each TH cell is a real transistor subckt (th22.sp / th_gates.sp / th_cells_sg13g2.sp),
+    so the whole async block is lowerable to silicon (LVS / extraction / SPICE) in the
+    SG13G2 domain. Dual-rail nets are node pairs n<bit>_L / n<bit>_H; the DIMS collectors
+    and the NOT rail-swap are 0-ohm ties. Rail encoding: DATA1=(L=1,H=0), DATA0=(L=0,H=1),
+    NULL=(L=0,H=0)."""
+    L = ["* GENERATED by nulex map_ncl_struct.py --target spice -- do not edit.",
+         "* Transistor-level SG13G2 realization of the dual-rail NCL netlist (phys binding).",
+         "* The enclosing deck must provide, before X<top> is instantiated:",
+         "*   .hdl \"<verilog-a>/psp103/psp103.va\"          (PSP103 device)",
+         "*   .include \"<sg13g2_psp103_tt.lib>\"             (SG13G2 PSP103 model card)",
+         "*   .include \"<ldx>/asic/cells/th22.sp\"           (C-element)",
+         "*   .include \"<ldx>/asic/cells/th_gates.sp\"       (th12/th23/th33/th34w2)",
+         "*   .include \"<nulex>/lib/th_cells_sg13g2.sp\"     (th13/th14 collectors)",
+         "* Each data bit -> two rail nodes <port>_L/_H (or _L_<i>/_H_<i> for a bus).",
+         "* Encoding: DATA1=(L=1,H=0)  DATA0=(L=0,H=1)  NULL=(L=0,H=0)."]
+    pnodes = []
+    for pname, p in ports.items():
+        w = len(p["bits"])
+        if w == 1 and p["direction"] == "input" and p["bits"][0] in clock_nets:
+            sys.exit("--target spice: clocked designs not supported yet")
+        for nl, nh in spice_port_nodes(pname, w):
+            pnodes += [nl, nh]
+    pnodes += [name for name, _, _ in extra_ports]
+    L.append(".subckt %s %s VDD VSS" % (top, " ".join(pnodes)))
+    L += body
+    L.append(".ends %s" % top)
+    return "\n".join(L) + "\n"
 
 
 def emit_verilog(top, ports, dual_nets, clock_nets, minterm_sigs, body, extra_ports):
