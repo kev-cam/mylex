@@ -1,0 +1,69 @@
+{
+  "creator": "Yosys 0.66+103 (git sha1 e2903c4a5, Release, GNU /usr/bin/c++ 14.2.0)",
+  "modules": {
+    "and2": {
+      "attributes": {
+        "top": "00000000000000000000000000000001",
+        "src": "and2.v:1.1-1.69"
+      },
+      "ports": {
+        "a": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "b": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "y": {
+          "direction": "output",
+          "bits": [ 4 ]
+        }
+      },
+      "cells": {
+        "$auto$simplemap.cc:106:simplemap_bitop$73": {
+          "hide_name": 1,
+          "type": "$_AND_",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "and2.v:1.53-1.58"
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 2 ],
+            "B": [ 3 ],
+            "Y": [ 4 ]
+          }
+        }
+      },
+      "netnames": {
+        "a": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "and2.v:1.19-1.20"
+          }
+        },
+        "b": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "and2.v:1.28-1.29"
+          }
+        },
+        "y": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "and2.v:1.38-1.39"
+          }
+        }
+      }
+    }
+  }
+}
