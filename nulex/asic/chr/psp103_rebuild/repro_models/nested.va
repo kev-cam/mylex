@@ -1,0 +1,4 @@
+`include "disciplines.vams"
+module m(p,n); electrical p,n; inout p,n; real g;
+analog begin g = V(p,n)*10.0; if (g > 2.0) begin if (g > 5.0) g = 5.0; end I(p,n) <+ g; end
+endmodule

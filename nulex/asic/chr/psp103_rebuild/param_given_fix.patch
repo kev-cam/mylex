@@ -1,0 +1,130 @@
+# PyMS $param_given fix — corrects BSIM-CMG low-Vg sign inversion.
+# Root cause: JIT baked ALL params into param_values; emitter used
+# param_values.keys() as the $param_given set, so defaulted params
+# (NVTM, THETASCE/SW/DIBL) read as user-given -> nVtm=NVTM=0 ->
+# every /nVtm term hit pole_error, swallowed to 0 by _safe_ex ->
+# frozen surface-potential solve -> negative subthreshold qis.
+# Fix: shell emits __GIVEN__= from Xyce given(); builder parses it;
+# emitter takes a real given_params set (PSP103 uses $param_given 0x).
+# Generated 2026-09-18T23:15:12Z
+
+--- a/ginac_emitter.py
++++ b/ginac_emitter.py
+@@ -70,7 +70,8 @@
+                  forced_conditions: Optional[dict[int, bool]] = None,
+                  forced_nodes: Optional[dict[int, bool]] = None,
+                  assume_true: Optional[set[str]] = None,
+-                 collapse_nodes: bool = True):
++                 collapse_nodes: bool = True,
++                 given_params: Optional[set[str]] = None):
+         """
+         Args:
+             module: Parsed Verilog-A module AST.
+@@ -136,9 +137,17 @@
+         # No instance params — everything is constant at compile time
+         self.instance_params: set[str] = set()
+ 
+-        # Track explicitly given params (for $param_given)
++        # Track explicitly given params (for $param_given). The JIT builder
++        # bakes ALL params (given + defaulted) into param_values, so
++        # param_values.keys() OVER-reports given-ness — e.g. NVTM=0 (a default)
++        # would make $param_given(NVTM) true and select `nVtm = NVTM = 0`,
++        # collapsing every /nVtm term. When the caller knows the true
++        # user-given set (from Xyce's given()), it passes given_params and we
++        # use exactly that; otherwise fall back to the legacy keys() behavior.
+         self._given_params: set[str] = set()
+-        if param_values:
++        if given_params is not None:
++            self._given_params = set(given_params)
++        elif param_values:
+             self._given_params = set(param_values.keys())
+ 
+         # Variable values resolved during elaboration
+@@ -2428,7 +2437,8 @@
+ 
+ def emit_ginac_program(module: Module,
+                        param_values: Optional[dict[str, float]] = None,
+-                       line_directives: Optional[bool] = None) -> str:
++                       line_directives: Optional[bool] = None,
++                       given_params: Optional[set[str]] = None) -> str:
+     """Generate GiNaC C++ source from a parsed Verilog-A module.
+ 
+     All parameters (model card + instance) must be supplied as constants.
+@@ -2440,6 +2450,12 @@
+         module: Parsed Verilog-A module.
+         param_values: All parameter values (model + instance). Merged over AST defaults.
+         line_directives: None=off, True=#line (active), False=//line (inactive).
++        given_params: The set of parameter names the USER explicitly supplied
++                      (from Xyce's given()). Drives $param_given(). If None,
++                      falls back to param_values.keys() (legacy). Must be passed
++                      by the JIT builder, which bakes defaults into param_values
++                      and would otherwise mis-report every default as "given".
+     """
+     return GiNaCEmitter(module, param_values=param_values,
+-                        line_directives=line_directives).emit()
++                        line_directives=line_directives,
++                        given_params=given_params).emit()
+--- a/build_vae_so.py
++++ b/build_vae_so.py
+@@ -38,16 +38,27 @@
+     va, out_so, pfile = sys.argv[1], sys.argv[2], sys.argv[3]
+ 
+     params = {}
++    # The device shell serializes ALL params (given + defaulted) as NAME=value,
++    # plus a single __GIVEN__=NAME1,NAME2,... line naming ONLY the params the
++    # user explicitly supplied (from Xyce's given()). That set drives
++    # $param_given() in the emitter; without it every baked default would read
++    # as "given" and select the wrong model branch (e.g. nVtm = NVTM = 0).
++    given = None  # None => legacy shells with no marker => keys()-based fallback
+     try:
+         with open(pfile) as f:
+             for line in f:
+                 line = line.strip()
+-                if '=' in line:
+-                    k, v = line.split('=', 1)
+-                    try:
+-                        params[k.strip().upper()] = float(v.strip())
+-                    except ValueError:
+-                        pass
++                if not line or '=' not in line:
++                    continue
++                k, v = line.split('=', 1)
++                k = k.strip()
++                if k == '__GIVEN__':
++                    given = {n.strip().upper() for n in v.split(',') if n.strip()}
++                    continue
++                try:
++                    params[k.upper()] = float(v.strip())
++                except ValueError:
++                    pass
+     except OSError:
+         pass
+ 
+@@ -62,7 +73,8 @@
+         wrap_cpp = os.path.join(wd, "wrap.cpp")
+         # CONSTCtoK (Celsius->Kelvin): define if the preprocessor didn't expand
+         # it (include not found). Harmless when already a literal.
+-        src = "#define CONSTCtoK 273.15\n" + emit_ginac_program(mod, param_values=pvals)
++        src = "#define CONSTCtoK 273.15\n" + emit_ginac_program(
++            mod, param_values=pvals, given_params=given)
+         with open(g_cpp, "w") as f:
+             f.write(src)
+         # 1. compile GiNaC metaprogram; 2. run it to emit the specialized eval.
+--- a/xyce_device_gen.py
++++ b/xyce_device_gen.py
+@@ -769,6 +769,15 @@
+     for pname, pdefault, is_inst, cxx in params:
+         ref = f'{cxx}' if is_inst else f'model_.{cxx}'
+         c.append(f'      snprintf(_pb,sizeof(_pb),"{pname.upper()}=%.12g\\n",(double)({ref})); _p += _pb;')
++    # Serialize the set of params the user actually supplied (Xyce given()),
++    # so build_vae_so.py can drive $param_given() correctly. Baking every
++    # default as "given" mis-selects model branches (e.g. nVtm = NVTM = 0).
++    c.append('      std::string _gv;')
++    for pname, pdefault, is_inst, cxx in params:
++        guard = (f'given("{pname.upper()}")' if is_inst
++                 else f'model_.given("{pname.upper()}")')
++        c.append(f'      if ({guard}) _gv += "{pname.upper()},";')
++    c.append('      _p += "__GIVEN__=" + _gv + "\\n";')
+     c.append('      std::size_t _key = std::hash<std::string>{}(std::string(_va) + "|" + _p);')
+     c.append('      const char *_cd = getenv("PYMS_VAE_CACHE");')
+     c.append('      std::string _cache = _cd ? _cd : "/tmp/pyms_vae_cache";')
