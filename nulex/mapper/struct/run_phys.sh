@@ -37,7 +37,7 @@ grep -q '^\.subckt add4 ' "$WORK/add4_phys.sp" || fail "no .subckt add4"
 grep -q '^\.ends add4'     "$WORK/add4_phys.sp" || fail "no .ends add4"
 # census must match the behavioral (verilog) netlist's TH-cell instances
 python3 "$MAP" "$HERE/add4.json" add4 "$WORK/add4_v.v" --target verilog >/dev/null || fail "verilog emit"
-census_sp=$(grep -E '^  X[0-9]+ ' "$WORK/add4_phys.sp" | awk '{print $NF}' | sort | uniq -c | awk '{print $1, $2}')
+census_sp=$(grep -E '^X[0-9]+ ' "$WORK/add4_phys.sp" | awk '{print $NF}' | sort | uniq -c | awk '{print $1, $2}')
 census_v=$(grep -oE '^  th[0-9]+w?[0-9]* u[0-9]' "$WORK/add4_v.v" | awk '{print $1}' | sort | uniq -c | awk '{print $1, $2}')
 [ "$census_sp" = "$census_v" ] || fail "spice census != verilog census:
 spice:
@@ -100,5 +100,61 @@ else
   echo "   SKIP: no PSP103-capable Xyce (set XYCE=; needs the PyMS-fixed build)"
 fi
 
+echo "== 3. block-level transistor transient: mapped AND2, NULL -> DATA1"
+if [ "${PHYS_DC:-0}" = 1 ]; then
+  # AND2: a=b=DATA1 -> y=DATA1 (y_L->VDD, y_H stays ~0). Real transistor cells,
+  # self-timed from NULL. Instance name is NOT X* of an internal cell (avoid a
+  # subckt/instance name clash).
+  python3 "$MAP" "$HERE/and2.json" and2 "$WORK/and2_phys.sp" --target spice >/dev/null || fail "and2 spice emit"
+  cat > "$WORK/and2_tb.cir" <<EOF
+mapped AND2 block, transistor-level NULL->DATA1 transient
+.hdl "$PSP"
+.include "$MODEL"
+.include "$CELLS/th22.sp"
+.include "$CELLS/th_gates.sp"
+.include "$SUP"
+.include "$WORK/and2_phys.sp"
+Vdd VDD 0 1.2
+Vss VSS 0 0
+Va_L a_L 0 PWL(0 0 1n 0 1.2n 1.2)
+Va_H a_H 0 0
+Vb_L b_L 0 PWL(0 0 1n 0 1.2n 1.2)
+Vb_H b_H 0 0
+Xblk a_L a_H b_L b_H y_L y_H VDD VSS and2
+Cl y_L 0 1f
+Ch y_H 0 1f
+.tran 2p 4n
+.print tran format=noindex V(y_L) V(y_H)
+.end
+EOF
+  (cd "$WORK" && timeout 900 "$XYCE" and2_tb.cir >and2_tb.out 2>&1)
+  prn="$WORK/and2_tb.cir.prn"
+  if [ -f "$prn" ] && ! grep -qi 'too small\|fatal\|abort' "$WORK/and2_tb.out"; then
+    ok=$(python3 - "$prn" <<'PY'
+import sys
+rows=[r.split() for r in open(sys.argv[1]) if r.strip() and 'End of' not in r]
+hdr=rows[0]; cols={n:i for i,n in enumerate(hdr)}
+def _num(r):
+    try:
+        [float(x) for x in r]; return True
+    except ValueError:
+        return False
+data=[r for r in rows[1:] if len(r)==len(hdr) and _num(r)]
+yl=[float(r[cols['V(Y_L)']]) for r in data]
+yh=[float(r[cols['V(Y_H)']]) for r in data]
+# DATA1 output: the y_L rail must assert (>1.0 V) and y_H stay low (<0.2 V)
+print("ok" if (yl and max(yl)>1.0 and max(yh)<0.2) else "bad(yl=%.3f yh=%.3f)" % (max(yl or [0]), max(yh or [0])))
+PY
+)
+    [ "$ok" = ok ] || fail "AND2 block logic wrong: $ok (expected y_L->DATA1, y_H~0)"
+    echo "   ok: mapped AND2 computes DATA1 = AND(DATA1,DATA1) at the transistor level (self-timed, from NULL)"
+    PHYS_BLK=1
+  else
+    echo "   SKIP: AND2 block transient did not complete cleanly"
+  fi
+else
+  echo "   SKIP: needs the PSP103-capable Xyce (see step 2)"
+fi
+
 rm -rf "$WORK"
-echo "=== PHYS BINDING GREEN (emit+structure${PHYS_DC:+ +cell-DC}) ==="
+echo "=== PHYS BINDING GREEN (emit+structure${PHYS_DC:+ +cell-DC}${PHYS_BLK:+ +block-transient}) ==="

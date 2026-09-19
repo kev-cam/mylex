@@ -39,12 +39,18 @@ inconsistent with the value path). The native C-element characterizes over the f
 slew × load grid (25/25, 0 divergence), and a mapped block now runs a transistor-
 level transient without diverging.
 
-★ REMAINING `--target spice` bug (separate from PSP103, surfaced once block
-transient could run): the emitted **block logic is wrong** — a mapped AND2 gives
-`y_L = 0` (NULL) at DC for DATA1 inputs, though the standalone th22 and the 0-ohm
-ties are each correct. So `run_phys.sh` still gates on emit + structure + per-cell
-DC (all green); block-level logic verification awaits this fix. Likely in the
-DIMS/collector wiring or 0-ohm-tie node-merging within the `.subckt`.
+★ `--target spice` block logic (2026-09-19): FIXED. The earlier "mapped AND2 gives
+y_L=0 for DATA1 inputs" was TWO emit issues: (1) the net-alias ties were 0-ohm
+resistors — replaced by NODE ALIASING (a union-find collapses each alias into one
+canonical node, port node preferred; no 0-ohm resistors, which Xyce mis-reduces in
+a multi-cell `.subckt`); and (2) — the actual culprit — the device cards were
+emitted with LEADING WHITESPACE, which Xyce mis-parses inside a `.subckt` (the
+devices silently fail to bind VDD/VSS → outputs stuck-at-0). SPICE cards are now
+emitted flush-left. `run_phys.sh` now includes a **block-transient gate**: a mapped
+AND2 computes DATA1 = AND(DATA1,DATA1) at the transistor level, self-timed from
+NULL (y_L→VDD, y_H→0, ~0.36 ns). NB: the block is meant to be evaluated by a
+NULL→DATA transient (a plain DC `.op` is ill-posed — held C-elements have no unique
+DC state), and the enclosing instance must not reuse an internal cell name.
 
 Registers: `--reg sync` (default) emits the sync-emulation `ncl_dff`; `--reg qdi`
 emits a **multi-stage QDI pipeline**. Registers are assigned 4-phase STAGES by
