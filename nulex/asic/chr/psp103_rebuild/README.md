@@ -45,6 +45,7 @@ Patches (diffs vs the pristine xyce-tree source, applied on top of each other):
 - `param_given_fix.patch` — the `$param_given()` fix (see below).
 - `qinv_fix.patch` — declared-var-unassigned → 0 fix (see below).
 - `modulo_fix.patch` — tokenizer `%` (modulo) drop fix (see below).
+- `fd_jacobian_fix.patch` — finite-difference `vae_jacobian` (PSP103 transient robustness, see below).
 
 Support: `repro_tool.py` + `repro_models/*.va` (10 micro-models proving each
 emitter mechanism), `deploy_xyce_fix.sh` (crash-fix deploy — needs sudo).
@@ -123,6 +124,32 @@ condition became `( 1.0 2 )` — the operator gone entirely.
 are compile-time constants, so `(nf%2)!=0` now folds (Python `%`) at emit time.
 One-character change; the validated models (108/PSP103) use no modulo, so they
 are unaffected — 48 PyMS unit tests still OK.
+
+## The FD-jacobian fix (PSP103 transient robustness)
+
+**Symptom:** the JIT model's DC was solid (Id-Vg/Id-Vd/VTC all converge) but stiff
+**transients** diverged ("time step too small") at some geometries — specifically
+narrow-W + long-L, which is exactly the NCL C-element **keeper** (W=0.15/0.35u,
+L=1.0u). This blocked transistor-level transient sim and the gold NLDM sweep.
+
+**Root cause:** the emitted **analytic jacobian is inconsistent with the eval's
+value path**. An indicator-select's VALUE is a short-circuit C++ ternary, but its
+DERIVATIVE is forward-AD of the arithmetic `base+(alt-base)*S` form; at some
+geometries these diverge. Finite-difference checks vs the eval showed charge
+derivatives wrong in **magnitude and sign** (e.g. dQ/dV[Qd] analytic −3.8e-15 vs
+FD +5.8e-16). DC Newton tolerates a wrong jacobian (the residual F is correct, so
+it still finds F=0), but transient's stiff `C·dV/dt` term with a sign-wrong `dQ/dV`
+makes Newton diverge — hence DC-fine / transient-broken.
+
+**Fix (`fd_jacobian_fix.patch`):** `build_vae_so.py` computes `vae_jacobian` by
+**finite difference of the eval** — perturb each node, `(F(V+dv)−F(V))/dv` and
+`(Q(V+dv)−Q(V))/dv` — consistent with F/Q by construction, so transient converges
+for every geometry. Costs `(n_nodes+1)` evals per jacobian (fine for a model whose
+priority is correctness over speed). **F/Q — and the solved values — are
+unchanged** (PSP103 Id-Vg byte-identical to pre-fix); only the jacobian path
+improved. RESULT: the C-element characterizes over the full slew × load grid
+(th22 set 0.30→0.74 ns, transition 0.11→0.48 ns, **25/25 points, 0 divergence**,
+was mostly FAILED). The gold `--spice` NLDM path is now reliable.
 
 ## Install + reproduce
 

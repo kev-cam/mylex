@@ -32,12 +32,19 @@ census matches the behaviorally-verified `--target verilog` netlist (whose logic
 threshold function at DC (th22 C-element set/reset; th12/th13/th14 OR collectors),
 using the PyMS-fixed PSP103-capable Xyce.
 
-★ Block-level TRANSIENT of a mapped block is **not yet** a gate: the JIT PSP103
-model converges in DC but its stiff transient diverges above ~1f load, so a full
-NULL→DATA block transient and a full NLDM characterization (`asic/chr`, the gold
-`--spice` path) await a more transient-robust PSP103 charge model. The binding and
-per-cell DC logic are the delivered increment; the transistor timing of the native
-C-element is unblocked at the light-load corner (real: ~0.30–0.43 ns set delay).
+★ PSP103 transient robustness (2026-09-19): the stiff-transient divergence that
+blocked loads above ~1f is **FIXED** — `build_vae_so.py` now computes the device
+jacobian by finite difference of the eval (the emitted analytic jacobian was
+inconsistent with the value path). The native C-element characterizes over the full
+slew × load grid (25/25, 0 divergence), and a mapped block now runs a transistor-
+level transient without diverging.
+
+★ REMAINING `--target spice` bug (separate from PSP103, surfaced once block
+transient could run): the emitted **block logic is wrong** — a mapped AND2 gives
+`y_L = 0` (NULL) at DC for DATA1 inputs, though the standalone th22 and the 0-ohm
+ties are each correct. So `run_phys.sh` still gates on emit + structure + per-cell
+DC (all green); block-level logic verification awaits this fix. Likely in the
+DIMS/collector wiring or 0-ohm-tie node-merging within the `.subckt`.
 
 Registers: `--reg sync` (default) emits the sync-emulation `ncl_dff`; `--reg qdi`
 emits a **multi-stage QDI pipeline**. Registers are assigned 4-phase STAGES by

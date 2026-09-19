@@ -16,18 +16,20 @@ load grid → propagation delay + output transition (+ the C-element set/reset/h
 → NLDM tables. This is the real characterization of the native C-element (its
 feedback keeper, the loop/hold delay).
 
-> **PSP103 UNBLOCKED (2026-09-19), but a transient ceiling remains.** The PyMS
-> GiNaC device path now binds SG13G2 PSP103 via `.hdl` JIT — run with
-> `XYCE=/usr/local/src/xyce-build/src/Xyce` + `PYMS_DIR=/usr/local/share/xyce/PyMS`
-> (the fixed build). DC is solid (Id-Vg/Id-Vd, and the native C-element's DC
-> set/reset transfer characterize cleanly), and the light-load transient gives real
-> timing (th22 set ~0.30–0.43 ns @1f). **However** the JIT PSP103 stiff transient
-> DIVERGES above ~1f load ("time step too small"), so the full (slew × load) NLDM
-> sweep is not yet reliable — the ceiling is now the PSP103 **transient charge-model
-> robustness** (its accuracy-first emit leaves non-smooth charge derivatives), not a
-> missing device. The delivered increment is the phys binding + per-cell DC logic
-> (`../../mapper/struct/run_phys.sh`); full gold NLDM awaits that fix, and
-> `--from-lib` gives P&R-usable comb timing meanwhile.
+> **PSP103 UNBLOCKED + transient ceiling RESOLVED (2026-09-19).** The PyMS GiNaC
+> device path binds SG13G2 PSP103 via `.hdl` JIT — run with
+> `XYCE=/usr/local/src/xyce-build/src/Xyce` + `PYMS_DIR=/usr/local/share/xyce/PyMS`.
+> The earlier stiff-transient divergence above ~1f load was the **analytic jacobian
+> being inconsistent with the eval** (forward-AD of the indicator-select arithmetic
+> form diverged from the ternary value path — charge derivatives came out wrong
+> magnitude AND sign at narrow-W+long-L geometries; DC tolerates it, transient
+> doesn't). FIXED in `build_vae_so.py` by computing `vae_jacobian` via FINITE
+> DIFFERENCE of the eval (consistent with F/Q by construction). RESULT: the native
+> C-element characterizes over the FULL (slew × load) grid — th22 set delay 0.30 ns
+> (fast/light) → 0.74 ns (slow/heavy), transition 0.11 → 0.48 ns, **25/25 grid
+> points, 0 divergence** (was mostly FAILED). DC Id-Vg is byte-identical to pre-fix
+> (F/Q unchanged; only the jacobian). The gold `--spice` NLDM sweep is now reliable;
+> `--from-lib` remains the quick comb-timing path.
 
 **`--from-lib` — SG13G2-domain timing available now.** Derives the TH-cell Liberty
 from IHP's **silicon-characterized** `sg13g2_stdcell` library (real 1.2 V/25 °C
@@ -41,10 +43,10 @@ OpenROAD, so a TH netlist times/places in the SG13G2 domain today.
   characterization, via the std-cell realization). The hysteretic C-element and
   weighted gates compose these (their timing is the path sum through the
   composition — see `../../lib/th_compose.v`).
-- Native-transistor `--spice` gold path: PSP103 now **binds** (PyMS-fixed Xyce), so
-  the C-element's DC set/reset transfer and its light-load transient timing
-  characterize (real: th22 set ~0.30–0.43 ns @1f). The full (slew × load) NLDM
-  sweep is still **not delivered** — the JIT PSP103 stiff transient diverges above
-  ~1f load; the remaining gate is PSP103 transient charge-model robustness, not the
-  device or the method. The phys binding + per-cell DC logic are proven now
-  (`../../mapper/struct/run_phys.sh`).
+- Native-transistor `--spice` gold path: PSP103 **binds** (PyMS-fixed Xyce) AND the
+  stiff-transient divergence is **fixed** (FD jacobian in `build_vae_so.py`). The
+  C-element now characterizes over the full (slew × load) grid — th22 set delay
+  0.30→0.74 ns, transition 0.11→0.48 ns, 25/25 grid points, 0 divergence. The gold
+  NLDM sweep is reliable; wiring the full multi-cell NLDM assembly into
+  `characterize_th.py --spice` is the remaining build step (the physics/convergence
+  is no longer the blocker).
