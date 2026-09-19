@@ -44,6 +44,7 @@ Patches (diffs vs the pristine xyce-tree source, applied on top of each other):
 - `xyce_device_gen_jit.patch` — node-collapse + JIT-build `processParams` + TYPE.
 - `param_given_fix.patch` — the `$param_given()` fix (see below).
 - `qinv_fix.patch` — declared-var-unassigned → 0 fix (see below).
+- `modulo_fix.patch` — tokenizer `%` (modulo) drop fix (see below).
 
 Support: `repro_tool.py` + `repro_models/*.va` (10 micro-models proving each
 emitter mechanism), `deploy_xyce_fix.sh` (crash-fix deploy — needs sudo).
@@ -107,6 +108,22 @@ has no resolved value and no assigned symbol on the reached path substitutes to
 unaffected (they resolve earlier); models whose vars are all assigned (108,
 PSP103) are untouched.
 
+## The modulo fix (the `%` drop)
+
+**Symptom:** the ADMS-benchmark and inlined-VA decks (BSIM6, and the finger-
+geometry paths) emitted C++ that wouldn't compile — `expected ')' before numeric
+constant` from a malformed condition like `( 1.0 2 )`.
+
+**Root cause:** the tokenizer's `OP` char-class (`parser.py`) omitted `%`. Since
+`tokenize()` only yields regex matches, any `%` was silently dropped:
+`if((nf % 2) != 0)` tokenized to `( nf 2 )`, and after constant-substitution the
+condition became `( 1.0 2 )` — the operator gone entirely.
+
+**Fix (`modulo_fix.patch`):** add `%` to the `OP` token pattern. Finger counts
+are compile-time constants, so `(nf%2)!=0` now folds (Python `%`) at emit time.
+One-character change; the validated models (108/PSP103) use no modulo, so they
+are unaffected — 48 PyMS unit tests still OK.
+
 ## Install + reproduce
 
     # 1. install the three files (back up first)
@@ -133,6 +150,14 @@ First sim per unique geometry takes ~2-3 min (GiNaC metaprogram compile); the
 - **qinv fix (2026-09-19):** BSIM-CMG 107/110/111 math `.so` all build (0
   undeclared identifiers, was the failure); the 107 Id-Vg deck runs end-to-end
   in Xyce (−9.5e-10 off → −94µA @Vg=1.0, monotonic); 48 PyMS unit tests OK.
+- **run_adms_tests.sh --pyms (2026-09-19, 48 decks, qinv + modulo fixes):**
+  16 OK / 32 FAIL, and **zero remaining PyMS math-build failures** — every model
+  builds its `.so`. 107 and 108 each went 0 → 8 OK (gummel/idvd/invdc/transient/
+  ringosc/cfrgeo). The 32 FAILs are all downstream of the emitter: cadence2xyce
+  netlist-conversion artifacts (`.print i(X1.d)` undefined symbol, `.NOISE`
+  field count, malformed sweep `-1.3.0`, AC/rdsgeo netlist errors), numerical
+  convergence (BSIM6), and unsupported analyses (ringosc). None are parser/
+  emitter bugs.
 
 ## Known limits
 

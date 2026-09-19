@@ -1,0 +1,22 @@
+# PyMS modulo-operator fix (the '%' drop).
+# The tokenizer OP char-class omitted '%', so re.finditer silently dropped
+# it: '(nf % 2)' tokenized to '( nf 2 )' -> the emitted condition became
+# '( 1.0 2 )' (operator gone) -> eval C++ syntax error 'expected )'.
+# Blocked every inlined-VA deck using finger-geometry macros
+# (if((nf%2)!=0)) — BSIM6 and the ADMS benchmark decks. Fix: add '%' to
+# the OP token pattern in tokenize(). Constant finger counts then fold.
+# Generated 2026-09-19T11:24:49Z
+
+diff --git a/a/parser.py b/utils/PyMS/vae/parser.py
+index 8dcb9945..26d0acab 100644
+--- a/a/parser.py
++++ b/a/parser.py
+@@ -161,7 +161,7 @@ _TOKEN_PATTERNS = [
+     ('CONTRIB', r'<\+'),
+     ('NUMBER', r'[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?(?:[fpnumkMGT])?'),
+     ('IDENT', r'[A-Za-z_\$`][A-Za-z0-9_\$]*'),
+-    ('OP', r'[+\-*/(){},;:=<>!&|~\[\]@^?.]'),
++    ('OP', r'[+\-*/%(){},;:=<>!&|~\[\]@^?.]'),
+     ('WS', r'\s+'),
+ ]
+ 
