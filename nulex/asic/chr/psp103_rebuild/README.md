@@ -42,7 +42,8 @@ Patches (diffs vs the pristine xyce-tree source, applied on top of each other):
   guard-lowering + jacobian `_san` + `hypsmooth/hypmax/Tempdep` + reserved-name
   mangling + `_safe_ex` + `ddx` stub.
 - `xyce_device_gen_jit.patch` — node-collapse + JIT-build `processParams` + TYPE.
-- `param_given_fix.patch` — **this session's fix** (see below).
+- `param_given_fix.patch` — the `$param_given()` fix (see below).
+- `qinv_fix.patch` — declared-var-unassigned → 0 fix (see below).
 
 Support: `repro_tool.py` + `repro_models/*.va` (10 micro-models proving each
 emitter mechanism), `deploy_xyce_fix.sh` (crash-fix deploy — needs sudo).
@@ -82,6 +83,30 @@ SCE/DIBL/subthreshold-swing physics (all `!$param_given`-guarded).
 
 PSP103 uses `$param_given` zero times, so it is provably unaffected — verified.
 
+## The qinv fix (declared var used before assignment)
+
+**Symptom:** the BSIM-CMG ADMS-example decks (107/110/111) failed to build —
+the emitted C++ referenced undeclared identifiers (`ETA0R_i`, `K1_i`, `K11_i`,
+`K1SAT_i`, `qinv`, ...).
+
+**Root cause:** those are `real` locals whose *only* assignment is inside a block
+the emitter skips at compile time — the instance/binning params `*_i` sit behind
+`if(BULKMOD!=0)` / `if(ASYMMOD!=0)`, and `qinv` behind an undefined
+`` `ifdef __NQSMOD3__ ``. When the guard resolves false (e.g. ASYMMOD defaults 0),
+the assignment is dropped, but later unconditional code (`ETA0R_t = ETA0R_i*...`,
+`case(TNOIMOD) 0: T0 = ueff*qinv`) still reads them. In Verilog-A a declared real
+referenced with no value is **0** (zero-init); the emitter instead leaked the
+bare identifier → a dangling C++ symbol → build failure.
+
+**Fix (`qinv_fix.patch`):** `GiNaCEmitter` records the set of module-declared
+locals (`module.variables`). In all three substitution paths — the GiNaC
+metaprogram (`_subst_known`), the C++ value path (`_subst_known_cpp`), and the
+condition path (`_cond_final_cpp`) — an identifier that is a declared local but
+has no resolved value and no assigned symbol on the reached path substitutes to
+`0` instead of leaking verbatim. Node voltages / params / assigned vars are
+unaffected (they resolve earlier); models whose vars are all assigned (108,
+PSP103) are untouched.
+
 ## Install + reproduce
 
     # 1. install the three files (back up first)
@@ -105,10 +130,11 @@ First sim per unique geometry takes ~2-3 min (GiNaC metaprogram compile); the
   1.2 → 0 V.
 - **nulex** `run_struct.sh` — STRUCTURAL FLOW GREEN, no collateral.
 - repro battery 10/10.
+- **qinv fix (2026-09-19):** BSIM-CMG 107/110/111 math `.so` all build (0
+  undeclared identifiers, was the failure); the 107 Id-Vg deck runs end-to-end
+  in Xyce (−9.5e-10 off → −94µA @Vg=1.0, monotonic); 48 PyMS unit tests OK.
 
 ## Known limits
 
-- AMS-suite decks use the cadence2xyce-inlined VA (pre-existing `qinv` parse
-  issue) — use the raw `*_main.va` / `psp103.va` instead.
 - Param-registration completeness — a few card params (e.g. `VASATCV`) are "not
   found" → default; a CV param, no effect on DC.
