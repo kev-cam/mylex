@@ -1,0 +1,35 @@
+* th22 Muller C-element -- Monte-Carlo Vt-mismatch reliability (SG13G2 PSP103)
+* Per-device DELVTO ~ AGAUSS reaches the PSP103 threshold LIVE via the PyMS
+* runtime-callback param path (one .so per geometry, no per-sample rebuild;
+* run with PYMS_CALLBACK_PARAMS=DELVTO). kvt scales the Pelgrom spread.
+* Sequence (5 ns/phase): reset(00) set(11) hold(10) reset(00) hold(01) set(11)
+*   expected Y:            0       1      1       0        0       1
+* __KVT__ / __N__ are substituted by run_sweep.sh.
+.hdl "/usr/local/share/xyce/verilog-a/psp103/psp103.va"
+.include "/usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib"
+.include "th22_mc.sp"
+
+Xdut A B Y VDD 0 th22 kvt=__KVT__
+VVDD VDD 0 1.2
+Cy   Y 0 5f
+VA A 0 PWL(0 0  4.9n 0  5n 1.2  14.9n 1.2  15n 0  24.9n 0  25n 1.2  30n 1.2)
+VB B 0 PWL(0 0  4.9n 0  5n 1.2  9.9n 1.2  10n 0  19.9n 0  20n 1.2  30n 1.2)
+
+.tran 20p 30n
+* functional levels (settled) at end of each phase
+.measure tran yrst0 FIND V(Y) AT=4.8n
+.measure tran yset1 FIND V(Y) AT=9.8n
+.measure tran yhld1 FIND V(Y) AT=14.8n
+.measure tran yrst2 FIND V(Y) AT=19.8n
+.measure tran yhld0 FIND V(Y) AT=24.8n
+.measure tran yset2 FIND V(Y) AT=29.8n
+* propagation delays: set(phase1 rise), reset(phase3 fall), set(phase6 rise)
+.measure tran tset1 TRIG V(A) VAL=0.6 RISE=1 TARG V(Y) VAL=0.6 RISE=1
+.measure tran trst  TRIG V(A) VAL=0.6 FALL=1 TARG V(Y) VAL=0.6 FALL=1
+.measure tran tset2 TRIG V(A) VAL=0.6 RISE=2 TARG V(Y) VAL=0.6 RISE=2
+
+.SAMPLING useExpr=true
+.options SAMPLES numsamples=__N__ SAMPLE_TYPE=MC SEED=1
++ measures=yrst0,yset1,yhld1,yrst2,yhld0,yset2,tset1,trst,tset2
++ OUTPUT_SAMPLE_STATS=true stdoutput=true
+.end
