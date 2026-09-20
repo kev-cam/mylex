@@ -1,0 +1,46 @@
+* th23 2-of-3 majority (NCL hysteresis) -- Monte-Carlo Vt-mismatch reliability (SG13G2 PSP103)
+* Per-device DELVTO ~ AGAUSS reaches the PSP103 threshold LIVE via the PyMS
+* runtime-callback param path (one .so per geometry, no per-sample rebuild;
+* run with PYMS_CALLBACK_PARAMS=DELVTO). kvt scales the Pelgrom spread.
+* Threshold fn: SET(Y->1) when >=2 of {A,B,C} high; RESET(Y->0) only when ALL low;
+*              HOLD prev Y when exactly 1 high.
+* Sequence (5 ns/phase):  reset(000) set(110) hold(100) reset(000) hold(001) set(011)
+*   A B C:                 000     110     100      000      001      011
+*   # high:                 0       2       1        0        1        2
+*   expected Y:             0       1       1        0        0        1
+* __KVT__ / __N__ are substituted by the run driver.
+.hdl "/usr/local/share/xyce/verilog-a/psp103/psp103.va"
+.include "/usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/th23_mc.sp"
+
+Xdut a b c y VDD 0 th23 kvt=__KVT__
+VVDD VDD 0 1.2
+Cy   y 0 5f
+* A: high in P1,P2 (5-15n) only
+VA a 0 PWL(0 0  4.9n 0  5n 1.2  14.9n 1.2  15n 0  30n 0)
+* B: high in P1 (5-10n) and P5 (25-30n)
+VB b 0 PWL(0 0  4.9n 0  5n 1.2  9.9n 1.2  10n 0  24.9n 0  25n 1.2  30n 1.2)
+* C: high in P4,P5 (20-30n)
+VC c 0 PWL(0 0  19.9n 0  20n 1.2  30n 1.2)
+
+.tran 20p 30n
+* functional levels (settled) at end of each phase
+.measure tran yrst0 FIND V(y) AT=4.8n
+.measure tran yset1 FIND V(y) AT=9.8n
+.measure tran yhld1 FIND V(y) AT=14.8n
+.measure tran yrst2 FIND V(y) AT=19.8n
+.measure tran yhld0 FIND V(y) AT=24.8n
+.measure tran yset2 FIND V(y) AT=29.8n
+* propagation delays:
+*  tset1 = set at P1 (A,B rise @5n -> Y 1st rise)
+*  trst  = reset at P3 (A falls @15n, last high input -> Y 1st fall)
+*  tset2 = set at P5 (B rises @25n, C already high -> Y 2nd rise)
+.measure tran tset1 TRIG V(a) VAL=0.6 RISE=1 TARG V(y) VAL=0.6 RISE=1
+.measure tran trst  TRIG V(a) VAL=0.6 FALL=1 TARG V(y) VAL=0.6 FALL=1
+.measure tran tset2 TRIG V(b) VAL=0.6 RISE=2 TARG V(y) VAL=0.6 RISE=2
+
+.SAMPLING useExpr=true
+.options SAMPLES numsamples=__N__ SAMPLE_TYPE=MC SEED=1
++ measures=yrst0,yset1,yhld1,yrst2,yhld0,yset2,tset1,trst,tset2
++ OUTPUT_SAMPLE_STATS=true stdoutput=true
+.end

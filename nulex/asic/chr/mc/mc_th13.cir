@@ -1,0 +1,48 @@
+* th13 1-of-3 threshold (OR3, degenerate/no-hysteresis) -- Monte-Carlo Vt-mismatch reliability (SG13G2 PSP103)
+* Per-device DELVTO ~ AGAUSS reaches the PSP103 threshold LIVE via the PyMS
+* runtime-callback param path (one .so per geometry, no per-sample rebuild;
+* run with PYMS_CALLBACK_PARAMS=DELVTO). kvt scales the Pelgrom spread.
+* Combinational OR3 sequence (5 ns/phase), toggling to all-0 between each single
+* input so every input path is exercised on its own rise AND fall:
+*   ph0 000  ph1 A00  ph2 000  ph3 0B0  ph4 000  ph5 00C  ph6 000  ph7 ABC  ph8 000
+*   expected Y: 0     1       0      1       0      1       0      1       0
+* Proves Y=1 iff ANY input high; Y=0 iff all low.
+* __KVT__ / __N__ are substituted by the run driver.
+.hdl "/usr/local/share/xyce/verilog-a/psp103/psp103.va"
+.include "/usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/th13_mc.sp"
+
+Xdut a b c y VDD 0 th13 kvt=__KVT__
+VVDD VDD 0 1.2
+Cy   y 0 5f
+* one PWL per input; ~0.1 ns edges, ~5 ns settled phases
+VA a 0 PWL(0 0  4.9n 0  5n 1.2  9.9n 1.2  10n 0  34.9n 0  35n 1.2  39.9n 1.2  40n 0  45n 0)
+VB b 0 PWL(0 0  14.9n 0  15n 1.2  19.9n 1.2  20n 0  34.9n 0  35n 1.2  39.9n 1.2  40n 0  45n 0)
+VC c 0 PWL(0 0  24.9n 0  25n 1.2  29.9n 1.2  30n 0  34.9n 0  35n 1.2  39.9n 1.2  40n 0  45n 0)
+
+.tran 20p 45n
+* functional levels (settled) at end of each phase; expected side in the name
+.measure tran y0lo FIND V(y) AT=4.8n
+.measure tran y1hi FIND V(y) AT=9.8n
+.measure tran y2lo FIND V(y) AT=14.8n
+.measure tran y3hi FIND V(y) AT=19.8n
+.measure tran y4lo FIND V(y) AT=24.8n
+.measure tran y5hi FIND V(y) AT=29.8n
+.measure tran y6lo FIND V(y) AT=34.8n
+.measure tran y7hi FIND V(y) AT=39.8n
+.measure tran y8lo FIND V(y) AT=44.8n
+* propagation delays: per-input Y rise/fall + the all-inputs rise/fall
+.measure tran tr_a   TRIG V(a) VAL=0.6 RISE=1 TARG V(y) VAL=0.6 RISE=1
+.measure tran tf_a   TRIG V(a) VAL=0.6 FALL=1 TARG V(y) VAL=0.6 FALL=1
+.measure tran tr_b   TRIG V(b) VAL=0.6 RISE=1 TARG V(y) VAL=0.6 RISE=2
+.measure tran tf_b   TRIG V(b) VAL=0.6 FALL=1 TARG V(y) VAL=0.6 FALL=2
+.measure tran tr_c   TRIG V(c) VAL=0.6 RISE=1 TARG V(y) VAL=0.6 RISE=3
+.measure tran tf_c   TRIG V(c) VAL=0.6 FALL=1 TARG V(y) VAL=0.6 FALL=3
+.measure tran tr_all TRIG V(a) VAL=0.6 RISE=2 TARG V(y) VAL=0.6 RISE=4
+.measure tran tf_all TRIG V(a) VAL=0.6 FALL=2 TARG V(y) VAL=0.6 FALL=4
+
+.SAMPLING useExpr=true
+.options SAMPLES numsamples=__N__ SAMPLE_TYPE=MC SEED=1
++ measures=y0lo,y1hi,y2lo,y3hi,y4lo,y5hi,y6lo,y7hi,y8lo,tr_a,tf_a,tr_b,tf_b,tr_c,tf_c,tr_all,tf_all
++ OUTPUT_SAMPLE_STATS=true stdoutput=true
+.end

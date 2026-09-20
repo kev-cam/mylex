@@ -1,0 +1,43 @@
+* th14 1-of-4 threshold (OR4, combinational) -- Monte-Carlo Vt-mismatch reliability (SG13G2 PSP103)
+* Per-device DELVTO ~ AGAUSS reaches the PSP103 threshold LIVE via the PyMS
+* runtime-callback param path (one .so per geometry, no per-sample rebuild;
+* run with PYMS_CALLBACK_PARAMS=DELVTO). kvt scales the Pelgrom spread.
+* OR4 stimulus (5 ns/phase, 0.1 ns edges): all0  A-only  B-only  C-only  D-only  all1  all0
+*   expected Y:                              0     1       1       1       1       1     0
+* Proves Y=1 iff ANY input high (the single-high input hands off A->B->C->D with Y held high).
+* __KVT__ / __N__ are substituted by the run driver.
+.hdl "/usr/local/share/xyce/verilog-a/psp103/psp103.va"
+.include "/usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/th14_mc.sp"
+
+Xdut a b c d y VDD 0 th14 kvt=__KVT__
+VVDD VDD 0 1.2
+Cy   y 0 5f
+* One PWL source per input. Rise/fall edges are 0.1 ns, completing AT the 5 ns phase boundary.
+* A high in phase1 (5-10n) and phase5 (25-30n)
+VA a 0 PWL(0 0  4.9n 0  5n 1.2  9.9n 1.2  10n 0  24.9n 0  25n 1.2  29.9n 1.2  30n 0  35n 0)
+* B high in phase2 (10-15n) and phase5 (25-30n)
+VB b 0 PWL(0 0  9.9n 0  10n 1.2  14.9n 1.2  15n 0  24.9n 0  25n 1.2  29.9n 1.2  30n 0  35n 0)
+* C high in phase3 (15-20n) and phase5 (25-30n)
+VC c 0 PWL(0 0  14.9n 0  15n 1.2  19.9n 1.2  20n 0  24.9n 0  25n 1.2  29.9n 1.2  30n 0  35n 0)
+* D high in phase4 (20-25n) through phase5 (25-30n) (stays high across the 25n boundary)
+VD d 0 PWL(0 0  19.9n 0  20n 1.2  29.9n 1.2  30n 0  35n 0)
+
+.tran 20p 35n
+* functional levels (settled) at end of each phase (phase-end -0.2 ns)
+.measure tran y0 FIND V(y) AT=4.8n    ; expect LOW  (all inputs 0)
+.measure tran y1 FIND V(y) AT=9.8n    ; expect HIGH (A only)
+.measure tran y2 FIND V(y) AT=14.8n   ; expect HIGH (B only)
+.measure tran y3 FIND V(y) AT=19.8n   ; expect HIGH (C only)
+.measure tran y4 FIND V(y) AT=24.8n   ; expect HIGH (D only)
+.measure tran y5 FIND V(y) AT=29.8n   ; expect HIGH (all high)
+.measure tran y6 FIND V(y) AT=34.8n   ; expect LOW  (all inputs 0)
+* propagation delays: Y rise (A drives it at 5n) and Y fall (all release at 30n; D is last-held)
+.measure tran tset1 TRIG V(a) VAL=0.6 RISE=1 TARG V(y) VAL=0.6 RISE=1
+.measure tran trst  TRIG V(d) VAL=0.6 FALL=1 TARG V(y) VAL=0.6 FALL=1
+
+.SAMPLING useExpr=true
+.options SAMPLES numsamples=__N__ SAMPLE_TYPE=MC SEED=1
++ measures=y0,y1,y2,y3,y4,y5,y6,tset1,trst
++ OUTPUT_SAMPLE_STATS=true stdoutput=true
+.end

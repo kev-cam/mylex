@@ -1,0 +1,41 @@
+* th12 OR2 (1-of-2 threshold, degenerate, no hysteresis) -- Monte-Carlo Vt-mismatch reliability (SG13G2 PSP103)
+* Per-device DELVTO ~ AGAUSS reaches the PSP103 threshold LIVE via the PyMS
+* runtime-callback param path (one .so per geometry, no per-sample rebuild;
+* run with PYMS_CALLBACK_PARAMS=DELVTO). kvt scales the Pelgrom spread.
+* Sequence (5 ns/phase): 00 -> 10 -> 00 -> 01 -> 11 -> 00
+*   expected Y:           0     1     0     1     1     0
+*   (proves Y=1 iff A OR B high; each input drives an isolated Y rise+fall)
+* __KVT__ / __N__ are substituted per run.
+.hdl "/usr/local/share/xyce/verilog-a/psp103/psp103.va"
+.include "/usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/th12_mc.sp"
+
+Xdut a b y VDD 0 th12 kvt=__KVT__
+VVDD VDD 0 1.2
+Cy   y 0 5f
+VA a 0 PWL(0 0  4.9n 0  5n 1.2  9.9n 1.2  10n 0  19.9n 0  20n 1.2  24.9n 1.2  25n 0  30n 0)
+VB b 0 PWL(0 0  14.9n 0  15n 1.2  24.9n 1.2  25n 0  30n 0)
+
+.tran 20p 30n
+* functional levels (settled) at phase-end -0.2ns
+.measure tran y0 FIND V(y) AT=4.8n
+.measure tran y1 FIND V(y) AT=9.8n
+.measure tran y2 FIND V(y) AT=14.8n
+.measure tran y3 FIND V(y) AT=19.8n
+.measure tran y4 FIND V(y) AT=24.8n
+.measure tran y5 FIND V(y) AT=29.8n
+* propagation delays (input 0.6V cross -> Y 0.6V cross)
+* tset_a: Y rise driven by A alone (00->10 @5n)
+.measure tran tset_a TRIG V(a) VAL=0.6 RISE=1 TARG V(y) VAL=0.6 RISE=1
+* trst_a: Y fall driven by A alone (10->00 @10n)
+.measure tran trst_a TRIG V(a) VAL=0.6 FALL=1 TARG V(y) VAL=0.6 FALL=1
+* tset_b: Y rise driven by B alone (00->01 @15n)
+.measure tran tset_b TRIG V(b) VAL=0.6 RISE=1 TARG V(y) VAL=0.6 RISE=2
+* trst_ab: Y fall driven by both A,B falling (11->00 @25n)
+.measure tran trst_ab TRIG V(b) VAL=0.6 FALL=1 TARG V(y) VAL=0.6 FALL=2
+
+.SAMPLING useExpr=true
+.options SAMPLES numsamples=__N__ SAMPLE_TYPE=MC SEED=1
++ measures=y0,y1,y2,y3,y4,y5,tset_a,trst_a,tset_b,trst_ab
++ OUTPUT_SAMPLE_STATS=true stdoutput=true
+.end

@@ -1,0 +1,50 @@
+* th34w2 weighted-3-of-4 threshold cell -- Monte-Carlo Vt-mismatch reliability (SG13G2 PSP103)
+* Threshold function: SET when 2*A+B+C+D >= 3 ; RESET only when all low ; HOLD otherwise.
+* Per-device DELVTO ~ AGAUSS reaches the PSP103 threshold LIVE via the PyMS
+* runtime-callback param path (one .so per geometry; PYMS_CALLBACK_PARAMS=DELVTO).
+* kvt scales the Pelgrom spread. __KVT__ / __N__ substituted by the run driver.
+*
+* Sequence (5 ns/phase):  A B C D
+*   P0 reset    0 0 0 0  ->  Y=0   (all low -> RESET)
+*   P1 set A&B  1 1 0 0  ->  Y=1   (2+1=3 >= 3 SET, Y rises)
+*   P2 hold A   1 0 0 0  ->  Y=1   (2 < 3, HOLD high; B falls)
+*   P3 reset    0 0 0 0  ->  Y=0   (all low -> RESET, Y falls; A falls)
+*   P4 holdlo BC 0 1 1 0 ->  Y=0   (2 < 3, HOLD low; B,C rise)
+*   P5 set BCD  0 1 1 1  ->  Y=1   (1+1+1=3 >= 3 SET, Y rises; D last-arriving)
+.hdl "/usr/local/share/xyce/verilog-a/psp103/psp103.va"
+.include "/usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/th34w2_mc.sp"
+
+Xdut a b c d y VDD 0 th34w2 kvt=__KVT__
+VVDD VDD 0 1.2
+Cy   y 0 5f
+
+* PWL inputs (levels per phase; ~0.1 ns edges at phase boundaries)
+VA a 0 PWL(0 0  4.9n 0  5n 1.2  14.9n 1.2  15n 0  30n 0)
+VB b 0 PWL(0 0  4.9n 0  5n 1.2  9.9n 1.2  10n 0  19.9n 0  20n 1.2  30n 1.2)
+VC c 0 PWL(0 0  19.9n 0  20n 1.2  30n 1.2)
+VD d 0 PWL(0 0  24.9n 0  25n 1.2  30n 1.2)
+
+.tran 20p 30n
+
+* --- functional levels (settled) at end of each phase, -0.2 ns ---
+.measure tran yrst0 FIND V(y) AT=4.8n     ; P0 reset  expect LOW
+.measure tran yset1 FIND V(y) AT=9.8n     ; P1 set    expect HIGH
+.measure tran yhld1 FIND V(y) AT=14.8n    ; P2 hold   expect HIGH
+.measure tran yrst2 FIND V(y) AT=19.8n    ; P3 reset  expect LOW
+.measure tran yhld0 FIND V(y) AT=24.8n    ; P4 holdlo expect LOW
+.measure tran yset2 FIND V(y) AT=29.8n    ; P5 set    expect HIGH
+
+* --- propagation delays: last-arriving input -> Y crossing ---
+* tset1: P1 set A&B, A&B rise together at 5n -> Y rise #1
+.measure tran tset1 TRIG V(a) VAL=0.6 RISE=1 TARG V(y) VAL=0.6 RISE=1
+* trst : P3 reset, A (sole high in P2) falls at 15n -> Y fall #1
+.measure tran trst  TRIG V(a) VAL=0.6 FALL=1 TARG V(y) VAL=0.6 FALL=1
+* tset2: P5 set B&C&D, D last-arriving rises at 25n -> Y rise #2
+.measure tran tset2 TRIG V(d) VAL=0.6 RISE=1 TARG V(y) VAL=0.6 RISE=2
+
+.SAMPLING useExpr=true
+.options SAMPLES numsamples=__N__ SAMPLE_TYPE=MC SEED=1
++ measures=yrst0,yset1,yhld1,yrst2,yhld0,yset2,tset1,trst,tset2
++ OUTPUT_SAMPLE_STATS=true stdoutput=true
+.end
