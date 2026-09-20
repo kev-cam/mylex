@@ -21,7 +21,8 @@ Two paths:
             Real SG13G2 timing at the lib's corner (1.2V/25C), available now.
 
 Usage: characterize_th.py --from-lib <stdcell.lib> [out.lib]
-       characterize_th.py --spice [out.lib]
+       characterize_th.py --spice [out.lib] [--cell thNN]
+  --cell thNN   characterize just one cell (for parallel per-cell runs).
 """
 import os, re, subprocess, sys
 
@@ -33,6 +34,28 @@ PSP103_VA = "/usr/local/share/xyce/verilog-a/psp103/psp103.va"
 # comb TH cell -> the SG13G2 std cell realizing the same function (single-cell map)
 TH_MAP = {"th22": "and2_1", "th12": "or2_1", "th13": "or3_1", "th33": "and3_1", "th44": "and4_1"}
 PIN_MAP = {"A": "a", "B": "b", "C": "c", "D": "d", "X": "y"}
+
+# --- gold --spice NLDM grid + cell set ---------------------------------------
+HERE = os.path.dirname(os.path.abspath(__file__))
+SUP = os.path.join(HERE, "..", "..", "lib", "th_cells_sg13g2.sp")   # th13/th14
+INCLUDES = [os.path.join(CELLS, "th22.sp"), os.path.join(CELLS, "th_gates.sp"), SUP]
+VDD = 1.2
+# input transition (slew) [s] and output load [F] axes of the NLDM tables
+SLEWS = [20e-12, 50e-12, 100e-12, 200e-12, 400e-12]
+LOADS = [1e-15, 5e-15, 10e-15, 20e-15, 50e-15]
+# each native transistor TH cell + its input pins (port order is <inputs> Y VDD VSS)
+SPICE_CELLS = [
+    ("th22",   ["A", "B"]),        # 2-of-2 Muller C-element
+    ("th12",   ["A", "B"]),        # 1-of-2 (OR2)
+    ("th13",   ["A", "B", "C"]),   # 1-of-3 (OR3)
+    ("th14",   ["A", "B", "C", "D"]),   # 1-of-4 (OR4)
+    ("th23",   ["A", "B", "C"]),   # 2-of-3 majority
+    ("th33",   ["A", "B", "C"]),   # 3-of-3 (AND3)
+    ("th34w2", ["A", "B", "C", "D"]),   # weighted 3-of-4 (A weight 2)
+]
+# estimated input pin capacitance [pf] (a placeholder; delay/transition are the
+# measured gold, Cin is refined from --from-lib or a dedicated Q-sweep later)
+CIN_PF = 0.001
 
 
 def spice_probe():
@@ -50,7 +73,136 @@ def spice_probe():
         and "rror" not in r.stdout.split("Total")[0]
 
 
-def run_spice(outlib):
+def _deck(cell, pins, arc, wd):
+    """Build a .step (slew x load) transient deck for one (cell, arc). arc='set'
+    drives the inputs 0->VDD together (rail bundle -> Y rises); 'reset' drives
+    VDD->0 (-> Y falls). Both cross every threshold gate's switch point."""
+    L = ["* %s %s-arc NLDM sweep" % (cell, arc),
+         '.hdl "%s"' % PSP103_VA, '.include "%s"' % MODEL]
+    L += ['.include "%s"' % inc for inc in INCLUDES]
+    L += [".param CL=1f", ".param TR=50p", "Vdd VDD 0 %g" % VDD, "Vss VSS 0 0"]
+    for i, p in enumerate(pins):
+        if arc == "set":
+            L.append("V%d %s 0 PWL(0 0 2n 0 '2n+TR' %g)" % (i, p, VDD))
+        else:
+            L.append("V%d %s 0 PWL(0 %g 2n %g '2n+TR' 0)" % (i, p, VDD, VDD))
+    L.append("X1 %s Y VDD VSS %s" % (" ".join(pins), cell))
+    L.append("Cl Y VSS {CL}")
+    L.append(".tran 2p 8n")
+    edge, e2 = ("RISE", "RISE") if arc == "set" else ("FALL", "FALL")
+    lo, hi = ("0.24", "0.96") if arc == "set" else ("0.96", "0.24")
+    L.append(".measure tran td TRIG v(%s) VAL=0.6 %s=1 TARG v(Y) VAL=0.6 %s=1" % (pins[0], edge, e2))
+    L.append(".measure tran ts TRIG v(Y) VAL=%s %s=1 TARG v(Y) VAL=%s %s=1" % (lo, edge, hi, e2))
+    L.append(".step TR LIST " + " ".join("%gp" % (s * 1e12) for s in SLEWS))    # inner axis
+    L.append(".step CL LIST " + " ".join("%gf" % (c * 1e15) for c in LOADS))    # outer axis
+    L.append(".end")
+    path = os.path.join(wd, "%s_%s.cir" % (cell, arc))
+    open(path, "w").write("\n".join(L) + "\n")
+    return path
+
+
+def _read_mt(path):
+    d = {}
+    try:
+        for ln in open(path):
+            m = re.match(r"\s*(\w+)\s*=\s*(\S+)", ln)
+            if m:
+                try:
+                    d[m.group(1).upper()] = float(m.group(2))
+                except ValueError:
+                    d[m.group(1).upper()] = None
+    except OSError:
+        pass
+    return d.get("TD"), d.get("TS")
+
+
+def _sweep(cell, pins, arc, wd):
+    """Run the (cell, arc) sweep in Xyce; return (delay[slew][load], trans[...])
+    in ns, plus a failed-point count. .step nesting: the FIRST .step (TR/slew) is
+    the inner loop, the LAST (CL/load) the outer -> mt index = load*nslews+slew."""
+    cir = _deck(cell, pins, arc, wd)
+    subprocess.run([XYCE, cir], capture_output=True, text=True, timeout=1800,
+                   cwd=wd)
+    ns, nl = len(SLEWS), len(LOADS)
+    dly = [[None] * nl for _ in range(ns)]
+    trs = [[None] * nl for _ in range(ns)]
+    fails = 0
+    for li in range(nl):
+        for si in range(ns):
+            td, ts = _read_mt("%s.mt%d" % (cir, li * ns + si))
+            if td is None or ts is None:
+                fails += 1
+            dly[si][li] = None if td is None else td * 1e9    # s -> ns
+            trs[si][li] = None if ts is None else ts * 1e9
+    return dly, trs, fails
+
+
+def _fill(table):
+    """Replace any failed (None) grid point by the nearest valid value in its row
+    (then column), so the Liberty table is complete; returns (table, n_filled)."""
+    ns = len(table); nl = len(table[0]); n = 0
+    for si in range(ns):
+        for li in range(nl):
+            if table[si][li] is None:
+                n += 1
+                cand = ([table[si][j] for j in range(nl) if table[si][j] is not None] or
+                        [table[i][li] for i in range(ns) if table[i][li] is not None])
+                table[si][li] = cand[0] if cand else 0.0
+    return table, n
+
+
+def _lut(name, table):
+    rows = ", \\\n      ".join('"%s"' % ", ".join("%.6g" % v for v in row) for row in table)
+    return "      %s (NLDM_%dx%d) {\n        values ( %s );\n      }" % (
+        name, len(SLEWS), len(LOADS), rows)
+
+
+def _liberty_cell(cell, pins, rise, fall):
+    lp = [p.lower() for p in pins]
+    lo = ["  cell (%s) {" % cell,
+          "    area : %d;" % len(pins),
+          '    cell_footprint : "ncl_th";']
+    for p in lp:
+        lo += ["    pin (%s) {" % p, '      direction : "input";',
+               "      capacitance : %g;" % CIN_PF, "    }"]
+    lo += ["    pin (y) {", '      direction : "output";',
+           "      max_capacitance : %g;" % (LOADS[-1] * 1e12),
+           "      timing () {",
+           '        related_pin : "%s";' % " ".join(lp),
+           "        timing_sense : positive_unate;",
+           "        timing_type : combinational;",
+           _lut("cell_rise", rise[0]),
+           _lut("rise_transition", rise[1]),
+           _lut("cell_fall", fall[0]),
+           _lut("fall_transition", fall[1]),
+           "      }", "    }", "  }"]
+    return "\n".join(lo)
+
+
+def _library_header():
+    idx1 = ", ".join("%.4g" % (s * 1e9) for s in SLEWS)   # ns
+    idx2 = ", ".join("%.4g" % (c * 1e12) for c in LOADS)  # pf
+    return "\n".join([
+        "library (ncl_th_sg13g2_spice) {",
+        '  comment : "nulex native TH-cell NLDM from transistor-level Xyce (PSP103); generated by characterize_th.py --spice";',
+        "  delay_model : table_lookup;",
+        "  time_unit : \"1ns\";", "  voltage_unit : \"1V\";",
+        "  capacitive_load_unit (1,pf);",
+        "  nom_voltage : 1.2;  nom_temperature : 25;",
+        "  input_threshold_pct_rise : 50;  input_threshold_pct_fall : 50;",
+        "  output_threshold_pct_rise : 50;  output_threshold_pct_fall : 50;",
+        "  slew_lower_threshold_pct_rise : 20;  slew_upper_threshold_pct_rise : 80;",
+        "  slew_lower_threshold_pct_fall : 20;  slew_upper_threshold_pct_fall : 80;",
+        "  lu_table_template (NLDM_%dx%d) {" % (len(SLEWS), len(LOADS)),
+        "    variable_1 : input_net_transition;",
+        "    variable_2 : total_output_net_capacitance;",
+        '    index_1 ("%s");' % idx1,
+        '    index_2 ("%s");' % idx2,
+        "  }",
+    ])
+
+
+def run_spice(outlib, only_cell=None):
     if not os.path.exists(MODEL):
         sys.exit("SG13G2 model card missing: %s" % MODEL)
     if not spice_probe():
@@ -58,16 +210,26 @@ def run_spice(outlib):
                  "PyMS-fixed build (/usr/local/src/xyce-build/src/Xyce, with\n"
                  "PYMS_DIR=/usr/local/share/xyce/PyMS), which binds PSP103 via .hdl JIT.\n"
                  "Meanwhile use: characterize_th.py --from-lib <sg13g2_stdcell.lib>" % XYCE)
-    # PSP103 binds (PyMS-fixed Xyce) AND the stiff-transient divergence is fixed
-    # (build_vae_so.py FD jacobian): the native C-element now characterizes over the
-    # FULL slew x load grid (th22 set 0.30->0.74 ns, transition 0.11->0.48 ns, 25/25
-    # grid points, 0 divergence). The physics/convergence is no longer a blocker;
-    # the remaining work is wiring the multi-cell (slew x load) transient sweep +
-    # NLDM-table assembly here (per-arc .measure over the grid, one cell at a time).
-    sys.exit("PSP103 present + transient FIXED (FD jacobian). Gold NLDM path is\n"
-             "reliable (proven on th22: full slew x load grid, 25/25). The multi-cell\n"
-             "sweep+NLDM assembly is the remaining build in this script; --from-lib\n"
-             "still gives quick comb-cell P&R timing.")
+    wd = os.path.abspath(outlib) + ".sweep"   # absolute: decks/.mt paths are cwd-independent
+    os.makedirs(wd, exist_ok=True)
+    cells = [(c, p) for c, p in SPICE_CELLS if only_cell in (None, c)]
+    blocks, total_fill = [], 0
+    for cell, pins in cells:
+        rd, rt, rf = _sweep(cell, pins, "set", wd)
+        fd, ft, ff = _sweep(cell, pins, "reset", wd)
+        rd, n1 = _fill(rd); rt, n2 = _fill(rt); fd, n3 = _fill(fd); ft, n4 = _fill(ft)
+        nfill = n1 + n2 + n3 + n4
+        total_fill += nfill
+        blocks.append(_liberty_cell(cell, pins, (rd, rt), (fd, ft)))
+        sys.stderr.write("  %-7s set/reset swept (%d filled); set delay %.3f-%.3f ns\n"
+                         % (cell, nfill, min(min(r) for r in rd), max(max(r) for r in rd)))
+    text = _library_header() + "\n" + "\n".join(blocks) + "\n}\n"
+    open(outlib, "w").write(text)
+    print("wrote %s: %d native TH cells, transistor-level NLDM (PSP103, %dx%d slew x load)"
+          % (outlib, len(cells), len(SLEWS), len(LOADS)))
+    print("  cells: %s" % ", ".join(c for c, _ in cells))
+    if total_fill:
+        print("  NOTE: %d grid point(s) failed to converge and were nearest-filled." % total_fill)
 
 
 def cell_block(src, macro):
@@ -111,6 +273,10 @@ if __name__ == "__main__":
         outlib = a[i + 2] if len(a) > i + 2 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "th_cells_sg13g2.lib")
         derive_from_lib(stdlib, outlib)
     elif "--spice" in a:
-        run_spice(a[a.index("--spice") + 1] if len(a) > a.index("--spice") + 1 else "th_cells_sg13g2.lib")
+        cell = a[a.index("--cell") + 1] if "--cell" in a else None
+        rest = [x for i, x in enumerate(a)
+                if x not in ("--spice", "--cell") and (i == 0 or a[i - 1] != "--cell")]
+        outlib = rest[0] if rest else os.path.join(HERE, "th_cells_sg13g2_spice.lib")
+        run_spice(outlib, only_cell=cell)
     else:
         sys.exit(__doc__)

@@ -43,10 +43,16 @@ OpenROAD, so a TH netlist times/places in the SG13G2 domain today.
   characterization, via the std-cell realization). The hysteretic C-element and
   weighted gates compose these (their timing is the path sum through the
   composition — see `../../lib/th_compose.v`).
-- Native-transistor `--spice` gold path: PSP103 **binds** (PyMS-fixed Xyce) AND the
-  stiff-transient divergence is **fixed** (FD jacobian in `build_vae_so.py`). The
-  C-element now characterizes over the full (slew × load) grid — th22 set delay
-  0.30→0.74 ns, transition 0.11→0.48 ns, 25/25 grid points, 0 divergence. The gold
-  NLDM sweep is reliable; wiring the full multi-cell NLDM assembly into
-  `characterize_th.py --spice` is the remaining build step (the physics/convergence
-  is no longer the blocker).
+- Native-transistor `--spice` gold path: **DELIVERED.** PSP103 binds (PyMS-fixed
+  Xyce), the stiff-transient divergence is fixed (FD jacobian in `build_vae_so.py`),
+  and `characterize_th.py --spice` now runs the full multi-cell (slew × load)
+  transient sweep + NLDM assembly. Output `th_cells_sg13g2_spice.lib`: **7 native
+  TH cells** (th22, th12, th13, th14, th23, th33, th34w2), each with measured
+  `cell_rise/fall` + `rise/fall_transition` over a 5×5 grid — **700/700 grid points
+  converged, 0 nearest-filled** — and it **reads cleanly in OpenROAD**
+  (`read_liberty` OK). Set delays: 0.07 ns (OR collectors) → 0.74 ns (C-element /
+  AND3); the C-element's reset (fall) is slower than its set (rise), the keeper
+  signature the `--from-lib` realization can't capture. `--cell thNN` characterizes
+  one cell (for parallel per-cell runs). Input pin cap is a placeholder estimate
+  (0.001 pf) — the delay/transition tables are the measured gold; refine Cin from
+  `--from-lib` or a dedicated Q-sweep.
