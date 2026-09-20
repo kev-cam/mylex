@@ -20,11 +20,11 @@ library (ncl_th_sg13g2_spice) {
     cell_footprint : "ncl_th";
     pin (a) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00180111;
     }
     pin (b) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.0016247;
     }
     pin (y) {
       direction : "output";
@@ -69,11 +69,11 @@ library (ncl_th_sg13g2_spice) {
     cell_footprint : "ncl_th";
     pin (a) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00205779;
     }
     pin (b) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00216127;
     }
     pin (y) {
       direction : "output";
@@ -118,15 +118,15 @@ library (ncl_th_sg13g2_spice) {
     cell_footprint : "ncl_th";
     pin (a) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00263584;
     }
     pin (b) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00268942;
     }
     pin (c) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00283038;
     }
     pin (y) {
       direction : "output";
@@ -171,19 +171,19 @@ library (ncl_th_sg13g2_spice) {
     cell_footprint : "ncl_th";
     pin (a) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00335896;
     }
     pin (b) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00341796;
     }
     pin (c) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00351428;
     }
     pin (d) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00371657;
     }
     pin (y) {
       direction : "output";
@@ -228,15 +228,15 @@ library (ncl_th_sg13g2_spice) {
     cell_footprint : "ncl_th";
     pin (a) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00392096;
     }
     pin (b) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.0034707;
     }
     pin (c) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.003079;
     }
     pin (y) {
       direction : "output";
@@ -281,15 +281,15 @@ library (ncl_th_sg13g2_spice) {
     cell_footprint : "ncl_th";
     pin (a) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00260219;
     }
     pin (b) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00252552;
     }
     pin (c) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00232483;
     }
     pin (y) {
       direction : "output";
@@ -334,19 +334,19 @@ library (ncl_th_sg13g2_spice) {
     cell_footprint : "ncl_th";
     pin (a) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00532269;
     }
     pin (b) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.0038428;
     }
     pin (c) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00370449;
     }
     pin (d) {
       direction : "input";
-      capacitance : 0.001;
+      capacitance : 0.00346181;
     }
     pin (y) {
       direction : "output";

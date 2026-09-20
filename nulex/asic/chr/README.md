@@ -53,6 +53,8 @@ OpenROAD, so a TH netlist times/places in the SG13G2 domain today.
   (`read_liberty` OK). Set delays: 0.07 ns (OR collectors) → 0.74 ns (C-element /
   AND3); the C-element's reset (fall) is slower than its set (rise), the keeper
   signature the `--from-lib` realization can't capture. `--cell thNN` characterizes
-  one cell (for parallel per-cell runs). Input pin cap is a placeholder estimate
-  (0.001 pf) — the delay/transition tables are the measured gold; refine Cin from
-  `--from-lib` or a dedicated Q-sweep.
+  one cell (for parallel per-cell runs). **Input pin capacitance is measured** via
+  a per-pin Q-sweep (ramp the pin 0→VDD with others low, integrate the current
+  into it, Cin = |Q|/VDD): 1.6 fF (th22) → 3.7 fF (th14), and it captures per-pin
+  asymmetry — th34w2 pin A (weight 2) is 5.3 fF vs ~3.5 fF for B/C/D. So the
+  library now has measured delay, transition, AND input-cap.

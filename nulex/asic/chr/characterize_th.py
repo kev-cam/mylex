@@ -101,7 +101,7 @@ def _deck(cell, pins, arc, wd):
     return path
 
 
-def _read_mt(path):
+def _mt_dict(path):
     d = {}
     try:
         for ln in open(path):
@@ -113,7 +113,41 @@ def _read_mt(path):
                     d[m.group(1).upper()] = None
     except OSError:
         pass
+    return d
+
+
+def _read_mt(path):
+    d = _mt_dict(path)
     return d.get("TD"), d.get("TS")
+
+
+def _cin(cell, pins, wd):
+    """Per-input-pin capacitance [pf] via a Q-sweep: ramp the target pin 0->VDD
+    (other inputs held low), integrate the current delivered INTO it, Cin=|Q|/VDD.
+    Includes the Miller charge for cells whose output moves when one input arrives.
+    Falls back to the CIN_PF placeholder if a measure fails."""
+    caps = {}
+    for tgt in pins:
+        L = ["* %s Cin(%s) Q-sweep" % (cell, tgt),
+             '.hdl "%s"' % PSP103_VA, '.include "%s"' % MODEL]
+        L += ['.include "%s"' % inc for inc in INCLUDES]
+        L += ["Vdd VDD 0 %g" % VDD, "Vss VSS 0 0"]
+        for p in pins:
+            if p == tgt:
+                L.append("V%s %s 0 PWL(0 0 1n 0 2n %g)" % (p, p, VDD))
+            else:
+                L.append("V%s %s 0 0" % (p, p))
+        L.append("X1 %s Y VDD VSS %s" % (" ".join(pins), cell))
+        L.append("Cl Y VSS 2f")
+        L.append(".tran 1p 3n")
+        L.append(".measure tran q INTEGRAL I(V%s) FROM=1n TO=2n" % tgt)
+        L.append(".end")
+        cir = os.path.join(wd, "%s_cin_%s.cir" % (cell, tgt))
+        open(cir, "w").write("\n".join(L) + "\n")
+        subprocess.run([XYCE, cir], capture_output=True, text=True, timeout=600, cwd=wd)
+        q = _mt_dict("%s.mt0" % cir).get("Q")
+        caps[tgt] = (abs(q) / VDD * 1e12) if q is not None else CIN_PF   # pf
+    return caps
 
 
 def _sweep(cell, pins, arc, wd):
@@ -157,14 +191,14 @@ def _lut(name, table):
         name, len(SLEWS), len(LOADS), rows)
 
 
-def _liberty_cell(cell, pins, rise, fall):
+def _liberty_cell(cell, pins, rise, fall, cin):
     lp = [p.lower() for p in pins]
     lo = ["  cell (%s) {" % cell,
           "    area : %d;" % len(pins),
           '    cell_footprint : "ncl_th";']
-    for p in lp:
-        lo += ["    pin (%s) {" % p, '      direction : "input";',
-               "      capacitance : %g;" % CIN_PF, "    }"]
+    for p in pins:
+        lo += ["    pin (%s) {" % p.lower(), '      direction : "input";',
+               "      capacitance : %.6g;" % cin.get(p, CIN_PF), "    }"]
     lo += ["    pin (y) {", '      direction : "output";',
            "      max_capacitance : %g;" % (LOADS[-1] * 1e12),
            "      timing () {",
@@ -220,9 +254,11 @@ def run_spice(outlib, only_cell=None):
         rd, n1 = _fill(rd); rt, n2 = _fill(rt); fd, n3 = _fill(fd); ft, n4 = _fill(ft)
         nfill = n1 + n2 + n3 + n4
         total_fill += nfill
-        blocks.append(_liberty_cell(cell, pins, (rd, rt), (fd, ft)))
-        sys.stderr.write("  %-7s set/reset swept (%d filled); set delay %.3f-%.3f ns\n"
-                         % (cell, nfill, min(min(r) for r in rd), max(max(r) for r in rd)))
+        cap = _cin(cell, pins, wd)     # per-pin Cin [pf] via Q-sweep
+        blocks.append(_liberty_cell(cell, pins, (rd, rt), (fd, ft), cap))
+        sys.stderr.write("  %-7s set/reset swept (%d filled); set delay %.3f-%.3f ns; Cin %s fF\n"
+                         % (cell, nfill, min(min(r) for r in rd), max(max(r) for r in rd),
+                            "/".join("%.2f" % (cap[p] * 1e3) for p in pins)))
     text = _library_header() + "\n" + "\n".join(blocks) + "\n}\n"
     open(outlib, "w").write(text)
     print("wrote %s: %d native TH cells, transistor-level NLDM (PSP103, %dx%d slew x load)"
