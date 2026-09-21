@@ -1,0 +1,64 @@
+* NCL full-adder (nclfa) Monte-Carlo Vt-mismatch deck (auto: gen_fa_deck.py)
+* Dual-rail NULL/DATA over all 8 (A,B,Cin) vectors; per-device DELVTO from
+* th23_mc.sp / th34w2_mc.sp (independent AGAUSS per subckt instance = 60 devs).
+.hdl "/usr/local/share/xyce/verilog-a/psp103/psp103.va"
+.include "/usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/th23_mc.sp"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/th34w2_mc.sp"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/nclfa_mc.sp"
+.param kvt=1
+VVDD VDD 0 1.2
+Xdut aH aL bH bL ciH ciL sH sL coH coL VDD 0 nclfa kvt={kvt}
+CsH sH 0 2f
+CsL sL 0 2f
+CcoH coH 0 2f
+CcoL coL 0 2f
+VaH aH 0 PWL(0n 0 4n 0 4.2n 0 8n 0 8.2n 0 12n 0 12.2n 0 16n 0 16.2n 0 20n 0 20.2n 0 24n 0 24.2n 0 28n 0 28.2n 0 32n 0 32.2n 0 36n 0 36.2n 1.2 40n 1.2 40.2n 0 44n 0 44.2n 1.2 48n 1.2 48.2n 0 52n 0 52.2n 1.2 56n 1.2 56.2n 0 60n 0 60.2n 1.2 64n 1.2 64.2n 0)
+VaL aL 0 PWL(0n 0 4n 0 4.2n 1.2 8n 1.2 8.2n 0 12n 0 12.2n 1.2 16n 1.2 16.2n 0 20n 0 20.2n 1.2 24n 1.2 24.2n 0 28n 0 28.2n 1.2 32n 1.2 32.2n 0 36n 0 36.2n 0 40n 0 40.2n 0 44n 0 44.2n 0 48n 0 48.2n 0 52n 0 52.2n 0 56n 0 56.2n 0 60n 0 60.2n 0 64n 0 64.2n 0)
+VbH bH 0 PWL(0n 0 4n 0 4.2n 0 8n 0 8.2n 0 12n 0 12.2n 0 16n 0 16.2n 0 20n 0 20.2n 1.2 24n 1.2 24.2n 0 28n 0 28.2n 1.2 32n 1.2 32.2n 0 36n 0 36.2n 0 40n 0 40.2n 0 44n 0 44.2n 0 48n 0 48.2n 0 52n 0 52.2n 1.2 56n 1.2 56.2n 0 60n 0 60.2n 1.2 64n 1.2 64.2n 0)
+VbL bL 0 PWL(0n 0 4n 0 4.2n 1.2 8n 1.2 8.2n 0 12n 0 12.2n 1.2 16n 1.2 16.2n 0 20n 0 20.2n 0 24n 0 24.2n 0 28n 0 28.2n 0 32n 0 32.2n 0 36n 0 36.2n 1.2 40n 1.2 40.2n 0 44n 0 44.2n 1.2 48n 1.2 48.2n 0 52n 0 52.2n 0 56n 0 56.2n 0 60n 0 60.2n 0 64n 0 64.2n 0)
+VciH ciH 0 PWL(0n 0 4n 0 4.2n 0 8n 0 8.2n 0 12n 0 12.2n 1.2 16n 1.2 16.2n 0 20n 0 20.2n 0 24n 0 24.2n 0 28n 0 28.2n 1.2 32n 1.2 32.2n 0 36n 0 36.2n 0 40n 0 40.2n 0 44n 0 44.2n 1.2 48n 1.2 48.2n 0 52n 0 52.2n 0 56n 0 56.2n 0 60n 0 60.2n 1.2 64n 1.2 64.2n 0)
+VciL ciL 0 PWL(0n 0 4n 0 4.2n 1.2 8n 1.2 8.2n 0 12n 0 12.2n 0 16n 0 16.2n 0 20n 0 20.2n 1.2 24n 1.2 24.2n 0 28n 0 28.2n 0 32n 0 32.2n 0 36n 0 36.2n 1.2 40n 1.2 40.2n 0 44n 0 44.2n 0 48n 0 48.2n 0 52n 0 52.2n 1.2 56n 1.2 56.2n 0 60n 0 60.2n 0 64n 0 64.2n 0)
+.tran 20p 68n
+.measure tran d0_sh FIND V(sH) AT=7.7n
+.measure tran d0_sl FIND V(sL) AT=7.7n
+.measure tran d0_coh FIND V(coH) AT=7.7n
+.measure tran d0_col FIND V(coL) AT=7.7n
+.measure tran d1_sh FIND V(sH) AT=15.7n
+.measure tran d1_sl FIND V(sL) AT=15.7n
+.measure tran d1_coh FIND V(coH) AT=15.7n
+.measure tran d1_col FIND V(coL) AT=15.7n
+.measure tran d2_sh FIND V(sH) AT=23.7n
+.measure tran d2_sl FIND V(sL) AT=23.7n
+.measure tran d2_coh FIND V(coH) AT=23.7n
+.measure tran d2_col FIND V(coL) AT=23.7n
+.measure tran d3_sh FIND V(sH) AT=31.7n
+.measure tran d3_sl FIND V(sL) AT=31.7n
+.measure tran d3_coh FIND V(coH) AT=31.7n
+.measure tran d3_col FIND V(coL) AT=31.7n
+.measure tran d4_sh FIND V(sH) AT=39.7n
+.measure tran d4_sl FIND V(sL) AT=39.7n
+.measure tran d4_coh FIND V(coH) AT=39.7n
+.measure tran d4_col FIND V(coL) AT=39.7n
+.measure tran d5_sh FIND V(sH) AT=47.7n
+.measure tran d5_sl FIND V(sL) AT=47.7n
+.measure tran d5_coh FIND V(coH) AT=47.7n
+.measure tran d5_col FIND V(coL) AT=47.7n
+.measure tran d6_sh FIND V(sH) AT=55.7n
+.measure tran d6_sl FIND V(sL) AT=55.7n
+.measure tran d6_coh FIND V(coH) AT=55.7n
+.measure tran d6_col FIND V(coL) AT=55.7n
+.measure tran d7_sh FIND V(sH) AT=63.7n
+.measure tran d7_sl FIND V(sL) AT=63.7n
+.measure tran d7_coh FIND V(coH) AT=63.7n
+.measure tran d7_col FIND V(coL) AT=63.7n
+.measure tran n_sh FIND V(sH) AT=67.7n
+.measure tran n_sl FIND V(sL) AT=67.7n
+.measure tran n_coh FIND V(coH) AT=67.7n
+.measure tran n_col FIND V(coL) AT=67.7n
+.measure tran tvalid TRIG V(aH) VAL=0.6 RISE=1 TD=59.9n TARG V(sH) VAL=0.6 RISE=1 TD=59.9n
+.SAMPLING useExpr=true
+.options SAMPLES numsamples=200 SAMPLE_TYPE=MC SEED=1
++ measures=d0_sh,d0_sl,d0_coh,d0_col,d1_sh,d1_sl,d1_coh,d1_col,d2_sh,d2_sl,d2_coh,d2_col,d3_sh,d3_sl,d3_coh,d3_col,d4_sh,d4_sl,d4_coh,d4_col,d5_sh,d5_sl,d5_coh,d5_col,d6_sh,d6_sl,d6_coh,d6_col,d7_sh,d7_sl,d7_coh,d7_col,n_sh,n_sl,n_coh,n_col,tvalid
++ OUTPUT_SAMPLE_STATS=true stdoutput=true
+.end
