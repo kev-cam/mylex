@@ -45,8 +45,11 @@ STEPS:
      cp ${MC}/mc_nclfa.cir.expected.json mc_nclfa.cir.expected.json
    (The deck includes nclfa_mc.sp which threads kvt down to the gates; it already has
     numsamples=200, SAMPLE_TYPE=MC, SEED=1, and 60 per-device AGAUSS DELVTO. Cache is pre-warmed.)
-2. Run: $XYCE mc_nclfa.cir > mc.log 2>&1   (generous timeout ~900s; build-free but transient-heavy)
-   Confirm the log shows "Number of unique random parameters = 60" and "End of Xyce".
+2. Run Xyce in the BACKGROUND — the N=200 transient-heavy run takes ~12-15 min, longer than any
+   single foreground tool timeout, so launch it as a background command:
+     $XYCE mc_nclfa.cir > mc.log 2>&1
+   then POLL mc.log until it contains "End of Xyce" (success) or an error/abort. Do NOT run it in
+   the foreground. Confirm the log shows "Number of unique random parameters = 60" and "End of Xyce".
 3. Analyze: python3 ${MC}/analyze_fa.py "$PWD/mc_nclfa.cir"
    (functional = every DATA-phase output rail matches the FA dual-rail codeword AND every
    final-NULL output returns LOW/RTZ; plus completion-latency tvalid stats.)
