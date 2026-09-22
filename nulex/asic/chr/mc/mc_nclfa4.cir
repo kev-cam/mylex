@@ -1,0 +1,48 @@
+* nclfa4 4-bit ripple adder MC: worst-case carry ripple (A=1111,B=0000,Cin=1)
+* coH completion = 4-deep th23 carry chain -> validates stat-sim [th23]*4.
+.hdl "/usr/local/share/xyce/verilog-a/psp103/psp103.va"
+.include "/usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/th23_mc.sp"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/th34w2_mc.sp"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/nclfa_mc.sp"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/nclfa4_mc.sp"
+.param kvt=1
+VVDD VDD 0 1.2
+Xdut a0H a0L a1H a1L a2H a2L a3H a3L b0H b0L b1H b1L b2H b2L b3H b3L ciH ciL s0H s0L s1H s1L s2H s2L s3H s3L coH coL VDD 0 nclfa4 kvt={kvt}
+CcoH coH 0 2f
+CcoL coL 0 2f
+Cs0H s0H 0 2f
+Cs1H s1H 0 2f
+Cs2H s2H 0 2f
+Cs3H s3H 0 2f
+Va0H a0H 0 PWL(0 0  4n 0  4.2n 1.2  16n 1.2  16.2n 0)
+Va0L a0L 0 PWL(0 0  4n 0  4.2n 0  16n 0  16.2n 0)
+Vb0H b0H 0 PWL(0 0  4n 0  4.2n 0  16n 0  16.2n 0)
+Vb0L b0L 0 PWL(0 0  4n 0  4.2n 1.2  16n 1.2  16.2n 0)
+Va1H a1H 0 PWL(0 0  4n 0  4.2n 1.2  16n 1.2  16.2n 0)
+Va1L a1L 0 PWL(0 0  4n 0  4.2n 0  16n 0  16.2n 0)
+Vb1H b1H 0 PWL(0 0  4n 0  4.2n 0  16n 0  16.2n 0)
+Vb1L b1L 0 PWL(0 0  4n 0  4.2n 1.2  16n 1.2  16.2n 0)
+Va2H a2H 0 PWL(0 0  4n 0  4.2n 1.2  16n 1.2  16.2n 0)
+Va2L a2L 0 PWL(0 0  4n 0  4.2n 0  16n 0  16.2n 0)
+Vb2H b2H 0 PWL(0 0  4n 0  4.2n 0  16n 0  16.2n 0)
+Vb2L b2L 0 PWL(0 0  4n 0  4.2n 1.2  16n 1.2  16.2n 0)
+Va3H a3H 0 PWL(0 0  4n 0  4.2n 1.2  16n 1.2  16.2n 0)
+Va3L a3L 0 PWL(0 0  4n 0  4.2n 0  16n 0  16.2n 0)
+Vb3H b3H 0 PWL(0 0  4n 0  4.2n 0  16n 0  16.2n 0)
+Vb3L b3L 0 PWL(0 0  4n 0  4.2n 1.2  16n 1.2  16.2n 0)
+VciH ciH 0 PWL(0 0  4n 0  4.2n 1.2  16n 1.2  16.2n 0)
+VciL ciL 0 PWL(0 0  4n 0  4.2n 0  16n 0  16.2n 0)
+.tran 20p 20n
+.measure tran cout FIND V(coH) AT=15.6n
+.measure tran coutl FIND V(coL) AT=15.6n
+.measure tran sum0 FIND V(s0H) AT=15.6n
+.measure tran sum1 FIND V(s1H) AT=15.6n
+.measure tran sum2 FIND V(s2H) AT=15.6n
+.measure tran sum3 FIND V(s3H) AT=15.6n
+.measure tran tripple TRIG V(ciH) VAL=0.6 RISE=1 TD=3.9n TARG V(coH) VAL=0.6 RISE=1 TD=3.9n
+.SAMPLING useExpr=true
+.options SAMPLES numsamples=200 SAMPLE_TYPE=MC SEED=1
++ measures=cout,coutl,sum0,sum1,sum2,sum3,tripple
++ OUTPUT_SAMPLE_STATS=true stdoutput=true
+.end
