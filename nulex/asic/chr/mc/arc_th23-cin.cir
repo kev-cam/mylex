@@ -1,0 +1,18 @@
+* per-arc characterization: th23-cin  (carry-in arc: a rises@5n (held), c rises@6n last (2 high -> y))
+.hdl "/usr/local/share/xyce/verilog-a/psp103/psp103.va"
+.include "/usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib"
+.include "/usr/local/src/mylex/nulex/asic/chr/mc/th23_mc.sp"
+.param kvt=1
+VVDD VDD 0 1.2
+Xdut a b c y VDD 0 th23 kvt={kvt}
+Cy y 0 2f
+Va a 0 PWL(0 0  5n 0  5.2n 1.2  9.9n 1.2  10n 0)
+Vb b 0 PWL(0 0)
+Vc c 0 PWL(0 0  6n 0  6.2n 1.2  9.9n 1.2  10n 0)
+.tran 10p 12n
+.measure tran ylev FIND V(y) AT=9.7n
+.measure tran tarc TRIG V(c) VAL=0.6 RISE=1 TARG V(y) VAL=0.6 RISE=1
+.SAMPLING useExpr=true
+.options SAMPLES numsamples=200 SAMPLE_TYPE=MC SEED=1
++ measures=ylev,tarc OUTPUT_SAMPLE_STATS=true stdoutput=true
+.end
