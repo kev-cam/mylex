@@ -48,7 +48,7 @@ the deepest carry→sum path.
 the correct dual-rail Sum/Cout for all 8 input vectors and returns to NULL, with
 zero wrong-output events across all four mismatch scales, including ~4×-nominal.
 
-## Adversarial verification (three independent lenses, all PASS)
+## Adversarial verification (four independent lenses, all PASS)
 
 - **Truth-table** — independently derived the dual-rail FA truth from the
   `nclfa.sp` structure and the TH-gate thresholds; confirmed the expected-output
@@ -61,6 +61,15 @@ zero wrong-output events across all four mismatch scales, including ~4×-nominal
 - **NCL protocol** — confirmed every DATA phase asserts exactly one rail per
   input pair (valid codeword), every NULL phase is all-zero, a NULL separates
   every pair of DATA phases, and the measures cover all 8 vectors + RTZ.
+- **kvt-scaling** — confirmed the swept parameter actually reaches the DUT and
+  scales the mismatch: the k1 and k4 per-sample outputs differ, and the tvalid
+  spread grows monotonically with kvt (σ = 8.7 → 17.6 → 26.9 → 36.8 ps). This
+  lens exists because the composed block first ran with `kvt` un-threaded — the
+  cells' subckt-local `.param kvt=1` shadowed the top-level value, pinning every
+  level at nominal (identical k1/k4 output, flat σ). Run against that broken
+  data this lens FAILS (identical k1==k4, σ flat), so it catches the class of
+  silent hierarchical-sweep bug the other three lenses cannot. `nclfa_mc.sp`
+  threads `kvt` down to each gate instance to fix it.
 
 ## Findings
 
