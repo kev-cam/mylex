@@ -1,0 +1,141 @@
+### generated Fri Sep 25 01:02:33 PM PDT 2026
+========================================================================================================
+MATCHED TRANSISTOR vs LIBERTY, per cell type (same C_L, same input slew, same arc)
+========================================================================================================
+cell           arc      CL_fF slew_ps  Etog_lib  Etog_spi  ratio |  Eint_lib  Eint_spi  i-rat
+  (Etog = energy per output toggle, fJ.  Eint = per-toggle energy MINUS the
+   load term 0.5*CL*V^2, which both models compute identically.)
+inv_1          A->Y      9.34    64.9    8.3471   11.5166  1.380 |    1.6223    4.7918  2.954
+buf_1          A->X     21.68    72.2   21.4626   27.0862  1.262 |    5.8530   11.4766  1.961
+buf_8          A->X     32.87    78.9   59.9843   79.8585  1.331 |   36.3179   56.1921  1.547
+buf_16         A->X     26.28    33.6   91.2255  127.8696  1.402 |   72.3039  108.9480  1.507
+nand2_1        A->Y      4.93    86.2    5.4885   10.6918  1.948 |    1.9389    7.1422  3.684
+nor2_1         A->Y      4.75    87.0    6.4457   13.9440  2.163 |    3.0257   10.5240  3.478
+o21ai_1        A1->Y     4.26    80.7    7.8388   18.1344  2.313 |    4.7716   15.0672  3.158
+a21oi_1        A1->Y     4.99    81.4    7.2066   15.7001  2.179 |    3.6138   12.1073  3.350
+mux2_1         A0->X     5.66    75.6   12.6805   23.7368  1.872 |    8.6053   19.6616  2.285
+mux2_1         S->X      5.66    75.6   17.0541   31.8036  1.865 |   12.9789   27.7284  2.136
+
+FLOP sg13g2_dfrbpq_1 (per CLOCK CYCLE, CL=8.11fF, CLK slew 20.1ps, D slew 50ps)
+  SPICE  D static lo :   32.556 fJ/cyc   D static hi:   33.130 fJ/cyc
+  SPICE  Q toggles every cycle (a=1):   96.515 fJ/cyc
+  SPICE  at design a=0.4116          :   58.879 fJ/cyc
+  LIBERTY a=0 59.340  a=1 98.001  a=0.4116 75.251 fJ/cyc
+  RATIO (spice/liberty) = 0.782   <-- OPPOSITE DIRECTION to the logic cells
+  decomposed:  clock-only floor  spice/lib = 0.549  (liberty OVER-states it)
+               data term (a=1 minus a=0) spice/lib = 1.654  (liberty UNDER-states it,
+               same direction and size as the combinational cells)
+
+========================================================================================================
+WHOLE-ALU CORRECTION   (direct SPICE coverage: 85.6% of design power)
+========================================================================================================
+  extrapolation for the 14.4% not directly measured: buffer-like x1.330, logic x2.062
+  census-weighted mean ratio for UNMEASURED types (extrapolated): 1.568
+  liberty  total: 9.146656 mW   -> 43.447 pJ/cycle  -> 46.671 pJ/op
+  corrected total: 12.515874 mW  -> 59.450 pJ/cycle  -> 63.862 pJ/op
+  *** OVERALL TRANSISTOR/LIBERTY CORRECTION RATIO = 1.368 ***
+
+  ESTIMATOR 2 (load term exact, internal term x k):
+    power-weighted mean internal correction k = 2.010 (unmeasured types)
+    corrected total: 11.808397 mW -> 60.252 pJ/op   (overall x1.291)
+
+cycles/op = 1.0742 (2001 ops in 2149.5 cycles)
+
+========================================================================================================
+DESIGN ENERGY ACCOUNTING (physical netlist, real CTS, measured VCD activity)
+========================================================================================================
+                                               pJ/cycle      pJ/op
+  Combinational                                  21.021     22.581
+  Sequential (flops, incl. their CLK pin)        14.091     15.137
+  Clock tree (CTS buffers/inverters)              8.335      8.953
+  TOTAL                                          43.447     46.671
+
+  CLOCK-ATTRIBUTABLE (the term async/QAL claim to remove):
+    [flop clock fraction taken from liberty at the measured alpha=0.4116]
+    flop CLK-pin floor  = 78.856% of Sequential = 2.3393 mW
+    + clock tree                              = 1.7547 mW
+    = 4.0940 mW = 44.8% of total = 20.890 pJ/op
+
+  SAME CLOCK TERM RE-MEASURED AT TRANSISTOR LEVEL:
+    clock tree            liberty 1.7547 -> spice 2.4277 mW  (x1.384)
+    flop CLK-pin floor    liberty 2.3486 -> spice 1.2885 mW  (x0.549)
+    clock-attributable    liberty 4.1033 mW (44.9% of total) = 20.937 pJ/op
+    clock-attributable    spice   3.7163 mW (29.7% of total) = 18.962 pJ/op
+    => the clock PRIZE shrinks from 44.9% to 29.7% of total. Liberty FLATTERS
+       the async/QAL case: it over-states the flop clock floor 1.8x while
+       under-stating the combinational logic it would still have to pay.
+
+  ACTIVITY SENSITIVITY (physical netlist):
+    measured VCD activity        9.1467 mW    46.671 pJ/op
+    alpha=0.5 global            10.7360 mW    54.781 pJ/op
+    alpha=1.0 global            17.4697 mW    89.139 pJ/op
+
+  PHYSICAL-DESIGN OVERHEAD (why synth-only numbers are not comparable):
+    synth-only netlist @ measured activity :   6.5185 mW    33.261 pJ/op   (Clock group = 0, no CTS)
+    physical netlist   @ measured activity :   9.1467 mW    46.671 pJ/op
+    -> buffering + CTS + wire RC add 40.3%
+
+========================================================================================================
+CARRY-THROUGH TO THE sha_slice RUNG (232 fJ/op)
+========================================================================================================
+  reproduced baseline (as published, NO output load) : 231.929 fJ/op
+  + EXT=2fF output load (what the ASYNC arm charged)  : 249.109 fJ/op  (+7.4%%)
+  direct ratio coverage    : 58.4% of sha_slice power
+  logic-gate mean ratio used for the rest: 2.062
+  corrected                : 467.750 fJ/op   (x2.017)
+  NOTE: ratios are measured at the ALU's loads/slews; sha_slice is synth-only
+        (no wire RC, no buffering) so its loads are smaller -- transfer is approximate.
+
+sg13g2_inv_1  delay vs load, input slew 64.9 ps (20-80%)
+CL(fF)         lib_tpLH     lib_tpHL |     spi_tpLH     spi_tpHL
+1.000             32.00        31.64 |        54.60        48.58
+2.000             35.49        34.66 |        58.09        50.90
+4.260             43.37        41.48 |        65.98        55.45
+9.340             61.09        56.82 |        83.68        64.97
+15.000            80.82        73.91 |       103.31        75.40
+23.400           110.11        99.28 |       132.26        90.89
+39.000           154.38       135.62 |       186.00       119.41
+
+LIBERTY  tpLH: 3.2601 ps/fF, intercept 30.12 ps -> effective self-load 9.24 fF
+LIBERTY  tpHL: 2.7785 ps/fF, intercept 30.32 ps -> effective self-load 10.91 fF
+SPICE    tpLH: 3.4580 ps/fF, intercept 51.27 ps -> effective self-load 14.83 fF
+SPICE    tpHL: 1.8558 ps/fF, intercept 47.31 ps -> effective self-load 25.49 fF
+
+====================================================================================================
+A) INTERNAL ENERGY vs INPUT SLEW  (inv_1, CL=9.34 fF) -- short-circuit vs self-capacitance
+====================================================================================================
+  liberty says E_int = 1.6223 fJ/toggle = 3.2446 fJ/cycle at this load
+  tr(ps 0-100)    slew20-80    E_cyc(fJ) E_int(fJ/cyc)
+  2.0                   1.2      23.7796      10.3300
+  10.0                  6.0      23.6669      10.2173
+  30.0                 18.0      23.4971      10.0475
+  108.2                64.9      23.0260       9.5764
+  300.0               180.0      22.6959       9.2463
+  800.0               480.0      23.0091       9.5595
+  -> the flat part at fast edges is SELF-CAPACITANCE; the rise with slew is SHORT-CIRCUIT.
+
+====================================================================================================
+B) COMPOSITION CHECK -- real 4-cell interconnected chain (inv->nand2->nor2->inv, CL=4fF)
+====================================================================================================
+  SPICE   total supply energy, one full input rise+fall :   76.573 fJ
+  LIBERTY same netlist, same load, activity 1.0         :   36.787 fJ
+  ratio (spice/liberty)                                 :    2.081
+  (this INCLUDES real inter-stage slew degradation, which per-cell characterisation misses)
+
+====================================================================================================
+C) PSP103 MODEL-VERSION AND JUNCTION-GEOMETRY CONTROLS (sg13g2_inv_1, CL=9.34fF, slew 64.9ps)
+====================================================================================================
+  PSP 103.4.0 (/usr/local/share/xyce)  + explicit AD/AS/PD/PS    E=23.0260 fJ/cycle
+  PSP 103.8.2 (PDK's own verilog-a)    + explicit AD/AS/PD/PS    E=23.0260 fJ/cycle
+  PSP 103.4.0                          + NO junction geometry    E=20.7023 fJ/cycle
+  PSP 103.8.2                          + NO junction geometry    E=20.7023 fJ/cycle
+
+  model version 103.4.0 vs 103.8.2, geometry supplied   : 0.000000% difference
+  model version 103.4.0 vs 103.8.2, geometry NOT supplied: 0.000000% difference
+  => the PSP VERSION is irrelevant here (bit-identical, 4 from-scratch builds).
+  junction geometry supplied vs not                     : 11.22% (20.7023 -> 23.0260 fJ/cycle)
+  => what matters is AD/AS/PD/PS. The campaign's existing shim
+     (/usr/local/src/stat-sim/qal/sg13lv_compat.sp) DROPS them, under-counting
+     by 11% at this load (and 22% at 2 fF). The async th-cells
+     (th_cells_sg13g2.sp, th22.sp) are hand-written with bare W/L and no
+     junction geometry either, so BOTH arms are low for the same reason.

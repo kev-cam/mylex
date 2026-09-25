@@ -1,0 +1,33 @@
+OpenROAD 26Q3-2260-ge2787ffca2 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+@@@ WORST OVERALL
+Startpoint                           Endpoint                                 Slack
+----------------------------------------------------------------------------------
+ex_data[220] (input)                 _8053_/D (sg13g2_dfrbpq_1)              0.0091
+
+@@@ REG-TO-REG ONLY
+Startpoint                           Endpoint                                 Slack
+----------------------------------------------------------------------------------
+_8141_/Q (sg13g2_dfrbpq_1)           _8141_/D (sg13g2_dfrbpq_1)              2.3399
+_8141_/Q (sg13g2_dfrbpq_1)           _8018_/D (sg13g2_dfrbpq_1)              2.4887
+_8141_/Q (sg13g2_dfrbpq_1)           _8049_/D (sg13g2_dfrbpq_1)              2.4890
+
+@@@ INPUT-TO-REG ONLY
+Startpoint                           Endpoint                                 Slack
+----------------------------------------------------------------------------------
+ex_data[220] (input)                 _8053_/D (sg13g2_dfrbpq_1)              0.0091
+
+@@@ REG-TO-OUTPUT ONLY
+Startpoint                           Endpoint                                 Slack
+----------------------------------------------------------------------------------
+_8068_/Q (alu_top)                   rs_data[31] (output)                    0.2999
+
+@@@ DRV
+max fanout
+
+Pin                                   Limit Fanout  Slack
+---------------------------------------------------------
+clkbuf_0_clk/X                            8     16     -8 (VIOLATED)
+

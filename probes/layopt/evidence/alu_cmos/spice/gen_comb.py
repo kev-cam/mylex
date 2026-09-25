@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""Emit a Xyce deck measuring energy/output-toggle for the ALU's dominant
+combinational cell types, each at ITS OWN mean load and median input slew
+taken from the placed alu_top netlist."""
+import sys
+SHIM=sys.argv[1]; OUT=sys.argv[2]; SEL=[int(x) for x in sys.argv[3].split(",")]
+VDD=1.2
+# (cell, ports after out, out_pin, driven_pin, {side:level}, CL_fF, liberty_slew_ps)
+CELLS=[
+ ("sg13g2_inv_1",   ["A"],            "Y","A", {},                  9.34, 64.9),
+ ("sg13g2_buf_1",   ["A"],            "X","A", {},                 21.68, 72.2),
+ ("sg13g2_buf_8",   ["A"],            "X","A", {},                 32.87, 78.9),
+ ("sg13g2_buf_16",  ["A"],            "X","A", {},                 26.28, 33.6),
+ ("sg13g2_nand2_1", ["A","B"],        "Y","A", {"B":1},             4.93, 86.2),
+ ("sg13g2_nor2_1",  ["A","B"],        "Y","A", {"B":0},             4.75, 87.0),
+ ("sg13g2_o21ai_1", ["A1","A2","B1"], "Y","A1",{"A2":0,"B1":1},     4.26, 80.7),
+ ("sg13g2_a21oi_1", ["A1","A2","B1"], "Y","A1",{"A2":1,"B1":0},     4.99, 81.4),
+ ("sg13g2_mux2_1",  ["A0","A1","S"],  "X","A0",{"A1":0,"S":0},      5.66, 75.6),
+ # second MUX arc: toggle the SELECT with the two data inputs held opposite
+ ("sg13g2_mux2_1",  ["A0","A1","S"],  "X","S", {"A0":0,"A1":1},     5.66, 75.6),
+]
+L=[]
+L.append("ALU dominant-cell energy per output toggle (SG13G2, PSP103)")
+L.append('.hdl "/usr/local/share/xyce/verilog-a/psp103/psp103.va"')
+L.append('.include "/usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib"')
+L.append(f'.include "{SHIM}"')
+L.append('.include "/usr/local/src/IHP-Open-PDK/ihp-sg13g2/libs.ref/sg13g2_stdcell/spice/sg13g2_stdcell.spice"')
+L.append(f".param VDDV={VDD}")
+L.append("VHI nhi 0 {VDDV}")
+L.append("VLO nlo 0 0")
+L.append("VSSG vss 0 0")
+for i,(cell,ports,out,drv,side,cl,slew) in enumerate(CELLS):
+    if i not in SEL: continue
+    tr=slew/0.6   # liberty slew is 20-80%; PULSE tr is 0-100%
+    p=f"c{i}"
+    L.append(f"* ---- {p}: {cell} arc {drv}->{out}  CL={cl}fF  slew20-80={slew}ps (tr={tr:.1f}ps)")
+    L.append(f"V{p}dd {p}vdd 0 {{VDDV}}")
+    L.append(f"V{p}in {p}in 0 PULSE(0 {{VDDV}} 1n {tr:.4f}p {tr:.4f}p 2n 4n)")
+    nodes=[]
+    for pin in ports:
+        if pin==drv: nodes.append(f"{p}in")
+        else: nodes.append("nhi" if side[pin] else "nlo")
+    L.append(f"X{p} {p}out {' '.join(nodes)} {p}vdd vss {cell}")
+    L.append(f"C{p} {p}out 0 {cl}f")
+    L.append(f".measure tran Q{p} INTEG I(V{p}dd) FROM=0.9n TO=4.9n")
+    L.append(f".measure tran VX{p} MAX V({p}out) FROM=0.9n TO=4.9n")
+    L.append(f".measure tran VN{p} MIN V({p}out) FROM=0.9n TO=4.9n")
+L.append(".tran 2p 5n")
+L.append(".options timeint reltol=1e-4 abstol=1e-12")
+L.append(".end")
+open(OUT,'w').write('\n'.join(L)+'\n')
+print("wrote",OUT,"with",len(CELLS),"cells")

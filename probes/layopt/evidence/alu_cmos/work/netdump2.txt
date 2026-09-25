@@ -1,0 +1,2612 @@
+OpenROAD 26Q3-2260-ge2787ffca2 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[0]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[0]
+ Pin capacitance: 0.002041-0.002450
+ Wire capacitance: 0.000360
+ Total capacitance: 0.002402-0.002811
+ Number of drivers: 1
+ Number of loads: 1
+ Number of pins: 2
+
+Driver pins
+ _7955_/Q output (sg13g2_dfrbpq_1) (40, 17)
+
+Load pins
+ fanout396/A input (sg13g2_buf_1) 0.002041-0.002450 (28, 25)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[1]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[1]
+ Pin capacitance: 0.002791-0.003156
+ Wire capacitance: 0.000293
+ Total capacitance: 0.003084-0.003449
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7956_/Q output (sg13g2_dfrbpq_1) (301, 293)
+
+Load pins
+ hold820/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (294, 289)
+ hold897/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (303, 297)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[2]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[2]
+ Pin capacitance: 0.006662-0.008257
+ Wire capacitance: 0.000359-0.000359
+ Total capacitance: 0.007021-0.008616
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _7957_/Q output (sg13g2_dfrbpq_1) (281, 297)
+
+Load pins
+ _3992_/A input (sg13g2_inv_1) 0.002570-0.003266 (273, 293)
+ _4303_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (286, 293)
+ hold843/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (282, 297)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[3]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[3]
+ Pin capacitance: 0.011955-0.015752
+ Wire capacitance: 0.009192
+ Total capacitance: 0.021147-0.024944
+ Number of drivers: 1
+ Number of loads: 4
+ Number of pins: 5
+
+Driver pins
+ _7958_/Q output (sg13g2_dfrbpq_1) (285, 74)
+
+Load pins
+ _3991_/A input (sg13g2_inv_1) 0.002570-0.003266 (277, 286)
+ _4001_/A input (sg13g2_nor3_1) 0.002650-0.003429 (270, 289)
+ _4298_/S1 input (sg13g2_mux4_1) 0.004244-0.005949 (32, 44)
+ _4302_/A input (sg13g2_nand2_1) 0.002490-0.003317 (279, 289)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[4]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[4]
+ Pin capacitance: 0.002041-0.002450
+ Wire capacitance: 0.000341
+ Total capacitance: 0.002382-0.002791
+ Number of drivers: 1
+ Number of loads: 1
+ Number of pins: 2
+
+Driver pins
+ _7959_/Q output (sg13g2_dfrbpq_1) (121, 28)
+
+Load pins
+ fanout390/A input (sg13g2_buf_1) 0.002041-0.002450 (109, 36)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[5]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[5]
+ Pin capacitance: 0.006313-0.007896
+ Wire capacitance: 0.000288-0.000288
+ Total capacitance: 0.006601-0.008184
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _7960_/Q output (sg13g2_dfrbpq_1) (85, 74)
+
+Load pins
+ _3999_/B input (sg13g2_and2_1) 0.002257-0.002870 (94, 77)
+ _4000_/B input (sg13g2_nand2_1) 0.002661-0.003449 (90, 81)
+ hold890/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (86, 77)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[6]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[6]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000535-0.000535
+ Total capacitance: 0.004008-0.004567
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7961_/Q output (sg13g2_dfrbpq_1) (336, 127)
+
+Load pins
+ _4003_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (318, 123)
+ hold829/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (328, 134)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[7]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[7]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000186-0.000186
+ Total capacitance: 0.003659-0.004219
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7962_/Q output (sg13g2_dfrbpq_1) (242, 323)
+
+Load pins
+ _4008_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (240, 316)
+ hold822/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (239, 319)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[8]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[8]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000083-0.000083
+ Total capacitance: 0.003556-0.004116
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7963_/Q output (sg13g2_dfrbpq_1) (247, 312)
+
+Load pins
+ _4013_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (247, 308)
+ hold836/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (248, 312)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[9]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[9]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000093
+ Total capacitance: 0.003566-0.004126
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7964_/Q output (sg13g2_dfrbpq_1) (234, 301)
+
+Load pins
+ _4018_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (235, 297)
+ hold825/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (235, 301)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[10]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[10]
+ Pin capacitance: 0.004467-0.005553
+ Wire capacitance: 0.000254
+ Total capacitance: 0.004722-0.005807
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7965_/Q output (sg13g2_dfrbpq_1) (270, 285)
+
+Load pins
+ _4023_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (271, 286)
+ _4403_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (260, 289)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[11]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[11]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000126-0.000126
+ Total capacitance: 0.003599-0.004159
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7966_/Q output (sg13g2_dfrbpq_1) (234, 312)
+
+Load pins
+ _4028_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (231, 308)
+ hold837/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (233, 308)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[12]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[12]
+ Pin capacitance: 0.004467-0.005553
+ Wire capacitance: 0.000365
+ Total capacitance: 0.004832-0.005917
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7967_/Q output (sg13g2_dfrbpq_1) (327, 100)
+
+Load pins
+ _4033_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (311, 104)
+ _4428_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (312, 100)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[13]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[13]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000309-0.000309
+ Total capacitance: 0.003782-0.004342
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7968_/Q output (sg13g2_dfrbpq_1) (328, 89)
+
+Load pins
+ _4038_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (314, 92)
+ hold841/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (322, 92)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[14]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[14]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000208-0.000208
+ Total capacitance: 0.003681-0.004241
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7969_/Q output (sg13g2_dfrbpq_1) (317, 77)
+
+Load pins
+ _4043_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (313, 81)
+ hold833/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (320, 77)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[15]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[15]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000112-0.000112
+ Total capacitance: 0.003585-0.004145
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7970_/Q output (sg13g2_dfrbpq_1) (312, 74)
+
+Load pins
+ _4049_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (311, 70)
+ hold835/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (313, 74)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[16]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[16]
+ Pin capacitance: 0.004467-0.005553
+ Wire capacitance: 0.000399
+ Total capacitance: 0.004867-0.005952
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7971_/Q output (sg13g2_dfrbpq_1) (299, 62)
+
+Load pins
+ _4054_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (281, 66)
+ _4485_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (284, 62)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[17]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[17]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000326-0.000326
+ Total capacitance: 0.003799-0.004359
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7972_/Q output (sg13g2_dfrbpq_1) (303, 44)
+
+Load pins
+ _4059_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (289, 44)
+ hold842/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (293, 47)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[18]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[18]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000138-0.000138
+ Total capacitance: 0.003611-0.004171
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7973_/Q output (sg13g2_dfrbpq_1) (249, 44)
+
+Load pins
+ _4065_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (246, 39)
+ hold830/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (250, 44)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[19]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[19]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000151-0.000151
+ Total capacitance: 0.003624-0.004184
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7974_/Q output (sg13g2_dfrbpq_1) (290, 55)
+
+Load pins
+ _4071_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (295, 55)
+ hold839/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (293, 59)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[20]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[20]
+ Pin capacitance: 0.004467-0.005553
+ Wire capacitance: 0.000365
+ Total capacitance: 0.004833-0.005918
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7975_/Q output (sg13g2_dfrbpq_1) (213, 32)
+
+Load pins
+ _4075_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (211, 29)
+ _4549_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (200, 36)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[21]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[21]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000089-0.000089
+ Total capacitance: 0.003561-0.004121
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7976_/Q output (sg13g2_dfrbpq_1) (241, 28)
+
+Load pins
+ _4080_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (242, 29)
+ hold831/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (242, 32)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[22]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[22]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000327-0.000327
+ Total capacitance: 0.003800-0.004360
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7977_/Q output (sg13g2_dfrbpq_1) (333, 108)
+
+Load pins
+ _4086_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (319, 112)
+ hold827/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (327, 112)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[23]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[23]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000467-0.000467
+ Total capacitance: 0.003940-0.004500
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7978_/Q output (sg13g2_dfrbpq_1) (308, 100)
+
+Load pins
+ _4090_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (290, 97)
+ hold840/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (303, 104)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[24]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[24]
+ Pin capacitance: 0.004467-0.005553
+ Wire capacitance: 0.000512-0.000512
+ Total capacitance: 0.004980-0.006065
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7979_/Q output (sg13g2_dfrbpq_1) (317, 112)
+
+Load pins
+ _4095_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (297, 115)
+ _4610_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (302, 108)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[25]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[25]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000413-0.000413
+ Total capacitance: 0.003886-0.004446
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7980_/Q output (sg13g2_dfrbpq_1) (336, 119)
+
+Load pins
+ _4100_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (316, 119)
+ hold834/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (330, 123)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[26]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[26]
+ Pin capacitance: 0.004467-0.005553
+ Wire capacitance: 0.000352-0.000352
+ Total capacitance: 0.004819-0.005904
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7981_/Q output (sg13g2_dfrbpq_1) (336, 130)
+
+Load pins
+ _4105_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (316, 130)
+ _4633_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (321, 130)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[27]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[27]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000319-0.000319
+ Total capacitance: 0.003792-0.004352
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7982_/Q output (sg13g2_dfrbpq_1) (336, 138)
+
+Load pins
+ _4110_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (322, 142)
+ hold832/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (329, 142)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[28]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[28]
+ Pin capacitance: 0.004467-0.005553
+ Wire capacitance: 0.000311-0.000311
+ Total capacitance: 0.004778-0.005864
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7983_/Q output (sg13g2_dfrbpq_1) (336, 145)
+
+Load pins
+ _4115_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (325, 150)
+ _4654_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (322, 150)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[29]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[29]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000335-0.000335
+ Total capacitance: 0.003808-0.004368
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7984_/Q output (sg13g2_dfrbpq_1) (336, 165)
+
+Load pins
+ _4120_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (321, 165)
+ hold838/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (331, 168)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[30]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[30]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000139-0.000139
+ Total capacitance: 0.003612-0.004172
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7985_/Q output (sg13g2_dfrbpq_1) (253, 293)
+
+Load pins
+ _4126_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (256, 297)
+ hold823/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (252, 297)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[31]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[31]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000096-0.000096
+ Total capacitance: 0.003569-0.004129
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7986_/Q output (sg13g2_dfrbpq_1) (253, 289)
+
+Load pins
+ _4131_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (255, 286)
+ hold826/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (254, 289)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[32]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[32]
+ Pin capacitance: 0.004467-0.005553
+ Wire capacitance: 0.000248-0.000248
+ Total capacitance: 0.004715-0.005800
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7987_/Q output (sg13g2_dfrbpq_1) (237, 289)
+
+Load pins
+ _4136_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (235, 286)
+ _4695_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (226, 286)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[33]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[33]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000139-0.000139
+ Total capacitance: 0.003612-0.004172
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7988_/Q output (sg13g2_dfrbpq_1) (224, 319)
+
+Load pins
+ _4141_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (227, 319)
+ hold824/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (223, 316)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[34]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[34]
+ Pin capacitance: 0.004467-0.005553
+ Wire capacitance: 0.000309-0.000309
+ Total capacitance: 0.004776-0.005861
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7989_/Q output (sg13g2_dfrbpq_1) (241, 282)
+
+Load pins
+ _4146_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (238, 278)
+ _4715_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (228, 278)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[35]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[35]
+ Pin capacitance: 0.003473-0.004033
+ Wire capacitance: 0.000134-0.000134
+ Total capacitance: 0.003607-0.004167
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _7990_/Q output (sg13g2_dfrbpq_1) (199, 323)
+
+Load pins
+ _4152_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (203, 319)
+ hold828/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (200, 323)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[36]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[36]
+ Pin capacitance: 0.006124-0.007398
+ Wire capacitance: 0.000466
+ Total capacitance: 0.006590-0.007864
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _7991_/Q output (sg13g2_dfrbpq_1) (27, 32)
+
+Load pins
+ _4156_/A input (sg13g2_and2_1) 0.002269-0.002742 (31, 22)
+ _4298_/A2 input (sg13g2_mux4_1) 0.002394-0.003106 (27, 44)
+ hold847/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (28, 32)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[37]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[37]
+ Pin capacitance: 0.007065-0.008832
+ Wire capacitance: 0.000274-0.000274
+ Total capacitance: 0.007338-0.009106
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _7992_/Q output (sg13g2_dfrbpq_1) (24, 51)
+
+Load pins
+ _4157_/A input (sg13g2_and2_1) 0.002269-0.002742 (20, 46)
+ _4298_/A0 input (sg13g2_mux4_1) 0.002412-0.003110 (25, 44)
+ _5208_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (27, 51)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[38]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[38]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.001940-0.001940
+ Total capacitance: 0.008209-0.009493
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _7993_/Q output (sg13g2_dfrbpq_1) (61, 115)
+
+Load pins
+ _4002_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (63, 119)
+ _4159_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (56, 21)
+ hold889/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (64, 115)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[39]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[39]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000373
+ Total capacitance: 0.006642-0.007926
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _7994_/Q output (sg13g2_dfrbpq_1) (62, 221)
+
+Load pins
+ _4007_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (59, 213)
+ _4162_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (60, 206)
+ hold865/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (65, 221)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[40]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[40]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000389-0.000389
+ Total capacitance: 0.006658-0.007942
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _7995_/Q output (sg13g2_dfrbpq_1) (33, 251)
+
+Load pins
+ _4012_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (22, 259)
+ _4166_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (20, 255)
+ hold856/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (34, 255)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[41]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[41]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000360
+ Total capacitance: 0.006628-0.007913
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _7996_/Q output (sg13g2_dfrbpq_1) (18, 266)
+
+Load pins
+ _4017_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (19, 278)
+ _4170_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (12, 270)
+ hold858/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (19, 266)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[42]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[42]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000210
+ Total capacitance: 0.006479-0.007763
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _7997_/Q output (sg13g2_dfrbpq_1) (30, 270)
+
+Load pins
+ _4022_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (29, 278)
+ _4174_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (26, 274)
+ hold853/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (29, 274)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[43]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[43]
+ Pin capacitance: 0.007569-0.009505
+ Wire capacitance: 0.000255-0.000255
+ Total capacitance: 0.007823-0.009760
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _7998_/Q output (sg13g2_dfrbpq_1) (18, 248)
+
+Load pins
+ _4027_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (27, 248)
+ _4178_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (17, 244)
+ _5492_/A1 input (sg13g2_a22oi_1) 0.002762-0.003520 (23, 248)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[44]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[44]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000422-0.000422
+ Total capacitance: 0.006691-0.007975
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _7999_/Q output (sg13g2_dfrbpq_1) (18, 96)
+
+Load pins
+ _4032_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (21, 104)
+ _4181_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (14, 112)
+ hold867/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (19, 100)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[45]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[45]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000488
+ Total capacitance: 0.006757-0.008041
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8000_/Q output (sg13g2_dfrbpq_1) (18, 74)
+
+Load pins
+ _4037_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (18, 89)
+ _4185_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (10, 92)
+ hold855/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (18, 77)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[46]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[46]
+ Pin capacitance: 0.007569-0.009505
+ Wire capacitance: 0.000510
+ Total capacitance: 0.008079-0.010015
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8001_/Q output (sg13g2_dfrbpq_1) (289, 77)
+
+Load pins
+ _4042_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (287, 82)
+ _4189_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (272, 81)
+ _5603_/A1 input (sg13g2_a22oi_1) 0.002762-0.003520 (269, 77)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[47]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[47]
+ Pin capacitance: 0.003847-0.004622
+ Wire capacitance: 0.000159
+ Total capacitance: 0.004005-0.004781
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8002_/Q output (sg13g2_dfrbpq_1) (24, 59)
+
+Load pins
+ _4192_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (29, 59)
+ hold894/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (25, 62)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[48]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[48]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000308-0.000308
+ Total capacitance: 0.006576-0.007861
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8003_/Q output (sg13g2_dfrbpq_1) (66, 66)
+
+Load pins
+ _4053_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (65, 70)
+ _4196_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (63, 62)
+ hold848/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (59, 70)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[49]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[49]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000279-0.000279
+ Total capacitance: 0.006548-0.007832
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8004_/Q output (sg13g2_dfrbpq_1) (79, 32)
+
+Load pins
+ _4058_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (82, 44)
+ _4200_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (78, 36)
+ hold852/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (81, 36)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[50]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[50]
+ Pin capacitance: 0.003847-0.004622
+ Wire capacitance: 0.000378
+ Total capacitance: 0.004224-0.005000
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8005_/Q output (sg13g2_dfrbpq_1) (248, 21)
+
+Load pins
+ _4203_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (231, 21)
+ hold892/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (242, 24)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[51]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[51]
+ Pin capacitance: 0.006749-0.008503
+ Wire capacitance: 0.000403
+ Total capacitance: 0.007151-0.008906
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8006_/Q output (sg13g2_dfrbpq_1) (269, 40)
+
+Load pins
+ _4069_/A2 input (sg13g2_o21ai_1) 0.002862-0.004065 (264, 44)
+ _4207_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (259, 36)
+ hold866/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (259, 44)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[52]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[52]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000362
+ Total capacitance: 0.006631-0.007915
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8007_/Q output (sg13g2_dfrbpq_1) (208, 17)
+
+Load pins
+ _4074_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (207, 21)
+ _4211_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (192, 21)
+ hold844/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (201, 21)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[53]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[53]
+ Pin capacitance: 0.007192-0.009040
+ Wire capacitance: 0.000310
+ Total capacitance: 0.007501-0.009350
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8008_/Q output (sg13g2_dfrbpq_1) (227, 17)
+
+Load pins
+ _4079_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (225, 21)
+ _4214_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (214, 21)
+ _5844_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (217, 21)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[54]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[54]
+ Pin capacitance: 0.007672-0.009785
+ Wire capacitance: 0.000401-0.000401
+ Total capacitance: 0.008073-0.010187
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8009_/Q output (sg13g2_dfrbpq_1) (286, 104)
+
+Load pins
+ _4084_/A2 input (sg13g2_o21ai_1) 0.002862-0.004065 (283, 108)
+ _4218_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (275, 100)
+ _5879_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (275, 108)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[55]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[55]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000424-0.000424
+ Total capacitance: 0.006692-0.007977
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8010_/Q output (sg13g2_dfrbpq_1) (35, 85)
+
+Load pins
+ _4089_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (38, 92)
+ _4222_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (26, 89)
+ hold876/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (36, 85)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[56]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[56]
+ Pin capacitance: 0.007192-0.009040
+ Wire capacitance: 0.000531-0.000531
+ Total capacitance: 0.007722-0.009571
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8011_/Q output (sg13g2_dfrbpq_1) (49, 100)
+
+Load pins
+ _4094_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (47, 104)
+ _4225_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (27, 100)
+ _5945_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (39, 104)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[57]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[57]
+ Pin capacitance: 0.007192-0.009040
+ Wire capacitance: 0.000268
+ Total capacitance: 0.007460-0.009308
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8012_/Q output (sg13g2_dfrbpq_1) (18, 119)
+
+Load pins
+ _4099_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (24, 119)
+ _4229_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (24, 115)
+ _5979_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (17, 123)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[58]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[58]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000188
+ Total capacitance: 0.006457-0.007741
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8013_/Q output (sg13g2_dfrbpq_1) (18, 127)
+
+Load pins
+ _4104_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (19, 130)
+ _4233_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (22, 127)
+ hold860/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (22, 130)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[59]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[59]
+ Pin capacitance: 0.007569-0.009505
+ Wire capacitance: 0.000921
+ Total capacitance: 0.008490-0.010426
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8014_/Q output (sg13g2_dfrbpq_1) (63, 138)
+
+Load pins
+ _4109_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (65, 142)
+ _4236_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (25, 138)
+ _6039_/A1 input (sg13g2_a22oi_1) 0.002762-0.003520 (56, 142)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[60]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[60]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000336-0.000336
+ Total capacitance: 0.006604-0.007889
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8015_/Q output (sg13g2_dfrbpq_1) (18, 145)
+
+Load pins
+ _4114_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (28, 150)
+ _4240_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (20, 149)
+ hold871/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (24, 145)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[61]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[61]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000254-0.000254
+ Total capacitance: 0.006522-0.007807
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8016_/Q output (sg13g2_dfrbpq_1) (18, 161)
+
+Load pins
+ _4119_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (24, 165)
+ _4244_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (20, 157)
+ hold870/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (24, 161)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[62]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[62]
+ Pin capacitance: 0.003847-0.004622
+ Wire capacitance: 0.000453
+ Total capacitance: 0.004300-0.005076
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8017_/Q output (sg13g2_dfrbpq_1) (22, 183)
+
+Load pins
+ _4247_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (21, 165)
+ hold896/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (27, 183)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[63]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[63]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000258-0.000258
+ Total capacitance: 0.006527-0.007811
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8018_/Q output (sg13g2_dfrbpq_1) (18, 217)
+
+Load pins
+ _4130_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (24, 213)
+ _4251_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (21, 217)
+ hold851/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (22, 221)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[64]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[64]
+ Pin capacitance: 0.007192-0.009040
+ Wire capacitance: 0.000241
+ Total capacitance: 0.007433-0.009281
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8019_/Q output (sg13g2_dfrbpq_1) (18, 198)
+
+Load pins
+ _4135_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (23, 202)
+ _4255_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (18, 195)
+ _6196_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (23, 198)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[65]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[65]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000736-0.000736
+ Total capacitance: 0.007005-0.008289
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8020_/Q output (sg13g2_dfrbpq_1) (52, 187)
+
+Load pins
+ _4140_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (21, 191)
+ _4258_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (19, 187)
+ hold881/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (52, 191)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[66]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[66]
+ Pin capacitance: 0.006269-0.007553
+ Wire capacitance: 0.000317-0.000317
+ Total capacitance: 0.006586-0.007870
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8021_/Q output (sg13g2_dfrbpq_1) (18, 225)
+
+Load pins
+ _4145_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (25, 233)
+ _4262_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (21, 225)
+ hold857/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (18, 229)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[67]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[67]
+ Pin capacitance: 0.003847-0.004622
+ Wire capacitance: 0.000223
+ Total capacitance: 0.004070-0.004845
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8022_/Q output (sg13g2_dfrbpq_1) (37, 187)
+
+Load pins
+ _4265_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (29, 191)
+ hold895/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (38, 191)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[68]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[68]
+ Pin capacitance: 0.006168-0.007466
+ Wire capacitance: 0.000450-0.000450
+ Total capacitance: 0.006618-0.007916
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8023_/Q output (sg13g2_dfrbpq_1) (28, 36)
+
+Load pins
+ _4266_/A input (sg13g2_and2_1) 0.002269-0.002742 (13, 37)
+ _4298_/A3 input (sg13g2_mux4_1) 0.002437-0.003174 (30, 44)
+ hold850/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (27, 40)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[69]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[69]
+ Pin capacitance: 0.006093-0.007397
+ Wire capacitance: 0.000466-0.000466
+ Total capacitance: 0.006559-0.007863
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8024_/Q output (sg13g2_dfrbpq_1) (18, 47)
+
+Load pins
+ _4267_/A input (sg13g2_and2_1) 0.002269-0.002742 (13, 38)
+ _4298_/A1 input (sg13g2_mux4_1) 0.002362-0.003105 (27, 44)
+ hold875/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (23, 47)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[70]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[70]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.001971
+ Total capacitance: 0.008346-0.009630
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8025_/Q output (sg13g2_dfrbpq_1) (62, 123)
+
+Load pins
+ _4002_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (63, 120)
+ _4268_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (59, 21)
+ hold888/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (65, 123)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[71]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[71]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000329
+ Total capacitance: 0.006704-0.007988
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8026_/Q output (sg13g2_dfrbpq_1) (62, 210)
+
+Load pins
+ _4007_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (59, 213)
+ _4269_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (59, 202)
+ hold863/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (63, 213)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[72]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[72]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000286-0.000286
+ Total capacitance: 0.006661-0.007945
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8027_/Q output (sg13g2_dfrbpq_1) (18, 259)
+
+Load pins
+ _4012_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (22, 258)
+ _4270_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (16, 255)
+ hold846/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (15, 263)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[73]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[73]
+ Pin capacitance: 0.007298-0.009146
+ Wire capacitance: 0.000264
+ Total capacitance: 0.007562-0.009410
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8028_/Q output (sg13g2_dfrbpq_1) (18, 282)
+
+Load pins
+ _4017_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (19, 278)
+ _4271_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (12, 274)
+ _6893_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (12, 278)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[74]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[74]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000213
+ Total capacitance: 0.006588-0.007872
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8029_/Q output (sg13g2_dfrbpq_1) (27, 285)
+
+Load pins
+ _4022_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (29, 278)
+ _4272_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (25, 278)
+ hold862/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (28, 286)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[75]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[75]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000375-0.000375
+ Total capacitance: 0.006750-0.008034
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8030_/Q output (sg13g2_dfrbpq_1) (18, 240)
+
+Load pins
+ _4027_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (27, 248)
+ _4273_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (14, 244)
+ hold880/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (21, 244)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[76]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[76]
+ Pin capacitance: 0.007298-0.009146
+ Wire capacitance: 0.000316-0.000316
+ Total capacitance: 0.007614-0.009462
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8031_/Q output (sg13g2_dfrbpq_1) (18, 104)
+
+Load pins
+ _4032_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (21, 104)
+ _4274_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (11, 112)
+ _7023_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (12, 108)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[77]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[77]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000303
+ Total capacitance: 0.006678-0.007961
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8032_/Q output (sg13g2_dfrbpq_1) (18, 81)
+
+Load pins
+ _4037_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (18, 89)
+ _4275_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (10, 89)
+ hold861/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (18, 85)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[78]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[78]
+ Pin capacitance: 0.007335-0.009158
+ Wire capacitance: 0.000463
+ Total capacitance: 0.007798-0.009621
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8033_/Q output (sg13g2_dfrbpq_1) (289, 89)
+
+Load pins
+ _4042_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (287, 82)
+ _4276_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (270, 89)
+ _7104_/A0 input (sg13g2_mux2_1) 0.002422-0.003098 (274, 89)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[79]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[79]
+ Pin capacitance: 0.006508-0.007887
+ Wire capacitance: 0.000219-0.000219
+ Total capacitance: 0.006727-0.008106
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8034_/Q output (sg13g2_dfrbpq_1) (18, 66)
+
+Load pins
+ _4047_/B input (sg13g2_nand2_1) 0.002661-0.003449 (26, 66)
+ _4277_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (21, 66)
+ hold873/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (21, 70)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[80]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[80]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000254-0.000254
+ Total capacitance: 0.006629-0.007913
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8035_/Q output (sg13g2_dfrbpq_1) (63, 74)
+
+Load pins
+ _4053_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (65, 69)
+ _4278_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (62, 77)
+ hold854/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (67, 77)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[81]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[81]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000169-0.000169
+ Total capacitance: 0.006544-0.007828
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8036_/Q output (sg13g2_dfrbpq_1) (82, 40)
+
+Load pins
+ _4058_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (82, 44)
+ _4279_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (79, 44)
+ hold849/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (84, 40)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[82]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[82]
+ Pin capacitance: 0.007431-0.009296
+ Wire capacitance: 0.000308-0.000308
+ Total capacitance: 0.007738-0.009603
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8037_/Q output (sg13g2_dfrbpq_1) (230, 40)
+
+Load pins
+ _4063_/B input (sg13g2_nand2_1) 0.002661-0.003449 (233, 36)
+ _4280_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (229, 36)
+ _7267_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (219, 36)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[83]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[83]
+ Pin capacitance: 0.003847-0.004622
+ Wire capacitance: 0.000092
+ Total capacitance: 0.003938-0.004714
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8038_/Q output (sg13g2_dfrbpq_1) (260, 47)
+
+Load pins
+ _4281_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (261, 51)
+ hold891/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (261, 47)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[84]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[84]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000954
+ Total capacitance: 0.007329-0.008613
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8039_/Q output (sg13g2_dfrbpq_1) (167, 17)
+
+Load pins
+ _4074_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (207, 21)
+ _4282_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (186, 21)
+ hold879/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (162, 13)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[85]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[85]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000906-0.000906
+ Total capacitance: 0.007281-0.008564
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8040_/Q output (sg13g2_dfrbpq_1) (182, 17)
+
+Load pins
+ _4079_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (224, 21)
+ _4283_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (210, 24)
+ hold882/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (183, 17)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[86]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[86]
+ Pin capacitance: 0.003847-0.004622
+ Wire capacitance: 0.000517-0.000517
+ Total capacitance: 0.004363-0.005139
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8041_/Q output (sg13g2_dfrbpq_1) (301, 112)
+
+Load pins
+ _4284_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (276, 112)
+ hold893/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (292, 115)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[87]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[87]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000440-0.000440
+ Total capacitance: 0.006815-0.008099
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8042_/Q output (sg13g2_dfrbpq_1) (39, 89)
+
+Load pins
+ _4089_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (38, 92)
+ _4285_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (29, 97)
+ hold874/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (44, 97)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[88]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[88]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000410-0.000410
+ Total capacitance: 0.006785-0.008069
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8043_/Q output (sg13g2_dfrbpq_1) (46, 108)
+
+Load pins
+ _4094_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (47, 104)
+ _4286_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (28, 108)
+ hold868/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (47, 108)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[89]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[89]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000421-0.000421
+ Total capacitance: 0.006795-0.008079
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8044_/Q output (sg13g2_dfrbpq_1) (39, 119)
+
+Load pins
+ _4099_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (24, 120)
+ _4287_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (21, 119)
+ hold872/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (40, 123)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[90]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[90]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000342-0.000342
+ Total capacitance: 0.006717-0.008001
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8045_/Q output (sg13g2_dfrbpq_1) (18, 138)
+
+Load pins
+ _4104_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (19, 130)
+ _4288_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (13, 130)
+ hold845/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (16, 142)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[91]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[91]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.001064-0.001064
+ Total capacitance: 0.007439-0.008723
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8046_/Q output (sg13g2_dfrbpq_1) (64, 157)
+
+Load pins
+ _4109_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (65, 142)
+ _4289_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (22, 153)
+ hold886/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (65, 157)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[92]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[92]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000387-0.000387
+ Total capacitance: 0.006762-0.008046
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8047_/Q output (sg13g2_dfrbpq_1) (18, 153)
+
+Load pins
+ _4114_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (28, 150)
+ _4290_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (13, 149)
+ hold877/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (23, 153)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[93]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[93]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000356
+ Total capacitance: 0.006731-0.008015
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8048_/Q output (sg13g2_dfrbpq_1) (18, 168)
+
+Load pins
+ _4119_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (24, 165)
+ _4291_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (15, 165)
+ hold883/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (23, 172)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[94]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[94]
+ Pin capacitance: 0.006508-0.007887
+ Wire capacitance: 0.000298
+ Total capacitance: 0.006806-0.008185
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8049_/Q output (sg13g2_dfrbpq_1) (18, 180)
+
+Load pins
+ _4124_/B input (sg13g2_nand2_1) 0.002661-0.003449 (21, 180)
+ _4292_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (17, 172)
+ hold878/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (23, 183)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[95]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[95]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000206-0.000206
+ Total capacitance: 0.006581-0.007865
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8050_/Q output (sg13g2_dfrbpq_1) (18, 210)
+
+Load pins
+ _4130_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (24, 213)
+ _4293_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (17, 213)
+ hold864/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (18, 213)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[96]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[96]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000231-0.000231
+ Total capacitance: 0.006605-0.007889
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8051_/Q output (sg13g2_dfrbpq_1) (19, 206)
+
+Load pins
+ _4135_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (23, 203)
+ _4294_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (17, 202)
+ hold859/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (20, 206)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[97]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[97]
+ Pin capacitance: 0.007298-0.009146
+ Wire capacitance: 0.000235
+ Total capacitance: 0.007532-0.009380
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8052_/Q output (sg13g2_dfrbpq_1) (18, 191)
+
+Load pins
+ _4140_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (20, 190)
+ _4295_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (14, 187)
+ _7827_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (11, 187)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[98]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[98]
+ Pin capacitance: 0.006375-0.007659
+ Wire capacitance: 0.000232-0.000232
+ Total capacitance: 0.006607-0.007891
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8053_/Q output (sg13g2_dfrbpq_1) (18, 233)
+
+Load pins
+ _4145_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (25, 233)
+ _4296_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (17, 229)
+ hold869/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (19, 233)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[99]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[99]
+ Pin capacitance: 0.006508-0.007887
+ Wire capacitance: 0.001079-0.001079
+ Total capacitance: 0.007587-0.008966
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8054_/Q output (sg13g2_dfrbpq_1) (75, 195)
+
+Load pins
+ _4150_/B input (sg13g2_nand2_1) 0.002661-0.003449 (36, 195)
+ _4297_/A1 input (sg13g2_a21o_1) 0.002385-0.003055 (25, 191)
+ hold885/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (77, 198)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[100]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[100]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.005731-0.005731
+ Total capacitance: 0.008259-0.008931
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8055_/Q output (sg13g2_dfrbpq_1) (318, 40)
+
+Load pins
+ _7894_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (303, 39)
+ rs_data[64] output port (304, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[101]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[101]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.005457-0.005457
+ Total capacitance: 0.007986-0.008657
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8056_/Q output (sg13g2_dfrbpq_1) (314, 55)
+
+Load pins
+ _7895_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (299, 54)
+ rs_data[65] output port (303, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[102]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[102]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.006004-0.006004
+ Total capacitance: 0.008533-0.009205
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8057_/Q output (sg13g2_dfrbpq_1) (316, 24)
+
+Load pins
+ _7896_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (301, 24)
+ rs_data[66] output port (302, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[103]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[103]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.006278
+ Total capacitance: 0.008807-0.009478
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8058_/Q output (sg13g2_dfrbpq_1) (313, 9)
+
+Load pins
+ _7897_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (298, 9)
+ rs_data[67] output port (301, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[104]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[104]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.005594-0.005594
+ Total capacitance: 0.008122-0.008794
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8059_/Q output (sg13g2_dfrbpq_1) (314, 47)
+
+Load pins
+ _7898_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (299, 47)
+ rs_data[68] output port (300, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[105]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[105]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.006150
+ Total capacitance: 0.008678-0.009350
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8060_/Q output (sg13g2_dfrbpq_1) (313, 17)
+
+Load pins
+ _7899_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (298, 17)
+ rs_data[69] output port (299, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[106]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[106]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.005868
+ Total capacitance: 0.008396-0.009068
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8061_/Q output (sg13g2_dfrbpq_1) (313, 32)
+
+Load pins
+ _7900_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (298, 32)
+ rs_data[70] output port (298, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[107]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[107]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.006199-0.006199
+ Total capacitance: 0.008727-0.009399
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8062_/Q output (sg13g2_dfrbpq_1) (299, 13)
+
+Load pins
+ _7901_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (283, 14)
+ rs_data[71] output port (297, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[108]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[108]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.006028
+ Total capacitance: 0.008556-0.009228
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8063_/Q output (sg13g2_dfrbpq_1) (293, 24)
+
+Load pins
+ _7902_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (283, 21)
+ rs_data[72] output port (296, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[109]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[109]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.006046-0.006046
+ Total capacitance: 0.008575-0.009246
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8064_/Q output (sg13g2_dfrbpq_1) (304, 28)
+
+Load pins
+ _7903_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (289, 21)
+ rs_data[73] output port (295, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[110]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[110]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.005868-0.005868
+ Total capacitance: 0.008396-0.009068
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8065_/Q output (sg13g2_dfrbpq_1) (299, 36)
+
+Load pins
+ _7904_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (284, 32)
+ rs_data[74] output port (294, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[111]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[111]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.006435-0.006435
+ Total capacitance: 0.008963-0.009635
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8066_/Q output (sg13g2_dfrbpq_1) (279, 9)
+
+Load pins
+ _7905_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (269, 14)
+ rs_data[75] output port (293, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[112]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[112]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.006252
+ Total capacitance: 0.008780-0.009452
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8067_/Q output (sg13g2_dfrbpq_1) (289, 17)
+
+Load pins
+ _7906_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (274, 14)
+ rs_data[76] output port (292, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[113]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[113]
+ Pin capacitance: 0.018059-0.023076
+ Wire capacitance: 0.013914-0.013914
+ Total capacitance: 0.031973-0.036990
+ Number of drivers: 1
+ Number of loads: 8
+ Number of pins: 9
+
+Driver pins
+ _8068_/Q output (sg13g2_dfrbpq_1) (200, 13)
+
+Load pins
+ _4005_/A input (sg13g2_nand2_1) 0.002490-0.003317 (293, 301)
+ _4158_/A input (sg13g2_nor2_1) 0.002641-0.003443 (61, 21)
+ _4160_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (63, 206)
+ _4161_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (62, 202)
+ _4163_/A input (sg13g2_and3_1) 0.002248-0.002768 (193, 309)
+ _4164_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (196, 308)
+ _7907_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (185, 14)
+ rs_data[77] output port (291, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[114]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[114]
+ Pin capacitance: 0.015533-0.020156
+ Wire capacitance: 0.006692
+ Total capacitance: 0.022225-0.026849
+ Number of drivers: 1
+ Number of loads: 7
+ Number of pins: 8
+
+Driver pins
+ _8069_/Q output (sg13g2_dfrbpq_1) (80, 202)
+
+Load pins
+ _4010_/A input (sg13g2_nand2_1) 0.002490-0.003317 (290, 319)
+ _4160_/A2 input (sg13g2_o21ai_1) 0.002862-0.004065 (63, 206)
+ _4161_/A2 input (sg13g2_a21oi_1) 0.002679-0.003431 (62, 202)
+ _4163_/B input (sg13g2_and3_1) 0.002231-0.002832 (193, 308)
+ _4164_/A2 input (sg13g2_a21oi_1) 0.002679-0.003431 (197, 308)
+ _7908_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (67, 206)
+ rs_data[78] output port (290, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[115]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[115]
+ Pin capacitance: 0.009857-0.012664
+ Wire capacitance: 0.002331-0.002331
+ Total capacitance: 0.012188-0.014995
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8070_/Q output (sg13g2_dfrbpq_1) (226, 308)
+
+Load pins
+ _4015_/A input (sg13g2_nand2_1) 0.002490-0.003317 (284, 316)
+ _4163_/C input (sg13g2_and3_1) 0.002260-0.002872 (193, 308)
+ _4164_/B1 input (sg13g2_a21oi_1) 0.002422-0.003394 (195, 308)
+ _7909_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (211, 309)
+ rs_data[79] output port (289, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[116]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[116]
+ Pin capacitance: 0.010178-0.012973
+ Wire capacitance: 0.002589-0.002589
+ Total capacitance: 0.012767-0.015562
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8071_/Q output (sg13g2_dfrbpq_1) (221, 301)
+
+Load pins
+ _4020_/A input (sg13g2_nand2_1) 0.002490-0.003317 (283, 301)
+ _4167_/A input (sg13g2_and2_1) 0.002269-0.002742 (193, 302)
+ _4168_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (191, 301)
+ _7910_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (205, 296)
+ rs_data[80] output port (288, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[117]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[117]
+ Pin capacitance: 0.010178-0.012973
+ Wire capacitance: 0.005644
+ Total capacitance: 0.015822-0.018617
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8072_/Q output (sg13g2_dfrbpq_1) (225, 297)
+
+Load pins
+ _4025_/A input (sg13g2_nand2_1) 0.002490-0.003317 (275, 304)
+ _4171_/A input (sg13g2_and2_1) 0.002269-0.002742 (30, 296)
+ _4172_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (24, 297)
+ _7911_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (209, 293)
+ rs_data[81] output port (288, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[118]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[118]
+ Pin capacitance: 0.010178-0.012973
+ Wire capacitance: 0.005673
+ Total capacitance: 0.015851-0.018646
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8073_/Q output (sg13g2_dfrbpq_1) (212, 312)
+
+Load pins
+ _4030_/A input (sg13g2_nand2_1) 0.002490-0.003317 (282, 312)
+ _4175_/A input (sg13g2_and2_1) 0.002269-0.002742 (25, 294)
+ _4176_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (25, 289)
+ _7912_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (197, 311)
+ rs_data[82] output port (287, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[119]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[119]
+ Pin capacitance: 0.015418-0.019633
+ Wire capacitance: 0.010517
+ Total capacitance: 0.025935-0.030150
+ Number of drivers: 1
+ Number of loads: 7
+ Number of pins: 8
+
+Driver pins
+ _8074_/Q output (sg13g2_dfrbpq_1) (307, 89)
+
+Load pins
+ _4035_/A input (sg13g2_nand2_1) 0.002490-0.003317 (307, 274)
+ _4179_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (21, 108)
+ _4180_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (20, 108)
+ _4182_/A input (sg13g2_and3_1) 0.002248-0.002768 (20, 91)
+ _4183_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (18, 92)
+ _7913_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (291, 89)
+ rs_data[83] output port (286, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[120]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[120]
+ Pin capacitance: 0.009818-0.012623
+ Wire capacitance: 0.012658
+ Total capacitance: 0.022475-0.025281
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8075_/Q output (sg13g2_dfrbpq_1) (152, 13)
+
+Load pins
+ _4040_/A input (sg13g2_nand2_1) 0.002490-0.003317 (311, 319)
+ _4182_/B input (sg13g2_and3_1) 0.002231-0.002832 (21, 92)
+ _4183_/B1 input (sg13g2_a21oi_1) 0.002422-0.003394 (17, 92)
+ _7914_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (135, 14)
+ rs_data[84] output port (285, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[121]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[121]
+ Pin capacitance: 0.010178-0.012973
+ Wire capacitance: 0.005916-0.005916
+ Total capacitance: 0.016094-0.018889
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8076_/Q output (sg13g2_dfrbpq_1) (310, 81)
+
+Load pins
+ _4045_/A input (sg13g2_nand2_1) 0.002490-0.003317 (312, 263)
+ _4186_/A input (sg13g2_and2_1) 0.002269-0.002742 (279, 82)
+ _4187_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (273, 81)
+ _7915_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (293, 85)
+ rs_data[85] output port (284, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[122]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[122]
+ Pin capacitance: 0.015418-0.019633
+ Wire capacitance: 0.006547
+ Total capacitance: 0.021966-0.026181
+ Number of drivers: 1
+ Number of loads: 7
+ Number of pins: 8
+
+Driver pins
+ _8077_/Q output (sg13g2_dfrbpq_1) (314, 62)
+
+Load pins
+ _4051_/A input (sg13g2_nand2_1) 0.002490-0.003317 (312, 301)
+ _4190_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (276, 55)
+ _4191_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (279, 59)
+ _4193_/A input (sg13g2_and3_1) 0.002248-0.002768 (275, 61)
+ _4194_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (275, 59)
+ _7916_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (298, 67)
+ rs_data[86] output port (283, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[123]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[123]
+ Pin capacitance: 0.009818-0.012623
+ Wire capacitance: 0.005887-0.005887
+ Total capacitance: 0.015705-0.018510
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8078_/Q output (sg13g2_dfrbpq_1) (287, 40)
+
+Load pins
+ _4056_/A input (sg13g2_nand2_1) 0.002490-0.003317 (283, 327)
+ _4193_/B input (sg13g2_and3_1) 0.002231-0.002832 (275, 62)
+ _4194_/B1 input (sg13g2_a21oi_1) 0.002422-0.003394 (274, 59)
+ _7917_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (272, 39)
+ rs_data[87] output port (282, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[124]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[124]
+ Pin capacitance: 0.010178-0.012973
+ Wire capacitance: 0.005842-0.005842
+ Total capacitance: 0.016020-0.018815
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8079_/Q output (sg13g2_dfrbpq_1) (285, 47)
+
+Load pins
+ _4061_/A input (sg13g2_nand2_1) 0.002490-0.003317 (287, 278)
+ _4197_/A input (sg13g2_and2_1) 0.002269-0.002742 (268, 52)
+ _4198_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (271, 51)
+ _7918_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (270, 47)
+ rs_data[88] output port (281, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[125]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[125]
+ Pin capacitance: 0.015418-0.019633
+ Wire capacitance: 0.006485-0.006485
+ Total capacitance: 0.021903-0.026118
+ Number of drivers: 1
+ Number of loads: 7
+ Number of pins: 8
+
+Driver pins
+ _8080_/Q output (sg13g2_dfrbpq_1) (280, 21)
+
+Load pins
+ _4067_/A input (sg13g2_nand2_1) 0.002490-0.003317 (266, 293)
+ _4201_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (268, 36)
+ _4202_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (265, 32)
+ _4204_/A input (sg13g2_and3_1) 0.002248-0.002768 (270, 31)
+ _4205_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (272, 36)
+ _7919_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (265, 21)
+ rs_data[89] output port (280, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[126]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[126]
+ Pin capacitance: 0.009802-0.012692
+ Wire capacitance: 0.006319-0.006319
+ Total capacitance: 0.016121-0.019011
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8081_/Q output (sg13g2_dfrbpq_1) (290, 28)
+
+Load pins
+ _3986_/A input (sg13g2_inv_1) 0.002570-0.003266 (292, 286)
+ _4204_/B input (sg13g2_and3_1) 0.002231-0.002832 (271, 32)
+ _4205_/B1 input (sg13g2_a21oi_1) 0.002422-0.003394 (271, 36)
+ _7920_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (275, 32)
+ rs_data[90] output port (279, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[127]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[127]
+ Pin capacitance: 0.010178-0.012973
+ Wire capacitance: 0.006618-0.006618
+ Total capacitance: 0.016796-0.019590
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8082_/Q output (sg13g2_dfrbpq_1) (264, 17)
+
+Load pins
+ _4077_/A input (sg13g2_nand2_1) 0.002490-0.003317 (259, 304)
+ _4208_/A input (sg13g2_and2_1) 0.002269-0.002742 (272, 30)
+ _4209_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (266, 24)
+ _7921_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (249, 17)
+ rs_data[91] output port (278, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[128]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[128]
+ Pin capacitance: 0.015418-0.019633
+ Wire capacitance: 0.006379
+ Total capacitance: 0.021797-0.026012
+ Number of drivers: 1
+ Number of loads: 7
+ Number of pins: 8
+
+Driver pins
+ _8083_/Q output (sg13g2_dfrbpq_1) (265, 28)
+
+Load pins
+ _4082_/A input (sg13g2_nand2_1) 0.002490-0.003317 (275, 278)
+ _4212_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (253, 21)
+ _4213_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (250, 24)
+ _4215_/A input (sg13g2_and3_1) 0.002248-0.002768 (270, 98)
+ _4216_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (276, 97)
+ _7922_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (250, 29)
+ rs_data[92] output port (277, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[129]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[129]
+ Pin capacitance: 0.009802-0.012692
+ Wire capacitance: 0.005870-0.005870
+ Total capacitance: 0.015673-0.018562
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8084_/Q output (sg13g2_dfrbpq_1) (313, 96)
+
+Load pins
+ _3988_/A input (sg13g2_inv_1) 0.002570-0.003266 (313, 274)
+ _4215_/B input (sg13g2_and3_1) 0.002231-0.002832 (271, 97)
+ _4216_/B1 input (sg13g2_a21oi_1) 0.002422-0.003394 (276, 97)
+ _7923_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (296, 97)
+ rs_data[93] output port (276, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[130]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[130]
+ Pin capacitance: 0.010178-0.012973
+ Wire capacitance: 0.011752
+ Total capacitance: 0.021930-0.024725
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8085_/Q output (sg13g2_dfrbpq_1) (118, 24)
+
+Load pins
+ _4092_/A input (sg13g2_nand2_1) 0.002490-0.003317 (288, 323)
+ _4219_/A input (sg13g2_and2_1) 0.002269-0.002742 (32, 99)
+ _4220_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (33, 97)
+ _7924_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (107, 21)
+ rs_data[94] output port (275, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[131]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[131]
+ Pin capacitance: 0.015418-0.019633
+ Wire capacitance: 0.012541-0.012541
+ Total capacitance: 0.027959-0.032174
+ Number of drivers: 1
+ Number of loads: 7
+ Number of pins: 8
+
+Driver pins
+ _8086_/Q output (sg13g2_dfrbpq_1) (132, 17)
+
+Load pins
+ _4097_/A input (sg13g2_nand2_1) 0.002490-0.003317 (299, 308)
+ _4223_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (28, 104)
+ _4224_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (30, 100)
+ _4226_/A input (sg13g2_and3_1) 0.002248-0.002768 (32, 113)
+ _4227_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (30, 112)
+ _7925_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (116, 17)
+ rs_data[95] output port (274, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[132]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[132]
+ Pin capacitance: 0.009818-0.012623
+ Wire capacitance: 0.009583-0.009583
+ Total capacitance: 0.019400-0.022206
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8087_/Q output (sg13g2_dfrbpq_1) (122, 96)
+
+Load pins
+ _4102_/A input (sg13g2_nand2_1) 0.002490-0.003317 (302, 293)
+ _4226_/B input (sg13g2_and3_1) 0.002231-0.002832 (33, 112)
+ _4227_/B1 input (sg13g2_a21oi_1) 0.002422-0.003394 (29, 112)
+ _7926_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (110, 100)
+ rs_data[96] output port (273, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[133]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[133]
+ Pin capacitance: 0.010178-0.012973
+ Wire capacitance: 0.010203-0.010203
+ Total capacitance: 0.020381-0.023176
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8088_/Q output (sg13g2_dfrbpq_1) (318, 115)
+
+Load pins
+ _4107_/A input (sg13g2_nand2_1) 0.002490-0.003317 (313, 286)
+ _4230_/A input (sg13g2_and2_1) 0.002269-0.002742 (23, 122)
+ _4231_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (26, 123)
+ _7927_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (303, 120)
+ rs_data[97] output port (272, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[134]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[134]
+ Pin capacitance: 0.015418-0.019633
+ Wire capacitance: 0.009050
+ Total capacitance: 0.024468-0.028683
+ Number of drivers: 1
+ Number of loads: 7
+ Number of pins: 8
+
+Driver pins
+ _8089_/Q output (sg13g2_dfrbpq_1) (40, 142)
+
+Load pins
+ _4112_/A input (sg13g2_nand2_1) 0.002490-0.003317 (307, 308)
+ _4234_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (21, 138)
+ _4235_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (20, 138)
+ _4237_/A input (sg13g2_and3_1) 0.002248-0.002768 (24, 143)
+ _4238_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (22, 145)
+ _7928_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (29, 137)
+ rs_data[98] output port (271, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[135]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[135]
+ Pin capacitance: 0.009818-0.012623
+ Wire capacitance: 0.008759-0.008759
+ Total capacitance: 0.018576-0.021382
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8090_/Q output (sg13g2_dfrbpq_1) (146, 142)
+
+Load pins
+ _4117_/A input (sg13g2_nand2_1) 0.002490-0.003317 (303, 278)
+ _4237_/B input (sg13g2_and3_1) 0.002231-0.002832 (24, 142)
+ _4238_/B1 input (sg13g2_a21oi_1) 0.002422-0.003394 (21, 145)
+ _7929_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (131, 145)
+ rs_data[99] output port (270, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[136]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[136]
+ Pin capacitance: 0.010178-0.012973
+ Wire capacitance: 0.009872
+ Total capacitance: 0.020049-0.022844
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8091_/Q output (sg13g2_dfrbpq_1) (336, 153)
+
+Load pins
+ _4122_/A input (sg13g2_nand2_1) 0.002490-0.003317 (310, 266)
+ _4241_/A input (sg13g2_and2_1) 0.002269-0.002742 (23, 158)
+ _4242_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (21, 160)
+ _7930_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (323, 157)
+ rs_data[100] output port (269, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[137]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[137]
+ Pin capacitance: 0.015418-0.019633
+ Wire capacitance: 0.009840-0.009840
+ Total capacitance: 0.025258-0.029473
+ Number of drivers: 1
+ Number of loads: 7
+ Number of pins: 8
+
+Driver pins
+ _8092_/Q output (sg13g2_dfrbpq_1) (203, 172)
+
+Load pins
+ _4128_/A input (sg13g2_nand2_1) 0.002490-0.003317 (258, 316)
+ _4245_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (23, 168)
+ _4246_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (21, 172)
+ _4248_/A input (sg13g2_and3_1) 0.002248-0.002768 (19, 288)
+ _4249_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (19, 293)
+ _7931_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (185, 172)
+ rs_data[101] output port (268, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[138]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[138]
+ Pin capacitance: 0.009818-0.012623
+ Wire capacitance: 0.005870-0.005870
+ Total capacitance: 0.015687-0.018493
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8093_/Q output (sg13g2_dfrbpq_1) (224, 323)
+
+Load pins
+ _4133_/A input (sg13g2_nand2_1) 0.002490-0.003317 (264, 301)
+ _4248_/B input (sg13g2_and3_1) 0.002231-0.002832 (19, 289)
+ _4249_/B1 input (sg13g2_a21oi_1) 0.002422-0.003394 (18, 293)
+ _7932_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (209, 324)
+ rs_data[102] output port (267, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[139]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[139]
+ Pin capacitance: 0.010178-0.012973
+ Wire capacitance: 0.005779-0.005779
+ Total capacitance: 0.015957-0.018752
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8094_/Q output (sg13g2_dfrbpq_1) (214, 331)
+
+Load pins
+ _4138_/A input (sg13g2_nand2_1) 0.002490-0.003317 (256, 308)
+ _4252_/A input (sg13g2_and2_1) 0.002269-0.002742 (21, 296)
+ _4253_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (15, 297)
+ _7933_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (199, 326)
+ rs_data[103] output port (266, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[140]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[140]
+ Pin capacitance: 0.015418-0.019633
+ Wire capacitance: 0.005401
+ Total capacitance: 0.020819-0.025034
+ Number of drivers: 1
+ Number of loads: 7
+ Number of pins: 8
+
+Driver pins
+ _8095_/Q output (sg13g2_dfrbpq_1) (213, 304)
+
+Load pins
+ _4143_/A input (sg13g2_nand2_1) 0.002490-0.003317 (256, 327)
+ _4256_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (19, 301)
+ _4257_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (18, 301)
+ _4259_/A input (sg13g2_and3_1) 0.002248-0.002768 (19, 309)
+ _4260_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (17, 308)
+ _7934_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (199, 301)
+ rs_data[104] output port (265, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[141]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[141]
+ Pin capacitance: 0.009818-0.012623
+ Wire capacitance: 0.005213
+ Total capacitance: 0.015031-0.017836
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8096_/Q output (sg13g2_dfrbpq_1) (201, 331)
+
+Load pins
+ _4148_/A input (sg13g2_nand2_1) 0.002490-0.003317 (261, 323)
+ _4259_/B input (sg13g2_and3_1) 0.002231-0.002832 (20, 308)
+ _4260_/B1 input (sg13g2_a21oi_1) 0.002422-0.003394 (16, 308)
+ _7935_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (187, 326)
+ rs_data[105] output port (264, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[142]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[142]
+ Pin capacitance: 0.010540-0.013480
+ Wire capacitance: 0.005054
+ Total capacitance: 0.015594-0.018534
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8097_/Q output (sg13g2_dfrbpq_1) (33, 316)
+
+Load pins
+ _4154_/A input (sg13g2_nand2_1) 0.002490-0.003317 (262, 316)
+ _4263_/A1 input (sg13g2_o21ai_1) 0.002891-0.003861 (22, 304)
+ _4264_/A1 input (sg13g2_a21oi_1) 0.002630-0.003444 (25, 304)
+ _7936_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (24, 311)
+ rs_data[106] output port (264, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[143]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[143]
+ Pin capacitance: 0.005225-0.006657
+ Wire capacitance: 0.010481-0.010481
+ Total capacitance: 0.015706-0.017137
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8098_/Q output (sg13g2_dfrbpq_1) (136, 9)
+
+Load pins
+ _7937_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (121, 9)
+ _7953_/C input (sg13g2_nand3_1) 0.002681-0.003457 (87, 81)
+ rs_data[107] output port (263, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[144]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[144]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.006363-0.006363
+ Total capacitance: 0.008892-0.009563
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8099_/Q output (sg13g2_dfrbpq_1) (253, 13)
+
+Load pins
+ _7938_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (237, 14)
+ rs_data[108] output port (262, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[145]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[145]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.006495-0.006495
+ Total capacitance: 0.009023-0.009695
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8100_/Q output (sg13g2_dfrbpq_1) (242, 17)
+
+Load pins
+ _7939_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (229, 14)
+ rs_data[109] output port (261, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[146]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[146]
+ Pin capacitance: 0.001396-0.001578
+ Wire capacitance: 0.000325-0.000325
+ Total capacitance: 0.001720-0.001903
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8101_/Q output (sg13g2_dfrbpq_1) (252, 331)
+
+Load pins
+ hold884/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (253, 331)
+ rs_data[110] output port (260, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[147]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[147]
+ Pin capacitance: 0.001396-0.001578
+ Wire capacitance: 0.000437
+ Total capacitance: 0.001832-0.002015
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8102_/Q output (sg13g2_dfrbpq_1) (258, 319)
+
+Load pins
+ hold887/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (256, 323)
+ rs_data[111] output port (259, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[148]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[148]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.006816-0.006816
+ Total capacitance: 0.009344-0.010016
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8103_/Q output (sg13g2_dfrbpq_1) (228, 9)
+
+Load pins
+ _7949_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (213, 9)
+ rs_data[112] output port (258, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[149]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[149]
+ Pin capacitance: 0.003969-0.004778
+ Wire capacitance: 0.006506-0.006506
+ Total capacitance: 0.010475-0.011284
+ Number of drivers: 1
+ Number of loads: 3
+ Number of pins: 4
+
+Driver pins
+ _8104_/Q output (sg13g2_dfrbpq_1) (266, 13)
+
+Load pins
+ _7950_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (251, 9)
+ hold817/A input (sg13g2_dlygate4sd3_1) 0.001396-0.001578 (269, 180)
+ rs_data[113] output port (257, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[150]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[150]
+ Pin capacitance: 0.002528-0.003200
+ Wire capacitance: 0.007024
+ Total capacitance: 0.009553-0.010224
+ Number of drivers: 1
+ Number of loads: 2
+ Number of pins: 3
+
+Driver pins
+ _8105_/Q output (sg13g2_dfrbpq_1) (214, 13)
+
+Load pins
+ _7951_/A1 input (sg13g2_mux2_1) 0.002528-0.003200 (199, 9)
+ rs_data[114] output port (256, 341)
+
+@@@N alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs\[0\].pipe_register.g_pipe.pipe[151]
+Net alu.rsp_buf.genblk1.g_eb1.pipe_buffer.g_register.g_pipe_regs[0].pipe_register.g_pipe.pipe[151]
+ Pin capacitance: 0.009750-0.012484
+ Wire capacitance: 0.011451-0.011451
+ Total capacitance: 0.021201-0.023934
+ Number of drivers: 1
+ Number of loads: 5
+ Number of pins: 6
+
+Driver pins
+ _8141_/Q output (sg13g2_dfrbpq_1) (55, 13)
+
+Load pins
+ _3997_/B_N input (sg13g2_nor2b_1) 0.002045-0.002455 (55, 165)
+ _7266_/A1 input (sg13g2_a221oi_1) 0.002628-0.003372 (140, 36)
+ _7826_/A1 input (sg13g2_a221oi_1) 0.002628-0.003372 (68, 191)
+ _7953_/A input (sg13g2_nand3_1) 0.002450-0.003327 (89, 81)
+ rs_valid output port (255, 341)
+

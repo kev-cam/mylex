@@ -1,0 +1,26 @@
+cell 2 rc=0 748s  QC2 = -1.330975e-13
+cell 3 rc=0 557s  QC3 = -2.131160e-13
+cell 4 rc=0 14s  QC4 = -1.781972e-14
+cell 5 rc=0 13s  QC5 = -2.324000e-14
+cell 6 rc=0 187s  QC6 = -3.022402e-14
+cell 7 rc=0 14s  QC7 = -2.616682e-14
+cell 8 rc=0 13s  QC8 = -3.956125e-14
+cell 9 rc=0 13s  QC9 = -5.300601e-14
+DONE
+invload rc=0 14s
+flop rc=0 426s QA = -5.426061e-13 QA2 = -5.521590e-13 QB = -1.608580e-12 
+PHASE2DONE
+invslew rc=0 13s
+PHASE3DONE
+ALLDONE
+chain rc=1 13s 
+PHASE5DONE
+pdkmodel rc=0 14s QCYC = -1.918834e-14 TPHL = 6.497299e-11 with targ = 1.119056e-09 and trig = 1.054083e-09 TPLH = 8.368461e-11 with targ = 3.245935e-09 and trig = 3.162250e-09 
+PHASE6DONE
+chain2 rc=0 14s QCHAIN = -6.381054e-14
+pdkmodel2 rc=0 330s QCYC = -1.918834e-14 TPHL = 6.497299e-11 with targ = 1.119056e-09 and trig = 1.054083e-09 TPLH = 8.368461e-11 with targ = 3.245935e-09 and trig = 3.162250e-09 
+oldmodel rc=0 329s QCYC = -1.918834e-14 TPHL = 6.497299e-11 with targ = 1.119056e-09 and trig = 1.054083e-09 TPLH = 8.368461e-11 with targ = 3.245935e-09 and trig = 3.162250e-09 
+PHASE7DONE
+nojunc-pdk rc=0 315s QCYC = -1.725195e-14 TPHL = 6.202507e-11 with targ = 1.116108e-09 and trig = 1.054083e-09 
+nojunc-old rc=0 311s QCYC = -1.725195e-14 TPHL = 6.202507e-11 with targ = 1.116108e-09 and trig = 1.054083e-09 
+PHASE8DONE

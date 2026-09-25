@@ -1,0 +1,341 @@
+
+*****
+***** Welcome to the Xyce(TM) Parallel Electronic Simulator
+*****
+***** This is version Xyce DEVELOPMENT-202607082310-()-opensource
+***** Date: Fri Sep 25 12:40:25 PDT 2026
+
+
+***** Executing netlist inv_pdkmodel.sp
+
+***** Reading and parsing netlist...
+Netlist warning: .HDL: compiled and registered PSP103VA from
+ /usr/local/src/IHP-Open-PDK/ihp-sg13g2/libs.tech/verilog-a/psp103/psp103.va
+Netlist warning: No print specified
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 1
+ No model parameter CTBO found for model SG13G2_NMOS of type NMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 1
+ No model parameter CTGO found for model SG13G2_NMOS of type NMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 1
+ No model parameter DTA found for model SG13G2_NMOS of type NMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 1
+ No model parameter MUNQSO found for model SG13G2_NMOS of type NMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 1
+ No model parameter NSUBEDGELEXP found for model SG13G2_NMOS of type NMOS,
+ parameter ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 1
+ No model parameter ST2VFBO found for model SG13G2_NMOS of type NMOS,
+ parameter ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 1
+ No model parameter STCTO found for model SG13G2_NMOS of type NMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 1
+ No model parameter STTHECSO found for model SG13G2_NMOS of type NMOS,
+ parameter ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 1
+ No model parameter SWNQS found for model SG13G2_NMOS of type NMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 1
+ No model parameter THECSO found for model SG13G2_NMOS of type NMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 67
+ No model parameter CTBO found for model SG13G2_PMOS of type PMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 67
+ No model parameter CTGO found for model SG13G2_PMOS of type PMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 67
+ No model parameter DTA found for model SG13G2_PMOS of type PMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 67
+ No model parameter MUNQSO found for model SG13G2_PMOS of type PMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 67
+ No model parameter NSUBEDGELEXP found for model SG13G2_PMOS of type PMOS,
+ parameter ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 67
+ No model parameter ST2VFBO found for model SG13G2_PMOS of type PMOS,
+ parameter ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 67
+ No model parameter STCTO found for model SG13G2_PMOS of type PMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 67
+ No model parameter STTHECSO found for model SG13G2_PMOS of type PMOS,
+ parameter ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 67
+ No model parameter SWNQS found for model SG13G2_PMOS of type PMOS, parameter
+ ignored.
+Netlist warning in file /usr/local/src/kestrel/sim/models/sg13g2_psp103_tt.lib
+ at or near line 67
+ No model parameter THECSO found for model SG13G2_PMOS of type PMOS, parameter
+ ignored.
+***** Setting up topology...
+
+preprocess: warning: 'discipline.h' not found (skipped)
+build_vae_so: built /tmp/pyms_vae_pdk/vae_PSP103VA_a0821f848e3b009f.so (782 params, full)
+preprocess: warning: 'discipline.h' not found (skipped)
+build_vae_so: built /tmp/pyms_vae_pdk/vae_PSP103VA_622ac138f6f0ae03.so (782 params, full)
+***** Device Count Summary ...
+       C level 1 (Capacitor)                  1
+       PSP103VA (PSP103VA)                    2
+       V level 1 (Independent Voltage Source) 3
+       ----------------------------------------
+       Total Devices                          6
+***** Setting up matrix structure...
+***** Number of Unknowns = 9
+***** Initializing...
+
+***** Beginning DC Operating Point Calculation...
+
+***** Beginning Transient Calculation...
+
+***** Percent complete: 1.24 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 2.52 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 4.52 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 6.52 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 8.52 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 10.52 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 12.52 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 14.52 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 16.52 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 18.52 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 20 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 21.0947 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 22.1289 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 23.1354 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 24.2502 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 25.6222 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 27.4515 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 29.2809 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 32.9396 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 40.257 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 48.257 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 56.257 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 62.1633 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 63.2173 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 64.2646 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 65.3015 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 66.366 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 67.4039 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 68.6015 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 69.8789 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 71.1563 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 72.4337 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 74.9885 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 80.0982 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 88.0982 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Percent complete: 96.0982 %
+***** Current system time: Fri Sep 25 12:45:55 2026
+***** Estimated time to completion:  0 sec.
+
+***** Problem read in and set up time: 330.323 seconds
+ ***** DCOP time: 0.00215793 seconds.  Breakdown follows:
+	Number Successful Steps Taken:		1
+	Number Failed Steps Attempted:		0
+	Number Jacobians Evaluated:		4
+	Number Linear Solves:			4
+	Number Failed Linear Solves:		0
+	Number Residual Evaluations:		6
+	Number Nonlinear Convergence Failures:	0
+	Total Residual Load Time:		0.000404596 seconds
+	Total Jacobian Load Time:		3.60012e-05 seconds
+	Total Linear Solution Time:		0.000224113 seconds
+
+ ***** Transient Stepping time: 0.044456 seconds.  Breakdown follows:
+	Number Successful Steps Taken:		219
+	Number Failed Steps Attempted:		13
+	Number Jacobians Evaluated:		332
+	Number Linear Solves:			332
+	Number Failed Linear Solves:		0
+	Number Residual Evaluations:		564
+	Number Nonlinear Convergence Failures:	0
+	Total Residual Load Time:		0.0299263 seconds
+	Total Jacobian Load Time:		0.00171375 seconds
+	Total Linear Solution Time:		0.00349402 seconds
+
+
+***** Solution Summary *****
+	Number Successful Steps Taken:		220
+	Number Failed Steps Attempted:		13
+	Number Jacobians Evaluated:		336
+	Number Linear Solves:			336
+	Number Failed Linear Solves:		0
+	Number Residual Evaluations:		570
+	Number Nonlinear Convergence Failures:	0
+	Total Residual Load Time:		0.0303309 seconds
+	Total Jacobian Load Time:		0.00174975 seconds
+	Total Linear Solution Time:		0.00371814 seconds
+
+
+ ***** Measure Functions ***** 
+
+QCYC = -1.918834e-14
+Measure Start Time= 9.000000e-10	Measure End Time= 4.900000e-09
+
+VX = 1.235572e+00 at time = 1.059255e-09
+Measure Start Time= 9.000000e-10	Measure End Time= 4.900000e-09
+
+VN = -1.786710e-02 at time = 3.155572e-09
+Measure Start Time= 9.000000e-10	Measure End Time= 4.900000e-09
+
+TPHL = 6.497299e-11 with targ = 1.119056e-09 and trig = 1.054083e-09
+
+TPLH = 8.368461e-11 with targ = 3.245935e-09 and trig = 3.162250e-09
+
+
+***** Total Simulation Solvers Run Time: 0.046953 seconds
+***** Total Elapsed Run Time:            330.37 seconds
+*****
+***** End of Xyce(TM) Simulation
+*****
+
+Timing summary of 1 processor
+                 Stats                   Count       CPU Time              Wall Time
+---------------------------------------- ----- --------------------- ---------------------
+Xyce                                         1        1.505 (100.0%)     5:30.371 (100.0%)
+  Analysis                                   1        0.044 ( 2.90%)        0.047 ( 0.01%)
+    Transient                                1        0.044 ( 2.89%)        0.047 ( 0.01%)
+      Nonlinear Solve                      233        0.039 ( 2.61%)        0.042 ( 0.01%)
+        Residual                           570        0.029 ( 1.92%)        0.031 (<0.01%)
+        Jacobian                           336        0.002 ( 0.13%)        0.002 (<0.01%)
+        Linear Solve                       336        0.004 ( 0.25%)        0.004 (<0.01%)
+      Successful DCOP Steps                  1        0.000 ( 0.02%)        0.000 (<0.01%)
+      Successful Step                      219        0.002 ( 0.12%)        0.002 (<0.01%)
+      Failed Steps                          13        0.000 (<0.01%)        0.000 (<0.01%)
+  Netlist Import                             1        1.455 (96.72%)     5:30.320 (99.98%)
+    Parse Context                            1        1.450 (96.37%)       13.741 ( 4.16%)
+    Distribute Devices                       1        0.003 ( 0.23%)        0.003 (<0.01%)
+    Verify Devices                           1        0.000 (<0.01%)        0.000 (<0.01%)
+    Instantiate                              1        0.001 ( 0.09%)     5:16.570 (95.82%)
+  Late Initialization                        1        0.001 ( 0.09%)        0.001 (<0.01%)
+    Global Indices                           1        0.000 (<0.01%)        0.000 (<0.01%)
+  Setup Matrix Structure                     1        0.000 ( 0.03%)        0.000 (<0.01%)
+

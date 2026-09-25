@@ -261,11 +261,25 @@ def main():
                 body.append(th_inst("th22", [rail(dbit, "H"), kis], rail(qbit, "H")))
                 cd = "cd_s%d_%d" % (s, j); minterm_sigs.append(cd); cds.append(cd)
                 body.append(th_inst("th12", [rail(qbit, "L"), rail(qbit, "H")], cd))
-            prev = cds[0]
-            for j in range(1, len(cds)):
-                acc = "acc_s%d_%d" % (s, j); minterm_sigs.append(acc)
-                body.append(th_inst("th22", [prev, cds[j]], acc)); prev = acc
-            body.append(assign(kos, prev))
+            # C-element completion tree.  This used to be a LINEAR chain
+            # (acc(j) = TH22(acc(j-1), cd(j))), which costs the same N-1 TH22
+            # cells but has depth N-1 instead of ceil(log2 N): at W=24 that is
+            # ~24 TH22 delays of completion for a datapath only 9 deep, i.e. the
+            # detector, not the logic, sets the cycle time.  A balanced tree is
+            # the same cell count and the same function (C-elements associate).
+            lvl, k = list(cds), 0
+            while len(lvl) > 1:
+                nxt = []
+                for j in range(0, len(lvl), 2):
+                    if j + 1 < len(lvl):
+                        acc = "acc_s%d_%d_%d" % (s, k, j // 2)
+                        minterm_sigs.append(acc)
+                        body.append(th_inst("th22", [lvl[j], lvl[j + 1]], acc))
+                        nxt.append(acc)
+                    else:
+                        nxt.append(lvl[j])
+                lvl, k = nxt, k + 1
+            body.append(assign(kos, lvl[0]))
         body.append(assign("ko_out", "ko_s%d" % maxs))
         body.append(assign("ko_in", "ko_s0"))
 
