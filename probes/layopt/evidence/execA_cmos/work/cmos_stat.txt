@@ -1,0 +1,49 @@
+
+7. Printing statistics.
+
+=== exec_top ===
+
+        +----------Local Count, excluding submodules.
+        |        +-Local Area, excluding submodules.
+        |        | 
+    31225        - wires
+    74244        - wire bits
+     1559        - public wires
+    44578        - public wire bits
+       76        - ports
+     2433        - port bits
+    33831 4.91E+05 cells
+      146        -   $scopeinfo
+      601 7.63E+03   sg13g2_a21o_1
+     3884 3.52E+04   sg13g2_a21oi_1
+      171 2.48E+03   sg13g2_a221oi_1
+     1242 1.35E+04   sg13g2_a22oi_1
+     1001 9.08E+03   sg13g2_and2_1
+      120 1.52E+03   sg13g2_and3_1
+      119 1.73E+03   sg13g2_and4_1
+        2   14.515   sg13g2_buf_1
+     3704 1.81E+05   sg13g2_dfrbpq_1
+     1081 5.88E+03   sg13g2_inv_1
+     2127 3.86E+04   sg13g2_mux2_1
+       23  876.355   sg13g2_mux4_1
+     3826 2.78E+04   sg13g2_nand2_1
+     1076 9.76E+03   sg13g2_nand2b_1
+      654 5.93E+03   sg13g2_nand3_1
+       24  304.819   sg13g2_nand3b_1
+      314  3418.33   sg13g2_nand4_1
+     2604 1.89E+04   sg13g2_nor2_1
+     2040 1.85E+04   sg13g2_nor2b_1
+      569 5.16E+03   sg13g2_nor3_1
+       57  620.525   sg13g2_nor4_1
+     3261 2.96E+04   sg13g2_o21ai_1
+      295  2676.24   sg13g2_or2_1
+      375   4762.8   sg13g2_or3_1
+       13  188.698   sg13g2_or4_1
+     2965  4.3E+04   sg13g2_xnor2_1
+     1537 2.23E+04   sg13g2_xor2_1
+
+   Area for cell type $scopeinfo is unknown!
+
+   Chip area for module '\exec_top': 490911.548400
+     of which used for sequential elements: 181454.515200 (36.96%)
+

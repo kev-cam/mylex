@@ -1,0 +1,398 @@
+OpenROAD 26Q3-2260-ge2787ffca2 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[INFO ODB-0227] LEF file: /usr/local/src/IHP-Open-PDK/ihp-sg13g2/libs.ref/sg13g2_stdcell/lef/sg13g2_tech.lef, created 19 layers, 70 vias
+[INFO ODB-0227] LEF file: /usr/local/src/IHP-Open-PDK/ihp-sg13g2/libs.ref/sg13g2_stdcell/lef/sg13g2_stdcell.lef, created 84 library cells
+[INFO IFP-0107] Defining die area using utilization: 45.00% and aspect ratio: 1.
+[WARNING IFP-0028] Core area lower left (5.000, 5.000) snapped to (5.280, 7.560).
+[INFO IFP-0001] Added 128 rows of 1016 site CoreSite.
+[INFO IFP-0100] Die BBox:  (  0.000  0.000 ) ( 498.090 498.090 ) um
+[INFO IFP-0101] Core BBox: (  5.280  7.560 ) ( 492.960 491.400 ) um
+[INFO IFP-0102] Core area:                       235959.091 um^2
+[INFO IFP-0103] Total instances area:            107205.638 um^2
+[INFO IFP-0104] Effective utilization:                0.454
+[INFO IFP-0105] Number of instances:                   4573
+Found 0 macro blocks.
+[INFO PPL-0001] Number of available slots 4420
+[INFO PPL-0002] Number of I/O             2245
+[INFO PPL-0003] Number of I/O w/sink      2244
+[INFO PPL-0004] Number of I/O w/o sink    1
+[INFO PPL-0005] Slots per section         200
+[INFO PPL-0008] Successfully assigned pins to sections.
+[INFO PPL-0012] I/O nets HPWL: 707404.12 um.
+[INFO IFP-0030] Inserted 1 tiecells using sg13g2_tiehi/L_HI.
+[INFO IFP-0030] Inserted 1 tiecells using sg13g2_tielo/L_LO.
+[INFO GPL-0001] ---- Initialize GPL Main Data Structures
+[INFO GPL-0002] DBU: 1000
+[INFO GPL-0003] SiteSize: (  0.480  3.780 ) um
+[INFO GPL-0004] CoreBBox: (  5.280  7.560 ) ( 492.960 491.400 ) um
+[INFO GPL-0016] Core area:                  235959.091 um^2
+[INFO GPL-0036] Movable instances area:     107220.154 um^2
+[INFO GPL-0037] Total instances area:       107220.154 um^2
+[INFO GPL-0035] Pin density area adjust:      8026.504 um^2
+[INFO GPL-0032] ---- Initialize Region: Top-level
+[INFO GPL-0006] Number of instances:              4575
+[INFO GPL-0007] Movable instances:                4575
+[INFO GPL-0008] Fixed instances:                     0
+[INFO GPL-0009] Dummy instances:                     0
+[INFO GPL-0010] Number of nets:                   6145
+[INFO GPL-0011] Number of pins:                  20127
+[INFO GPL-0012] Die BBox:       (  0.000  0.000 ) ( 498.090 498.090 ) um
+[INFO GPL-0013] Placement BBox: (  5.280  7.560 ) ( 492.960 491.400 ) um
+[INFO GPL-0014] Region name: top-level.
+[INFO GPL-0015] Region area:                235959.091 um^2
+[INFO GPL-0017] Fixed instances area:            0.000 um^2
+[INFO GPL-0018] Movable instances area:     115246.657 um^2
+[INFO GPL-0019] Utilization:                    48.842 %
+[INFO GPL-0020] Standard cells area:        115246.657 um^2
+[INFO GPL-0021] Large instances area:            0.000 um^2
+[INFO GPL-0005] ---- Execute Conjugate Gradient Initial Placement.
+[INFO GPL-0051] Source of initial instance position counters:
+	Odb location = 0	Core center = 4575	Region center = 0
+[InitialPlace]  Iter: 1 conjugate gradient residual: 0.00013986 HPWL: 1187523760
+[InitialPlace]  Iter: 2 conjugate gradient residual: 0.00001057 HPWL: 582837842
+[InitialPlace]  Iter: 3 conjugate gradient residual: 0.00003027 HPWL: 540293559
+[InitialPlace]  Iter: 4 conjugate gradient residual: 0.00000375 HPWL: 504516882
+[InitialPlace]  Iter: 5 conjugate gradient residual: 0.00000622 HPWL: 478730032
+[INFO GPL-0033] ---- Initialize Nesterov Region: Top-level
+[INFO GPL-0023] Placement target density:       0.5500
+[INFO GPL-0024] Movable insts average area:     25.191 um^2
+[INFO GPL-0025] Ideal bin area:                 45.801 um^2
+[INFO GPL-0026] Ideal bin count:                  5151
+[INFO GPL-0027] Total bin area:             235959.091 um^2
+[INFO GPL-0028] Bin count (X, Y):          64 ,     64
+[INFO GPL-0029] Bin size (W * H):       7.620 *  7.560 um
+[INFO GPL-0030] Number of bins:                   4096
+[INFO GPL-0084] ---- Execute Nesterov Global Placement.
+[INFO GPL-0031] HPWL: Half-Perimeter Wirelength
+Iteration | Overflow |     HPWL (um) |  HPWL(%) |   Penalty | Group
+---------------------------------------------------------------
+        0 |   0.8074 |  4.710151e+05 |   +0.00% |  3.86e-14 |      
+       10 |   0.7634 |  4.707684e+05 |   -0.05% |  6.24e-14 |      
+       20 |   0.7630 |  4.680342e+05 |   -0.58% |  1.02e-13 |      
+       30 |   0.7623 |  4.683038e+05 |   +0.06% |  1.65e-13 |      
+       40 |   0.7615 |  4.680855e+05 |   -0.05% |  2.70e-13 |      
+       50 |   0.7626 |  4.683204e+05 |   +0.05% |  4.39e-13 |      
+       60 |   0.7604 |  4.678328e+05 |   -0.10% |  7.15e-13 |      
+       70 |   0.7605 |  4.677201e+05 |   -0.02% |  1.17e-12 |      
+       80 |   0.7615 |  4.679221e+05 |   +0.04% |  1.90e-12 |      
+       90 |   0.7604 |  4.678935e+05 |   -0.01% |  3.09e-12 |      
+      100 |   0.7599 |  4.678822e+05 |   -0.00% |  5.03e-12 |      
+      110 |   0.7595 |  4.680450e+05 |   +0.03% |  8.20e-12 |      
+      120 |   0.7577 |  4.680789e+05 |   +0.01% |  1.34e-11 |      
+      130 |   0.7542 |  4.680570e+05 |   -0.00% |  2.18e-11 |      
+      140 |   0.7522 |  4.682991e+05 |   +0.05% |  3.54e-11 |      
+      150 |   0.7459 |  4.682664e+05 |   -0.01% |  5.77e-11 |      
+      160 |   0.7385 |  4.680821e+05 |   -0.04% |  9.40e-11 |      
+      170 |   0.7274 |  4.678681e+05 |   -0.05% |  1.53e-10 |      
+      180 |   0.6950 |  4.662543e+05 |   -0.34% |  2.50e-10 |      
+      190 |   0.6500 |  4.603015e+05 |   -1.28% |  4.06e-10 |      
+      200 |   0.5893 |  4.515035e+05 |   -1.91% |  6.62e-10 |      
+      210 |   0.5352 |  4.471390e+05 |   -0.97% |  1.08e-09 |      
+      220 |   0.4821 |  4.412301e+05 |   -1.32% |  1.76e-09 |      
+      230 |   0.4350 |  4.406268e+05 |   -0.14% |  2.86e-09 |      
+      240 |   0.3835 |  4.414164e+05 |   +0.18% |  4.66e-09 |      
+      250 |   0.3368 |  4.435361e+05 |   +0.48% |  7.51e-09 |      
+      260 |   0.2983 |  4.463630e+05 |   +0.64% |  1.11e-08 |      
+      270 |   0.2610 |  4.501794e+05 |   +0.86% |  1.63e-08 |      
+      280 |   0.2288 |  4.529610e+05 |   +0.62% |  2.40e-08 |      
+      290 |   0.1953 |  4.548521e+05 |   +0.42% |  3.53e-08 |      
+      300 |   0.1713 |  4.566467e+05 |   +0.39% |  5.21e-08 |      
+      310 |   0.1456 |  4.580359e+05 |   +0.30% |  7.67e-08 |      
+      320 |   0.1207 |  4.590995e+05 |   +0.23% |  1.13e-07 |      
+      330 |   0.1039 |  4.601020e+05 |   +0.22% |  1.66e-07 |      
+      333 |   0.0987 |  4.603472e+05 |          |  1.94e-07 |      
+---------------------------------------------------------------
+[INFO GPL-1001] Global placement finished at iteration 333
+[INFO GPL-1002] Placed Cell Area            115246.6572
+[INFO GPL-1003] Available Free Area         235959.0912
+[INFO GPL-1004] Minimum Feasible Density        0.4900 (cell_area / free_area)
+[INFO GPL-1006]   Suggested Target Densities:
+[INFO GPL-1007]     - For 90% usage of free space: 0.5427
+[INFO GPL-1008]     - For 80% usage of free space: 0.6105
+[INFO GPL-1009]     - For 50% usage of free space: 0.9768
+[INFO GPL-1014] Final placement area: 115246.66 (+0.00%)
+[INFO GPL-1018] Final HPWL (um): 460695.14
+########## REPAIR_DESIGN (DRV) ##########
+Iteration |   Area    | Resized | Buffers | Nets repaired | Remaining
+---------------------------------------------------------------------
+        0 |     +0.0% |       0 |       0 |             0 |      6145
+    final |     +3.6% |       0 |     534 |            83 |         0
+---------------------------------------------------------------------
+[INFO RSZ-0034] Found 5 slew violations.
+[INFO RSZ-0035] Found 83 fanout violations.
+[INFO RSZ-0038] Inserted 534 buffers in 83 nets.
+[INFO RSZ-0504] Runtime: 1.25s
+########## REPAIR_TIMING -setup (pre-CTS) ##########
+[INFO RSZ-0100] Repair move sequence: UnbufferMove SizeUpMove SwapPinsMove BufferMove CloneMove SplitLoadMove 
+[INFO RSZ-0098] No setup violations found
+[INFO RSZ-0505] Runtime: 0.79s
+[INFO DPL-0006] Core area: 235959.09 um^2
+[INFO DPL-0007] Movable instances area: 111095.71 um^2
+[INFO DPL-0008] Fixed instances area within core: 0.00 um^2
+[INFO DPL-0009] Utilization: 47.1%
+[INFO DPL-0005] Diamond search max displacement: +/- 500 sites horizontally, +/- 100 rows vertically.
+[INFO DPL-1102] Legalizing using negotiation legalizer.
+[INFO DPL-1103] Negotiation base search window: +/-20 sites horizontally, +/-5 rows vertically 
+	Automatic search window extension enabled.
+	Search window extendable up to the max displacement cap of +/-500 sites, +/-100 rows near walls.
+[INFO DPL-1104] NegotiationLegalizer DRC penalty: 5.
+[INFO DPL-0392] Negotiation cell height distribution (1 unique row-count(s)):
+[INFO DPL-0393]   height 1 row(s): 5109 cells
+          |      Total |  Illegal |  Illegal
+Iteration | Violations |    Cells |    Sites
+---------------------------------------------
+        0 |       2029 |       565 |      1455
+        1 |         22 |        10 |        12
+        2 |          0 |         0 |         0
+Negotiation phase 1 converged at iteration 2.
+[INFO DPL-0500] Runtime: 0.16s
+Placement Analysis
+---------------------------------
+total displacement      17708.3 u
+average displacement        3.5 u
+max displacement           14.3 u
+original HPWL          505586.9 u
+legalized HPWL         515425.2 u
+delta HPWL                    2 %
+
+########## CTS ##########
+[INFO CTS-0050] Root buffer is sg13g2_buf_16.
+[INFO CTS-0051] Sink buffer is sg13g2_buf_4.
+[INFO CTS-0052] The following clock buffers will be used for CTS:
+                    sg13g2_buf_2
+                    sg13g2_buf_4
+                    sg13g2_buf_8
+[INFO CTS-0049] Characterization buffer is sg13g2_buf_8.
+[INFO CTS-0007] Net "clk" found for clock "clk".
+[INFO CTS-0010]  Clock net "clk" has 1288 sinks.
+[INFO CTS-0008] TritonCTS found 1 clock nets.
+[INFO CTS-0097] Characterization used 3 buffer(s) types.
+[INFO CTS-0201] 0 blockages from hard placement blockages and placed macros will be used.
+[INFO CTS-0027] Generating H-Tree topology for net clk.
+[INFO CTS-0028]  Total number of sinks: 1288.
+[INFO CTS-0029]  Register sinks will be clustered in groups of up to 8 and with maximum cluster diameter of 60.0 um.
+[INFO CTS-0030]  Number of static layers: 0.
+[INFO CTS-0020]  Wire segment unit: 18900  dbu (18 um).
+[INFO CTS-0204] A clustering solution was found from clustering size of 8 and clustering diameter of 60.
+[INFO CTS-0205] Better solution may be possible if either -sink_clustering_size, -sink_clustering_max_diameter, or both options are omitted to enable automatic clustering.
+[INFO CTS-0019]  Total number of sinks after clustering: 170.
+[INFO CTS-0024]  Normalized sink region: [(2.09524, 0.944444), (25.4921, 25.5556)].
+[INFO CTS-0025]     Width:  23.3968.
+[INFO CTS-0026]     Height: 24.6111.
+ Level 1
+    Direction: Vertical
+    Sinks per sub-region: 85
+    Sub-region size: 23.3968 X 12.3056
+[INFO CTS-0034]     Segment length (rounded): 6.
+ Level 2
+    Direction: Horizontal
+    Sinks per sub-region: 43
+    Sub-region size: 11.6984 X 12.3056
+[INFO CTS-0034]     Segment length (rounded): 6.
+ Level 3
+    Direction: Vertical
+    Sinks per sub-region: 22
+    Sub-region size: 11.6984 X 6.1528
+[INFO CTS-0034]     Segment length (rounded): 4.
+ Level 4
+    Direction: Horizontal
+    Sinks per sub-region: 11
+    Sub-region size: 5.8492 X 6.1528
+[INFO CTS-0034]     Segment length (rounded): 2.
+ Level 5
+    Direction: Vertical
+    Sinks per sub-region: 6
+    Sub-region size: 5.8492 X 3.0764
+[INFO CTS-0034]     Segment length (rounded): 1.
+[INFO CTS-0038]  Stop criterion found. Sink region hpwl is smaller than max wirelength (16281.710 um) and max number of sinks is 8.
+[INFO CTS-0035]  Number of sinks covered: 170.
+[INFO CTS-0018]     Created 219 clock buffers.
+[INFO CTS-0012]     Minimum number of buffers in the clock path: 4.
+[INFO CTS-0013]     Maximum number of buffers in the clock path: 4.
+[INFO CTS-0015]     Created 219 clock nets.
+[INFO CTS-0016]     Fanout distribution for the current clock = 2:1, 3:2, 4:1, 5:27, 6:21, 7:15, 8:135..
+[INFO CTS-0017]     Max level of the clock tree: 5.
+[INFO CTS-0098] Clock net "clk"
+[INFO CTS-0099]  Sinks 1333
+[INFO CTS-0100]  Leaf buffers 170
+[INFO CTS-0101]  Average sink wire length 645.51 um
+[INFO CTS-0102]  Path depth 3 - 4
+[INFO CTS-0207]  Dummy loads inserted 45
+[INFO CTS-0500] Runtime: 6.68s
+[INFO DPL-0006] Core area: 235959.09 um^2
+[INFO DPL-0007] Movable instances area: 115905.69 um^2
+[INFO DPL-0008] Fixed instances area within core: 0.00 um^2
+[INFO DPL-0009] Utilization: 49.1%
+[INFO DPL-0005] Diamond search max displacement: +/- 500 sites horizontally, +/- 100 rows vertically.
+[INFO DPL-1102] Legalizing using negotiation legalizer.
+[INFO DPL-1103] Negotiation base search window: +/-20 sites horizontally, +/-5 rows vertically 
+	Automatic search window extension enabled.
+	Search window extendable up to the max displacement cap of +/-500 sites, +/-100 rows near walls.
+[INFO DPL-1104] NegotiationLegalizer DRC penalty: 5.
+[INFO DPL-0392] Negotiation cell height distribution (1 unique row-count(s)):
+[INFO DPL-0393]   height 1 row(s): 5373 cells
+          |      Total |  Illegal |  Illegal
+Iteration | Violations |    Cells |    Sites
+---------------------------------------------
+        0 |        719 |       121 |       598
+        1 |          0 |         0 |         0
+Negotiation phase 1 converged at iteration 1.
+[INFO DPL-0500] Runtime: 0.11s
+Placement Analysis
+---------------------------------
+total displacement       1361.2 u
+average displacement        0.3 u
+max displacement           13.0 u
+original HPWL          530627.8 u
+legalized HPWL         530999.5 u
+delta HPWL                    0 %
+
+########## REPAIR_TIMING -setup (post-CTS) ##########
+[INFO RSZ-0100] Repair move sequence: UnbufferMove SizeUpMove SwapPinsMove BufferMove CloneMove SplitLoadMove 
+[INFO RSZ-0098] No setup violations found
+[INFO RSZ-0505] Runtime: 0.75s
+[INFO RSZ-0046] Found 669 endpoints with hold violations.
+Iteration | Resized | Buffers | Cloned Gates |   Area   |   WNS   |   TNS   | Endpoint
+--------------------------------------------------------------------------------------
+        0 |       0 |       0 |            0 |    +0.0% |  -0.150 | -25.277 | _7213_/D
+    final |       0 |     704 |            0 |    +9.9% |   0.050 |   0.000 | _8240_/D
+--------------------------------------------------------------------------------------
+[INFO RSZ-0032] Inserted 704 hold buffers.
+[INFO RSZ-0506] Runtime: 2.38s
+[INFO DPL-0006] Core area: 235959.09 um^2
+[INFO DPL-0007] Movable instances area: 127401.72 um^2
+[INFO DPL-0008] Fixed instances area within core: 0.00 um^2
+[INFO DPL-0009] Utilization: 54.0%
+[INFO DPL-0005] Diamond search max displacement: +/- 500 sites horizontally, +/- 100 rows vertically.
+[INFO DPL-1102] Legalizing using negotiation legalizer.
+[INFO DPL-1103] Negotiation base search window: +/-20 sites horizontally, +/-5 rows vertically 
+	Automatic search window extension enabled.
+	Search window extendable up to the max displacement cap of +/-500 sites, +/-100 rows near walls.
+[INFO DPL-1104] NegotiationLegalizer DRC penalty: 5.
+[INFO DPL-0392] Negotiation cell height distribution (1 unique row-count(s)):
+[INFO DPL-0393]   height 1 row(s): 6077 cells
+          |      Total |  Illegal |  Illegal
+Iteration | Violations |    Cells |    Sites
+---------------------------------------------
+        0 |       2893 |       407 |      2447
+        1 |        600 |        96 |       483
+        2 |        464 |        68 |       387
+        3 |        295 |        43 |       252
+        4 |        233 |        31 |       202
+        5 |        189 |        21 |       168
+        6 |        110 |        16 |        91
+        7 |         81 |         9 |        72
+        8 |         29 |         5 |        24
+        9 |         28 |         4 |        24
+       10 |         20 |         2 |        18
+       12 |          0 |         0 |         0
+Negotiation phase 1 converged at iteration 12.
+[INFO DPL-0500] Runtime: 0.32s
+Placement Analysis
+---------------------------------
+total displacement       4438.2 u
+average displacement        0.7 u
+max displacement           17.6 u
+original HPWL          533985.3 u
+legalized HPWL         535873.0 u
+delta HPWL                    0 %
+
+########## FINAL ##########
+max fanout
+
+Pin                                   Limit Fanout  Slack
+---------------------------------------------------------
+clkbuf_0_clk/X                            8     16     -8 (VIOLATED)
+
+Startpoint: _7358_ (rising edge-triggered flip-flop clocked by clk)
+Endpoint: _7221_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+
+    Delay      Time   Description
+-------------------------------------------------------------
+   0.0000    0.0000   clock clk (rise edge)
+   0.4061    0.4061   clock network delay (propagated)
+   0.0000    0.4061 ^ _7358_/CLK (sg13g2_dfrbpq_1)
+   0.1900    0.5960 ^ _7358_/Q (sg13g2_dfrbpq_1)
+   0.1345    0.7305 ^ fanout435/X (sg13g2_buf_1)
+   0.1617    0.8923 ^ _5932_/Y (sg13g2_nor2b_1)
+   0.2057    1.0980 ^ _5933_/Y (sg13g2_nor2b_1)
+   0.1126    1.2106 v _6072_/Y (sg13g2_nor4_1)
+   0.1542    1.3647 v fanout25/X (sg13g2_buf_1)
+   0.1185    1.4832 v _6073_/X (sg13g2_and2_1)
+   0.1306    1.6138 v fanout1/X (sg13g2_buf_1)
+   0.1576    1.7713 ^ _6156_/Y (sg13g2_a221oi_1)
+   0.0818    1.8532 v _6157_/Y (sg13g2_a21oi_1)
+   0.1039    1.9571 ^ _6163_/Y (sg13g2_nor2_1)
+   0.0835    2.0406 v _6164_/Y (sg13g2_nand2_1)
+   0.2574    2.2980 ^ _6165_/Y (sg13g2_nor4_1)
+   0.1434    2.4414 v _6468_/Y (sg13g2_nand4_1)
+   0.1050    2.5464 v _6469_/X (sg13g2_and2_1)
+   0.0000    2.5464 v _7221_/D (sg13g2_dfrbpq_1)
+             2.5464   data arrival time
+
+   4.7500    4.7500   clock clk (rise edge)
+   0.3933    5.1433   clock network delay (propagated)
+  -0.2500    4.8933   clock uncertainty
+   0.0040    4.8973   clock reconvergence pessimism
+             4.8973 ^ _7221_/CLK (sg13g2_dfrbpq_1)
+  -0.1081    4.7892   library setup time
+             4.7892   data required time
+-------------------------------------------------------------
+             4.7892   data required time
+            -2.5464   data arrival time
+-------------------------------------------------------------
+             2.2428   slack (MET)
+
+
+Startpoint: _7742_ (rising edge-triggered flip-flop clocked by clk)
+Endpoint: _8284_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: min
+
+    Delay      Time   Description
+-------------------------------------------------------------
+   0.0000    0.0000   clock clk (rise edge)
+   0.3940    0.3940   clock network delay (propagated)
+   0.0000    0.3940 ^ _7742_/CLK (sg13g2_dfrbpq_1)
+   0.1747    0.5687 v _7742_/Q (sg13g2_dfrbpq_1)
+   0.1019    0.6706 v _5403_/X (sg13g2_mux2_1)
+   0.0000    0.6706 v _8284_/D (sg13g2_dfrbpq_1)
+             0.6706   data arrival time
+
+   0.0000    0.0000   clock clk (rise edge)
+   0.4065    0.4065   clock network delay (propagated)
+   0.2500    0.6565   clock uncertainty
+  -0.0040    0.6526   clock reconvergence pessimism
+             0.6526 ^ _8284_/CLK (sg13g2_dfrbpq_1)
+  -0.0315    0.6211   library hold time
+             0.6211   data required time
+-------------------------------------------------------------
+             0.6211   data required time
+            -0.6706   data arrival time
+-------------------------------------------------------------
+             0.0496   slack (MET)
+
+
+Clock clk
+ 0.4072 source latency _7926_/CLK ^
+-0.3873 target latency _7282_/CLK ^
+ 0.2500 clock uncertainty
+-0.0040 CRPR
+--------------
+ 0.2660 setup skew
+
+wns max 0.0000
+tns max 0.0000
+Design area 127402 um^2 54% utilization.
+Cell type report:                       Count        Area
+  Clock buffer                            234     4604.95
+  Timing Repair Buffer                   1238    15371.60
+  Inverter                                296     1611.19
+  Clock inverter                           30      205.03
+  Sequential cell                        1288    63097.57
+  Multi-Input combinational cell         2991    42511.39
+  Total                                  6077   127401.72

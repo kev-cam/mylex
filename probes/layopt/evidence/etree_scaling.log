@@ -1,0 +1,65 @@
+# E_tree(N) scaling campaign — second/third/fourth/fifth placed blocks vs alu anchor
+# Date: 2026-09-25.  Flow: anchor recipe verbatim (phys.tcl/constraints.tcl/tracks.tcl
+# copied from alu_cmos/work, only netlist/top/output names substituted), CLKP=4.75,
+# floorplan -utilization 45, global_placement -density 0.55, same liberty
+# sg13g2_stdcell_typ_1p20V_25C.lib, CTS buf_16 root / {8,4,2} list, sink_clustering 20/60.
+# Power: two-activity no-VCD method, evidence/pwr_novcd.tcl (validated on anchor:
+# E_tree -0.001%, E0_ff -0.087% vs VCD run; alu_cmos/work/pwr_novcd_validation.log).
+# Raw logs: <block>_cmos/work/phys_4.75.log (flow) and <block>_cmos/work/pwr_novcd.log (power).
+#
+# MEASURED (P_clk = Clock group W, identical at a=0.0/0.2/1.0 in every block = activity-
+# independence check passed 5/5; P_seq0 = Sequential group at a=0):
+# block     NFF   area_um2  P_clk_W       P_seq0_W      CTS  util  wns_ns   skew
+anchor      188    59106    1.754673e-03  2.337323e-03   53   55%   0.000   0.2598
+commit      160    24874    1.688580e-03  1.989620e-03   49   55%   0.000   0.2573
+schedule    186    37654    1.738177e-03  2.312531e-03   55   53%   0.000   0.2597
+icache     1288   127402    4.932704e-03  1.594447e-02  264   54%   0.000   0.2660
+execA      3704   588655    2.319990e-02  4.599083e-02  969   54%  -2.338   0.2922
+#
+# DERIVED (T=4.75ns; E_tree = P_clk*T/NFF, E0_ff = P_seq0*T/NFF; Eint/Esw = Clock group
+# internal/switching split; Cclk/ff = P_sw*T/V^2/NFF, V=1.2; pin part 2.796 fF from liberty):
+# block    treepJ/cyc E_tree  E0_ff   Eint/ff Esw/ff  Cclk/ff_fF
+anchor       8.335    44.33   59.05   31.69   12.64    8.78
+commit       8.021    50.13   59.07   37.15   12.97    9.01
+schedule     8.256    44.39   59.06   32.08   12.31    8.55
+icache      23.430    18.19   58.80   10.18    8.01    5.56
+execA      110.200    29.75   58.98   19.06   10.69    7.42
+#
+# CTS buffer mixes (grep of <block>.phys_4.75.v):
+#  anchor/commit/schedule: 33x buf_16 + 16x buf_8 (+0/0/6 inv loads) — IDENTICAL trunk
+#    skeleton at 160-188 flops: small-N tree cost is a geometric floor, not per-flop.
+#  icache: 33x buf_16 + 21x buf_8 + 180x buf_4 + 30 inv loads (1288 sinks -> 170 clusters)
+#  execA: 129x buf_16 + 692x buf_8 + 1x buf_2 + 147 inv loads (3704 sinks -> 549 clusters)
+#
+# RESULT: E0_ff is FLAT (58.80-59.07 fJ over 160-3704 flops, spread 0.5%) — the flop
+# clock-pin floor is genuinely per-flop linear. E_tree/flop is strongly SUBLINEAR in N:
+# 44.3 fJ at N=188 -> 18.19 fJ at N=1288 (icache) / 29.75 fJ at N=3704 (execA). The
+# assumed exactly-linear 44.334 fJ/flop OVERSTATES the chip tree term. The large-N spread
+# (18.2 vs 29.8) tracks die area per flop (icache 98.9 um2/flop, execA 158.9): tree power
+# = per-sink cap + trunk that grows with die area, not flop count alone.
+#
+# Scaling fits (least squares, see session derivation; small-N points sit on the trunk
+# floor and no smooth law fits them — the floor amortizes away at chip scale):
+#   P_clk = b*N + c*A  (anchored by the two large blocks, errors +3.6%/-0.2% there):
+#     b = 2.05e-07 W/flop, c = 3.80e-08 W/um2 (=0.181 fJ/um2/cycle at 4.75 ns)
+#     chip N=35004: E_tree/flop = 18.9 fJ (icache-like area/flop) .. 29.7 fJ (execA-like)
+#   MEASURED BRACKET to replace the 44.334 assumption: E_tree(chip) in [18.2, 29.8]
+#   fJ/flop/cycle, i.e. 0.41x-0.67x of the single-anchor linear extrapolation.
+#   (b/c trade off with only 2 large-N points; prefer the bracket + area/flop
+#   interpolation E_tree/flop ~= 18.19 + 0.193*(area_per_flop_um2 - 98.9) fJ, valid
+#   98.9..158.9 um2/flop, over the raw b,c coefficients.)
+#
+# DEVIATIONS from anchor flow (recorded, per flow-discipline rule):
+# 1. commit/schedule/icache: place_pins -min_distance 1 -min_distance_in_tracks (1-track
+#    pin spacing; anchor default is 2 tracks). Required: PPL-0024, e.g. commit has 1140
+#    one-bit ports vs 992 default positions. execA used the default 2-track spacing.
+#    Pin spacing only; utilization/aspect/density untouched.
+# 2. execA does NOT close 4.75 ns: wns -2.3377, tns -90.9 (muldiv CSA tree; predicted).
+#    Period held at 4.75 per plan — tree pJ/cycle is period-independent to first order.
+#    Hold met (min slack +0.0500). All other blocks close: wns 0.0000, hold met.
+# 3. execA: repair_timing upsized 7 flops dfrbpq_1 -> dfrbpq_2 (3697+7=3704 = synth count;
+#    pwr_novcd.tcl NFF counter sees only dfrbpq_1 — derived numbers here use N=3704).
+# 4. icache: 6 SRAM arrays are external ports (synthesis handoff); its E_tree covers the
+#    1288 stdcell flop sinks only. In silicon the arrays are macros with their own clock.
+# 5. Utilization report varies 53-55% post-repair (floorplan knob identical at 45).
+# 6. Tie cells: 1-2 per block (anchor 2) — no explosion.

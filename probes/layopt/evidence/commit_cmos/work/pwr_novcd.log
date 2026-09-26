@@ -1,0 +1,41 @@
+OpenROAD 26Q3-2260-ge2787ffca2 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+NFF(dfrbpq_1)=160  CTS_cells=49 (clkbuf=49 clkload=0)  CLKP=4.75
+################ NOVCD POWER @ alpha=0.0 (duty 0.5, ties duty-corrected) ################
+Group                    Internal    Switching      Leakage        Total
+                            Power        Power        Power        Power (Watts)
+------------------------------------------------------------------------
+Sequential           1.989533e-03 0.000000e+00 8.692761e-08 1.989620e-03  54.1%
+Combinational        0.000000e+00 0.000000e+00 1.960995e-07 1.960995e-07   0.0%
+Clock                1.251474e-03 4.370489e-04 5.680084e-08 1.688580e-03  45.9%
+Macro                0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00   0.0%
+Pad                  0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00   0.0%
+------------------------------------------------------------------------
+Total                3.241007e-03 4.370489e-04 3.398245e-07 3.678396e-03 100.0%
+                            88.1%        11.9%         0.0%
+################ NOVCD POWER @ alpha=0.2 (duty 0.5, ties duty-corrected) ################
+Group                    Internal    Switching      Leakage        Total
+                            Power        Power        Power        Power (Watts)
+------------------------------------------------------------------------
+Sequential           2.209377e-03 1.394752e-05 8.692761e-08 2.223412e-03  48.3%
+Combinational        3.349159e-04 3.581555e-04 1.960995e-07 6.932675e-04  15.1%
+Clock                1.251474e-03 4.370489e-04 5.680084e-08 1.688580e-03  36.7%
+Macro                0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00   0.0%
+Pad                  0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00   0.0%
+------------------------------------------------------------------------
+Total                3.795766e-03 8.091518e-04 3.398245e-07 4.605258e-03 100.0%
+                            82.4%        17.6%         0.0%
+################ NOVCD POWER @ alpha=1.0 (duty 0.5, ties duty-corrected) ################
+Group                    Internal    Switching      Leakage        Total
+                            Power        Power        Power        Power (Watts)
+------------------------------------------------------------------------
+Sequential           3.088754e-03 6.973762e-05 8.692761e-08 3.158578e-03  38.0%
+Combinational        1.674579e-03 1.790779e-03 1.960995e-07 3.465554e-03  41.7%
+Clock                1.251474e-03 4.370489e-04 5.680084e-08 1.688580e-03  20.3%
+Macro                0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00   0.0%
+Pad                  0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00   0.0%
+------------------------------------------------------------------------
+Total                6.014804e-03 2.297566e-03 3.398245e-07 8.312711e-03 100.0%
+                            72.4%        27.6%         0.0%

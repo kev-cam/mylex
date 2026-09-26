@@ -1,0 +1,6 @@
+# regenerable heavy artifacts (run_synth.sh reproduces them)
+work/*.vcd
+work/*.vvp
+work/*.odb
+work/*.def
+work/*.v.gz
