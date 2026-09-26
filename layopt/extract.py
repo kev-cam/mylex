@@ -160,6 +160,8 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
         lname = inv.get(fr.layer)
         if lname is None:
             continue
+        if fr.rect[2] <= fr.rect[0] or fr.rect[3] <= fr.rect[1]:
+            continue                    # a degenerate rect is a removed one (drc.py convention)
         if lname == tech.diff:
             diffs.append((fr.rect, fr.prov, idx))
         elif lname in vt_layer:

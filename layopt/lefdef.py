@@ -79,11 +79,15 @@ def read_lef(path: str, lef: Optional[Lef] = None) -> Lef:
 
     skip_blocks = {"PROPERTYDEFINITIONS", "VIARULE", "NONDEFAULTRULE", "SPACING", "IRDROP", "NOISETABLE"}
     while i < n:
-        tok = t[i]
+        # LEF keywords are matched case-insensitively: IHP's sg13g2_tech.lef writes
+        # `Via <name> DEFAULT` and `ViaRULE <name> GENERATE` (mixed case), which a
+        # case-sensitive match falls through -- the ViaRULE body's `LAYER Metal1`
+        # then reads as a layer block whose END never comes.  Names stay exact.
+        tok = t[i].upper()
         if tok in skip_blocks:                     # END <keyword> or END <name>
-            name = t[i + 1] if tok in ("VIARULE", "NONDEFAULTRULE") else tok
+            name = t[i + 1] if tok in ("VIARULE", "NONDEFAULTRULE") else t[i]
             i += 1
-            while i < n and not (t[i] == "END" and t[i + 1] == name):
+            while i + 1 < n and not (t[i] == "END" and t[i + 1] == name):
                 i += 1
             i += 2
         elif tok == "UNITS":
@@ -401,9 +405,11 @@ def def2flat(def_path: str, lef_paths: List[str], gds_dir: str, tech: Tech,
     scale = 1000.0 / d.dbu_per_um                                    # DEF units -> nm
     fl = FlatLayout(dbu_um=0.001, top=d.design)
     L = tech.layers
-    lef2tech = {"li1": "li", "met1": "met1", "met2": "met2", "met3": "met3", "met4": "met4", "met5": "met5",
-                "mcon": "mcon", "via": "via1", "via2": "via2", "via3": "via3", "via4": "via4",
-                "poly": "poly", "nwell": "nwell", "pwell": None}
+    # LEF/DEF layer names -> logical names: the tech's own table, or the sky130 names
+    lef2tech = tech.lef2tech if tech.lef2tech is not None else {
+        "li1": "li", "met1": "met1", "met2": "met2", "met3": "met3", "met4": "met4", "met5": "met5",
+        "mcon": "mcon", "via": "via1", "via2": "via2", "via3": "via3", "via4": "via4",
+        "poly": "poly", "nwell": "nwell", "pwell": None}
     libs: Dict[str, gds.Library] = {}
     # one merged library, or several (a cell library plus layopt's merged-cell GDS)
     merged = [gds.read(g) for g in ([gds_lib] if isinstance(gds_lib, str) else list(gds_lib))] if gds_lib else None

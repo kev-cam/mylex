@@ -47,6 +47,8 @@ class Tech:
     enclosure: Dict[Tuple[str, str], float] = field(default_factory=dict)  # (metal, cut) -> um
     grid_um: float = 0.005
     supply_names: Tuple[str, ...] = ("VDD", "VSS", "VPWR", "VGND", "vdd", "vss")
+    # LEF/DEF layer name -> logical layer name (def2flat); None = the sky130 names
+    lef2tech: Optional[Dict[str, str]] = None
     text_layers: Dict[Layer, str] = field(default_factory=dict)   # label (layer, datatype) -> conducting layer it names
     # construction constants for generated geometry (um)
     poly_ext_diff: float = 0.13        # poly overhang beyond diffusion along W
@@ -169,6 +171,12 @@ SG13G2 = Tech(
     min_space={"poly": 0.180, "diff": 0.210, "met1": 0.180, "met2": 0.210, "met3": 0.210, "met4": 0.210,
                "met5": 0.210, "topmet1": 1.640, "topmet2": 2.000, "licon": 0.180, "via1": 0.220},
     enclosure={("met1", "licon"): 0.005, ("met1", "via1"): 0.010, ("met2", "via1"): 0.005},
+    # IHP LEF/DEF layer names (sg13g2_tech.lef) -> logical names
+    lef2tech={"Metal1": "met1", "Metal2": "met2", "Metal3": "met3", "Metal4": "met4", "Metal5": "met5",
+              "TopMetal1": "topmet1", "TopMetal2": "topmet2",
+              "Via1": "via1", "Via2": "via2", "Via3": "via3", "Via4": "via4",
+              "TopVia1": "topvia1", "TopVia2": "topvia2",
+              "Cont": "licon", "GatPoly": "poly", "Activ": "diff", "NWell": "nwell"},
 )
 
 TECHS = {"sky130": SKY130, "sg13g2": SG13G2}
