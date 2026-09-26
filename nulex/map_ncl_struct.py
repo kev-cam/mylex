@@ -377,11 +377,18 @@ def port_wire(V, pname, i, w, bit, direction, S=False):
     return "  %s <= n%d;" % (acc, bit)
 
 
+_rdf = [0]
+
+
 def dff_inst(V, c, dbit, qbit, rail):
+    # unique instance names (rdf1, rdf2, ...): a fixed name collides as soon as a
+    # design has two registers and yosys refuses to re-read the netlist.
+    _rdf[0] += 1
     if V:
-        return ("  ncl_dff r (.clk(%s), .d_L(%s), .d_H(%s), .q_L(%s), .q_H(%s));"
-                % (c, rail(dbit, "L"), rail(dbit, "H"), rail(qbit, "L"), rail(qbit, "H")))
-    return "  r: entity work.ncl_dff port map (clk => %s, d => n%d, q => n%d);" % (c, dbit, qbit)
+        return ("  ncl_dff rdf%d (.clk(%s), .d_L(%s), .d_H(%s), .q_L(%s), .q_H(%s));"
+                % (_rdf[0], c, rail(dbit, "L"), rail(dbit, "H"), rail(qbit, "L"), rail(qbit, "H")))
+    return ("  rdf%d: entity work.ncl_dff port map (clk => %s, d => n%d, q => n%d);"
+            % (_rdf[0], c, dbit, qbit))
 
 
 TH_PORTS = {"th12": 2, "th13": 3, "th14": 4, "th22": 2, "th23": 3, "th33": 3,
