@@ -5,7 +5,10 @@
 #   cd frontends && sh tests/run_oracle_suite.sh
 #
 # Every test must exit 0 EXCEPT promo_trap_naive_catch, whose pass condition
-# is the oracle CATCHING the planted --naive-widths bug (nonzero exit).
+# is the oracle CATCHING the planted --naive-widths bug (nonzero exit), and
+# the two *_refuse tests, whose pass condition is c_expr REFUSING the source
+# with the NAMED message (nonzero exit + the message matched, so an unrelated
+# crash cannot pass them).
 # sha_byte_identity additionally requires the emitted sha_slice_c.v to stay
 # byte-identical run-to-run and the C-origin QDI netlists (when present in
 # work/polysynth_sha_c) to stay byte-identical to the committed threeway
@@ -17,6 +20,21 @@ mkdir -p work
 cd work
 
 run() { name=$1; shift; echo "== $name"; python3 "$FRONT/c_expr.py" "$@"; }
+
+# refuse NAME PATTERN ARGS... : the frontend must REJECT with PATTERN in the
+# message (a refusal is a feature only if it is the RIGHT refusal).
+refuse() {
+    name=$1; pat=$2; shift 2
+    echo "== $name (frontend MUST refuse)"
+    if out=$(python3 "$FRONT/c_expr.py" "$@" 2>&1); then
+        echo "$name: FRONTEND ACCEPTED IT (expected a refusal)"; echo "$out"
+        exit 1
+    fi
+    case "$out" in
+        *"$pat"*) echo "$name: refused with the named message -- PASS" ;;
+        *) echo "$name: wrong failure (expected '$pat'):"; echo "$out"; exit 1 ;;
+    esac
+}
 
 # ---- the B0 acceptance set ----
 run sha_slice   "$FRONT/examples/sha_slice.c"  sha_slice  -o sha_slice_c.v  --check 200000
@@ -41,6 +59,19 @@ run cmp_wide_const      "$FRONT/examples/cmp_wide_const.c"      cmp_wide_const \
 run adv_mixed   "$FRONT/examples/adv_mixed.c"   adv_mixed   -o adv_mixed.v   --check 200000
 run adv_cmpcmp  "$FRONT/examples/adv_cmpcmp.c"  adv_cmpcmp  -o adv_cmpcmp.v  --exhaustive
 run adv_terncmp "$FRONT/examples/adv_terncmp.c" adv_terncmp -o adv_terncmp.v --exhaustive
+
+# ---- (int)-cast on the compare path: the DEFINED half must agree, and the
+#      two implementation-defined shapes must be refused by name ----
+run adv_intcast "$FRONT/examples/adv_intcast.c" adv_intcast -o adv_intcast.v \
+    --exhaustive
+refuse adv_intcast_wrap_refuse \
+    "implementation-defined out-of-range conversion" \
+    "$FRONT/examples/adv_intcast.c" adv_intcast_wrap -o adv_intcast_wrap.v \
+    --exhaustive
+refuse adv_intcast_signed_cmp_refuse \
+    "ordered compare on a possibly-negative int" \
+    "$FRONT/examples/adv_intcast.c" adv_intcast_signed_cmp \
+    -o adv_intcast_signed_cmp.v --exhaustive
 
 # ---- sha_byte_identity: C-origin QDI netlists vs the committed threeway GT
 #      (skipped with a notice if the polysynth outputs are not in work/) ----

@@ -37,7 +37,7 @@ instruction, and must be printed as such.
 | BUNDLED-DATA | T2 | **no mapper exists.** `ASYNC-PLAN.md:459` plans `bindings/bundled.py`; grep over nulex finds nothing. All BD figures in this campaign are analysis of an unbuilt binding. |
 | SRAM binding | T2 | `ASYNC-PLAN.md:460` plans `bindings/sram.py`; nothing on disk. Worse: the flow **lowers** memories (`synth_exec.ys:4` etc. run `memory_map`), turning a 256×8 into 2048 DFFs — 43.6× the macro's retention leakage plus a clock floor where the macro's is exactly zero. |
 | ARBITER/MUTEX cell | T2 | grep for mutex\|arbiter\|metastab over nulex = 0 hits |
-| QAL | T2 | no mapper, no cell library, no DFT concept, no P&R story for the 278 nH inductor; the zero-current detector has now been designed and MEASURED (`stat-sim/qal/zcd/`, 2026-09-27, skeptic-reproduced) and the result is a REFUTATION: a 3-stage armed SG13G2 comparator at ~120 µA/1.2 V (144.3–200.5 fJ full arm-detect-reset cycle) never resolves the true 74 µV/ps zero within the 342 ps beat — its only fires lock on the switch-OPENING transient ~431 ps late, useless for ZCS. Every measured QAL number still assumes a free, perfect, jitterless ZCS that this comparator class cannot provide (the ZCS decks drive the switch from an ideal PWL source); the surviving alternative is a per-bank calibrated predictive timer — unbuilt and unscoped |
+| QAL | T2 | no mapper, no cell library, no DFT concept, no P&R story for the 278 nH inductor; the zero-current detector has now been designed and MEASURED (`stat-sim/qal/zcd/`, 2026-09-27, skeptic-reproduced) and the result is a REFUTATION: a 3-stage armed SG13G2 comparator at ~120 µA/1.2 V (144.3–200.5 fJ full arm-detect-reset cycle) never resolves the true 74 µV/ps zero within the 342 ps beat — its only fires lock on the switch-OPENING transient ~431 ps late, useless for ZCS. Every measured QAL number still assumes a free, perfect, jitterless ZCS that this comparator class cannot provide (the ZCS decks drive the switch from an ideal PWL source); the surviving alternative, a per-bank calibrated predictive timer, is **now built and costed** (`stat-sim/qal/timer/` + `qal/sar/`, 2026-09-27, stat-sim 28dcece) and it does not rescue the arm: the timer hardware costs **399.8 fJ/hop** where the ideal-PWL decks booked 3.56 fJ, of which **302.8 fJ is per-bank taps that do NOT divide by B** → N_min 412–535, worse than the refuted ZCD's ≥221. QAL admission at SG13G2 hinged on one unmeasured thing — recovering the switch-gate charge — and that is now MEASURED too (`stat-sim/qal/recov/` + `skeptic/`, 2026-09-27, UNCOMMITTED, §3 G2b): stepwise-capacitive and switched-resonant and lower-VGH all FAIL outright, a **free-running multi-harmonic resonant network** does drive the gt/gtp taps for **2.974 fJ** with every completeness gate PASS, but the **park's real driver measures 15.0–15.5 fJ against a 9.77 fJ headroom** → complete ledger **17.911 fJ/bank/hop, N_min 69.2, fpsat-63 EXCLUDED**. QAL at SG13G2 is EXCLUDED, not open; the one untried thing is a resonant park tap |
 
 ---
 
@@ -96,7 +96,7 @@ shape, workload), plus dependent scores:
 | D7 | cone-support distribution | ≤4 viable; >10% mass over → QDI out (G-B) | **M** |
 | D6 | level-profile shape (bush/tail) | knee where per-level population < N_min; tail = control path | **M** |
 | D3 | duty / activity | α\* = (E_async − E_floor)/k; for a combinational block E_floor = 0 so α\* is undefined and clock-elimination buys nothing — the prize is proportional to *sequential fraction*, not cell count | **M** |
-| D4 | QAL bank population | N_min = (39.6 + E_ZCD)/(h − 0.0361); E_ZCD now MEASURED ≥ 144.3 fJ → **N_min ≥ 221** — see §3 | **M/D** |
+| D4 | QAL bank population | N_min = (39.6 + E_timing)/(h − 0.0361); per-hop ZCD MEASURED ≥ 144.3 fJ → N_min ≥ 221, and the hybrid tuned timer that replaces it MEASURED at 302.8 fJ/bank of taps → **N_min 412–535 as built**; switch-gate-charge recovery was the open lever and is now MEASURED (2026-09-27, §3 G2b): the resonant gt/gtp pair reaches 2.974 fJ with every completeness gate PASS, but the park's real driver costs 15.0–15.5 fJ measured against a 9.77 fJ headroom → **complete ledger 17.911 fJ/bank/hop, N_min 69.2, fpsat-63 EXCLUDED**. Note the level error: **η is load-referenced, E_timer is driver-referenced — "≤ 12.75 fJ ⇔ ≥ 71–74%" is NOT an equivalence** (as-built ratio 7.0×). Quote the fJ | **M/D** |
 | D5 | QAL bank level-span | d_max = τ/4 ≈ 4.3 levels at RC_g = 20 ps — **the weakest derived input in the QAL branch**; RC_g is `qal_crossover_map.py:17`'s stated anchor, not a measurement (12 ps → 7.1; 30 ps → 2.9) | **D** |
 | D8 | primitive mix | dual-rail 2:1 MUX = 8 TH cells/bit, proven minimal (§4); 4:1 MUX support 6 → no direct form | **M** |
 | D9 | delay variance | harvestable only with completion detection *and* an elastic consumer; on zero-variance logic (maj/ch, 0.0–0.1% spread) a timing oracle is never worth paying for | **M** |
@@ -181,6 +181,259 @@ per-hop overhead fits Ov(N) = 39.6 + 0.0361·N fJ [D from two measured points,
   delay refutation stands, and if tg15p's per-gate number feeds h then
   N_min(144.3) ≈ 163 [D] — no verdict flips either way.
 
+**G2b — the hybrid tuned timer: BUILT, COSTED, and the cost is now the whole
+verdict** (2026-09-27; `stat-sim/qal/timer/README.md` + `RESULTS.json`,
+`stat-sim/qal/sar/RESULTS_SAR.json`, both committed at stat-sim 28dcece).
+The user's architecture decision replaced per-hop detection with *"a
+pulse-width generator you tune occasionally on just a representative piece of
+logic, rather than ZCD everywhere"* — which dissolves the ZCD refutation by
+construction (calibration is offline and repeatable, so detector delay is
+irrelevant and detector energy amortizes). It is now the FIRST deck in the
+campaign whose switch gates are driven by transistors instead of ideal PWL
+sources — the bookkeeping hole every previous QAL number carried.
+
+- **The mechanism works.** Tapped `sg13g2_inv_1` line + NAND pulse gate +
+  three taps (gtp/gt/pk) lands the tuned window at 269.84 ps against a
+  271.5 ps target with both completeness gates PASS: VBEND **0.6846**
+  (+1.3% of the ideal-drive 0.6759), VA_open 0.108 (rail drains),
+  E_hop_open **8.109 fJ** — **−3.3%** vs the ideal-drive 8.383 and **−24%**
+  vs the tg60 ring-robust 10.69 anchor, so the tg15p switch win survives
+  real edges [M]. **ATTRIBUTION CORRECTED (verify round, 2026-09-27,
+  `qal/timer/verify/`): the −3.3% number is right but it is NOT a better
+  transfer** — 81% of it is the E_sup_static(VBEND) subtraction, i.e. charge
+  the timer *delivered* into bank B (2.03 fC arriving, 0.317 fC surviving,
+  now metered with 1 Ω ammeters, books closing three independent ways).
+  Bank A's actual expenditure EA_C is FLAT: 17.762 vs 17.814 fJ = **−0.29%**,
+  and ±0.4% across the whole valid mistiming map. Read it as "real edges cost
+  bank A nothing measurable", not as a transfer win. Cut ORDER is a hard
+  constraint, not a preference: pMOS
+  (gtp) early-or-with, nMOS (gt) at the tuned zero, park AFTER the nMOS cut.
+  v1 got it backwards (nMOS first) and FAILED completeness — the LC rang to
+  −70 µA through the still-on pMOS, un-transferring the rail (VBEND 0.651),
+  and burned 508 fJ [M, recorded in `tl_hop.json`].
+- **Slow gate edges are BENIGN** — the real stdcell edges (30.5/16.3 ps)
+  cost only −3.3% E_hop, and the damage they do lands on the *sending*
+  bank's post-transfer ring ("bank A's corpse", V(bka) pk-pk 0.29 → 0.71 V)
+  not on the delivered payload (V(bkb) ripple after park **2.1 mV**, vs
+  47 mV post-open excursion in the ideal run) [M — but those two figures mix
+  definitions; at matched definitions (verify round) it is 4.07 vs 49.14 mV at
+  park+5 ps and 0.65 vs 28.41 mV at park+20 ps, which makes the conclusion
+  *stronger*, not weaker]. Tap drivers therefore do
+  not need to be fast, which is precisely what admits the slow-by-nature
+  recovery drives below.
+- **Calibration is essentially free — with one named exception.** SAR loop of
+  18 trial hops / 14 decisions, E_cal ≈ 1.5 pJ/event [D design point, band
+  0.7–4.0 pJ; the trial-hop energies 8.25–9.92 fJ are M], amortizing to
+  ≤ 0.3% of the 0.8309 denominator at 10 kHz / B = 8 / full duty [D]. The
+  user's "tune occasionally" half is vindicated. **Exception — dark
+  silicon:** overhead scales as 1/duty, so at duty ≤ 1% and 10 kHz it is
+  0.27 fJ/hop = 33% of the denominator. That corner (the SNN / dark-silicon
+  workload) must **calibrate on wake**: one event per burst, < 0.03 fJ/hop
+  over a ≥ 10⁴-hop burst [D]; wall-clock drift only matters when a bank is
+  about to fire. Also measured: a *designated real bank* beats a replica —
+  the replica needs its own 277.8 nH inductor (the architecture's scarcest
+  component) and transfers ±2–4 ps of L/C mismatch the real bank never sees.
+- **THE COST: E_timer = 399.8 fJ/hop = 302.8 per-bank taps (gt 118.0 + gtp
+  109.8 + park 75.0) + 97.0 line + 5.4 trigger** [M] — **and that is the
+  SINGLE-SHOT figure. CORRECTED (verify round, 2026-09-27): per hop in steady
+  state it is 633.3 fJ, +58%** — the committed deck's trigger rises once and
+  never returns, so the line/park RESET every subsequent hop needs is
+  unmetered (line 97.0 → 269.8 fJ, ×2.78, because CTRIM's two 12.5 fF caps sit
+  on same-parity nodes so the metered half is the cheap one; park 75.0 →
+  135.3 fJ, ×1.80; gt/gtp are complete inside the window and stand). Admission
+  on the full cycle: **N_min 485 (B → ∞) … 812 (B = 1)**. Also note the split
+  sums to 405.2, not 399.8 — the total excludes the trigger rail.
+  The line and trigger
+  are shared by every bank on the chain; **the taps are not, and the taps
+  ARE the cost** — so the hoped-for "one shared line collapses N_min back
+  toward 48" is **RETRACTED**. Admission as built,
+  N_min = (39.6 + 302.8 + 102.4/B)/0.8309 → **412 (B → ∞) … 535 (B = 1)**
+  gates/bank, i.e. **worse than the refuted ZCD's ≥ 221** [M/D]. The
+  ideal-PWL decks booked **3.56 fJ** for these same drives: ideal sources
+  RECOVER the CV² a real driver dissipates, and that hid two orders of
+  magnitude. The hybrid beats ZCD on *mechanism*, not (yet) on energy.
+- **The layered timing stack** (the user's design; each layer now carries its
+  own evidence). **STRUCTURE = the tapped line** [M]: 29.43 ps/stage at
+  1.5 V, CTRIM cap-DAC linear at 2.06 ps/fF, achievable widths odd
+  stage-multiples with the DAC covering the gap; two SAR iterations landed
+  269.8 ps on a 271.5 ps target. **TRACKING = same-die co-drift** [M, and it
+  **FAILS in magnitude**]: the hop zero is LC-governed (+0.74% at 85 C) while
+  the line is RC-governed (+10.23%) → **tracking ratio 16.4 cold / 13.9
+  hot** — the line is a replica of gate RC, not of the zero. Only the SIGN
+  saves the architecture: heat lengthens the width = LATE = the
+  measured-benign direction (≈ +24 ps ≈ −7% E_hop at 85 C, VBEND fine),
+  cold shortens it = EARLY = the bad direction (≈ −14 ps at 0 C ≈ −1.8%
+  VBEND). Drift 0.46 ps/K, so ±16 K between calibrations holds the
+  measured-benign ±7.5 ps residual. **CORRECTED (verify round, 2026-09-27):
+  the ratio reproduces to the digit (16.414/13.893; 16.09/13.91 on a refined
+  0.1 ps grid) and the instance-DTA path is now controlled (a never-run GDTA=0
+  control at 27 C is bit-identical to the plain shim, and all 11 compiled .so
+  carry the offset), so the ratio is temperature and not a compile artifact.
+  But "VBEND fine at 85 C" is WRONG: the n9 reference rows sit at +2.39%
+  (27 C) and +3.77% (85 C), OUTSIDE the pre-registered ±2% band — read it as
+  "VBEND high, out of band, and 75% of that −7% E_hop is the E_sup(VBEND)
+  subsidy term". Widths and zeros are timer-only observables and stand. Also:
+  "late stays benign" is supported only to ≈ +7.5 ps, NOT to the +66 ps
+  mistiming row — that row's deck carried a SUPERSEDED 5-stage park chain
+  (park 22 ps BEFORE the nMOS cut), and the corrected 7-stage re-run still
+  FAILS the drained-rail gate (VA_open 0.224): at +66 ps the reverse current
+  takes charge back into bank A, so the apparent cheapness is an unfinished
+  transfer. And every swsweep "true zero" carries a **+1.1 ps quantisation
+  bias** (first-sample-past vs interpolated extraction; 1.5× the cold shift
+  being measured), harmless only because one convention is used throughout.
+  Uncorrected data spread: **±3σ at N=128 is ±8 ps, not ±5.8** (the original
+  8-word sample under-dispersed; 16 words and the analytic |dt/da|·σ_a agree). Consequence for the flow: calibration
+  must measure the **hop** observable (SAR on the bank rail), never trust the
+  line as a replica of the zero. **TRIM = FD-SOI back-gate body bias,
+  DEFERRED to the GF FDX target and explicitly NOT built at SG13G2** (the
+  user's call): structure/tracking/observable/SAR transfer, the fine-trim
+  actuator does not.
+- **Why the deferred trim is also the largest deferred upside:** the FD-SOI
+  back gate is the SAME knob that moves the measured **Vt cliff**. The
+  lowest-energy *and* fastest QAL operating point is dV = 0.6 V —
+  **0.326 fJ/gate-settle at a 325.9 ps hop**, versus 0.429 fJ / 367.5 ps at
+  dV = 0.8 — but dV = 0.6 is functionally INVALID on SG13G2: the bank rail
+  reaches only 0.382 V against Vt ≈ 0.4 V, so the pMOS never turns on and
+  the gate settles to 64% of the rail (97.6% at dV = 0.8) [M:
+  `stat-sim/qal/qal_bodybias.py`, committed]. A device threshold, not the
+  energy target, is what forces the higher swing, at 1.3× the energy and 13%
+  of the speed. Lowering Vt with a back gate re-opens the dV = 0.6/0.8
+  operating points on FDX — **the largest deferred QAL upside in the
+  campaign** [A for the FDX magnitude: nothing on FDX has been measured
+  here; the SG13G2 bulk switched-cap body-bias probe moved settling
+  64% → 90–97% but its energy bookkeeping did not close and is not quoted].
+- **THE OPEN DECISION, pre-stated before any recovery deck ran**
+  (`stat-sim/qal/recov/PRE_REGISTERED.json`, 2026-09-27 —
+  **UNCOMMITTED** as of this edit; the numbers it anchors on are committed in
+  `qal/sar/RESULTS_SAR.json` and the on-disk `qal/swsweep/sw_tg15p_z.cir.mt0`
+  integrators). The dominating term is the switch-gate drive itself:
+  **29.0 fC of tg15p gate charge per hop** (Q_gt close 10.50 fC + Q_gtp open
+  16.38 fC [M, committed integrators] + park ≈ 2.1 fC [D, width-scaled]),
+  which a conventional CMOS tap driver from the 1.5 V rail burns as
+  **43.5 fJ/bank/hop** — that **admits NOTHING at any chain length** — while
+  the ideal-recycling floor of the same gates is **3.56 fJ** [M].
+  **Re-measured (verify round, 2026-09-27): 29.88 fC → 44.82 fJ, with the park
+  term now MEASURED at 2.193 fC instead of width-derived; implied C_gate
+  19.92 fF. `RESULTS.json`'s "switch_gate_CV2_floor 55.3 fJ" rested on an
+  ASSUMED 24.6 fF geometric estimate, 23% high — the measured floor is
+  44.8 fJ.** The threshold re-derived against measurement is η ≥ 71.5%, so the
+  handed-down ≥71% stands. Per-gate ideal-source decomposition: gt **−2.993 fJ
+  (the ideal source REABSORBS the discharge — a topology property, reproduced
+  in two independent re-runs)**, gtp +3.880, pk +2.664, sum 3.551 ≡ the
+  3.56 fJ floor.
+  **PRE-STATED LINE, not to be moved: the fpsat_fma min-bank-63 block flips
+  EXCLUDED → ADMITTED iff E_timer ≤ 12.75 fJ/bank/hop, i.e. gate-charge
+  recovery ≥ 71–74%** (line-share dependent, B ≥ 8; 63 × 0.8309 − 39.6 =
+  12.747 fJ, so the line is the *arithmetic* of the N_min formula, not a
+  taste). Under §3's own per-gate-scaling rider — the switch must grow with
+  the bank, so the tap term moves into the DENOMINATOR — the bar rises to
+  **≥ 96.7%** and gate-drive recovery becomes existential rather than a
+  tuning knob [D]. Three candidate mechanisms are being measured and are not
+  exclusive: **resonant LC gate drive** (architecturally the prize, because a
+  resonant network is clock-like — every bank hops on the same beat, so ONE
+  network could serve all B banks' switch gates and divide the tap cost by B
+  exactly as the line already does — but it needs inductors, the scarcest
+  component in the σ0 architecture, and loss ≈ π/Q means ≥ 71% needs
+  Q ≳ 11, which is an ASSUMPTION at SG13G2, not something any deck here
+  measures); **stepwise capacitive charging** (≈ 1 − 1/n recovery with
+  capacitors only, no magnetics and no Q question, but the step switches have
+  their own gates and they must be counted at the conventional rate — the
+  exact sum-of-pieces error this campaign has already paid for); and **lower
+  VGH** (CV² ∝ V² against a Vt-set overdrive floor: voltage alone would need
+  VGH ≤ 1.5·√(12.75/43.5) = 0.81 V, below the 1.0 V bank + Vt the nMOS must
+  pass, so it is a multiplier on the other two, not a mechanism [D]).
+  **Until one of them is MEASURED at ≥ 71% with a closed ledger and the
+  completeness gates intact (VBEND in band, rail drained, all 8 cells
+  settled, E_hop_open still ≈ 8.109 fJ), QAL admission stays CLOSED at
+  SG13G2. If none clears, that CLOSES the QAL question at this node** — a
+  negative result of record, not an open item.
+- **THE DECISION, MEASURED AND CLOSED FOR THE THREE MECHANISMS AS BRIEFED
+  (2026-09-27, `stat-sim/qal/recov/` + `qal/recov/skeptic/`, UNCOMMITTED).
+  The line is NOT cleared: best complete measured ledger = 17.911 fJ/bank/hop,
+  η 58.8%, N_min 69.2 → fpsat_fma min-bank-63 stays EXCLUDED.** [M]
+  - **M3 lower VGH: admits nothing and breaks first.** CV² measured ∝ V^1.86
+    (not V²); the lowest completeness-passing row is VGH = 1.5 V, VBEND leaves
+    its band at 1.20 V and E_hop_open leaves ±5% already at 1.35 V — far above
+    the 0.81 V the arithmetic demanded. A ×0.84 multiplier bought for a +5.8%
+    E_hop penalty on the same ledger, i.e. ≈ zero. It is a constraint, not a
+    lever. [M]
+  - **M2 stepwise: dead by 3× even idealised.** Measured n=2 → 121.98 fJ, n=4
+    → 183.36 fJ (η −180% / −322%): the step switches' own gates (57 → 105 fJ)
+    and their hold-switch Miller traffic (60–72 fJ) dwarf the 1 − 1/n saving.
+    residual/CV² = 1/n + 2ατn²/T_edge with τ_TG = **1.884 ps MEASURED** (the
+    pre-registered estimate was ~3 ps) ⇒ n_opt ≈ 2 and **no n wins**. Analytic
+    best case with every measured overhead idealised away = 38.995 fJ, η 10.3%,
+    N_min 94.6 — still 3× over the line. The sum-of-pieces trap, paid again. [M]
+  - **M1 switched resonant (real freeze TG + clamps): dead, −69.7% measured**
+    (73.79 fJ min-width, 389.73 fJ at 5/10 µm — cost linear in W). The freeze
+    switch is a **B-invariant recursion**: its width tracks the load it drives,
+    so its gate charge tracks too and never amortizes over B. Its analytic
+    optimum (28.06 fJ, η 35.5%) needs R_opt = 1827 Ω, which **exceeds the
+    cut-order limit** — the optimum is not even reachable. [M]
+  - **M1 free-running resonant: the one real result, and it is a PART, not a
+    timer.** A multi-harmonic (Σ_{k odd ≤5} sin kθ/k) free-running network with
+    NO per-edge switch drives the gt/gtp taps for **2.974 fJ net** with the
+    ledger closed to 1e−12, independently re-metered by a trapezoid path that
+    never touches the 1F instrument (0.19%), the transfer intact (bank A's own
+    expenditure EA_C −0.22% vs ideal) and **all five pre-registered gates PASS
+    at the pre-registered checkpoint** (VBEND 0.6844, VA_open 0.0916 — better
+    than the committed 0.0978 — E_hop_open 8.130 fJ = +0.26%, 8 cells settled,
+    cut order pMOS +1.8 ps / park +30.8 ps). A plain sinusoid FAILS (its
+    quarter-period fall leaves the nMOS conducting when the park pulls sw to 0
+    and bank B drains, 0.703 → 0.527 V); the harmonic waveform was designed
+    mid-round and is therefore **post-hoc, tested against pre-registered
+    gates** — weaker than a pre-registered prediction. The architectural prize
+    is real: Q = 1/(ωC_net R) is **B-invariant** when B banks share one network
+    (R/B against B·C_net), so sharing buys a realisable L without making Q
+    harder — 3 modes, **3–4 inductors chip-wide**, L₁ = 5.9 nH at B = 64 with
+    shared series R ≤ 8.4 Ω. Required **Q ≥ 7**, set by the **CUT ORDER** (the
+    gtp tap RC-lags, so large R makes the pMOS cut late — the v1 failure), not
+    by energy (energy alone would allow Q ≈ 2.4). The inductor is IDEAL in
+    every deck; **no SG13G2 metal Q is measured anywhere** [A]. Costs measured:
+    **8.6% beat penalty** (580 vs 534 ps), gate–bulk stress −1.84 V on a 1.5 V
+    oxide (+23%, unpriced), and a fixed phase advance of 3–9 ps on gtp that
+    ±2 cells of data swing consumes 4.9 ps of.
+  - **WHAT KILLS IT: the park's driver.** The round booked the park at
+    Q_pk·VGH = 2.40 fJ from an IDEAL PWL step. Measured floor for a real one —
+    ONE minimum sg13g2_inv_1, zero junction capacitance, free ideal input, no
+    delay chain, phase assumed free — is **15.0–15.5 fJ** against a **9.77 fJ
+    headroom**, and it is robust to the input edge (15.48 fJ at 0.5 ps vs
+    15.02 at 130 ps) and the window (0.3% over 400 ps). It brackets correctly
+    inside the campaign's own two independent per-stage figures (FO1 at 1.5 V
+    9.87 fJ; as-built park tap 135.29/7 = 19.33 fJ). **Even the cheapest of
+    those, 9.87 fJ, gives E = 12.843 fJ and N_min 63.12 — still past the
+    line.** No park-driver figure anywhere in this campaign fits the headroom. [M]
+  - **THE LEVEL ERROR, and it is in the brief's own wording.** "E_timer ≤
+    12.75 fJ/bank/hop, **i.e.** recovery ≥ 71–74%" is FALSE as an equivalence.
+    η is **load-referenced** (against Q_gate·VGH = 43.5 fJ of gate charge);
+    E_timer is **driver-referenced** (what the timer hardware draws from its
+    supplies). They coincide only if a driver costs what the charge it delivers
+    costs — the campaign's own as-built ratio is **7.0×** (302.8 fJ of driver
+    for 43.5 fJ of load). **η ≥ 71% was cleared (87.9%); E ≤ 12.7467 fJ was
+    not.** Quote the fJ, never the percentage, in any admission statement.
+  - **The per-gate rider is refuted mechanism-independently**: the ideal-PWL
+    floor of 3.5627 fJ ⇒ **η_max = 91.8% at SG13G2**, and the rider needs
+    96.7%. No drive scheme whatsoever clears it. That branch is CLOSED. [M]
+  - **Still unbooked in BOTH ledgers** (pre-existing, not M1-D's fault): the
+    VHI 1.5 V pMOS-bulk rail at **4.31–4.49 fJ/hop** = 35% of the whole budget;
+    `grep` finds no EHI/VHI in any committed README or RESULTS.
+  - **The one open door, and it is narrower than either round said.** Nobody
+    has measured a **resonant park tap**. If the park could ride the same
+    free-running network at gt/gtp-like cost (~1.5 fJ) then E = 4.474 fJ,
+    N_min 53.0 and the block ADMITS — but the park must HOLD a DC level through
+    the hold phase and then cut, which is the one waveform a resonator is worst
+    at. Two riders [D, this report's arithmetic on their measured numbers]:
+    (i) the **sustaining amplifier** break-even is **η_amp ≥ 35.1%** (zero DC
+    bias) to **≥ 44.6%** (worst-case 2.71 fJ bias), NOT the round's "≥ 27.7%" —
+    that figure was computed against the 5.273 fJ headline that omitted the
+    park driver. (ii) **Lowering the park rail alone does not rescue it**: the
+    park is an nMOS to ground and needs no 1.0 V-bank overdrive, so its gate
+    could run below 1.5 V, but the measured V^1.86 law requires **V_park ≤
+    1.19 V** merely to fit the headroom, and at V_park = 1.0 V with a 50% amp
+    and the bias paid E = 15.7 fJ, N_min 66.6, **still EXCLUDED**. Until the
+    resonant park tap is measured, **QAL admission at SG13G2 is EXCLUDED, not
+    open.**
+
 **Admit QAL iff** (i) best min-bank of the *bush* ≥ N_min under d ≤ 4;
 (ii) the tail is excisable at affordable cut width (§5C); (iii) the workload
 is streaming — a latency-bound serial recurrence disqualifies outright
@@ -243,7 +496,8 @@ low duty; it renames it.
 **Hurdle rates** (calibrated from this campaign's own error record — six
 standing numbers corrected): BD ≥ 1.3× sync, QDI ≥ 2×, QAL ≥ 3× (the ZCD
 band is no longer assumed — E_ZCD measured ≥ 144.3 fJ, and per-hop ZCS
-itself is refuted; see G2). Tie-breaks in order: (i) testability — QDI faults
+itself is refuted; see G2 — and its replacement, the hybrid tuned timer, is
+measured at 302.8 fJ/bank of non-shareable taps, see G2b). Tie-breaks in order: (i) testability — QDI faults
 deadlock (undiagnosable, no scan/ATPG, the project's own certificate
 mechanism); QAL has no fault model at all; (ii) assumption discharge
 (`ASYNC-PLAN.md:115, :127-134`): refuse any binding whose assumptions have no
@@ -402,7 +656,9 @@ purely combinational block at any activity [M]. QAL fails G1+G2 at every
 legal partition by 4–7×; even the best bush-excision reaches only 1.17× at
 the zero-ZCD limit against a 3× hurdle. At the measured N_min ≥ 221 the QAL
 arm is EXCLUDED outright (bush = 0/10 levels; best 4-span prefix bank 92
-< 221) [M: `stat-sim/qal/zcd/restate_admission.py`, skeptic brute-forced]. Single-stream SHA is the named
+< 221) [M: `stat-sim/qal/zcd/restate_admission.py`, skeptic brute-forced],
+and the hybrid timer moves it further out, not back (N_min 412–535 as built,
+§3 G2b; the 4-level prefix bank 92 would need E_timer ≤ 36.84 fJ/bank/hop). Single-stream SHA is the named
 latency-bound recurrence; the consumer is inelastic, so the 50.5% QDI
 harvest is unbankable. Measured field: CMOS 232 fJ @ 928 ps (liberty basis —
 the transistor cross-check found liberty's internal term 1.5–3.7× low, small
@@ -431,8 +687,22 @@ min-bank-63 block resolves UNDECIDABLE → EXCLUDED (it would have needed
 E_ZCD ≤ 12.75 fJ, an order below the measured floor of a detector that
 does not even fire); the bush-excision arm still passes the bank criterion
 (25/37 levels, 98.2% of gates) but now carries the refuted-ZCD rider — its
-hop timing must come from a calibrated predictive timer (unbuilt,
-unscoped), not per-hop ZCS.
+hop timing must come from a calibrated predictive timer, not per-hop ZCS.
+**2026-09-27, second update (the timer is now MEASURED, §3 G2b):** that
+predictive timer exists and costs 302.8 fJ/bank/hop of taps → N_min 412–535,
+so **no arm of this block admits as built**; whole-block min-bank 8 and
+sha's 7 would need E_timer < 0 and can never admit at any timer cost. The
+fpsat_fma min-bank-63 row is the ONE live case in the campaign, and its flip
+line is the pre-stated **E_timer ≤ 12.7467 fJ/bank/hop** (the "⇔ ≥ 71–74%
+recovery" gloss is NOT an equivalence — see §3 G2b's level error).
+**2026-09-27, third update (recovery is now MEASURED, §3 G2b): the line is
+NOT cleared.** Complete measured ledger 17.911 fJ/bank/hop → N_min 69.2 →
+**fpsat_fma min-bank-63 EXCLUDED**, and the per-gate rider is refuted
+mechanism-independently (η_max 91.8% vs 96.7% needed). The free-running
+resonant network does deliver the gt/gtp taps at 2.974 fJ with every gate
+PASS; the **park's driver** (15.0–15.5 fJ measured, 9.77 fJ headroom) is what
+excludes it. **QAL at SG13G2 is EXCLUDED, not open** — the one unmeasured
+thing that could reopen it is a resonant park tap (~1.5 fJ ⇒ N_min 53.0).
 
 **Whole Vortex, per-block calls on real kernels** (medium confidence;
 binding choice flips across kernels for 12–38% of blocks — the rule must
@@ -473,7 +743,14 @@ extrapolated width formula invalid on cycles, an undischargeable timing
 assumption — the least defensible branch); any QAL verdict that needs
 per-hop ZCS (measured 2026-09-27: the comparator class cannot provide it;
 the former 50–400 UNDECIDABLE band is resolved — NOT ADMITTED, N_min ≥
-221); the island-size answer (rests on one
+221); **any QAL verdict that assumes the switch gates are driven for free**
+(every deck before 2026-09-27 did — real drives cost 399.8 fJ/hop single-shot,
+633.3 fJ/hop over a full trigger cycle, against the 3.56 fJ the ideal sources
+booked, §3 G2b); **any QAL admission quoted as a recovery PERCENTAGE** (η is
+load-referenced, the admission line is driver-referenced — the 2026-09-27
+round cleared η 87.9% and still measured E_timer 17.9 fJ, N_min 69.2, §3 G2b);
+**any park cost taken from an ideal-source booking** (2.40 fJ booked vs
+15.0–15.5 fJ measured for the cheapest real driver); the island-size answer (rests on one
 unsourced number); d_max = 4.3 (RC_g anchor); QDI for anything with
 registers (751-cell latch bank, no scan); level-profile shape as a block
 property (2×/10× synthesis spread, opposite verdicts).
@@ -499,13 +776,36 @@ loss — its value is converting BD from margined to self-timed).
    per-hop ZCS refuted, §3 G2) and the mistiming-cost half has two
    measured anchors (the committed record's own +50 ps-late openings cost
    ~nothing energetically at 60 µm; the tg15p+park optimum degrades
-   gracefully under +50 ps, −0.9% E_hop [M, skeptic]) — what remains is
-   scoping the predictive timer itself (energy, calibration, and the
-   uncorrected 61.6 ps data-dependent spread as a level/settling-margin
-   question).
-3. **Extract Vt and the settling-cliff rail level; measure RC_g** on a real
+   gracefully under +50 ps, −0.9% E_hop [M, skeptic]) — and **DISCHARGED
+   2026-09-27** by the hybrid timer round (§3 G2b): the predictive timer is
+   built, its energy measured (399.8 fJ/hop, 302.8 of it per-bank taps), its
+   calibration costed (1.5 pJ/event, ≤0.3% amortized, calibrate-on-wake in
+   the dark-silicon corner), its tracking measured (ratio 16.4, saved only by
+   the late-direction sign), and the uncorrected data spread bounded
+   (61.6→64.8 ps full-scale, N-invariant; 1/√N holds only for random data).
+3. **SWITCH-GATE-CHARGE RECOVERY — DISCHARGED 2026-09-27 (§3 G2b), and the
+   answer is NEGATIVE.** M3 lower-VGH, M2 stepwise and M1 switched-resonant
+   all FAIL outright; the free-running multi-harmonic resonant network drives
+   the gt/gtp taps at 2.974 fJ with every completeness gate PASS at the
+   pre-registered checkpoint, but the **park's real driver measures
+   15.0–15.5 fJ against a 9.77 fJ headroom** → complete ledger 17.911 fJ,
+   N_min 69.2, **fpsat-63 EXCLUDED**; the per-gate rider is refuted for every
+   possible mechanism (η_max 91.8%). **The successor, and the only remaining
+   QAL-at-SG13G2 question: a RESONANT PARK TAP** — drive the park gate from a
+   third tap on the same free-running network (fallback rows: park rail swept
+   1.5/1.2/1.0 V, since the park is an nMOS to ground and needs no 1.0 V-bank
+   overdrive — the measured V^1.86 law says ≤ 1.19 V would fit the headroom
+   [D]; and the cheapest real two-stage conventional driver). Metered
+   **driver-referenced**, at the pre-registered gates, with the park's own
+   phase generation counted. ~1.5 fJ ⇒ N_min 53.0 and the block admits;
+   anything above ~4 fJ and QAL is closed at this node with the sustaining
+   amplifier and the DC bias still unpaid.
+4. **Extract Vt and the settling-cliff rail level; measure RC_g** on a real
    SG13G2 gate — every G1 number scales with the first two; the third
-   parameterizes the bank DP and could flip the ALU verdict alone.
+   parameterizes the bank DP and could flip the ALU verdict alone. (The cliff
+   half now has a measured anchor and a deferred actuator: dV = 0.6 V is the
+   cheapest/fastest point at 0.326 fJ/gate but invalid at Vt ≈ 0.4 V, and the
+   FD-SOI back gate that would move it is the deferred FDX trim — §3 G2b.)
 
 Explicitly not prioritized: the in-flight CMOS transistor cross-check (both
 headline verdicts are insensitive over ±30%; it moves margins, not answers).

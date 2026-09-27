@@ -255,6 +255,51 @@ class Dag:
             return self.mk("trunc", (a, width), 32, True, vmax, False)
         return self.mk("trunc", (a, width), 32, False, vmax, False)
 
+    def int_cast(self, a, coord):
+        """`(int)` cast, modelled as C actually defines it (C17 6.3.1.3).
+
+        Three cases, and the old code collapsed all three into "w = 32, value
+        already fits", which was a SILENT WRONG ANSWER for the third:
+
+        1. the operand is ALREADY an int (signed after promotion): the cast
+           converts nothing, so pass the node through untouched -- crucially
+           keeping `neg`, which is what makes the ordered-compare and signed
+           `>>` refusals downstream still fire (`(int)(~a) < 1` refuses).
+        2. the operand is unsigned but its value provably fits in INT_MAX:
+           the conversion is value-preserving, so this is a pure RETYPE --
+           same bit pattern, now marked signed so that later int arithmetic
+           gets the INT_MAX overflow (UB) check it is entitled to.
+        3. the operand may exceed INT_MAX (vmax > INT_MAX, or `neg` says the
+           top bit may be set): the conversion is IMPLEMENTATION-DEFINED in C
+           (6.3.1.3p3 -- gcc/clang wrap, so the value goes NEGATIVE).  B0
+           refuses it by name, exactly as it already refuses signed overflow,
+           signed `>>` and ordered signed compares.  Before this guard, such
+           a value reached an ordered compare believed non-negative and was
+           compared UNSIGNED: `(int)(a | 0x80000000u) < 1` is always 1 in C
+           (negative < 1) and the emission said always 0 -- 259/259
+           oracle-caught mismatches (examples/adv_intcast.c).
+        """
+        if a.signed and not self.naive:
+            if not a.neg and a.vmax > INT_MAX:
+                # unreachable by construction (the arithmetic paths refuse
+                # signed bounds above INT_MAX and set neg when the top bit
+                # can be set) -- but guard-or-die rather than trust it, since
+                # the whole point of this branch is that a mis-set flag here
+                # silently becomes an unsigned compare
+                die("(int) cast of a signed value whose bound %#x exceeds "
+                    "INT_MAX with neg unset -- width-model inconsistency, "
+                    "refusing rather than guessing the compare signedness"
+                    % a.vmax, coord)
+            return a                       # int -> int: nothing converts
+        if a.neg or a.vmax > INT_MAX:
+            die("(int) cast of a value that may exceed INT_MAX (bound %#x) "
+                "is an implementation-defined out-of-range conversion in C "
+                "(C17 6.3.1.3p3: the result may be NEGATIVE) -- not in B0, "
+                "because the negative value would then need a signed "
+                "comparator/shifter; cast to (uint32_t) instead if unsigned "
+                "wrap semantics are what you mean" % a.vmax, coord)
+        return self.mk("trunc", (a, 32), 32, True, a.vmax, False)
+
 
 # ------------------------------------------------------------- AST -> DAG
 def typename_width(decl_type, coord):
@@ -427,9 +472,12 @@ class FnCompiler(c_ast.NodeVisitor):
                 except AttributeError:
                     pass
                 if names == ["int"]:
-                    w = 32          # value already fits (we forbid neg consts)
-                else:
-                    die("cast to unsupported type", e.coord)
+                    # NOT d.trunc(...,32): an (int) cast is a SIGNED retype,
+                    # and above INT_MAX it is implementation-defined -- see
+                    # Dag.int_cast (the guard that closes the silent unsigned
+                    # compare, examples/adv_intcast.c)
+                    return d.int_cast(self.expr(e.expr), e.coord)
+                die("cast to unsupported type", e.coord)
             return d.trunc(self.expr(e.expr), w)
         die("expression %s not in B0" % type(e).__name__,
             getattr(e, "coord", None))

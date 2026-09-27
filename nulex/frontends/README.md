@@ -31,7 +31,8 @@ c_expr.py <src.c> <func> [-o out.v] [--meta out.meta.json]
   choice, not a block property).
 
 Accepted subset (B0 exactly): `& | ^ ~ + - * << >> ! && || < > <= >= == !=
-?:`, casts to `(uintN_t)`, integer constants, `uintN_t` locals with
+?:`, casts to `(uintN_t)` and to `(int)` (the latter only where C defines it —
+§5 item 6), integer constants, `uintN_t` locals with
 initializers, single-assignment outputs. No loops / control flow / memory /
 calls / floats — those are B1+ in the COMMON-BACKEND.md §3.3 build order, and
 each is rejected by name.
@@ -85,6 +86,12 @@ documented one (`../POLYSYNTH.md` §1) with `sha_slice_c.v` as the source.
 * `examples/popcount4.c` — second end-to-end function (shift/mask/adder-tree
   shape sha_slice doesn't have).
 * `examples/promo_trap.c` — the distilled integer-promotion trap.
+* `examples/cmp_precedence_trap.c`, `examples/cmp_wide_const.c` — the two
+  compare-emission regressions (item 3).
+* `examples/adv_mixed.c`, `examples/adv_cmpcmp.c`, `examples/adv_terncmp.c` —
+  adversarial compare shapes.
+* `examples/adv_intcast.c` — the `(int)`-cast compare-path guard (item 6):
+  one function that must AGREE and two that must be REFUSED by name.
 * `tests/` — the formal-check fixtures: `equiv_sha.ys` / `equiv_pc4.ys`
   (yosys miter+SAT; run from `work/` after emitting), `pc4_ref.v`
   (behavioral popcount reference), `diff_tb.v` (200k iverilog differential;
@@ -136,6 +143,7 @@ documented one (`../POLYSYNTH.md` §1) with `sha_slice_c.v` as the source.
    cmp_precedence_trap 259/259, cmp_wide_const 259/259, three adversarial
    compare expressions (`adv_mixed` 200,004, `adv_cmpcmp` 65,540,
    `adv_terncmp` 65,540 — mixed-width, compare-of-compare, ternary shapes),
+   `adv_intcast` 65,540 plus its two refusal tests (item 6),
    sha_byte_identity PASS. sha_slice_c.v / popcount4_c.v / promo_trap.v are
    byte-identical to pre-fix snapshots (sha_slice has no compares) and the
    QDI netlists cmp-clean vs the committed threeway GT. The skeptic re-ran
@@ -148,20 +156,59 @@ documented one (`../POLYSYNTH.md` §1) with `sha_slice_c.v` as the source.
    (real compilers) stays the arbiter of everything accepted.
 5. M3 workload profiling of software (call rate → duty/busy, operand toggles
    → alpha) is B2; `--workload` is passthrough only today.
-6. **OPEN (frontend, skeptic-found 2026-09-27): `(int)` cast of provably-large
-   values defeats the signed-compare refusal** (`c_expr.py:429-430`). The
-   `names == ["int"]` cast branch sets w=32 with "value already fits" but
-   never checks `vmax <= INT_MAX` or sets `neg`, so a value provably
-   ≥ 2^31 reaches an ordered compare believed non-negative, bypassing the
-   `cmp()` signed-comparator rejection. Repro (MEASURED, oracle-caught
+6. **FIXED (frontend, 2026-09-27): `(int)` cast of provably-large values
+   defeated the signed-compare refusal** (was `c_expr.py:429-430`). The
+   `names == ["int"]` cast branch set w=32 with "value already fits" but
+   never checked `vmax <= INT_MAX` or set `neg`, so a value provably ≥ 2^31
+   reached an ordered compare believed non-negative, bypassing the `cmp()`
+   signed-comparator rejection. Repro (MEASURED pre-fix, oracle-caught
    259/259 mismatches, exit 1):
    `return (uint8_t)((int)(a | 0x80000000u) < 1);` — C (gcc==clang,
-   impl-defined wrap) is always 1 (negative < 1); the emission compares
+   impl-defined wrap) is always 1 (negative < 1); the emission compared
    unsigned → always 0. Same silent-wrong class as item 3, adjacent to (not
-   inside) the fixed width path — the fix did not and does not cover it.
-   Suggested fix (NOT applied): `die()` in that cast branch when
-   `expr.vmax > INT_MAX` (naming the `(uint32_t)` fix), or model the result
-   signed with `neg=True`; add the repro as `examples/adv_intcast.c` in the
-   suite. Until then, compare-bearing C that passes through an `(int)` cast
-   is trustworthy only WITH the oracle gate; close this before B1 leans on
-   compares.
+   inside) the width path item 3 fixed.
+   **The fix** is `Dag.int_cast()` (replacing the bare `d.trunc(...,32)`),
+   which models what C17 6.3.1.3 actually says, in three cases: (i) operand
+   already an `int` → pass the node through UNTOUCHED, keeping `neg`, so the
+   ordered-compare and signed-`>>` refusals downstream still fire;
+   (ii) unsigned operand provably ≤ INT_MAX → value-preserving pure retype,
+   now marked *signed* so later int arithmetic gets its INT_MAX overflow
+   check; (iii) may exceed INT_MAX (`vmax > INT_MAX`, or `neg` says the top
+   bit can be set) → **guard-or-die**, refused by name as an
+   implementation-defined out-of-range conversion, with `(uint32_t)` named as
+   the fix. A belt-and-braces `die()` also covers the
+   signed-and-`vmax > INT_MAX`-with-`neg`-unset combination that should be
+   unreachable by construction — refusing beats trusting a flag whose whole
+   job is deciding compare signedness.
+   Named tests in `tests/run_oracle_suite.sh`, all three in
+   `examples/adv_intcast.c`: `adv_intcast` (the DEFINED half — `(int)` no-op
+   casts on promoted `uint8_t`, `(int)` of a value masked to fit INT_MAX, the
+   documented `(uint32_t)` wrap fix, and a `(int)`-of-`~` passthrough:
+   **65,540/65,540 agree**), `adv_intcast_wrap_refuse` (the recorded repro —
+   must be REFUSED with the named message; the suite matches the message, so
+   an unrelated crash cannot pass it), and `adv_intcast_signed_cmp_refuse`
+   (`(int)(~a) < 1` — pins that the passthrough did not open a hole: the
+   existing signed-comparator refusal still fires).
+   Emission is untouched everywhere else: all eight pre-existing examples
+   emit **byte-identical** Verilog under the pre-fix (HEAD) and post-fix
+   frontends, and a fresh `polysynth --gt sha_slice` from the post-fix
+   C-origin `sha_slice_c.v` reproduces GT ALL PASS with `sha_slice.cmos.v`,
+   `sha_slice.qdi_direct.v` and `sha_slice.qdi_direct_cd.v` byte-identical to
+   the threeway ground truth. **B1's compare path is clean**: every
+   C-negative `int` in the model carries `neg` (the only producers are `~`,
+   unary `-`, signed `-`, and now a `neg`-preserving `(int)` passthrough),
+   `neg` propagates through and/or/xor/add/sub/mul/mux, ordered compares
+   refuse on `neg`, `==`/`!=` are pattern compares emitted at full operand
+   width, and the one remaining way to manufacture a negative silently — the
+   out-of-range `(int)` conversion — is now refused. Cross-checked on 9
+   adversarial shapes (6 accepted at 40,003/40,003 vectors each, 3 refused by
+   name) beyond the suite.
+7. **OPEN (frontend, pre-existing, NOT introduced by item 6's fix): signed
+   arithmetic on an already-`neg` value skips the INT_MAX overflow refusal.**
+   `binop`'s UB check is `if signed and not neg and v > INT_MAX`, so `~a + 1`
+   and `(int)(~a) * 3` are accepted and emitted as 32-bit wraps (verified
+   accepted under BOTH the pre-fix HEAD and post-fix frontends, 2,003/2,003
+   oracle-agree, gcc==clang). In C that is UB, not implementation-defined; the
+   compilers wrap in practice and the three-legged oracle gates it, but this
+   is an *arithmetic*-path hole, not a compare-path one, and it should be
+   closed (refuse, or prove the wrap) before B1 leans on signed arithmetic.

@@ -109,15 +109,46 @@ tools that measured them (the 4303.7-vs-4385.7 sum-of-pieces lesson).
      hop timing must be a calibrated predictive timer), DC-DFF term;
      admission by the §3 bank-partition DP (max-min bank, contiguous,
      span ≤ 4; bush = longest prefix whose best partition sustains
-     **N_min = 221** on the measured basis — the former 50–400 UNDECIDABLE
-     band is resolved, NOT ADMITTED; burst < 20 → fill/drain never
-     amortize). Reported as the triple (E band, Θ = 2.924 Gop/s,
-     t_fill = D×342 ps).
+     N_min — the former 50–400 UNDECIDABLE band is resolved, NOT ADMITTED;
+     burst < 20 → fill/drain never amortize). Reported as the triple
+     (E band, Θ = 2.924 Gop/s, t_fill = D×342 ps).
+     **2026-09-27, the timing term is now MEASURED HARDWARE, not a band**
+     (`stat-sim/qal/timer/`, `stat-sim/qal/sar/`, stat-sim 28dcece; full
+     reading in SELECTION-RULE §3 G2b). The calibrated predictive timer that
+     replaced per-hop ZCD is built: the tuned tapped-line row holds
+     completeness (VBEND 0.6846, rail drained, E_hop_open 8.109 fJ, −24% vs
+     the tg60 anchor) and calibration amortizes to ≤0.3% of the denominator
+     (1.5 pJ/event; **calibrate-on-wake** in the dark-silicon/SNN corner,
+     where 1/duty scaling would otherwise cost 33%) — but the timer HARDWARE
+     costs **399.8 fJ/hop = 302.8 per-bank taps + 97.0 shared line + 5.4
+     trigger**, where every earlier deck's ideal PWL gate drives booked
+     3.56 fJ. Only the line divides by B, so N_min = (39.6 + 302.8 +
+     102.4/B)/0.8309 → **412–535 as built**, worse than the ZCD-basis 221,
+     and the polysynth QAL arm must carry THAT as its timing term rather
+     than any free-gate-drive figure. The single open lever is switch-gate
+     charge recovery: 29.0 fC/hop = **43.5 fJ conventional** at VGH 1.5 V
+     vs a **3.56 fJ** ideal-recycling floor, and the pre-stated flip line is
+     **E_timer ≤ 12.7467 fJ/bank/hop** — note that the "⇔ recovery ≥ 71–74%"
+     gloss is NOT an equivalence: η is load-referenced, E_timer is
+     driver-referenced, and the campaign's own as-built ratio is 7.0×.
+     **MEASURED 2026-09-27 (`stat-sim/qal/recov/` + `skeptic/`, UNCOMMITTED;
+     anchors committed in `qal/sar/RESULTS_SAR.json`): the line is NOT
+     cleared.** Lower-VGH, stepwise-capacitive and switched-resonant all FAIL;
+     a free-running multi-harmonic resonant network drives the gt/gtp taps for
+     **2.974 fJ** with every completeness gate PASS, but the **park's real
+     driver measures 15.0–15.5 fJ against a 9.77 fJ headroom** → complete
+     ledger **17.911 fJ/bank/hop, N_min 69.2**. The per-gate rider is refuted
+     for every possible mechanism (η_max 91.8% from the 3.5627 fJ ideal floor).
+     **So the polysynth QAL timing term has no admitting value at SG13G2 and
+     no recovery credit is emittable in any row**; the only unmeasured thing
+     that could change it is a resonant park tap (~1.5 fJ ⇒ N_min 53.0).
    * BD (ANALYSIS-ONLY): sync-minus-clock-tree + measured delay-line tax
      1.2–1.7%; controller ASSUMED; refused at tie-break (ii) — the
      matched-delay margin has no named discharger in this flow.
 5. **Pick.** Lowest-energy EMITTABLE variant, hurdles from §3 of the rule
-   (BD ≥ 1.3×, QDI ≥ 2×, QAL ≥ 3× across the full ZCD band). ANALYSIS-ONLY
+   (BD ≥ 1.3×, QDI ≥ 2×, QAL ≥ 3× across the full timing-hardware band —
+   ZCD-basis ≥144.3 fJ/hop or the measured hybrid timer's 302.8 fJ/bank of
+   taps, never a free-gate-drive basis). ANALYSIS-ONLY
    rows can only yield a printed research recommendation. A pick that never
    moves across workloads triggers an explicit red-flag check that must name
    the structural reason.
@@ -128,7 +159,14 @@ SYNC under all three vectors, QDI 12.5× off, QAL verdict moving
 EXCLUDED (burst 6.5, 5.5 < 20) → EXCLUDED at fpsat saturation too
 (2026-09-27: the min-bank-63 row was UNDECIDABLE only inside the old
 assumed 50–400 ZCD band; at the measured N_min ≥ 221 it resolves 63 < 221
-→ EXCLUDED — `stat-sim/qal/zcd/restate_admission.py`, skeptic-verified),
+→ EXCLUDED — `stat-sim/qal/zcd/restate_admission.py`, skeptic-verified; the
+measured hybrid timer moves the same row further out, N_min 412–535, so it
+stays EXCLUDED and **its one flip condition was the pre-stated
+E_timer ≤ 12.7467 fJ/bank/hop line — MEASURED 2026-09-27 and NOT cleared:
+best complete ledger 17.911 fJ → N_min 69.2, so the row stays EXCLUDED on a
+measurement now, not on an open question**; whole-block rows, sha min-bank 7
+and alu min-bank 8, would need E_timer < 0 and can never admit at any timer
+cost),
 BD clearing its paper hurdle at saturation but
 refused for the undischargeable margin.
 
