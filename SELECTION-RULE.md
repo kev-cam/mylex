@@ -37,7 +37,7 @@ instruction, and must be printed as such.
 | BUNDLED-DATA | T2 | **no mapper exists.** `ASYNC-PLAN.md:459` plans `bindings/bundled.py`; grep over nulex finds nothing. All BD figures in this campaign are analysis of an unbuilt binding. |
 | SRAM binding | T2 | `ASYNC-PLAN.md:460` plans `bindings/sram.py`; nothing on disk. Worse: the flow **lowers** memories (`synth_exec.ys:4` etc. run `memory_map`), turning a 256×8 into 2048 DFFs — 43.6× the macro's retention leakage plus a clock floor where the macro's is exactly zero. |
 | ARBITER/MUTEX cell | T2 | grep for mutex\|arbiter\|metastab over nulex = 0 hits |
-| QAL | T2 | no mapper, no cell library, no DFT concept, no P&R story for the 278 nH inductor; the zero-current detector does not exist even as a schematic — and its absence is baked into every measured QAL number (the ZCS decks drive the switch from an ideal PWL source) |
+| QAL | T2 | no mapper, no cell library, no DFT concept, no P&R story for the 278 nH inductor; the zero-current detector has now been designed and MEASURED (`stat-sim/qal/zcd/`, 2026-09-27, skeptic-reproduced) and the result is a REFUTATION: a 3-stage armed SG13G2 comparator at ~120 µA/1.2 V (144.3–200.5 fJ full arm-detect-reset cycle) never resolves the true 74 µV/ps zero within the 342 ps beat — its only fires lock on the switch-OPENING transient ~431 ps late, useless for ZCS. Every measured QAL number still assumes a free, perfect, jitterless ZCS that this comparator class cannot provide (the ZCS decks drive the switch from an ideal PWL source); the surviving alternative is a per-bank calibrated predictive timer — unbuilt and unscoped |
 
 ---
 
@@ -96,7 +96,7 @@ shape, workload), plus dependent scores:
 | D7 | cone-support distribution | ≤4 viable; >10% mass over → QDI out (G-B) | **M** |
 | D6 | level-profile shape (bush/tail) | knee where per-level population < N_min; tail = control path | **M** |
 | D3 | duty / activity | α\* = (E_async − E_floor)/k; for a combinational block E_floor = 0 so α\* is undefined and clock-elimination buys nothing — the prize is proportional to *sequential fraction*, not cell count | **M** |
-| D4 | QAL bank population | N_min = (39.6 + E_ZCD)/(h − 0.0361) — see §3 | **D** |
+| D4 | QAL bank population | N_min = (39.6 + E_ZCD)/(h − 0.0361); E_ZCD now MEASURED ≥ 144.3 fJ → **N_min ≥ 221** — see §3 | **M/D** |
 | D5 | QAL bank level-span | d_max = τ/4 ≈ 4.3 levels at RC_g = 20 ps — **the weakest derived input in the QAL branch**; RC_g is `qal_crossover_map.py:17`'s stated anchor, not a measurement (12 ps → 7.1; 30 ps → 2.9) | **D** |
 | D8 | primitive mix | dual-rail 2:1 MUX = 8 TH cells/bit, proven minimal (§4); 4:1 MUX support 6 → no direct form | **M** |
 | D9 | delay variance | harvestable only with completion detection *and* an elastic consumer; on zero-variance logic (maj/ch, 0.0–0.1% spread) a timing oracle is never worth paying for | **M** |
@@ -150,15 +150,36 @@ per-hop overhead fits Ov(N) = 39.6 + 0.0361·N fJ [D from two measured points,
 `qal_pulse_topup.json` K=1]. Break-even N_min = (39.6 + E_ZCD)/(h − 0.0361):
 
 - generic-gate basis (h = 0.867 fJ): **N_min = 48 at E_ZCD = 0** — the floor
-  that survives the assumed comparator going to zero; 84 / 168 / 409 at
+  that survives the comparator going to zero; 84 / 168 / 409 at
   30/100/300 fJ.
 - stdcell basis (h = 2.800): 14 / 25 / 51 / 123. The 56-vs-105 gate-count
   basis is a ±1.9× ambiguity on the QAL logic term; use the generic basis.
-- **Working threshold N_min = 50; confident threshold N_min = 150.** An
-  earlier derivation gave ~23/~110 (`qal_burst_model.py` on the stdcell
-  basis); it is superseded by the Ov(N)-floor arithmetic above. Any block
-  whose best min-bank lands in 50–400 is **undecidable today** (the 10×
-  assumed ZCD band straddles it).
+- **E_ZCD is now MEASURED, not assumed** (`stat-sim/qal/zcd/RESULTS.json`,
+  2026-09-27, pre-registered bands, skeptic-reproduced in full incl. the
+  bank DP by brute force): the cheapest full arm-detect-reset cycle of a
+  real SG13G2 comparator on the committed hop is **144.3 fJ — and it never
+  fires on the true zero** (energy of a NON-functional detection); the
+  configuration that does fire costs 200.5 fJ and locks on the
+  switch-opening transient (~431 ps late, sense-size-independent), useless
+  for ZCS. Generic basis: **N_min ≥ 221** (≈289 at the fired
+  configuration). The former working/confident thresholds (50/150) and the
+  **50–400 UNDECIDABLE band are RETIRED — every block parked in that band
+  resolves to NOT ADMITTED** and no block's verdict improves. The rider
+  outranks the arithmetic: no functional per-hop zero-current detection was
+  achieved at ANY energy in the old 30–300 fJ band — **per-hop analog ZCS
+  tracking is refuted for simple continuous comparators** at 0.13 µm/1.2 V
+  against the 74 µV/ps signal (failure is DELAY, ≥538 ps vs the 342 ps
+  beat, GBW-limited at gm/C ≈ 2.5e10 /s — offset never even binds). The
+  surviving alternative is a per-bank calibrated predictive timer: it
+  abandons per-hop tracking, leaves the 61.6 ps/16.9% data-dependent t_zcs
+  spread uncorrected (energetically cheap — the committed record itself
+  opens every hop 50 ps late at I=−100 µA with E_hop still 10.74 fJ — but
+  a level/settling-margin cost), and its energy is unscoped. Switch–ZCD
+  coupling (skeptic): the tg15p switch optimum steepens the sensing signal
+  5.1× [M: −376 µV/ps, R_eff 179 Ω], relaxing the ±20 ps true-zero offset
+  need from ±1.48 mV to ±7.5 mV (marginal, no longer hopeless) — but the
+  delay refutation stands, and if tg15p's per-gate number feeds h then
+  N_min(144.3) ≈ 163 [D] — no verdict flips either way.
 
 **Admit QAL iff** (i) best min-bank of the *bush* ≥ N_min under d ≤ 4;
 (ii) the tail is excisable at affordable cut width (§5C); (iii) the workload
@@ -177,6 +198,41 @@ naive per-gate energy (1.343 fJ × cells) undercounts ~3× (wp-weighted logic
 depending on gate-drive recovery. This post-dates the Step-6 arithmetic below
 and erodes its margins; treat every QAL total as carrying that band.
 
+**Switch sweep (2026-09-27, `stat-sim/qal/swsweep/`, pre-registered,
+skeptic-verified — all 14 rows recomputed from raw mt0s, 0 mismatches; the
+tg15p re-run bit-identical):** the committed 60 µm TG is far oversized. At
+the iso-current point E_hop_open falls **monotonically** with TG width —
+11.31 / 10.66 / 9.6 / 8.4 / 7.5 fJ from 120 down to 7.5 µm total; there is
+**no interior W-optimum in range** (conduction loss never bites, ~0.05 fJ
+flat). The shrink is stopped by rail-drain completeness (VA_open 0.003 →
+0.162; the committed anchor itself leaves 0.095, 7.5 µm fails it) and,
+below ~30 µm, by post-open ring — a 1 µm parking nMOS with its own control
+phase is REQUIRED there. Constrained optimum **tg15p** (TG 5/10 µm + 1 µm
+park, 16 µm total): E_hop_open **8.38 fJ = −21.6%** vs the ring-robust
+10.69 fJ anchor, and **−8.4% on the beat** (true zero 266.8 vs 291.3 ps —
+the zero moves earlier as the switch shrinks, so energy AND speed improve
+together; the switch is a third co-design variable beside L and dV).
+Per-gate-settle at the optimum: **1.048 fJ/gate** (conservative tg30p:
+1.195) — carry three qualifiers on any use: (i) delivered at VBEND 0.676,
+not the committed 0.576 (a one-sided completeness reading; by the
+pre-registered two-sided band the strict optimum is tg60 and **1.343
+stands as the committed-swing anchor** — the iso-swing retune was NOT
+measured, though the co-design direction is favorable); (ii) cells burn
+1.70 fJ at that swing (swing physics, inside the total); (iii) ideal-rails
+bookkeeping — tg15p imports +7.9 fJ/hop of park drive-rail energy,
+excluded by the same convention that excludes the committed design's
+−14.5 fJ export; without recycling drive rails the win shrinks and can
+invert. nMOS-only (all widths) and 2:1 reduced-pMOS TG topologies **FAIL**
+(rail never drains / feedthrough pump — their low E numbers are artifacts).
+Two corrections to the committed record itself (amendment A2,
+skeptic-confirmed): the committed t_zcs = 342.0 ps is the true zero
+(291.3 ps) **plus a +50 ps late-open artifact** — benign only at 60 µm,
+whose own ~55 fF parks the interrupted-current ring (the convention does
+NOT transfer to smaller switches, though the tg15p park restores graceful
++50 ps behavior, −0.9% E_hop [M]); and the ring-robust restatement of the
+committed anchor is **E_hop = 10.69 fJ** (vs 10.81 D-snapshot; 1.336
+fJ/gate).
+
 **Report QAL as a triple, never energy-at-single-op-latency:**
 (E_op^sustained, Θ = 2.924 Gop/s, t_fill = D_banks × 342 ps). Retire
 "136.8 fJ @ 3.42 ns" — that was logic+path only (with overheads 841–3,541 fJ
@@ -185,15 +241,18 @@ Also: **QAL's power clock is a clock.** It does not escape the clock floor at
 low duty; it renames it.
 
 **Hurdle rates** (calibrated from this campaign's own error record — six
-standing numbers corrected): BD ≥ 1.3× sync, QDI ≥ 2×, QAL ≥ 3× *across the
-full 10× ZCD band*. Tie-breaks in order: (i) testability — QDI faults
+standing numbers corrected): BD ≥ 1.3× sync, QDI ≥ 2×, QAL ≥ 3× (the ZCD
+band is no longer assumed — E_ZCD measured ≥ 144.3 fJ, and per-hop ZCS
+itself is refuted; see G2). Tie-breaks in order: (i) testability — QDI faults
 deadlock (undiagnosable, no scan/ATPG, the project's own certificate
 mechanism); QAL has no fault model at all; (ii) assumption discharge
 (`ASYNC-PLAN.md:115, :127-134`): refuse any binding whose assumptions have no
 named discharger — BD's matched-delay margin has none in this flow, so BD
 must either lose here or adopt the current-sense early-out to become
-self-timed (its real value: closing the signoff gap, not the 49–273 fJ that
-an assumed 30–300 fJ comparator straddles); (iii) maturity tier.
+self-timed (its real value: closing the signoff gap — and note the current
+sensing comparator is now measured at 144.3–200.5 fJ/cycle and cannot
+resolve a µA-scale zero inside a ~342 ps window; any BD early-out claim
+must budget that class of detector honestly); (iii) maturity tier.
 
 ---
 
@@ -341,7 +400,9 @@ right reason — bank population, not abstention). QDI legal (0 cycles, all
 support ≤ 4) but α\* = 2712/487 = 5.6 > 1: QDI can never win on energy for a
 purely combinational block at any activity [M]. QAL fails G1+G2 at every
 legal partition by 4–7×; even the best bush-excision reaches only 1.17× at
-the zero-ZCD limit against a 3× hurdle. Single-stream SHA is the named
+the zero-ZCD limit against a 3× hurdle. At the measured N_min ≥ 221 the QAL
+arm is EXCLUDED outright (bush = 0/10 levels; best 4-span prefix bank 92
+< 221) [M: `stat-sim/qal/zcd/restate_admission.py`, skeptic brute-forced]. Single-stream SHA is the named
 latency-bound recurrence; the consumer is inelastic, so the 50.5% QDI
 harvest is unbankable. Measured field: CMOS 232 fJ @ 928 ps (liberty basis —
 the transistor cross-check found liberty's internal term 1.5–3.7× low, small
@@ -364,7 +425,14 @@ and give opposite QAL verdicts. Level-profile shape is a synthesis choice,
 not a block property; Step 2 must therefore read: levelize the netlist you
 will actually build, and if it fails the bank gates, **re-synthesize for
 balanced levels before declaring QAL ineligible** (a repair step, not a
-verdict).
+verdict). **2026-09-27 update (measured ZCD, §3 G2):** at N_min ≥ 221 the
+whole-block QAL arm is EXCLUDED (best min-bank 8) and the fpsat_fma
+min-bank-63 block resolves UNDECIDABLE → EXCLUDED (it would have needed
+E_ZCD ≤ 12.75 fJ, an order below the measured floor of a detector that
+does not even fire); the bush-excision arm still passes the bank criterion
+(25/37 levels, 98.2% of gates) but now carries the refuted-ZCD rider — its
+hop timing must come from a calibrated predictive timer (unbuilt,
+unscoped), not per-hop ZCS.
 
 **Whole Vortex, per-block calls on real kernels** (medium confidence;
 binding choice flips across kernels for 12–38% of blocks — the rule must
@@ -402,8 +470,10 @@ per-bank overheads amortize over N and K, never burst length.
 
 **Do not bet on:** any BD selection (no mapper, no netlist, no signoff, an
 extrapolated width formula invalid on cycles, an undischargeable timing
-assumption — the least defensible branch); any QAL verdict with best
-min-bank in 50–400 (ZCD band); the island-size answer (rests on one
+assumption — the least defensible branch); any QAL verdict that needs
+per-hop ZCS (measured 2026-09-27: the comparator class cannot provide it;
+the former 50–400 UNDECIDABLE band is resolved — NOT ADMITTED, N_min ≥
+221); the island-size answer (rests on one
 unsourced number); d_max = 4.3 (RC_g anchor); QDI for anything with
 registers (751-cell latch bank, no scan); level-profile shape as a block
 property (2×/10× synthesis spread, opposite verdicts).
@@ -424,10 +494,15 @@ loss — its value is converting BD from margined to self-timed).
 2. (a) **Re-levelize the ALU under 2–3 synthesis scripts** and bound the
    (depth, knee, tail, min-bank) spread — the rule's mechanical core is not
    reproducible until then; settle the generic-vs-stdcell basis (±1.9×).
-   (b) **ZCD timing-jitter sensitivity** in the existing decks (sweep the
-   freeze instant; dE_hop/dt and margin per ps) — not a comparator energy
-   estimate; both headline verdicts are already ZCD-energy-insensitive, but
-   every measured QAL number assumes a free, perfect, jitterless ZCD.
+   (b) **ZCD timing-jitter sensitivity** — PARTLY DISCHARGED 2026-09-27:
+   the comparator-energy half is measured (144.3–200.5 fJ, non-firing;
+   per-hop ZCS refuted, §3 G2) and the mistiming-cost half has two
+   measured anchors (the committed record's own +50 ps-late openings cost
+   ~nothing energetically at 60 µm; the tg15p+park optimum degrades
+   gracefully under +50 ps, −0.9% E_hop [M, skeptic]) — what remains is
+   scoping the predictive timer itself (energy, calibration, and the
+   uncorrected 61.6 ps data-dependent spread as a level/settling-margin
+   question).
 3. **Extract Vt and the settling-cliff rail level; measure RC_g** on a real
    SG13G2 gate — every G1 number scales with the first two; the third
    parameterizes the bank DP and could flip the ALU verdict alone.

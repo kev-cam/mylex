@@ -401,13 +401,25 @@ from fresh emission. Details: `nulex/frontends/README.md` §3/§5.
    loops and inserted `$_DFF_P_` stages will produce more never-before-seen
    shapes; RTL-origin regression cover is NOT evidence a consumer handles
    them.
-2. **Fix the frontend compare-emission bug BEFORE B1 if-conversion.**
-   Skeptic-found, OPEN: `c_expr.py:541-542` sizes a `const` compare operand
-   as width 1 and masks it — two silent-miscompile manifestations
-   (const-vs-const always-true; const wider than the other side's provable
-   maxbits), both oracle-caught, zero GT paths affected
-   (`frontends/README.md` §5.3). B1 routes compares into `$_MUX_` selects,
-   so this hole sits directly on B1's critical path.
+2. **The compare-emission bug is FIXED (2026-09-27, skeptic-verified) — B1's
+   compare condition is discharged, with one adjacent hole still OPEN.**
+   `c_expr.py` (was :541-542) sized a `const` compare operand as width 1 and
+   masked it — two silent-miscompile manifestations (const-vs-const
+   always-true, 130/259; const wider than the other side's provable maxbits,
+   17/259), both repro'd pre-fix and gone post-fix: `Dag.cmp` now
+   constant-folds const-cmp-const (and `lnot`/`truthy` route through it) and
+   the emitter takes const `maxbits()` in the compare width, each leg held
+   by its own named test. Full oracle suite green
+   (`frontends/tests/run_oracle_suite.sh`, 10 named tests incl. both repro
+   shapes + 3 adversarial compare expressions); GT netlists byte-identical;
+   skeptic re-ran everything independently and confirmed
+   (`frontends/README.md` §5.3). REMAINING (skeptic-found, OPEN,
+   `frontends/README.md` §5.6): the `(int)` cast branch
+   (`c_expr.py:429-430`) lets provably-≥2^31 values reach ordered compares
+   as unsigned — silent-wrong, oracle-caught 259/259 on the repro
+   `(int)(a | 0x80000000u) < 1`. Guard that branch (die on
+   `vmax > INT_MAX`, or model it signed) before B1 if-conversion leans on
+   compares.
 3. **The three-legged oracle (gcc==clang==iverilog) is the arbiter that
    caught everything — B1 needs its sequential analogue.** B0's harness is
    combinational (one vector in, one out). Registers/pipelining need a

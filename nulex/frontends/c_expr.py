@@ -200,6 +200,20 @@ class Dag:
             die("ordered compare on a possibly-negative int needs a signed "
                 "comparator -- not in B0; cast to (uint32_t) if the wrap "
                 "semantics are what you mean", coord)
+        if a.op == "const" and b.op == "const":
+            # const-cmp-const: fold here, exactly as the C compiler already
+            # folded it inside the oracle binary.  Both patterns are
+            # non-negative VALUES (negative constants are rejected at the
+            # leaf), so the plain integer compare IS the C compare for every
+            # signedness mix the usual conversions produce (int/int signed
+            # compare of non-negatives == unsigned compare == value compare).
+            # The emitter stays correct if ever handed an unfolded one (its
+            # compare width includes const maxbits -- it must not LIE), but
+            # folding is what keeps a constant comparator out of the netlist.
+            va, vb = a.args[0], b.args[0]
+            res = {"eq": va == vb, "ne": va != vb, "lt": va < vb,
+                   "le": va <= vb, "gt": va > vb, "ge": va >= vb}[op]
+            return self.const(1 if res else 0, coord)
         return self.mk(op, (a, b), 32, True, 1, False)
 
     def mux(self, s, a, b, coord):
@@ -209,12 +223,12 @@ class Dag:
         return self.mk("mux", (s, a, b), w, signed, vmax, neg)
 
     def lnot(self, a):
-        z = self.const(0)
-        return self.mk("eq", (a, z), 32, True, 1, False)
+        # via cmp() so !const folds like any other const-cmp-const
+        return self.cmp("eq", a, self.const(0), None)
 
     def truthy(self, a):
-        z = self.const(0)
-        return self.mk("ne", (a, z), 32, True, 1, False)
+        # via cmp() so const &&/||/?: conditions fold too
+        return self.cmp("ne", a, self.const(0), None)
 
     def unop(self, op, a, coord):
         w = a.cwidth if self.naive else 32
@@ -538,8 +552,16 @@ def emit_verilog(fc, src_path, naive):
                 rhs = "%s >> %s" % (ref(a), ref(b))
         elif n.op in ("eq", "ne", "lt", "le", "gt", "ge"):
             a, b = n.args
-            cw = max(emit_w(a) if a.op != "const" else 1,
-                     emit_w(b) if b.op != "const" else 1)
+            # the compare width must cover BOTH sides' provable bits: a const
+            # comparand counts at its full maxbits (NOT 1 -- ref() masks the
+            # constant to cw, so understating it miscompares: `0xF == 1`
+            # became `1'h1 == 1'h1`, and `(a & 0xF) == 0x10` became
+            # `w == 4'h0`; see examples/cmp_precedence_trap.c and
+            # examples/cmp_wide_const.c).  Dag.cmp folds const-cmp-const
+            # before it ever gets here, but the emitter must not lie if
+            # handed one, so consts take maxbits on this path too.
+            cw = max(emit_w(a) if a.op != "const" else a.maxbits(),
+                     emit_w(b) if b.op != "const" else b.maxbits())
             rhs = "%s %s %s" % (ref(a, cw), OPTXT[n.op], ref(b, cw))
         elif n.op == "mux":
             s, a, b = n.args

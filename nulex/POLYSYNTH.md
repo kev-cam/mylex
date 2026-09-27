@@ -98,11 +98,19 @@ tools that measured them (the 4303.7-vs-4385.7 sum-of-pieces lesson).
      liberty + transistor-corrected columns per workload (gated floors on
      busy cycles, leakage over wall time).
    * QAL (ANALYSIS-ONLY): `compose_qal_alu.py` constants generalized to the
-     emitted SG13G2 netlist — measured 1.343 fJ/gate-settle wp-weighted,
-     switch-tax band 0.7–26 fJ/gate, ZCD 30–300 fJ [ASSUMED] × banks, DC-DFF
-     term; admission by the §3 bank-partition DP (max-min bank, contiguous,
+     emitted SG13G2 netlist — measured 1.343 fJ/gate-settle wp-weighted
+     (committed-swing anchor; the 2026-09-27 switch sweep,
+     `stat-sim/qal/swsweep/`, measured 1.048 fJ/gate at the tg15p optimum,
+     −22%, WITH stated qualifiers: delivered swing 0.676 not 0.576,
+     ideal-rails bookkeeping, 1 µm park device required — see
+     SELECTION-RULE §3), switch-tax band 0.7–26 fJ/gate, ZCD now MEASURED
+     ≥ 144.3 fJ/bank/hop (`stat-sim/qal/zcd/`, 2026-09-27 — and the
+     comparator never fires on the true zero: per-hop ZCS itself refuted,
+     hop timing must be a calibrated predictive timer), DC-DFF term;
+     admission by the §3 bank-partition DP (max-min bank, contiguous,
      span ≤ 4; bush = longest prefix whose best partition sustains
-     N_min = 50; 50–400 → UNDECIDABLE; burst < 20 → fill/drain never
+     **N_min = 221** on the measured basis — the former 50–400 UNDECIDABLE
+     band is resolved, NOT ADMITTED; burst < 20 → fill/drain never
      amortize). Reported as the triple (E band, Θ = 2.924 Gop/s,
      t_fill = D×342 ps).
    * BD (ANALYSIS-ONLY): sync-minus-clock-tree + measured delay-line tax
@@ -117,8 +125,11 @@ tools that measured them (the 4303.7-vs-4385.7 sum-of-pieces lesson).
 Measured on the two validation blocks: sha_slice → SYNC (QDI 11.7× worse on a
 comb-only block — α\* undefined, clock-elimination buys nothing); alu_top →
 SYNC under all three vectors, QDI 12.5× off, QAL verdict moving
-EXCLUDED (burst 6.5, 5.5 < 20) → UNDECIDABLE (min-bank 63 in the 50–400 ZCD
-band) at fpsat saturation, BD clearing its paper hurdle at saturation but
+EXCLUDED (burst 6.5, 5.5 < 20) → EXCLUDED at fpsat saturation too
+(2026-09-27: the min-bank-63 row was UNDECIDABLE only inside the old
+assumed 50–400 ZCD band; at the measured N_min ≥ 221 it resolves 63 < 221
+→ EXCLUDED — `stat-sim/qal/zcd/restate_admission.py`, skeptic-verified),
+BD clearing its paper hurdle at saturation but
 refused for the undischargeable margin.
 
 **KNOWN DEFECT in the ALU EMITTABLE label (skeptic finding, 2026-09-26):**

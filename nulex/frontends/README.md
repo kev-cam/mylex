@@ -113,24 +113,55 @@ documented one (`../POLYSYNTH.md` §1) with `sha_slice_c.v` as the source.
    exhaustively (functional + rail well-formedness) by reusing `Net`
    (`tests/check_pc4_qdi.py`); the full 4-phase hazard/NULL-return machinery
    generalization is the backend's own fix-queue item (POLYSYNTH.md flags it).
-3. **OPEN (frontend, skeptic-found): compare-with-constant emission bug**
-   (`c_expr.py:541-542`). The emit-side context width for
-   `== != < <= > >=` treats a `const` operand as width 1
-   (`emit_w(a) if a.op != "const" else 1`), then `ref()` masks the constant
-   to that width. Two silent-miscompile manifestations, both repro'd and both
-   caught by the shipped oracle (exit 1): (i) const-vs-const —
-   `a & 0xF == 1` (C precedence: `a & (0xF==1)`) emits
-   `1'h1 == 1'h1` → always-true, 130/259 oracle mismatches; (ii) const wider
-   than the other side's provable maxbits — `(a & 0xF) == 0x10` (always false
-   in C) emits `w2 == 4'h0` → true on low-nibble zero, 17/259 mismatches.
-   The demanded-width pass (`c_expr.py:464-468`) is sound; only the emit-side
-   `cw` is wrong. Fix is local (include const `maxbits()` in `cw`; ideally
-   constant-fold const-cmp-const). **No GT deliverable contains a compare**,
-   so B0 results are unaffected — but until fixed, compare-bearing C is
-   trustworthy only WITH the oracle gate, and this MUST be fixed before B1
-   (if-conversion routes compares into `$_MUX_` selects).
+3. **FIXED (frontend, 2026-09-27, skeptic-verified): compare-with-constant
+   emission bug** (was `c_expr.py:541-542`). The emit-side context width for
+   `== != < <= > >=` treated a `const` operand as width 1, then `ref()`
+   masked the constant to that width. Two silent-miscompile manifestations,
+   both repro'd pre-fix and oracle-caught (exit 1): (i) const-vs-const —
+   `a & 0xF == 1` (C precedence: `a & (0xF==1)`) emitted `1'h1 == 1'h1` →
+   always-true, 130/259 mismatches; (ii) const wider than the other side's
+   provable maxbits — `(a & 0xF) == 0x10` (always false in C) emitted
+   `w2 == 4'h0`, 17/259. The fix has two independent legs, each held by its
+   own named test: `Dag.cmp` constant-folds const-cmp-const (both operands
+   are non-negative values, so the plain integer compare IS the C compare;
+   `lnot`/`truthy` now route through `cmp()` so `!const` and const
+   `&&/||/?:` conditions fold too) — covered by
+   `examples/cmp_precedence_trap.c`; and the emitter's compare width takes
+   `maxbits()` for const operands so it cannot lie if handed an unfolded
+   one — covered by `examples/cmp_wide_const.c` (emits `w2 == 5'h10`).
+   The demanded-width pass (`c_expr.py:464-468`) was confirmed sound and
+   untouched. Suite: `tests/run_oracle_suite.sh` — sha_slice 200,008/200,008,
+   popcount4 259/259, promo_trap 65,540/65,540, promo_trap_naive_catch still
+   caught (32,641/65,540 — the planted bug stays oracle-caught),
+   cmp_precedence_trap 259/259, cmp_wide_const 259/259, three adversarial
+   compare expressions (`adv_mixed` 200,004, `adv_cmpcmp` 65,540,
+   `adv_terncmp` 65,540 — mixed-width, compare-of-compare, ternary shapes),
+   sha_byte_identity PASS. sha_slice_c.v / popcount4_c.v / promo_trap.v are
+   byte-identical to pre-fix snapshots (sha_slice has no compares) and the
+   QDI netlists cmp-clean vs the committed threeway GT. The skeptic re-ran
+   the full suite and byte-identity independently (all counts and the
+   sha256 reproduce) and traced ~10 adversarial shapes symbolically.
+   B1's compare condition (COMMON-BACKEND.md §3.4.2) is discharged —
+   subject to the adjacent hole in item 6.
 4. **B0 refusals are features**: signed-overflow UB, signed `>>`, ordered
    signed compares — each rejected with the cast that fixes it. The oracle
    (real compilers) stays the arbiter of everything accepted.
 5. M3 workload profiling of software (call rate → duty/busy, operand toggles
    → alpha) is B2; `--workload` is passthrough only today.
+6. **OPEN (frontend, skeptic-found 2026-09-27): `(int)` cast of provably-large
+   values defeats the signed-compare refusal** (`c_expr.py:429-430`). The
+   `names == ["int"]` cast branch sets w=32 with "value already fits" but
+   never checks `vmax <= INT_MAX` or sets `neg`, so a value provably
+   ≥ 2^31 reaches an ordered compare believed non-negative, bypassing the
+   `cmp()` signed-comparator rejection. Repro (MEASURED, oracle-caught
+   259/259 mismatches, exit 1):
+   `return (uint8_t)((int)(a | 0x80000000u) < 1);` — C (gcc==clang,
+   impl-defined wrap) is always 1 (negative < 1); the emission compares
+   unsigned → always 0. Same silent-wrong class as item 3, adjacent to (not
+   inside) the fixed width path — the fix did not and does not cover it.
+   Suggested fix (NOT applied): `die()` in that cast branch when
+   `expr.vmax > INT_MAX` (naming the `(uint32_t)` fix), or model the result
+   signed with `neg=True`; add the repro as `examples/adv_intcast.c` in the
+   suite. Until then, compare-bearing C that passes through an `(int)` cast
+   is trustworthy only WITH the oracle gate; close this before B1 leans on
+   compares.
