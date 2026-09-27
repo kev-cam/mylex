@@ -1,0 +1,8 @@
+# FORMAL equivalence: C-origin sha_slice (c_expr.py) vs the reference RTL
+read_verilog /usr/local/src/stat-sim/qal/synth/threeway/sha_slice.v
+rename sha_slice gold
+read_verilog sha_slice_c.v
+rename sha_slice gate
+prep
+miter -equiv -flatten -make_outputs gold gate miter
+sat -verify -prove trigger 0 -show-ports miter

@@ -365,7 +365,23 @@ def main():
             continue
         if t == "$add":
             conn = c["connections"]
-            adders.append((conn["A"], conn["B"], conn["Y"]))
+            # yosys $add semantics: A/B are extended to Y_WIDTH.  RTL-shaped
+            # producers always emitted equal widths; the C frontend (natural
+            # demand-narrowed widths, e.g. 1+1 -> 2-bit Y) exposed that this
+            # consumer never implemented the extension.  Unsigned: pad with
+            # constant-0 bits (same treatment the bitwise ops below get; the
+            # constant rails fold in mp.emit).  Signed extension: refuse.
+            par = c.get("parameters", {})
+
+            def pint(v):
+                return int(v, 2) if isinstance(v, str) else int(v)
+            if pint(par.get("A_SIGNED", 0)) or pint(par.get("B_SIGNED", 0)):
+                sys.exit("$add %s: signed operand narrower than Y needs sign-"
+                         "extension -- not supported" % cn)
+            Y = conn["Y"]
+            A = list(conn["A"]) + ["0"] * (len(Y) - len(conn["A"]))
+            B = list(conn["B"]) + ["0"] * (len(Y) - len(conn["B"]))
+            adders.append((A, B, Y))
             continue
         if t not in BITOPS:
             sys.exit("unhandled cell type %s (%s)" % (t, cn))
