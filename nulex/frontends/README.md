@@ -67,11 +67,11 @@ corners + N random (or the exhaustive space ≤ 2^20), and compares bit-exact.
 | formal equivalence C-emitted vs reference `threeway/sha_slice.v` | yosys miter+SAT: **UNSAT = SUCCESS** (1039 vars, 2660 clauses) |
 | iverilog differential vs reference | 200,001 vectors, 0 errors |
 | shared-IR word census | identical to RTL-origin: `$add`×1 (8-wide) `$and`×5 `$xor`×3 `$not`×1 |
-| mapped SG13G2 netlist | **byte-identical** to committed `work/sha_slice.cmos.v` (so the committed VCD annotates it legitimately) |
-| QDI netlists | **byte-identical** to committed `sha_slice_direct_spice.v` / `_cd.v`; `verify_direct.py` PASS |
+| mapped SG13G2 netlist | **byte-identical** to the RTL-origin `threeway/work/sha_slice.cmos.v` (on disk, UNTRACKED in stat-sim git — as is `cmos.vcd`; the GT *numbers* are what is committed, in POLYSYNTH.md and polysynth's GT table), so that VCD annotates the C-origin netlist legitimately |
+| QDI netlists | **byte-identical** to the git-committed `sha_slice_direct_spice.v` / `_cd.v` (match HEAD); `verify_direct.py` PASS |
 | polysynth `--gt sha_slice` from the C source | **ALL PASS**: sync 231.9 fJ (−0.03%), 0.9281 ns (+0.00%), QDI 2713 fJ (+0.02%) @ 2.533 ns, QDI+CD 4385.8 fJ (−0.00%) |
 | `popcount4.c` (2nd function, not in the GT set) | exhaustive 256/256 oracle; yosys SAT SUCCESS vs behavioral ref; polysynth end-to-end (pick SYNC; QDI 46 TH cells) ; QDI netlist 256/256 exhaustive functional+well-formed via `verify_direct.Net` |
-| `promo_trap.c` promotion trap | correct mode 65,540/65,540; `--naive-widths` caught: 32,649 mismatches, first at a=b=0xFF (C 31 vs buggy 15) |
+| `promo_trap.c` promotion trap | correct mode 65,540/65,540; `--naive-widths` caught: 32,641 mismatches (65,536 exhaustive: the 32,640 pairs with a+b ≥ 256, + the duplicated ff/ff corner), first at a=b=0xFF (C 31 vs buggy 15) |
 
 Reproduce: `frontends/work/` holds the runs; the polysynth invocation is the
 documented one (`../POLYSYNTH.md` §1) with `sha_slice_c.v` as the source.
@@ -111,10 +111,26 @@ documented one (`../POLYSYNTH.md` §1) with `sha_slice_c.v` as the source.
    the sha reference. polysynth `--verify` on any other word-route block
    prints the header line and dies. popcount4's QDI netlists were checked
    exhaustively (functional + rail well-formedness) by reusing `Net`
-   (`work/check_pc4_qdi.py`); the full 4-phase hazard/NULL-return machinery
+   (`tests/check_pc4_qdi.py`); the full 4-phase hazard/NULL-return machinery
    generalization is the backend's own fix-queue item (POLYSYNTH.md flags it).
-3. **B0 refusals are features**: signed-overflow UB, signed `>>`, ordered
+3. **OPEN (frontend, skeptic-found): compare-with-constant emission bug**
+   (`c_expr.py:541-542`). The emit-side context width for
+   `== != < <= > >=` treats a `const` operand as width 1
+   (`emit_w(a) if a.op != "const" else 1`), then `ref()` masks the constant
+   to that width. Two silent-miscompile manifestations, both repro'd and both
+   caught by the shipped oracle (exit 1): (i) const-vs-const —
+   `a & 0xF == 1` (C precedence: `a & (0xF==1)`) emits
+   `1'h1 == 1'h1` → always-true, 130/259 oracle mismatches; (ii) const wider
+   than the other side's provable maxbits — `(a & 0xF) == 0x10` (always false
+   in C) emits `w2 == 4'h0` → true on low-nibble zero, 17/259 mismatches.
+   The demanded-width pass (`c_expr.py:464-468`) is sound; only the emit-side
+   `cw` is wrong. Fix is local (include const `maxbits()` in `cw`; ideally
+   constant-fold const-cmp-const). **No GT deliverable contains a compare**,
+   so B0 results are unaffected — but until fixed, compare-bearing C is
+   trustworthy only WITH the oracle gate, and this MUST be fixed before B1
+   (if-conversion routes compares into `$_MUX_` selects).
+4. **B0 refusals are features**: signed-overflow UB, signed `>>`, ordered
    signed compares — each rejected with the cast that fixes it. The oracle
    (real compilers) stays the arbiter of everything accepted.
-4. M3 workload profiling of software (call rate → duty/busy, operand toggles
+5. M3 workload profiling of software (call rate → duty/busy, operand toggles
    → alpha) is B2; `--workload` is passthrough only today.

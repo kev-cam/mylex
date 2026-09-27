@@ -253,6 +253,22 @@ the polysynth driver defines the exact filename).
   (`SELECTION-RULE.md:362-367`); a scored result is meaningless without naming
   the netlist it was scored on.
 
+  *B0 addendum (2026-09-26): M5 must name the WHOLE producer chain, not one
+  link.* B0 answered the shape-sensitivity question in the strongest way —
+  the C-origin and RTL-origin `sha_slice` mapped netlists came out
+  byte-identical, so the GT scores were equal as the same bytes, not merely
+  equivalent-cost — but the road there showed identity is an empirical result
+  per block, never an assumption: (a) a frontend emission detail (dead alias
+  wires from pass-through trunc nodes) survived synthesis as extra net names —
+  same cells, same cost, different bytes — until fixed in the emitter; (b) the
+  same frontend's demand-narrowing gives popcount4 ragged-width `$add`s no RTL
+  producer ever emitted (a genuinely different, correct, differently-costed
+  shape); (c) `c_expr.py` therefore writes real M5 (frontend name + its own
+  sha256 + source sha256 + mode flags, e.g. `naive_widths_bug_mode`) into the
+  sidecar. Layering note (skeptic): the frontend sidecar names the C→Verilog
+  link; the JSON-producing synth recipe is polysynth-internal today and is
+  polysynth's link to add when it starts consuming sidecars (§4 NOTE, §5).
+
 ### 2.9 What is deliberately NOT in this contract
 
 The channel-contract language (encoding/completion/ack/phase/assumptions,
@@ -317,6 +333,21 @@ emittable backends → polysynth table.** Concretely:
 
 Effort: **S (days).** Everything except step 2 exists and is green on disk.
 
+**B0 OUTCOME (2026-09-26): DONE, acceptance exceeded.** The frontend is
+`nulex/frontends/c_expr.py` (pycparser C subset → hash-consed expression DAG →
+comb Verilog + M1–M5 sidecar; commit `c386114`, local — push pending user).
+The C-origin `sha_slice` reproduces the committed GT **exactly, not merely
+within the 2% bar**: the word-IR census is identical to the RTL-origin one
+(`$add`×1 8-wide, `$and`×5, `$xor`×3, `$not`×1) and all three mapped netlists
+(SG13G2 cmos, QDI direct, QDI+CD) are **byte-identical** to the RTL-origin
+outputs — so sync 231.9 fJ @ 0.9281 ns, QDI 2713 fJ @ 2.533 ns, QDI+CD
+4386 fJ, ALL PASS with the tolerance never exercised. Formal equivalence:
+yosys miter+SAT UNSAT vs `threeway/sha_slice.v`; software oracle
+gcc==clang==iverilog 200,008/200,008. Second function (`popcount4.c`, not in
+the GT set): exhaustive oracle 256/256, SAT SUCCESS, polysynth-scored, QDI
+rails checked 256/256. Independently re-run and confirmed by a skeptic pass
+from fresh emission. Details: `nulex/frontends/README.md` §3/§5.
+
 ### 3.2 The hard parts (named, with the honest gate each hits)
 
 1. **Control flow → handshake.**
@@ -349,14 +380,49 @@ Effort: **S (days).** Everything except step 2 exists and is green on disk.
 
 | step | content | effort | gate |
 |---|---|---|---|
-| B0 | pure-expression compiler → comb Verilog → IR-WORD/IR-BIT; reproduce the committed `sha_slice` table from a C source | **S** (days) | none — all pieces exist |
-| B1 | fixed-bound loops (unroll), width inference, optional pipelining directive → `$_DFF_P_` stages; `pipeline_stages()` green = feed-forward proof | **M** (~week) | none structural |
+| B0 | pure-expression compiler → comb Verilog → IR-WORD/IR-BIT; reproduce the committed `sha_slice` table from a C source | **DONE 2026-09-26** (`nulex/frontends/c_expr.py`, commit `c386114`) — GT reproduced EXACTLY (byte-identical netlists); see §3.1 outcome | none — held |
+| B1 | fixed-bound loops (unroll), width inference, optional pipelining directive → `$_DFF_P_` stages; `pipeline_stages()` green = feed-forward proof | **M** (~week) | none structural — but see the B0 → B1 notes below |
 | B2 | function boundary = channel: valid/ready wrapper (sync binding) and `ki/ko` (QDI reg binding, ports already emitted `map_ncl_struct.py:248-249`); PIPES token semantics; software profiling → M3 vector | **M** | P1 contract ADR shapes the boundary metadata |
 | B3 | data-dependent `while` via token recirculation; desync/sync bindings only | **L** | gated on the desync register bank actually running (`--reg desync` is VHDL-only, `map_ncl_struct.py:233`; cyclic logic currently `SystemExit`s the QDI path `:342-343`) |
 | B4 | arrays → `$mem` + G-D sync memory interface | **L** | **blocked** on `bindings/sram.py` (T2, `SELECTION-RULE.md:38`) — ANALYSIS-ONLY until then |
 | — | recursion, pointers-as-data, dynamic allocation, concurrency primitives | not promised | out of scope by construction |
 
----
+### 3.4 What B0 learned (recorded 2026-09-26; conditions on B1)
+
+1. **Software-origin shapes exercise backend paths RTL never did — audit
+   consumers for implicit yosys cell semantics before each B step.** The
+   frontend's demanded-width narrowing legitimately emits ragged widths
+   (popcount4: `1+1 → 2-bit Y`), and `map_ncl_direct.py`'s Fant `$add`
+   expansion had never implemented yosys's implicit A/B→`Y_WIDTH` extension —
+   IndexError crash, FIXED in `c386114` (`map_ncl_direct.py:367-384`,
+   zero-pad unsigned with constant rails, signed refuses loudly;
+   regression-guarded: RTL-origin AND C-origin GT ALL PASS post-fix). Every
+   RTL-origin block had masked this by emitting equal widths. B1's unrolled
+   loops and inserted `$_DFF_P_` stages will produce more never-before-seen
+   shapes; RTL-origin regression cover is NOT evidence a consumer handles
+   them.
+2. **Fix the frontend compare-emission bug BEFORE B1 if-conversion.**
+   Skeptic-found, OPEN: `c_expr.py:541-542` sizes a `const` compare operand
+   as width 1 and masks it — two silent-miscompile manifestations
+   (const-vs-const always-true; const wider than the other side's provable
+   maxbits), both oracle-caught, zero GT paths affected
+   (`frontends/README.md` §5.3). B1 routes compares into `$_MUX_` selects,
+   so this hole sits directly on B1's critical path.
+3. **The three-legged oracle (gcc==clang==iverilog) is the arbiter that
+   caught everything — B1 needs its sequential analogue.** B0's harness is
+   combinational (one vector in, one out). Registers/pipelining need a
+   cycle-accurate C-vs-Verilog co-simulation contract (initial-value
+   undefined per §2.3, so the harness must not compare pre-fill cycles).
+   That is new machinery with no B0 piece to reuse.
+4. **`verify_direct.py` generalization must precede any B-step that scores
+   new QDI blocks.** Its `main()` hardwires sha_slice's ports and reference
+   (`verify_direct.py:138-155`); polysynth `--verify` dies on any other
+   word-route block. popcount4 was covered by reusing its generic `Net`
+   simulator (`frontends/tests/check_pc4_qdi.py`, exhaustive
+   functional + rail well-formedness only); the 4-phase hazard/NULL-return
+   generalization stays on polysynth's own queue (top item, per POLYSYNTH.md).
+5. **Emission shape is a cost-relevant free variable even at equal function —
+   the M5 rationale now has software-side evidence** (§2.8 note).
 
 ## 4. Cost of this contract to the existing RTL flow — verified consumer by consumer
 
