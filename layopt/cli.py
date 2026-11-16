@@ -35,9 +35,10 @@ def main(argv=None):
 
     fl, ex = _load(args)
     if args.cmd == "extract":
-        print("top %s: %d shapes, %d nets, %d devices (%d n / %d p)" % (
+        print("top %s: %d shapes, %d nets, %d devices (%d n / %d p)%s" % (
             ex.top, len(ex.shapes), len(ex.nets), len(ex.devices),
-            sum(d.kind == "n" for d in ex.devices), sum(d.kind == "p" for d in ex.devices)))
+            sum(d.kind == "n" for d in ex.devices), sum(d.kind == "p" for d in ex.devices),
+            ", %d resistor bodies cut" % len(ex.res_bodies) if ex.res_bodies else ""))
         if args.output:
             extract.write_spice(ex, args.output); print("wrote", args.output)
     elif args.cmd == "rc":

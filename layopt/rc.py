@@ -124,6 +124,7 @@ def net_segments(ex: Extraction, net_id: int) -> List[Segment]:
                 segs.append(Segment(gsid, psid, 1e-3, tech.poly, "wire"))
     # cuts: diff contact -> first routing layer; via stack
     stacks = list(tech.vias)
+    plate_of = {cut: plate for plate, cut, up in tech.mim}      # a cut over a MiM plate lands on the plate
     lower_of_contact = ["sd_n", "sd_p", tech.poly]
     for cut_layer, lowers, upper in ([(tech.diff_contact, lower_of_contact, tech.routing[0])] +
                                      [(cut, [lo], up) for lo, cut, up in stacks]):
@@ -133,7 +134,9 @@ def net_segments(ex: Extraction, net_id: int) -> List[Segment]:
         for v in by_layer[cut_layer]:
             vr = ex.shapes[v].rect
             ups = idx[upper].query_overlap(vr) if upper in idx else []
-            los = [s for lo in lowers if lo in idx for s in idx[lo].query_overlap(vr)]
+            plate = plate_of.get(cut_layer)
+            on_plate = idx[plate].query_overlap(vr) if plate in idx else []
+            los = on_plate or [s for lo in lowers if lo in idx for s in idx[lo].query_overlap(vr)]
             # via resistance sits on the cut node; wire squares to the landing rects
             for u in ups:
                 segs.append(Segment(v, u, rvia / 2.0 + _junction_r(ex, v, u, upper) * 0.0, cut_layer, "via"))

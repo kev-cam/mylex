@@ -6,6 +6,12 @@ Mirrors what kestrel/stat-sim do with KLayout's LayoutToNetlist (MOS3
 recognition: gate = poly & diff, S/D = diff - poly, well decides N/P) but in
 pure Python over rectangles, so the optimizer's inner loop does not need
 KLayout and can re-extract after every geometry move.
+
+Only MOS devices are recognised, but two other device kinds are kept from
+shorting nets: wire under a resistor marker (Tech.res_markers) is cut out as
+a resistor body, and a cut over a MiM plate (Tech.mim) lands on the plate,
+not on the metal below it.  Their values come from elsewhere (stat-sim
+rf/layrc.py pairs this extraction with the KLayout LVS deck's devices).
 """
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Tuple
@@ -64,6 +70,7 @@ class Extraction:
     nets: Dict[int, Net]
     devices: List[Device]
     top: str = ""
+    res_bodies: List[Tuple[str, Rect]] = field(default_factory=list)   # (wire layer, rect) cut out under a resistor marker
 
     def net_by_name(self, name: str) -> Optional[Net]:
         for n in self.nets.values():
@@ -156,12 +163,32 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
     psdm: List[Rect] = []
     vt_rects: Dict[str, List[Rect]] = {name: [] for name in tech.vt}      # flavour -> implant rects
     vt_layer = {f.layer: name for name, f in tech.vt.items()}
+    # resistor markers: the wire under one is a resistor body, not a conductor
+    marker_of = {m: w for w, m in tech.res_markers.items() if m in L}
+    res_index: Dict[str, geom.BinIndex] = {}
+    res_rects: List[Rect] = []
+    if marker_of:
+        for fr in fl.rects:
+            w = marker_of.get(inv.get(fr.layer))
+            if w is not None and fr.rect[2] > fr.rect[0] and fr.rect[3] > fr.rect[1]:
+                res_index.setdefault(w, geom.BinIndex()).add(len(res_rects), fr.rect)
+                res_rects.append(fr.rect)
+    res_bodies: List[Tuple[str, Rect]] = []
     for idx, fr in enumerate(fl.rects):
         lname = inv.get(fr.layer)
         if lname is None:
             continue
         if fr.rect[2] <= fr.rect[0] or fr.rect[3] <= fr.rect[1]:
             continue                    # a degenerate rect is a removed one (drc.py convention)
+        if lname in res_index:
+            holes = [res_rects[k] for k in res_index[lname].query_overlap(fr.rect)]
+            if holes:
+                res_bodies += [(lname, h) for h in (geom.inter(fr.rect, m) for m in holes) if h]
+                for piece in geom.subtract(fr.rect, holes):
+                    sid = add(lname, piece, fr.prov, idx)
+                    if lname == tech.poly:
+                        polys.append(sid)
+                continue
         if lname == tech.diff:
             diffs.append((fr.rect, fr.prov, idx))
         elif lname in vt_layer:
@@ -264,9 +291,19 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
     connect_pair(tech.poly, tech.diff_contact, touch=False)
     if tech.diff_contact != (tech.vias[0][1] if tech.vias else None):
         connect_pair(tech.diff_contact, tech.routing[0], touch=False)
+    plate_of = {cut: plate for plate, cut, up in tech.mim if plate in idx_of}
+    for plate in plate_of.values():
+        connect_same(plate)
     for lo, cut, up in tech.vias:
-        connect_pair(lo, cut, touch=False)
         connect_pair(cut, up, touch=False)
+        plate = plate_of.get(cut)
+        if plate is None or cut not in idx_of:
+            connect_pair(lo, cut, touch=False)
+            continue
+        for i in by_layer[cut]:                          # a cut over a MiM plate lands on the plate
+            on_plate = idx_of[plate].query_overlap(shapes[i].rect)
+            for j in (on_plate or (idx_of[lo].query_overlap(shapes[i].rect) if lo in idx_of else [])):
+                uf.union(i, j)
 
     # ---- nets --------------------------------------------------------------
     roots: Dict[int, int] = {}
@@ -367,7 +404,7 @@ def extract(fl: FlatLayout, tech: Tech, labels: Optional[Dict[str, Tuple[str, fl
         for t, n in (("G", dv.g), ("S", dv.s), ("D", dv.d)):
             nets[n].devices.append((dv.name, t))
 
-    return Extraction(tech, dbu, shapes, net_of_shape, nets, devices, fl.top)
+    return Extraction(tech, dbu, shapes, net_of_shape, nets, devices, fl.top, res_bodies)
 
 
 def combine_parallel(devices: List[Device]) -> List[Device]:

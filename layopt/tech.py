@@ -50,6 +50,12 @@ class Tech:
     # LEF/DEF layer name -> logical layer name (def2flat); None = the sky130 names
     lef2tech: Optional[Dict[str, str]] = None
     text_layers: Dict[Layer, str] = field(default_factory=dict)   # label (layer, datatype) -> conducting layer it names
+    # resistor bodies: wire layer -> marker layer; the wire under the marker is a device, not a
+    # conductor, so it is cut out and the two ends are separate nets
+    res_markers: Dict[str, str] = field(default_factory=dict)
+    # MiM capacitors: (top plate, cut, upper metal).  A cut over a plate lands on the plate, not on
+    # the metal below it (the bottom plate), so the two plates stay separate nets
+    mim: List[Tuple[str, str, str]] = field(default_factory=list)
     # construction constants for generated geometry (um)
     poly_ext_diff: float = 0.13        # poly overhang beyond diffusion along W
     implant_enc: float = 0.125         # nsdm/psdm enclosure of diffusion
@@ -85,6 +91,7 @@ class Tech:
         for lo, cut, up in self.vias:
             out.append(cut)
         out.append(self.diff_contact)
+        out += [plate for plate, cut, up in self.mim]
         seen, res = set(), []
         for n in out:
             if n in self.layers and n not in seen:
@@ -107,7 +114,13 @@ SKY130 = Tech(
             "mcon": (67, 44), "met1": (68, 20), "via1": (68, 44), "met2": (69, 20),
             "via2": (69, 44), "met3": (70, 20), "via3": (70, 44), "met4": (71, 20),
             "via4": (71, 44), "met5": (72, 20), "text": (83, 44),
-            "hvtp": (78, 44), "lvtn": (125, 44)},
+            "hvtp": (78, 44), "lvtn": (125, 44),
+            "polyres": (66, 13), "lires": (67, 13), "met1res": (68, 13), "met2res": (69, 13),
+            "met3res": (70, 13), "met4res": (71, 13), "met5res": (72, 13),
+            "capm": (89, 44), "cap2m": (97, 44)},
+    res_markers={"poly": "polyres", "li": "lires", "met1": "met1res", "met2": "met2res",
+                 "met3": "met3res", "met4": "met4res", "met5": "met5res"},
+    mim=[("capm", "via3", "met4"), ("cap2m", "via4", "met5")],
     routing=["li", "met1", "met2", "met3", "met4", "met5"],
     vias=[("li", "mcon", "met1"), ("met1", "via1", "met2"), ("met2", "via2", "met3"),
           ("met3", "via3", "met4"), ("met4", "via4", "met5")],

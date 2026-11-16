@@ -950,6 +950,38 @@ END DESIGN
         res["d1"] * 1e12, res["d2"] * 1e12, res["energy_fJ"], d.stats["devices"], d.stats["resistors"], d.stats["capacitors"]))
 
 
+def test_resistor_body_and_mim_plates_split_nets():
+    """Poly under a resistor marker is a device, not a wire, and a via3 over a MiM plate lands
+    on the plate, not on the met3 below it: both must leave two nets, not one."""
+    fl = gds.FlatLayout(dbu_um=0.001, top="rc")
+    _r(fl, "poly", 0.0, 0.0, 0.35, 6.0, "rc/r")
+    _r(fl, "polyres", 0.0, 2.0, 0.35, 4.0, "rc/r")               # resistor body
+    for y, tag in ((0.5, "a"), (5.0, "b")):
+        _r(fl, "licon", 0.09, y, 0.26, y + 0.17, "rc/r"); _r(fl, "li", 0.0, y - 0.1, 0.35, y + 0.27, "rc/" + tag)
+    ex = extract.extract(fl, T)
+    a = ex.net_of_shape[rc.shape_at(ex, "li", 0.1, 0.5)]
+    b = ex.net_of_shape[rc.shape_at(ex, "li", 0.1, 5.0)]
+    assert a != b, "resistor ends shorted through the body"
+    assert ex.res_bodies == [("poly", (0, 2000, 350, 4000))], ex.res_bodies
+    assert rc.shape_at(ex, "poly", 0.1, 3.0) is None, "body still conducts"
+
+    fl = gds.FlatLayout(dbu_um=0.001, top="mim")
+    _r(fl, "met3", 0.0, 0.0, 20.0, 10.0, "mim/bot")              # bottom plate, extends beyond the cap
+    _r(fl, "capm", 1.0, 1.0, 9.0, 9.0, "mim/top")
+    _r(fl, "via3", 4.0, 4.0, 4.2, 4.2, "mim/top")                # lands on capm
+    _r(fl, "met4", 2.0, 2.0, 8.0, 8.0, "mim/top")
+    _r(fl, "via3", 15.0, 4.0, 15.2, 4.2, "mim/bot")              # ordinary via beside the cap
+    _r(fl, "met4", 14.0, 3.0, 16.0, 5.0, "mim/bot")
+    ex = extract.extract(fl, T)
+    top = ex.net_of_shape[rc.shape_at(ex, "met4", 5.0, 5.0)]
+    bot = ex.net_of_shape[rc.shape_at(ex, "met3", 5.0, 5.0)]
+    assert top != bot, "MiM plates shorted by the via over the plate"
+    assert ex.net_of_shape[rc.shape_at(ex, "capm", 5.0, 5.0)] == top
+    assert ex.net_of_shape[rc.shape_at(ex, "met4", 15.0, 4.0)] == bot, "ordinary via3 must still connect met3-met4"
+    segs = rc.net_segments(ex, top)
+    assert any({ex.shapes[sg.a].layer, ex.shapes[sg.b].layer} == {"via3", "capm"} for sg in segs), "no via-to-plate segment"
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):
